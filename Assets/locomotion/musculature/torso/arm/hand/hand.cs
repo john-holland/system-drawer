@@ -52,7 +52,10 @@
 //  or we should be able to query the nervous system with a GameObject, and a desired goal or "good section" and have
 //    the nervous system respond with a "video routine" of good sections in order that satisfy the desired topology.
 //    we should be able to insert the "video routine" and have the musculature respond desireably to our goal
-// 
+//  impulses should also include things like physics contacts (for feet and hands common animations),
+//    as well as arbitrary things, like heat or custom game events like an animal licking them, or
+//    someone pointing something out, with or without a laser pointer
+//
 //  standing up:
 //    pull in knees, feet flat, hands behind you, push torso forward, support with arms while legs open and torso extends
 //    pull in hands and knees to ball, extend one leg to fall on side then close leg, on ground side pull arm back and press open lifting torso
@@ -78,3 +81,19 @@
 // and since we have the "good sections" as pieces of required communication,
 // we can procedurally disable the tree, and topologically handle the animation of the
 // non-hand-animated (ironically lol) ragdoll tree sections!
+
+// for the first time around, let's make our character super man, and let the individual muscles be as strong as they
+// have to be to reach a desired card position to continue our procedural animation
+// we should develop an LSTM or more generic RNN that can tell the next card's with accuracy, or guess the amount
+//   of strength necessary
+// we should add an arbitrary tree fit component solver for game object trees
+//
+
+// todo: cars, with chassis, engines, tanks, drivetrains, steering, brakes, etc
+//       bicycles, with peddles, shifters, gears, i-n-d-i-v-i-d-u-a-l chain links (or approximation), handle bars
+//       structures with deformation, it'd be fun to run this with the weather system on a barn and make a scene from
+//        twister, including the acting procedurally, since the pressure change, and sound of the twister could be
+//        counted as cards that offload to a behavior tree for AI, that send the characters to gather the animals
+//        close the barn, and head into the cellar
+//        
+// 
