@@ -27,27 +27,34 @@ public class SGBehaviorTreeEmptySpace : MonoBehaviour
     {
         if (meshType == MeshType.Base)
         {
-            // Try to get bounds from colliders or renderers
+            // Try to get bounds from colliders or renderers (these are already in world space)
             BoxCollider boxCollider = GetComponent<BoxCollider>();
             if (boxCollider != null)
             {
-                return boxCollider.bounds;
+                return boxCollider.bounds; // Already world space
             }
             
             MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
             if (meshRenderer != null)
             {
-                return meshRenderer.bounds;
+                return meshRenderer.bounds; // Already world space
             }
             
             // Default: use transform scale
-            Vector3 size = transform.localScale;
+            // Use lossyScale to account for parent transforms (world space scale)
+            Vector3 size = transform.lossyScale;
             return new Bounds(transform.position, size);
         }
         else // Box
         {
-            // Use explicit box size
-            return new Bounds(transform.position, boxSize);
+            // Use explicit box size, transformed to world space
+            // Multiply by lossyScale to account for parent transforms
+            Vector3 worldSize = new Vector3(
+                boxSize.x * transform.lossyScale.x,
+                boxSize.y * transform.lossyScale.y,
+                boxSize.z * transform.lossyScale.z
+            );
+            return new Bounds(transform.position, worldSize);
         }
     }
     

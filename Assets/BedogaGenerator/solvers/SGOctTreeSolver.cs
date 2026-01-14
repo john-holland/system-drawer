@@ -198,6 +198,12 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
         {
             foreach (var emptySpace in emptySpaces)
             {
+                // Skip destroyed objects
+                if (emptySpace == null)
+                {
+                    continue;
+                }
+                
                 Bounds spaceBounds = emptySpace.GetBounds();
                 Bounds? availableSpace = FindSpaceInBounds(spaceBounds, minSpace, maxSpace, optimalSpace);
                 if (availableSpace.HasValue)

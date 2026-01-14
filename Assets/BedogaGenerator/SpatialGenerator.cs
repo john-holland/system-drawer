@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Text;
 
 // Main component for procedural spatial generation
 // Manages generation lifecycle, coordinates with behavior tree and spatial trees
@@ -18,6 +19,7 @@ public class SpatialGenerator : MonoBehaviour
     public int seed = 0;
     public bool autoGenerateOnStart = false;
     public bool autoRegenerateOnResize = true;
+    [Range(0f, 1f)] public float alignmentOffsetCoefficient = 0.5f;
     
     [Header("Generation Bounds")]
     public Vector3 generationSize = Vector3.one * 10f;
@@ -30,6 +32,9 @@ public class SpatialGenerator : MonoBehaviour
     public Transform behaviorTreeParent;
     public Transform sceneTreeParent;
     public Transform sceneGraphParent;
+    
+    [Header("Test Results")]
+    [SerializeField, TextArea(10, 20)] private string testResults = "";
     
     private SGTreeSolverInterface treeSolver;
     private System.Random rng;
@@ -168,6 +173,12 @@ public class SpatialGenerator : MonoBehaviour
         SGBehaviorTreeEmptySpace[] markers = FindObjectsOfType<SGBehaviorTreeEmptySpace>();
         foreach (var marker in markers)
         {
+            // Skip destroyed objects
+            if (marker == null)
+            {
+                continue;
+            }
+            
             // Only include markers within generation bounds (or all if bounds checking is disabled)
             Bounds markerBounds = marker.GetBounds();
             if (generationBounds.Intersects(markerBounds) || !useEmptySpaceMarkers)
@@ -175,6 +186,9 @@ public class SpatialGenerator : MonoBehaviour
                 emptySpaceMarkers.Add(marker);
             }
         }
+        
+        // Clean up any null references that might have been added previously
+        emptySpaceMarkers.RemoveAll(marker => marker == null);
     }
     
     public void Generate()
@@ -288,11 +302,14 @@ public class SpatialGenerator : MonoBehaviour
         instance.transform.position = placementBounds.center;
         instance.transform.rotation = Quaternion.Euler(node.rotationPreference);
         
-        // Apply alignment
+        // Apply alignment (this may change the position)
         ApplyAlignment(node, instance, placementBounds);
         
-        // Add to spatial tree
+        // Get final bounds after alignment
+        // Note: We insert with final bounds since the object hasn't been inserted yet
         Bounds instanceBounds = GetGameObjectBounds(instance);
+        
+        // Add to spatial tree with final bounds
         treeSolver.Insert(instanceBounds, node, instance);
     }
     
@@ -301,29 +318,88 @@ public class SpatialGenerator : MonoBehaviour
         Vector3 position = obj.transform.position;
         Vector3 size = GetGameObjectBounds(obj).size;
         
+        // Calculate offset coefficient
+        // 0.0 = flush against edge, 1.0 = maximum offset from edge
+        float offsetCoeff = alignmentOffsetCoefficient;
+        
+        bool isFlush = node.placeFlush;
+        
         switch (node.alignPreference)
         {
-            // todo: review: per 0.5f coeficient, we might want to add a "align flush" option
-            
             case SGBehaviorTreeNode.AlignmentPreference.Up:
-                position.y = bounds.max.y - size.y * 0.5f;
+                if (isFlush)
+                {
+                    // Object's top edge at bounds.max.y
+                    position.y = bounds.max.y - size.y * 0.5f;
+                }
+                else
+                {
+                    // offsetCoeff 0 = flush at top, 1 = offset downward
+                    position.y = bounds.max.y - size.y * (0.5f + offsetCoeff * 0.5f);
+                }
                 break;
             case SGBehaviorTreeNode.AlignmentPreference.Down:
-                position.y = bounds.min.y + size.y * 0.5f;
+                if (isFlush)
+                {
+                    // Object's bottom edge at bounds.min.y
+                    position.y = bounds.min.y + size.y * 0.5f;
+                }
+                else
+                {
+                    // offsetCoeff 0 = flush at bottom, 1 = offset upward
+                    position.y = bounds.min.y + size.y * (0.5f + offsetCoeff * 0.5f);
+                }
                 break;
             case SGBehaviorTreeNode.AlignmentPreference.Left:
-                position.x = bounds.min.x + size.x * 0.5f;
+                if (isFlush)
+                {
+                    // Object's left edge at bounds.min.x
+                    position.x = bounds.min.x + size.x * 0.5f;
+                }
+                else
+                {
+                    // offsetCoeff 0 = flush at left, 1 = offset rightward
+                    position.x = bounds.min.x + size.x * (0.5f + offsetCoeff * 0.5f);
+                }
                 break;
             case SGBehaviorTreeNode.AlignmentPreference.Right:
-                position.x = bounds.max.x - size.x * 0.5f;
+                if (isFlush)
+                {
+                    // Object's right edge at bounds.max.x
+                    position.x = bounds.max.x - size.x * 0.5f;
+                }
+                else
+                {
+                    // offsetCoeff 0 = flush at right, 1 = offset leftward
+                    position.x = bounds.max.x - size.x * (0.5f + offsetCoeff * 0.5f);
+                }
                 break;
             case SGBehaviorTreeNode.AlignmentPreference.Forward:
-                position.z = bounds.max.z - size.z * 0.5f;
+                if (isFlush)
+                {
+                    // Object's front edge at bounds.max.z
+                    position.z = bounds.max.z - size.z * 0.5f;
+                }
+                else
+                {
+                    // offsetCoeff 0 = flush at front, 1 = offset backward
+                    position.z = bounds.max.z - size.z * (0.5f + offsetCoeff * 0.5f);
+                }
                 break;
             case SGBehaviorTreeNode.AlignmentPreference.Backward:
-                position.z = bounds.min.z + size.z * 0.5f;
+                if (isFlush)
+                {
+                    // Object's back edge at bounds.min.z
+                    position.z = bounds.min.z + size.z * 0.5f;
+                }
+                else
+                {
+                    // offsetCoeff 0 = flush at back, 1 = offset forward
+                    position.z = bounds.min.z + size.z * (0.5f + offsetCoeff * 0.5f);
+                }
                 break;
             case SGBehaviorTreeNode.AlignmentPreference.Center:
+                // Center alignment (offset doesn't apply)
                 position = bounds.center;
                 break;
         }
@@ -428,6 +504,360 @@ public class SpatialGenerator : MonoBehaviour
     public void Regenerate()
     {
         Generate();
+    }
+    
+    public void RunTest()
+    {
+        System.Text.StringBuilder results = new System.Text.StringBuilder();
+        results.AppendLine("=== SpatialGenerator Test Run ===");
+        results.AppendLine($"Mode: {mode}");
+        results.AppendLine($"Seed: {seed}");
+        results.AppendLine($"Generation Bounds: {generationSize}");
+        results.AppendLine();
+        
+        List<string> errors = new List<string>();
+        List<string> warnings = new List<string>();
+        
+        try
+        {
+            // Check behavior tree structure
+            results.AppendLine("--- Behavior Tree Analysis ---");
+            
+            if (behaviorTreeParent == null)
+            {
+                errors.Add("BehaviorTree parent is null");
+                results.AppendLine("ERROR: BehaviorTree parent is null");
+            }
+            else
+            {
+                SGTreeNodeContainer container = behaviorTreeParent.GetComponent<SGTreeNodeContainer>();
+                if (container == null)
+                {
+                    errors.Add("No SGTreeNodeContainer found in BehaviorTree parent");
+                    results.AppendLine("ERROR: No SGTreeNodeContainer found in BehaviorTree parent");
+                }
+                else
+                {
+                    SGBehaviorTreeNode rootNode = container.GetRootNode();
+                    if (rootNode == null)
+                    {
+                        errors.Add("No root behavior tree node found");
+                        results.AppendLine("ERROR: No root behavior tree node found");
+                    }
+                    else
+                    {
+                        results.AppendLine($"Root node found: {rootNode.name}");
+                        results.AppendLine($"Root enabled: {rootNode.isEnabled}");
+                        results.AppendLine($"Root prefabs: {rootNode.gameObjectPrefabs?.Count ?? 0}");
+                        
+                        // Analyze tree structure
+                        int nodeCount = AnalyzeBehaviorTree(rootNode, results, errors, warnings, 1);
+                        results.AppendLine($"Total nodes in tree: {nodeCount}");
+                        results.AppendLine();
+                    }
+                }
+            }
+            
+            // Check sizing issues
+            results.AppendLine("--- Size Validation ---");
+            ValidateSizing(behaviorTreeParent, results, warnings);
+            
+            // Check if nodes fit within generation bounds
+            ValidateBoundsCompatibility(behaviorTreeParent, results, errors, warnings);
+            results.AppendLine();
+            
+            // Run generation
+            results.AppendLine("--- Generation Test ---");
+            if (errors.Count == 0)
+            {
+                // Clear previous generation
+                ClearGeneration();
+                
+                // Initialize if needed
+                if (!isInitialized)
+                {
+                    Initialize();
+                }
+                
+                // Run generation
+                Generate();
+                
+                // Count generated objects
+                int generatedCount = 0;
+                if (sceneTreeParent != null)
+                {
+                    generatedCount = sceneTreeParent.childCount;
+                }
+                
+                results.AppendLine($"Generated objects: {generatedCount}");
+                
+                if (generatedCount == 0)
+                {
+                    warnings.Add("No objects were generated");
+                    results.AppendLine("WARNING: No objects were generated");
+                }
+                else if (generatedCount < 3)
+                {
+                    warnings.Add($"Only {generatedCount} object(s) generated (expected at least 3)");
+                    results.AppendLine($"WARNING: Only {generatedCount} object(s) generated");
+                }
+                else
+                {
+                    results.AppendLine($"✓ Generated {generatedCount} objects (minimum threshold met)");
+                }
+                
+                // Show structure
+                results.AppendLine();
+                results.AppendLine("--- Generated Object Structure ---");
+                if (sceneTreeParent != null)
+                {
+                    ShowObjectStructure(sceneTreeParent, results, 0);
+                }
+            }
+            else
+            {
+                results.AppendLine("SKIPPED: Generation not run due to errors");
+            }
+            
+            // Summary
+            results.AppendLine();
+            results.AppendLine("=== Test Summary ===");
+            results.AppendLine($"Errors: {errors.Count}");
+            results.AppendLine($"Warnings: {warnings.Count}");
+            
+            if (errors.Count > 0)
+            {
+                results.AppendLine();
+                results.AppendLine("Errors:");
+                foreach (string error in errors)
+                {
+                    results.AppendLine($"  - {error}");
+                }
+            }
+            
+            if (warnings.Count > 0)
+            {
+                results.AppendLine();
+                results.AppendLine("Warnings:");
+                foreach (string warning in warnings)
+                {
+                    results.AppendLine($"  - {warning}");
+                }
+            }
+            
+            if (errors.Count == 0 && warnings.Count == 0)
+            {
+                results.AppendLine();
+                results.AppendLine("✓ All tests passed!");
+            }
+        }
+        catch (System.Exception e)
+        {
+            results.AppendLine();
+            results.AppendLine($"FATAL ERROR: {e.Message}");
+            results.AppendLine($"Stack trace: {e.StackTrace}");
+        }
+        
+        testResults = results.ToString();
+        Debug.Log(testResults);
+    }
+    
+    private int AnalyzeBehaviorTree(SGBehaviorTreeNode node, System.Text.StringBuilder results, List<string> errors, List<string> warnings, int depth)
+    {
+        if (node == null) return 0;
+        
+        string indent = new string(' ', depth * 2);
+        results.AppendLine($"{indent}- {node.name} (depth {depth})");
+        results.AppendLine($"{indent}  Enabled: {node.isEnabled}");
+        results.AppendLine($"{indent}  Prefabs: {node.gameObjectPrefabs?.Count ?? 0}");
+        results.AppendLine($"{indent}  Min Space: {node.minSpace}");
+        results.AppendLine($"{indent}  Max Space: {node.maxSpace}");
+        results.AppendLine($"{indent}  Optimal Space: {node.optimalSpace}");
+        results.AppendLine($"{indent}  Placement Limit: {node.placementLimit}");
+        results.AppendLine($"{indent}  Child Nodes: {node.childNodes?.Count ?? 0}");
+        
+        if (node.gameObjectPrefabs == null || node.gameObjectPrefabs.Count == 0)
+        {
+            warnings.Add($"Node '{node.name}' has no prefabs assigned");
+            results.AppendLine($"{indent}  WARNING: No prefabs assigned");
+        }
+        
+        int count = 1;
+        if (node.childNodes != null)
+        {
+            foreach (var child in node.childNodes)
+            {
+                count += AnalyzeBehaviorTree(child, results, errors, warnings, depth + 1);
+            }
+        }
+        
+        return count;
+    }
+    
+    private void ValidateSizing(Transform behaviorTreeParent, System.Text.StringBuilder results, List<string> warnings)
+    {
+        if (behaviorTreeParent == null) return;
+        
+        SGTreeNodeContainer container = behaviorTreeParent.GetComponent<SGTreeNodeContainer>();
+        if (container == null) return;
+        
+        SGBehaviorTreeNode rootNode = container.GetRootNode();
+        if (rootNode == null) return;
+        
+        ValidateNodeSizing(rootNode, results, warnings);
+    }
+    
+    private void ValidateNodeSizing(SGBehaviorTreeNode node, System.Text.StringBuilder results, List<string> warnings)
+    {
+        if (node == null) return;
+        
+        // Check if min > max
+        if (node.minSpace.x > node.maxSpace.x || node.minSpace.y > node.maxSpace.y || node.minSpace.z > node.maxSpace.z)
+        {
+            warnings.Add($"Node '{node.name}' has min space larger than max space");
+            results.AppendLine($"WARNING: {node.name} - min > max: min={node.minSpace}, max={node.maxSpace}");
+        }
+        
+        // Check if optimal is outside min/max range
+        if (node.optimalSpace.x < node.minSpace.x || node.optimalSpace.x > node.maxSpace.x ||
+            node.optimalSpace.y < node.minSpace.y || node.optimalSpace.y > node.maxSpace.y ||
+            node.optimalSpace.z < node.minSpace.z || node.optimalSpace.z > node.maxSpace.z)
+        {
+            warnings.Add($"Node '{node.name}' has optimal space outside min/max range");
+            results.AppendLine($"WARNING: {node.name} - optimal outside range: min={node.minSpace}, optimal={node.optimalSpace}, max={node.maxSpace}");
+        }
+        
+        // Check for zero or negative sizes
+        if (node.minSpace.x <= 0 || node.minSpace.y <= 0 || node.minSpace.z <= 0)
+        {
+            warnings.Add($"Node '{node.name}' has zero or negative min space");
+            results.AppendLine($"WARNING: {node.name} - zero/negative min space: {node.minSpace}");
+        }
+        
+        if (node.maxSpace.x <= 0 || node.maxSpace.y <= 0 || node.maxSpace.z <= 0)
+        {
+            warnings.Add($"Node '{node.name}' has zero or negative max space");
+            results.AppendLine($"WARNING: {node.name} - zero/negative max space: {node.maxSpace}");
+        }
+        
+        // Recurse to children
+        if (node.childNodes != null)
+        {
+            foreach (var child in node.childNodes)
+            {
+                ValidateNodeSizing(child, results, warnings);
+            }
+        }
+    }
+    
+    private void ValidateBoundsCompatibility(Transform behaviorTreeParent, System.Text.StringBuilder results, List<string> errors, List<string> warnings)
+    {
+        if (behaviorTreeParent == null) return;
+        
+        SGTreeNodeContainer container = behaviorTreeParent.GetComponent<SGTreeNodeContainer>();
+        if (container == null) return;
+        
+        SGBehaviorTreeNode rootNode = container.GetRootNode();
+        if (rootNode == null) return;
+        
+        results.AppendLine("--- Bounds Compatibility Check ---");
+        results.AppendLine($"Generation Bounds: {generationSize}");
+        
+        // Check root node against generation bounds (errors if it doesn't fit)
+        ValidateNodeBounds(rootNode, generationSize, results, errors, warnings, true);
+        
+        // Check all child nodes (warnings if they don't fit)
+        if (rootNode.childNodes != null)
+        {
+            foreach (var child in rootNode.childNodes)
+            {
+                ValidateNodeBounds(child, generationSize, results, errors, warnings, false);
+            }
+        }
+    }
+    
+    private void ValidateNodeBounds(SGBehaviorTreeNode node, Vector3 genBounds, System.Text.StringBuilder results, List<string> errors, List<string> warnings, bool rootOnly)
+    {
+        if (node == null) return;
+        
+        // Check if node's min space fits within generation bounds
+        bool minFits = node.minSpace.x <= genBounds.x && node.minSpace.y <= genBounds.y && node.minSpace.z <= genBounds.z;
+        bool maxFits = node.maxSpace.x <= genBounds.x && node.maxSpace.y <= genBounds.y && node.maxSpace.z <= genBounds.z;
+        bool optimalFits = node.optimalSpace.x <= genBounds.x && node.optimalSpace.y <= genBounds.y && node.optimalSpace.z <= genBounds.z;
+        
+        if (!minFits)
+        {
+            string msg = $"Node '{node.name}' min space ({node.minSpace}) exceeds generation bounds ({genBounds})";
+            if (rootOnly)
+            {
+                errors.Add(msg);
+                results.AppendLine($"ERROR: {msg}");
+            }
+            else
+            {
+                warnings.Add(msg);
+                results.AppendLine($"WARNING: {msg}");
+            }
+        }
+        
+        if (!maxFits)
+        {
+            string msg = $"Node '{node.name}' max space ({node.maxSpace}) exceeds generation bounds ({genBounds})";
+            if (rootOnly)
+            {
+                errors.Add(msg);
+                results.AppendLine($"ERROR: {msg}");
+            }
+            else
+            {
+                warnings.Add(msg);
+                results.AppendLine($"WARNING: {msg}");
+            }
+        }
+        
+        if (!optimalFits && optimalFits != minFits) // Only warn if optimal doesn't fit but min does
+        {
+            warnings.Add($"Node '{node.name}' optimal space ({node.optimalSpace}) exceeds generation bounds ({genBounds})");
+            results.AppendLine($"WARNING: {node.name} - optimal space exceeds bounds: optimal={node.optimalSpace}, bounds={genBounds}");
+        }
+        
+        if (minFits && maxFits && optimalFits && rootOnly)
+        {
+            results.AppendLine($"✓ Root node '{node.name}' space requirements fit within generation bounds");
+        }
+        
+        // Recurse to children if not root-only check
+        if (!rootOnly && node.childNodes != null)
+        {
+            foreach (var child in node.childNodes)
+            {
+                ValidateNodeBounds(child, genBounds, results, errors, warnings, false);
+            }
+        }
+    }
+    
+    private void ShowObjectStructure(Transform parent, System.Text.StringBuilder results, int depth)
+    {
+        if (parent == null) return;
+        
+        string indent = new string(' ', depth * 2);
+        
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            Bounds bounds = GetGameObjectBounds(child.gameObject);
+            
+            results.AppendLine($"{indent}- {child.name}");
+            results.AppendLine($"{indent}  Position: {child.position}");
+            results.AppendLine($"{indent}  Rotation: {child.rotation.eulerAngles}");
+            results.AppendLine($"{indent}  Scale: {child.localScale}");
+            results.AppendLine($"{indent}  Bounds: center={bounds.center}, size={bounds.size}");
+            
+            if (child.childCount > 0)
+            {
+                ShowObjectStructure(child, results, depth + 1);
+            }
+        }
     }
     
     #if UNITY_EDITOR
