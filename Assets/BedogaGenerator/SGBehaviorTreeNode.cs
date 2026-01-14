@@ -38,6 +38,7 @@ public class SGBehaviorTreeNode : MonoBehaviour
     [Header("Alignment")]
     public AlignmentPreference alignPreference = AlignmentPreference.Center;
     public AlignmentPreference placeSearchMode = AlignmentPreference.Center; // Opposite to align
+    public bool placeFlush = false; // Place object flush against bounds edge
     
     [Header("Rotation")]
     public bool allowRotation = true;
@@ -95,6 +96,10 @@ public class SGBehaviorTreeNode : MonoBehaviour
                 break;
             case PlacementLimitType.Min:
                 // Can place if under min
+                if (currentPlacementCount >= placementMax)
+                {
+                    return false;
+                }
                 break;
             case PlacementLimitType.Max:
                 if (currentPlacementCount >= placementMax)
@@ -124,6 +129,8 @@ public class SGBehaviorTreeNode : MonoBehaviour
             case PlacementLimitType.Specific:
                 return currentPlacementCount >= placementLimit;
             case PlacementLimitType.Max:
+                return currentPlacementCount >= placementMax;
+            case PlacementLimitType.Min:
                 return currentPlacementCount >= placementMax;
             default:
                 return false;

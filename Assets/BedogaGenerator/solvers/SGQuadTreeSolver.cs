@@ -13,6 +13,8 @@ public class SGQuadTreeSolver : MonoBehaviour, SGTreeSolverInterface
     private Bounds treeBounds;
     private System.Random rng;
     
+    public SpatialGenerator spatialGenerator;
+
     // Store behavior tree choices for update comparison
     private Dictionary<GameObject, object> objectProperties = new Dictionary<GameObject, object>();
     
@@ -38,6 +40,8 @@ public class SGQuadTreeSolver : MonoBehaviour, SGTreeSolverInterface
         // Cache SpatialGenerator reference for visualization
         if (spatialGenerator == null)
         {
+            //todo: review: we may want to search up the object hierarchy to find the spatial generator
+            //  that is most closely related to this one
             spatialGenerator = FindObjectOfType<SpatialGenerator>();
         }
     }

@@ -30,6 +30,9 @@ public class ModulatingSoundComponent : MonoBehaviour
     [SerializeField] private Dimension dimensionToSet = Dimension.X;
     [SerializeField] private float widthSmoothing = 0.1f;
     
+    [Header("Debug")]
+    [SerializeField] private bool enableDebugLogging = false;
+    
     private AudioSource audioSource;
     private float widthModulationTime = 0f;
     
@@ -73,7 +76,10 @@ public class ModulatingSoundComponent : MonoBehaviour
                 break;
         }
         
-        Debug.Log($"[ModulatingSound] Start - Dimension: {dimensionToSet}, Starting Value: {startingDimensionValue}, Original Scale: {originalScale}, Update Dimension: {updateGameObjectDimension}");
+        if (enableDebugLogging)
+        {
+            Debug.Log($"[ModulatingSound] Start - Dimension: {dimensionToSet}, Starting Value: {startingDimensionValue}, Original Scale: {originalScale}, Update Dimension: {updateGameObjectDimension}");
+        }
         
         // Initialize width modulation curve if not set
         if (widthModulationCurve == null || widthModulationCurve.keys.Length == 0)
@@ -126,14 +132,14 @@ public class ModulatingSoundComponent : MonoBehaviour
             }
             
             // Log dimension updates (throttled to avoid spam)
-            if (Time.frameCount % 60 == 0) // Log every 60 frames (~1 second at 60fps)
+            if (enableDebugLogging && Time.frameCount % 60 == 0) // Log every 60 frames (~1 second at 60fps)
             {
                 Debug.Log($"[ModulatingSound] Update - Dimension: {dimensionToSet}, Current: {currentDimensionValue:F3}, Target: {currentTargetWidth:F3}, Smoothed: {smoothedDimensionValue:F3}, Starting: {startingDimensionValue:F3}");
             }
         }
         else
         {
-            if (Time.frameCount % 120 == 0) // Log every 120 frames
+            if (enableDebugLogging && Time.frameCount % 120 == 0) // Log every 120 frames
             {
                 Debug.Log($"[ModulatingSound] Update - Not updating dimension. UpdateEnabled: {updateGameObjectDimension}, HasStartedPlaying: {hasStartedPlaying}, IsPlaying: {audioSource != null && audioSource.isPlaying}");
             }
@@ -156,14 +162,20 @@ public class ModulatingSoundComponent : MonoBehaviour
                     startingDimensionValue = transform.localScale.z;
                     break;
             }
-            Debug.Log($"[ModulatingSound] Audio Started - HasStartedPlaying: {hasStartedPlaying}, Starting Dimension Value: {startingDimensionValue:F3}, Dimension: {dimensionToSet}");
+            if (enableDebugLogging)
+            {
+                Debug.Log($"[ModulatingSound] Audio Started - HasStartedPlaying: {hasStartedPlaying}, Starting Dimension Value: {startingDimensionValue:F3}, Dimension: {dimensionToSet}");
+            }
         }
         
         // Reset flag when audio stops
         if (audioSource != null && !audioSource.isPlaying && hasStartedPlaying)
         {
             hasStartedPlaying = false;
-            Debug.Log($"[ModulatingSound] Audio Stopped - HasStartedPlaying: {hasStartedPlaying}");
+            if (enableDebugLogging)
+            {
+                Debug.Log($"[ModulatingSound] Audio Stopped - HasStartedPlaying: {hasStartedPlaying}");
+            }
         }
         
         // Update audio clip if changed
@@ -245,13 +257,13 @@ public class ModulatingSoundComponent : MonoBehaviour
             
             // Log DSP values (throttled - only when width changes significantly or every 1000 calls)
             dspCallCount++;
-            if (Mathf.Abs(currentWidth - lastLoggedWidth) > 0.05f || dspCallCount % 1000 == 0)
+            if (enableDebugLogging && (Mathf.Abs(currentWidth - lastLoggedWidth) > 0.05f || dspCallCount % 1000 == 0))
             {
                 Debug.Log($"[ModulatingSound] DSP - TotalWidth: {totalWidth:F3}, CurrentWidth: {currentWidth:F3}, Proportional: {proportionalValue:F3}, TargetWidth: {currentTargetWidth:F3}, Starting: {startingDimensionValue:F3}, ModulateWidth: {modulateWidth}");
                 lastLoggedWidth = currentWidth;
             }
         }
-        else if (dspCallCount % 2000 == 0) // Log occasionally even when not updating
+        else if (enableDebugLogging && dspCallCount % 2000 == 0) // Log occasionally even when not updating
         {
             Debug.Log($"[ModulatingSound] DSP - Not calculating dimension. UpdateEnabled: {updateGameObjectDimension}, HasStartedPlaying: {hasStartedPlaying}, TotalWidth: {totalWidth:F3}");
         }
