@@ -1,0 +1,1 @@
+// specific properties for rain objects and the rain system if necessary (like, don't rain here, etc)
