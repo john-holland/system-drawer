@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 // Solver for 3D spatial generation using OctTree
 // Facilitates interaction between SGBehaviorTreeNode's and SGOctTree
@@ -9,6 +12,7 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
     private SGOctTree octTree;
     private Bounds treeBounds;
     private System.Random rng;
+    private SpatialGenerator spatialGenerator;
     
     // Store behavior tree choices for update comparison
     private Dictionary<GameObject, object> objectProperties = new Dictionary<GameObject, object>();
@@ -31,6 +35,12 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
         octTree = new SGOctTree(bounds);
         rng = new System.Random(seed);
         objectProperties.Clear();
+        
+        // Cache SpatialGenerator reference for visualization
+        if (spatialGenerator == null)
+        {
+            spatialGenerator = FindObjectOfType<SpatialGenerator>();
+        }
     }
     
     public bool Insert(Bounds bounds, object behaviorTreeProperties, GameObject gameObject)
@@ -291,12 +301,56 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
     
     void OnDrawGizmos()
     {
-        if (!showTreeStructure || octTree == null)
+        // Only draw when Unity is paused and visualization is enabled
+        if (!EditorApplication.isPaused)
+        {
+            return;
+        }
+        
+        // Check SpatialGenerator toggle
+        if (spatialGenerator == null)
+        {
+            spatialGenerator = FindObjectOfType<SpatialGenerator>();
+        }
+        
+        if (spatialGenerator == null || !spatialGenerator.showTreeVisualization)
+        {
+            return;
+        }
+        
+        if (octTree == null)
         {
             return;
         }
         
         DrawTreeRecursive(octTree.GetRoot(), 0, 8);
+    }
+    
+    private Color GetNodeColor(SGOctTree.OctTreeNode node, int maxDepth, int depth)
+    {
+        const int maxObjectsPerNode = 8;
+        
+        // Empty nodes: light gray with low alpha
+        if (node.objects == null || node.objects.Count == 0)
+        {
+            Color gray = Color.gray;
+            gray.a = 0.25f;
+            return gray;
+        }
+        
+        // Occupied nodes: color gradient based on occupancy
+        float occupancyRatio = Mathf.Clamp01((float)node.objects.Count / maxObjectsPerNode);
+        
+        if (occupancyRatio < 0.5f)
+        {
+            // Low occupancy: green to yellow
+            return Color.Lerp(Color.green, Color.yellow, occupancyRatio * 2f);
+        }
+        else
+        {
+            // High occupancy: yellow to red
+            return Color.Lerp(Color.yellow, Color.red, (occupancyRatio - 0.5f) * 2f);
+        }
     }
     
     private void DrawTreeRecursive(SGOctTree.OctTreeNode node, int depth, int maxDepth)
@@ -306,12 +360,34 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
             return;
         }
         
-        // Color based on depth
-        float normalizedDepth = (float)depth / maxDepth;
-        Gizmos.color = Color.Lerp(Color.green, Color.red, normalizedDepth);
+        // Get color based on occupancy
+        Color nodeColor = GetNodeColor(node, maxDepth, depth);
+        Gizmos.color = nodeColor;
         
         // Draw wireframe for node bounds
         Gizmos.DrawWireCube(node.bounds.center, node.bounds.size);
+        
+        // Draw spheres for objects in this node
+        if (node.objects != null && node.objects.Count > 0)
+        {
+            // Use a slightly different color for spheres (brighter)
+            Color sphereColor = nodeColor;
+            sphereColor.a = Mathf.Min(1f, sphereColor.a + 0.3f);
+            Gizmos.color = sphereColor;
+            
+            // Calculate sphere size based on node size (smaller nodes = smaller spheres)
+            float sphereSize = Mathf.Min(node.bounds.size.x, Mathf.Min(node.bounds.size.y, node.bounds.size.z)) * 0.1f;
+            sphereSize = Mathf.Max(0.05f, Mathf.Min(0.2f, sphereSize)); // Clamp between 0.05 and 0.2
+            
+            foreach (GameObject obj in node.objects)
+            {
+                if (obj != null)
+                {
+                    // Draw sphere at object position
+                    Gizmos.DrawSphere(obj.transform.position, sphereSize);
+                }
+            }
+        }
         
         // Draw child nodes
         if (!node.isLeaf && node.children != null)

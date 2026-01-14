@@ -21,6 +21,9 @@ public class SpatialGenerator : MonoBehaviour
     public bool autoRegenerateOnResize = true;
     [Range(0f, 1f)] public float alignmentOffsetCoefficient = 0.5f;
     
+    [Header("Tree Visualization")]
+    public bool showTreeVisualization = false;
+    
     [Header("Generation Bounds")]
     public Vector3 generationSize = Vector3.one * 10f;
     
@@ -300,7 +303,11 @@ public class SpatialGenerator : MonoBehaviour
         // Instantiate object
         GameObject instance = Instantiate(prefab, sceneTreeParent);
         instance.transform.position = placementBounds.center;
-        instance.transform.rotation = Quaternion.Euler(node.rotationPreference);
+        
+        // Get rotation based on alignment direction, or use default rotation preference
+        // Combine with prefab's original rotation to preserve baked rotations
+        Vector3 rotationEuler = node.GetRotationForDirection(node.alignPreference);
+        instance.transform.rotation = Quaternion.Euler(rotationEuler) * prefab.transform.rotation;
         
         // Apply alignment (this may change the position)
         ApplyAlignment(node, instance, placementBounds);
