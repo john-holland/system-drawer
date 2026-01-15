@@ -31,7 +31,174 @@ Collecting any `WeatherEvent` objects created during gameplay, the Weather Syste
     * river
  * cloud // after all that what do they look like!
  * // here we should have an endstate wind graph that will carry over in part or whole to the next frame
- 
+
+## Numerical Integration & Physics Methods
+
+For real-time weather simulation, we employ state-of-the-art numerical integration methods adapted from operational meteorology and computational fluid dynamics. These methods ensure stable, accurate frame-by-frame state calculation for the `WeatherPhysicsManifold`.
+
+### Integration Methods
+
+#### Semi-Implicit Euler (Primary Method)
+- **Use**: Default for `WeatherPhysicsManifold` velocity updates
+- **Pros**: Fast, stable, energy-conserving for Hamiltonian systems
+- **Cons**: Lower accuracy than RK4, but sufficient for real-time
+- **Application**: Velocity field updates, pressure gradients, temperature diffusion
+
+#### RK4 (Runge-Kutta 4th Order)
+- **Use**: High-accuracy paths when needed (optional upgrade)
+- **Pros**: High accuracy, stable for smooth flows, standard in operational weather models
+- **Cons**: 4 evaluations per step (more expensive)
+- **Application**: Critical wind field calculations, precise particle tracking
+
+#### Verlet Integration
+- **Use**: Precipitation particle physics (raindrops, snowflakes)
+- **Pros**: Energy-conserving, symplectic, good for long-term stability
+- **Cons**: Less accurate for rapidly changing forces
+- **Application**: Individual precipitation particle tracking
+
+#### Position-Based Dynamics (PBD)
+- **Use**: Water surface simulation, cloud volume deformation
+- **Pros**: Stable, controllable, good for fluids
+- **Cons**: Less physically accurate, but visually convincing
+- **Application**: `Water.cs` surface effects, `Cloud.cs` volume rendering
+
+### Meteorological Techniques
+
+#### Semi-Lagrangian Advection
+- **What**: Track fluid parcels backward in time, interpolate from grid
+- **Why**: Stable for large time steps, standard in operational NWP models
+- **Application**: Wind field advection in `Wind.cs`, cloud movement in `Cloud.cs`
+- **Implementation**: Backtrace particles through velocity field, sample previous grid state
+
+#### Operator Splitting
+- **What**: Split advection, pressure, and diffusion into separate steps
+- **Why**: Stable, allows different methods per physical process
+- **Application**: `WeatherSystem.ServiceUpdate()` structure:
+  1. Advection (semi-Lagrangian)
+  2. Pressure projection (pressure-Poisson solver)
+  3. Diffusion/viscosity (implicit)
+  4. External forces (wind, gravity)
+
+#### Finite Volume Method (FVM)
+- **What**: Conservative discretization of conservation laws
+- **Why**: Preserves mass/momentum, standard in CFD
+- **Application**: Water flow in `River.cs` and `Pond.cs`, mass conservation
+
+#### Lattice Boltzmann Method (LBM) - Optional GPU Acceleration
+- **What**: Particle-based fluid dynamics on a lattice
+- **Why**: GPU-friendly, handles complex boundaries well, can run at 60fps on modern GPUs
+- **Application**: Compute shader implementation for `WeatherPhysicsManifold` updates
+- **Note**: Consider for high-resolution simulations requiring GPU acceleration
+
+### Frame-End State Calculation
+
+The `WeatherSystem.ServiceUpdate()` follows operator splitting to determine final lattice state:
+
+```
+1. Meteorology (sets boundary conditions)
+2. Wind (generates force field)
+3. Advect all fields (velocity, temperature, pressure) - Semi-Lagrangian
+4. Apply pressure gradients - Implicit pressure projection
+5. Apply diffusion (temperature, moisture) - Implicit viscosity
+6. Precipitation (uses manifold state)
+7. Water (uses manifold + precipitation)
+8. Cloud (visual representation of manifold)
+```
+
+Final state is stored in `WeatherPhysicsManifold`, ready for shader access and next frame's initial conditions.
+
+## Physical Weather Objects & Spatial Blocking
+
+For local weather effects (e.g., dew on aluminum shed, interior weather phenomena), we use a physical octree with blocking shapes to create microclimates and material-specific interactions.
+
+### Physical Octree Blocking System
+
+The `WeatherPhysicsManifold` uses an **OctTree** (similar to `SGOctTree` from BedogaGenerator) to manage spatial blocking and material interactions:
+
+- **Blocking Shapes**: Colliders or custom meshes define solid geometry
+- **Material Properties**: Each blocking shape has material type (aluminum, wood, glass, etc.)
+- **Local Weather Effects**: Weather calculations respect blocking geometry
+  - Wind shadowing behind objects
+  - Dew formation on cold surfaces (aluminum sheds)
+  - Precipitation accumulation on surfaces
+  - Temperature gradients around objects
+  - Pressure variations in enclosed spaces
+
+**Key Features**:
+- Efficient spatial queries via OctTree
+- Material-specific weather interactions
+- Procedural microclimate generation
+- GPU-friendly blocking data structure
+
+### PhysicalWeatherObject Component
+
+A component that can be attached to any GameObject (e.g., a shed, building, tree) to define how it interacts with weather systems.
+
+**Key Properties**:
+- **Material Type**: Enum (Aluminum, Wood, Glass, Concrete, Metal, Fabric, etc.)
+- **Thermal Properties**:
+  - **Thermal Conductivity**: W/(m·K) - how quickly heat transfers
+  - **Specific Heat**: J/(kg·K) - heat capacity
+  - **Emissivity**: 0-1 - radiation properties
+- **Surface Properties**:
+  - **Roughness**: 0-1 - affects water accumulation, dew formation
+  - **Absorptivity**: 0-1 - how much solar/thermal energy is absorbed
+  - **Water Permeability**: 0-1 - how water penetrates (0 = waterproof, 1 = fully permeable)
+- **Interior Weather**:
+  - **HasInterior**: bool - whether object has enclosed space
+  - **InteriorVolume**: m³ - volume of interior space
+  - **Ventilation**: 0-1 - air exchange rate with exterior
+  - **InteriorTemperature**: °C - separate temperature tracking
+  - **InteriorHumidity**: % - separate humidity tracking
+- **Blocking Shape**:
+  - **UseCollider**: bool - use attached Collider as blocking shape
+  - **CustomMesh**: Mesh - optional custom blocking mesh
+  - **BlockingMode**: Enum (Full, Partial, WindOnly) - what weather effects are blocked
+
+**Key Methods**:
+- `GetMaterialType()` - Return material type
+- `GetThermalProperties()` - Return thermal data
+- `CalculateDewPoint()` - Compute dew formation based on surface temp/humidity
+- `UpdateInteriorWeather(float deltaTime, WeatherPhysicsManifold manifold)` - Update interior conditions
+- `GetBlockingBounds()` - Return OctTree-compatible bounds
+- `GetWeatherInteraction(Vector3 position, WeatherType type)` - Get local weather modification
+
+**Procedural Weather Phenomena**:
+- **Dew Formation**: On cold surfaces (aluminum sheds) when humidity > dew point
+- **Frost**: On surfaces below freezing with high humidity
+- **Condensation**: On interior surfaces when interior humidity > exterior
+- **Wind Shadowing**: Reduced wind speed behind blocking objects
+- **Temperature Gradients**: Warmer/cooler zones around objects based on material
+- **Precipitation Accumulation**: Water pooling on surfaces based on roughness
+- **Interior Weather**: Separate atmospheric conditions inside enclosed spaces
+  - Temperature lag (warmer in day, cooler at night)
+  - Humidity accumulation from interior sources
+  - Pressure equalization with exterior
+  - Wind effects through ventilation
+
+**Example Use Case**: A shed in a field
+- Material: Aluminum (high thermal conductivity, low emissivity)
+- HasInterior: true
+- InteriorVolume: 10 m³
+- Ventilation: 0.1 (small gaps)
+- Result:
+  - Dew forms on exterior aluminum surfaces at night
+  - Interior temperature tracks exterior with lag
+  - Interior humidity can accumulate if ventilation is low
+  - Wind creates pressure differences between interior/exterior
+  - Precipitation can pool on roof if roughness > 0
+
+### Integration with WeatherPhysicsManifold
+
+The OctTree blocking system integrates with `WeatherPhysicsManifold`:
+
+1. **Spatial Queries**: OctTree efficiently finds blocking objects for any lattice cell
+2. **Material Lookup**: Each blocking shape provides material properties
+3. **Local Modifications**: Weather calculations respect blocking and material properties
+4. **Interior Tracking**: Separate manifold data for interior spaces of `PhysicalWeatherObject`s
+
+## Core Weather Subsystems
+
 ### Meteorology
 
 Controls the cloud movements and stages weather events to happen so you can stage a storm, or a nice day with interesting wind all the same.
@@ -43,6 +210,21 @@ Controls the cloud movements and stages weather events to happen so you can stag
 - **Dew Point**: °C
 - **Cloud Cover**: Oktas (0-8) or %
 
+### Wind
+
+Wind system that affects clouds, precipitation, and physics objects.
+
+**Key Parameters**:
+- **Speed**: m/s (meters per second) - horizontal wind speed
+- **Direction**: degrees (0-360°, meteorological convention: direction wind comes FROM)
+- **Gust Speed**: m/s (peak wind speed)
+- **Altitude Levels**: Can vary by height (m above ground level)
+
+**Integration**:
+- Uses Semi-Lagrangian advection for wind field updates
+- Affects: Cloud movement, Precipitation drift, Physics objects (via forces)
+- Respects blocking shapes from `PhysicalWeatherObject` components
+
 ### Precipitation
 
 Rain rendering and phase change events that might lower pressure or effect change over time.
@@ -53,6 +235,10 @@ Rain rendering and phase change events that might lower pressure or effect chang
 - **Type**: Rain, Snow, Sleet, Hail
 - **Accumulation**: mm (total precipitation)
 
+**Integration**:
+- Uses Verlet integration for particle physics
+- Affects: Water system (adds to ponds/rivers), Dam (overflow), PhysicalWeatherObject surfaces (accumulation)
+
 ### Water
 
 Water system is for prebaking water effects and connecting ponds (may be arbitrarily large), rivers, and rains.
@@ -61,6 +247,12 @@ Water system is for prebaking water effects and connecting ponds (may be arbitra
 - **Water Level**: m (meters) or mm relative to reference
 - **Flow Rate**: m³/s (cubic meters per second) for rivers
 - **Volume**: m³ (cubic meters) for ponds
+
+**Integration**:
+- Uses Finite Volume Method for flow calculations
+- Receives: Precipitation accumulation
+- Manages: Pond, River, Dam components
+- Affects: Wind (lake effect), Local weather
 
 ### River
 
@@ -73,6 +265,11 @@ River splines can be placed or generated procedurally.
 - **Width**: m (meters)
 - **Depth**: m (meters)
 
+**Integration**:
+- Uses Finite Volume Method for flow calculations
+- Receives: Water from Precipitation, upstream Rivers
+- Affects: Wind (local effects), Pond (feeds into)
+
 ### Pond/Lake
 
 Ponds collect water and effect precipitation systems. They can have additional settings like artificial lake effect etc.
@@ -83,6 +280,10 @@ Ponds collect water and effect precipitation systems. They can have additional s
 - **Surface Area**: m² (square meters)
 - **Temperature**: °C (can affect local weather)
 
+**Integration**:
+- Receives: Water from Precipitation, Rivers
+- Affects: Local Meteorology (temperature, humidity), Wind
+
 ### Dam
 
 A planar or mesh prevention of water.
@@ -92,15 +293,9 @@ A planar or mesh prevention of water.
 - **Water Level**: m (meters) above/below dam
 - **Flow Rate**: m³/s (if water overflows)
 
-### Wind
-
-Wind system that affects clouds, precipitation, and physics objects.
-
-**Key Parameters**:
-- **Speed**: m/s (meters per second) - horizontal wind speed
-- **Direction**: degrees (0-360°, meteorological convention: direction wind comes FROM)
-- **Gust Speed**: m/s (peak wind speed)
-- **Altitude Levels**: Can vary by height (m above ground level)
+**Integration**:
+- Blocks: Water from Rivers, Ponds
+- Affects: Downstream Rivers, Ponds
 
 ### Cloud
 
@@ -113,15 +308,46 @@ A cloud is a pressure system and is compatible with the PhysicsManifold - this s
 - **Type**: Cumulus, Stratus, Cirrus, etc.
 - **Density**: kg/m³ (affects visual rendering)
 
-### WeatherPhysicsManifold
+**Integration**:
+- Uses Semi-Lagrangian advection for movement
+- Uses Position-Based Dynamics for volume deformation
+- Receives: Data from Meteorology, Wind
+- Visual: Particle effects, shader-based rendering
 
-Like the Wind data structure, a 3D matrix of velocities and mode coords in a quad or oct tree for access from the weather shaders.
+## WeatherPhysicsManifold
+
+Like the Wind data structure, a 3D matrix of velocities and mode coords in an oct tree for access from the weather shaders. Enhanced with physical blocking and material interactions.
 
 **Key Parameters**:
 - **Velocity**: m/s (meters per second) - 3D vector
 - **Pressure**: hPa (hectopascals)
 - **Temperature**: °C (Celsius)
 - **Density**: kg/m³ (air density)
+- **Mode**: Enum (Water, Rain, Cloud, Wind, Air) - material type per cell
+
+**Spatial Organization**:
+- **OctTree Structure**: Efficient spatial queries for blocking shapes
+- **Blocking Integration**: Respects `PhysicalWeatherObject` blocking shapes
+- **Material Lookup**: Per-cell material properties from blocking objects
+- **Interior Spaces**: Separate manifold data for enclosed spaces
+
+**Update Scheme** (per frame, using operator splitting):
+1. **Advection**: Semi-Lagrangian (stable, large timesteps)
+2. **Pressure Projection**: Implicit pressure-Poisson solver (conserves mass)
+3. **Diffusion**: Implicit viscosity (stable)
+4. **Forces**: External forces (wind, gravity, blocking objects)
+5. **Material Interactions**: Apply material-specific effects (dew, condensation, etc.)
+
+**GPU Acceleration** (optional):
+- Compute shaders for parallel updates
+- Lattice Boltzmann Method for high-resolution simulations
+- Direct shader access via texture/buffer reads
+
+**Integration**:
+- Aggregates: Wind, Cloud, Precipitation, Water data
+- Provides: Data to shaders for rendering
+- Uses: OctTree for efficient blocking queries
+- Supports: Interior weather tracking for `PhysicalWeatherObject`s
 
 ## Data Integration
 
