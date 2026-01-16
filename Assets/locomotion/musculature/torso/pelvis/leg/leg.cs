@@ -10,3 +10,7 @@
 // the bottom leg back muscles pull or root the foot
 // the bottom right leg side muscles pull the foot to the right
 // the bottom left leg side muscles pull the foot to the left
+// the top leg side muscles outside pull the leg open, they also help curl the lower leg with a twist, vital for a famous dance move
+// the top leg side muscles inside pull the leg closed, they also help curl the lower leg
+
+

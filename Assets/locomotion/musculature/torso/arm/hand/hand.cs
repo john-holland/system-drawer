@@ -96,4 +96,25 @@
 //        counted as cards that offload to a behavior tree for AI, that send the characters to gather the animals
 //        close the barn, and head into the cellar
 //        
+//      if we get really good at this, we should make a stanley steamer simulator
 // 
+// todo: make a card game out of these
+//    when we resume we should all be able to walk our characters around
+//    so it would be like poker alan wake 2 fortnite takashis castle (cards 
+//       in hand when taking damage, otherwise attacks do nothing, first one back wins)
+
+
+// if the physics card, or "good section" is available from the current selection (applied from animation, or around procedurally)
+//   the card should be looked at for range, and ordered for applicability based on:
+//      - degrees difference required
+//      - torque, force
+//      - velocity change, likely hood given force / torque ranges
+// 
+// e.x. 
+//  the idea that a screw could be turned by hand, would occur to the solver with available cards
+//    finding 2 good sections, we get 2 cards
+//     - fingers grab and turn (includes behavior tree)
+//     - pick up screw driver, turn (includes behavior tree with pruning)
+// these 2 cards should order fairly simply, finding little good in finger grab and turn
+// but if the screw were entirely loose, the finger grab and turn might be a better option
+

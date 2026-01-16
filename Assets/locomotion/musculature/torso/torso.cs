@@ -5,3 +5,5 @@
 // the torso can be bent to the sides by activating a gradient of side muscles
 // the torso can be bent backward by activating a gradient of back and abs and chest
 // the torso can be bent forward by activating abs, groin, and chest
+// the torso side muscles, the lats pull the arms closed and back like a wing
+

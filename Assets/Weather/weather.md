@@ -32,6 +32,104 @@ Collecting any `WeatherEvent` objects created during gameplay, the Weather Syste
  * cloud // after all that what do they look like!
  * // here we should have an endstate wind graph that will carry over in part or whole to the next frame
 
+### Service Update Order
+
+The `WeatherSystem` executes subsystem updates in a specific order to ensure proper data flow and dependencies:
+
+1. **Meteorology** - Sets boundary conditions, stages weather events, controls cloud movements
+2. **Wind** - Generates wind field vectors, affects clouds, precipitation, and physics objects
+3. **Precipitation** - Rain/snow rendering, phase changes, accumulation tracking
+4. **Water** - Water body management, height maps, flow calculations
+   - **Dam** - Water blocking/overflow calculations (executed within Water update)
+   - **River** - Flow calculations, spline management (executed within Water update)
+5. **Cloud** - Visual representation, pressure system integration, meteorology linking
+6. **WeatherPhysicsManifold** - Final state aggregation for shaders, spatial tree updates
+
+This order ensures:
+- Boundary conditions are set before field calculations
+- Wind affects clouds and precipitation before they render
+- Precipitation data is available for water systems
+- Water systems update before visual representation
+- Final manifold state is ready for shader access
+
+### Data Flow
+
+Data flows through the weather system in the following pattern:
+
+```
+WeatherEvent → WeatherSystem
+    ↓
+Meteorology (atmospheric conditions)
+    ↓
+Wind (force field generation)
+    ↓
+WeatherPhysicsManifold (advection, pressure, diffusion)
+    ↓
+Precipitation (uses manifold state)
+    ↓
+Water (receives precipitation, manages rivers/ponds/dams)
+    ↓
+Cloud (visual representation of manifold)
+    ↓
+WeatherPhysicsManifold (final state for shaders)
+```
+
+**Key Data Paths**:
+- **Meteorology → Wind**: Temperature, pressure gradients drive wind patterns
+- **Wind → Cloud**: Wind vectors move clouds via Semi-Lagrangian advection
+- **Wind → Precipitation**: Wind drift affects rain/snow particle paths
+- **Meteorology → Precipitation**: Humidity, temperature determine precipitation type
+- **Precipitation → Water**: Accumulation feeds into rivers and ponds
+- **Water → Wind**: Lake effect modifies local wind patterns
+- **All → WeatherPhysicsManifold**: Aggregates all data for spatial queries and shader access
+
+### Component Relationships
+
+```
+WeatherSystem (Main Controller)
+├── Collects: WeatherEvent[]
+├── Manages: Service update order
+└── Coordinates:
+    ├── Meteorology
+    │   ├── Stages: WeatherEvent
+    │   └── Controls: Cloud movement
+    ├── Wind
+    │   ├── Uses: PhysicsManifold
+    │   └── Affects: Cloud, Precipitation, Physics objects
+    ├── Precipitation
+    │   ├── Uses: PhysicsManifold
+    │   └── Feeds: Water system
+    ├── Water
+    │   ├── Manages: River, Pond, Dam
+    │   └── Affects: Local Meteorology, Wind
+    ├── Cloud
+    │   ├── Uses: PhysicsManifold
+    │   └── Receives: Meteorology, Wind data
+    └── WeatherPhysicsManifold
+        ├── Aggregates: All subsystem data
+        ├── Uses: OctTree for spatial queries
+        └── Provides: Shader access
+```
+
+### Integration Points
+
+**Unity Physics Integration**:
+- **Wind Forces**: `Wind.GetWindForce(Rigidbody)` applies forces to physics objects
+- **OnWeatherForce Interface**: Objects implementing `IOnWeatherForce` receive custom force handling
+- **Tornado Effects**: `WeatherEvent` with vortex type can create tornado-like wind patterns
+- **Physical Weather Objects**: `PhysicalWeatherObject` components define material interactions and blocking
+
+**Shader Integration**:
+- **WeatherPhysicsManifold**: Exposes data via `GetShaderParameters()` for texture/buffer access
+- **Compute Shaders**: Optional GPU acceleration for manifold updates (LBM method)
+- **Water Rendering**: River and pond shaders read from manifold for flow visualization
+- **Cloud Rendering**: Cloud shaders use manifold pressure/velocity data for volume effects
+
+**Spatial Queries**:
+- **OctTree**: Efficient blocking shape queries for `PhysicalWeatherObject` components
+- **Material Lookup**: Per-cell material properties from blocking objects
+- **Interior Spaces**: Separate manifold tracking for enclosed spaces
+
 ## Numerical Integration & Physics Methods
 
 For real-time weather simulation, we employ state-of-the-art numerical integration methods adapted from operational meteorology and computational fluid dynamics. These methods ensure stable, accurate frame-by-frame state calculation for the `WeatherPhysicsManifold`.
@@ -66,7 +164,7 @@ For real-time weather simulation, we employ state-of-the-art numerical integrati
 
 #### Semi-Lagrangian Advection
 - **What**: Track fluid parcels backward in time, interpolate from grid
-- **Why**: Stable for large time steps, standard in operational NWP models
+- **Why**: Stable for large time steps, standard in operational National Weather Prediction (NWP) models // todo: double check NWP
 - **Application**: Wind field advection in `Wind.cs`, cloud movement in `Cloud.cs`
 - **Implementation**: Backtrace particles through velocity field, sample previous grid state
 
@@ -318,36 +416,76 @@ A cloud is a pressure system and is compatible with the PhysicsManifold - this s
 
 Like the Wind data structure, a 3D matrix of velocities and mode coords in an oct tree for access from the weather shaders. Enhanced with physical blocking and material interactions.
 
-**Key Parameters**:
-- **Velocity**: m/s (meters per second) - 3D vector
-- **Pressure**: hPa (hectopascals)
-- **Temperature**: °C (Celsius)
-- **Density**: kg/m³ (air density)
+### Structure
+
+**Data Per Cell**:
+- **Velocity**: Vector3 (m/s) - 3D velocity vector
+- **Pressure**: float (hPa) - atmospheric pressure
+- **Temperature**: float (°C) - air temperature
+- **Density**: float (kg/m³) - air density
 - **Mode**: Enum (Water, Rain, Cloud, Wind, Air) - material type per cell
+- **Material Properties**: Optional material data from blocking objects
 
 **Spatial Organization**:
-- **OctTree Structure**: Efficient spatial queries for blocking shapes
-- **Blocking Integration**: Respects `PhysicalWeatherObject` blocking shapes
-- **Material Lookup**: Per-cell material properties from blocking objects
-- **Interior Spaces**: Separate manifold data for enclosed spaces
+- **OctTree Structure**: Hierarchical spatial partitioning for efficient queries
+- **Cell Resolution**: Configurable grid resolution (e.g., 1m, 5m, 10m per cell)
+- **World Bounds**: Defines the spatial extent of the simulation
+- **Blocking Integration**: OctTree stores references to `PhysicalWeatherObject` blocking shapes
+- **Material Lookup**: Per-cell material properties cached from blocking objects
+- **Interior Spaces**: Separate manifold instances for enclosed spaces (tracked by `PhysicalWeatherObject`)
+
+### Access Patterns
+
+**Position-Based Queries**:
+- `GetDataAtPosition(Vector3 position)` - Returns manifold data at world position
+- `SetDataAtPosition(Vector3 position, ManifoldData data)` - Sets data at position
+- `GetVelocityAtPosition(Vector3 position)` - Fast velocity lookup
+- `GetPressureAtPosition(Vector3 position)` - Pressure at position
+- `GetTemperatureAtPosition(Vector3 position)` - Temperature at position
+
+**Spatial Queries**:
+- `QueryBounds(Bounds bounds)` - Returns all cells within bounds
+- `QuerySphere(Vector3 center, float radius)` - Returns cells in sphere
+- `FindBlockingObjects(Vector3 position)` - Finds blocking shapes at position
+- `GetMaterialAtPosition(Vector3 position)` - Returns material properties
+
+**Shader Access**:
+- `GetShaderParameters()` - Returns structured data for shader access
+- **Texture Format**: 3D texture with RGBA channels (velocity.xyz, pressure.w)
+- **Buffer Format**: Structured buffer with full cell data
+- **Compute Shader**: Direct GPU updates via compute shader dispatch
 
 **Update Scheme** (per frame, using operator splitting):
 1. **Advection**: Semi-Lagrangian (stable, large timesteps)
+   - Backtrace particles through velocity field
+   - Interpolate from previous grid state
 2. **Pressure Projection**: Implicit pressure-Poisson solver (conserves mass)
+   - Solves for pressure field
+   - Projects velocity to be divergence-free
 3. **Diffusion**: Implicit viscosity (stable)
+   - Temperature diffusion
+   - Moisture diffusion
 4. **Forces**: External forces (wind, gravity, blocking objects)
+   - Apply wind forces from `Wind` system
+   - Apply gravity
+   - Apply forces from blocking objects
 5. **Material Interactions**: Apply material-specific effects (dew, condensation, etc.)
+   - Query blocking objects for material properties
+   - Apply thermal effects
+   - Apply surface interactions
 
 **GPU Acceleration** (optional):
-- Compute shaders for parallel updates
-- Lattice Boltzmann Method for high-resolution simulations
-- Direct shader access via texture/buffer reads
+- **Compute Shaders**: Parallel updates for all cells
+- **Lattice Boltzmann Method**: GPU-friendly fluid dynamics
+- **Texture Reads**: Direct shader access via 3D textures
+- **Structured Buffers**: High-performance data access
 
 **Integration**:
-- Aggregates: Wind, Cloud, Precipitation, Water data
-- Provides: Data to shaders for rendering
-- Uses: OctTree for efficient blocking queries
-- Supports: Interior weather tracking for `PhysicalWeatherObject`s
+- **Aggregates**: Wind, Cloud, Precipitation, Water data
+- **Provides**: Data to shaders for rendering
+- **Uses**: OctTree for efficient blocking queries
+- **Supports**: Interior weather tracking for `PhysicalWeatherObject`s
+- **Updates**: Called last in service update order to capture final state
 
 ## Data Integration
 

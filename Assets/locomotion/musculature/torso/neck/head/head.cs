@@ -19,3 +19,35 @@
 // the head should have a number of expressions and a set of topologies that reach that expression
 // the head should have mouth limits
 // additionally the head should have a number of degrees to open the mouth
+
+// let's make a brain component that can be attached to the head or anywhere a nervous system dispatcher is needed
+// the brain should contain the solvers cited in hand.cs and be given a priority so that multiple brains can be attached to the same body part
+// brains will effectively act as filters, and can be considered appended behavior trees, who's main function is to interpret physics card impulses
+// in this manner, brains should also be able to send thoughts to one another
+// this could be a result of discrete or procedural, e.x. dialogue or arbitrary event sequence
+// physics card solver <-> arbitrary behavior tree
+// physics card solvers adjust component physics pieces and allow for topological sorts to perform possible physical space searches
+// 
+
+
+// if the physics card, or "good section" is available from the current selection (applied from animation, or around procedurally)
+//   the card should be looked at for range, and ordered for applicability based on:
+//      - degrees difference required
+//      - torque, force
+//      - velocity change, likely hood given force / torque ranges
+//      - any other comparison properties specified
+//
+// when a "good section" is selected based on feasability / closeness to the current behavior tree
+// it paints the stack of cards on the section of tree, such that each limb and chord receive what to do
+// note: we may want to include 'adoption timeouts' to debounce the actor being stuck in loops during weak sections
+//   of a behavior tree
+//
+// e.x. 
+//  the idea that a screw could be turned by hand, would occur to the solver with available cards
+//    finding 2 good sections, we get 2 cards
+//     - fingers grab and turn (includes behavior tree)
+//     - pick up screw driver, turn (includes behavior tree with pruning)
+// these 2 cards should order fairly simply, finding little good in finger grab and turn
+// but if the screw were entirely loose, the finger grab and turn might be a better option
+
+

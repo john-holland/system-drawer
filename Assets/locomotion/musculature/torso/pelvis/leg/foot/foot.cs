@@ -5,3 +5,6 @@
 //  like on the hand the pinky is attached has its own muscle, but on the foot, the other toes are slightly more
 //     connected
 //  the big toe is not a thumb, and has more limited aposeability
+//  the big toe and the other toes have 3 digits, but the spring strength is higher and the control is more about position
+//    and leverage against what you're picking up or standing on
+
