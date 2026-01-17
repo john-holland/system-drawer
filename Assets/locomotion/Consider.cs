@@ -39,12 +39,52 @@ public class Consider : MonoBehaviour
     [Tooltip("Generate preposition cards ('in front', 'to the left', 'on top')")]
     public bool generatePrepositionCards = true;
 
+    [Header("Tipping Analysis")]
+    [Tooltip("Enable center of mass tipping analysis")]
+    public bool enableTippingAnalysis = true;
+
+    [Tooltip("Minimum torque-to-weight ratio for viable tipping")]
+    [Range(0f, 1f)]
+    public float tippingViabilityThreshold = 0.3f;
+
+    [Tooltip("Number of directions to evaluate (8 = cardinal + diagonal)")]
+    public int tippingDirectionsToEvaluate = 8;
+
+    [Tooltip("How many cards deep to predict after tip")]
+    public int postTipPredictionDepth = 3;
+
+    [Header("Mesh Surface Analysis")]
+    [Tooltip("Enable mesh surface analysis for placement planes")]
+    public bool enableSurfaceAnalysis = true;
+
+    [Tooltip("Minimum angle between adjacent vectors for viable surface (degrees)")]
+    public float minPlacementAngle = 50f;
+
+    [Tooltip("Mesh sampling resolution")]
+    public float surfaceSamplingDensity = 0.1f;
+
+    [Header("Hemispherical Enclosure")]
+    [Tooltip("Enable hemispherical grasp evaluation (Lego hand style)")]
+    public bool enableHemisphericalGrasp = true;
+
+    [Tooltip("Hemisphere threshold (0.55 = slightly more than half)")]
+    [Range(0f, 1f)]
+    public float hemisphereThreshold = 0.55f;
+
+    [Tooltip("Tolerance for enclosure fit")]
+    public float enclosureTolerance = 0.05f;
+
     // Internal state
     private Dictionary<GameObject, List<GoodSection>> toolUsageCards = new Dictionary<GameObject, List<GoodSection>>();
     private Dictionary<GameObject, GoodSection> toolReturnCards = new Dictionary<GameObject, GoodSection>();
     private Dictionary<GameObject, float> cardTimeouts = new Dictionary<GameObject, float>();
     private float lastRefreshTime = 0f;
     private float timeoutSeconds = 5f;
+
+    // Advanced features state
+    private Dictionary<GameObject, TippingAnalysis> tippingAnalyses = new Dictionary<GameObject, TippingAnalysis>();
+    private Dictionary<GameObject, List<PlacementPlane>> placementSurfaces = new Dictionary<GameObject, List<PlacementPlane>>();
+    private Dictionary<GameObject, EnclosureFeasibility> enclosureFeasibilities = new Dictionary<GameObject, EnclosureFeasibility>();
 
     // References
     private NervousSystem nervousSystem;
@@ -119,6 +159,42 @@ public class Consider : MonoBehaviour
                     if (nervousSystem != null)
                     {
                         nervousSystem.RegisterTool(tool.gameObject, tool.originalPosition);
+                    }
+                }
+            }
+        }
+
+        // Generate advanced feature cards if enabled
+        if (target != null)
+        {
+            // Tipping analysis
+            if (enableTippingAnalysis)
+            {
+                var tippingCards = GenerateTippingCards(target, GetCurrentState());
+                generatedCards.AddRange(tippingCards);
+            }
+
+            // Surface analysis
+            if (enableSurfaceAnalysis)
+            {
+                var surfaces = AnalyzePlacementSurfaces(target);
+                foreach (var surface in surfaces)
+                {
+                    var placementCards = GeneratePlacementCards(target, surface, GetCurrentState());
+                    generatedCards.AddRange(placementCards);
+                }
+            }
+
+            // Hemispherical enclosure
+            if (enableHemisphericalGrasp)
+            {
+                Hand hand = GetDefaultHand(); // Would get actual hand from ragdoll system
+                if (hand != null)
+                {
+                    var enclosureCard = GenerateHemisphericalGraspCard(target, hand, GetCurrentState());
+                    if (enclosureCard != null)
+                    {
+                        generatedCards.Add(enclosureCard);
                     }
                 }
             }
@@ -503,6 +579,514 @@ public class Consider : MonoBehaviour
         state.rootPosition = position;
         return state;
     }
+
+    // ========== Advanced Features: Tipping Analysis ==========
+
+    /// <summary>
+    /// Analyze object for viable tipping directions based on center of mass.
+    /// </summary>
+    public List<TippingCard> GenerateTippingCards(GameObject obj, RagdollState state)
+    {
+        List<TippingCard> tippingCards = new List<TippingCard>();
+
+        if (obj == null)
+            return tippingCards;
+
+        // Get object's center of mass
+        Vector3 centerOfMass = GetCenterOfMass(obj);
+        Bounds bounds = GetObjectBounds(obj);
+
+        // Evaluate multiple directions
+        for (int i = 0; i < tippingDirectionsToEvaluate; i++)
+        {
+            float angle = (360f / tippingDirectionsToEvaluate) * i;
+            Vector3 direction = new Vector3(
+                Mathf.Cos(angle * Mathf.Deg2Rad),
+                0f,
+                Mathf.Sin(angle * Mathf.Deg2Rad)
+            );
+
+            // Evaluate viability
+            TippingViability viability = EvaluateTippingDirection(obj, direction, state);
+
+            if (viability.viability >= tippingViabilityThreshold)
+            {
+                // Generate tipping card
+                TippingCard card = new TippingCard
+                {
+                    targetObject = obj,
+                    tipDirection = direction,
+                    centerOfMass = centerOfMass,
+                    tipAngle = CalculateTipAngle(obj, direction),
+                    viabilityScore = viability.viability,
+                    torqueRatio = viability.torqueRatio,
+                    contactPoint = viability.contactPoint,
+                    requiresStabilization = !viability.isStable
+                };
+
+                // Predict post-tip card tree
+                card.postTipTree = GeneratePostTipCardTree(obj, direction, card.tipAngle, state);
+
+                tippingCards.Add(card);
+            }
+        }
+
+        return tippingCards;
+    }
+
+    /// <summary>
+    /// Evaluate tipping viability in a direction.
+    /// </summary>
+    public TippingViability EvaluateTippingDirection(GameObject obj, Vector3 direction, RagdollState state)
+    {
+        TippingViability viability = new TippingViability
+        {
+            direction = direction,
+            viability = 0f,
+            isStable = false,
+            reason = ""
+        };
+
+        if (obj == null)
+        {
+            viability.reason = "Object is null";
+            return viability;
+        }
+
+        // Get center of mass and bounds
+        Vector3 centerOfMass = GetCenterOfMass(obj);
+        Bounds bounds = GetObjectBounds(obj);
+
+        // Calculate contact point (edge of object in direction)
+        Vector3 contactPoint = centerOfMass + direction * bounds.extents.magnitude;
+        viability.contactPoint = contactPoint;
+
+        // Calculate torque ratio (simplified)
+        Rigidbody rb = obj.GetComponent<Rigidbody>();
+        float mass = rb != null ? rb.mass : 1f;
+        float distance = Vector3.Distance(centerOfMass, contactPoint);
+        float torque = mass * 9.81f * distance; // Weight * distance
+        viability.torqueRatio = torque / (mass * 9.81f); // Normalized
+
+        // Viability based on torque ratio and stability
+        viability.viability = Mathf.Clamp01(viability.torqueRatio);
+        viability.isStable = viability.torqueRatio > 0.5f; // More torque = more stable
+
+        viability.reason = viability.isStable ? "Tipping is viable and stable" : "Tipping may require stabilization";
+
+        return viability;
+    }
+
+    /// <summary>
+    /// Generate predictive card tree after tipping.
+    /// </summary>
+    public CardTree GeneratePostTipCardTree(GameObject obj, Vector3 tipDirection, float tipAngle, RagdollState state)
+    {
+        CardTree tree = new CardTree();
+
+        // Simulate object state after tipping
+        RagdollState predictedState = PredictPostTipState(obj, tipDirection, tipAngle, state);
+
+        // Generate cards available in predicted state (simplified)
+        List<GoodSection> immediateCards = new List<GoodSection>();
+        
+        // Generate a few example post-tip cards
+        GoodSection stabilizeCard = CreatePrepositionCard("stabilize_after_tip", obj.transform.position);
+        immediateCards.Add(stabilizeCard);
+
+        // Add branches to tree
+        foreach (var card in immediateCards)
+        {
+            List<GoodSection> followUpCards = new List<GoodSection>();
+            // Generate follow-up cards (simplified)
+            followUpCards.Add(CreatePrepositionCard("continue_after_tip", obj.transform.position + tipDirection * 0.5f));
+            
+            tree.AddBranch(card, followUpCards);
+        }
+
+        return tree;
+    }
+
+    private Vector3 GetCenterOfMass(GameObject obj)
+    {
+        Rigidbody rb = obj.GetComponent<Rigidbody>();
+        if (rb != null && rb.centerOfMass != Vector3.zero)
+        {
+            return obj.transform.TransformPoint(rb.centerOfMass);
+        }
+        return obj.transform.position;
+    }
+
+    private float CalculateTipAngle(GameObject obj, Vector3 direction)
+    {
+        // Simplified: calculate angle based on direction
+        return Vector3.Angle(Vector3.up, direction);
+    }
+
+    private RagdollState PredictPostTipState(GameObject obj, Vector3 tipDirection, float tipAngle, RagdollState currentState)
+    {
+        // Simplified prediction: rotate object state
+        RagdollState predicted = currentState.CopyState();
+        predicted.rootRotation = Quaternion.AngleAxis(tipAngle, Vector3.Cross(Vector3.up, tipDirection)) * predicted.rootRotation;
+        return predicted;
+    }
+
+    // ========== Advanced Features: Surface Analysis ==========
+
+    /// <summary>
+    /// Analyze mesh surfaces for placement planes (>50° adjacent vectors).
+    /// </summary>
+    public List<PlacementPlane> AnalyzePlacementSurfaces(GameObject obj)
+    {
+        List<PlacementPlane> placementPlanes = new List<PlacementPlane>();
+
+        if (obj == null)
+            return placementPlanes;
+
+        // Get mesh
+        MeshFilter meshFilter = obj.GetComponent<MeshFilter>();
+        if (meshFilter == null || meshFilter.sharedMesh == null)
+            return placementPlanes;
+
+        Mesh mesh = meshFilter.sharedMesh;
+        Transform objTransform = obj.transform;
+
+        // Sample mesh vertices
+        List<Vector3> vertices = new List<Vector3>();
+        List<Vector3> normals = new List<Vector3>();
+        GetSampledVertices(mesh, objTransform, surfaceSamplingDensity, out vertices, out normals);
+
+        // Group vertices by similar normals
+        Dictionary<Vector3, List<Vector3>> groupedByNormal = new Dictionary<Vector3, List<Vector3>>();
+
+        foreach (Vector3 vertex in vertices)
+        {
+            Vector3 normal = GetNormalAtVertex(mesh, objTransform, vertex);
+
+            // Find similar normal (within angle tolerance)
+            bool foundGroup = false;
+            foreach (Vector3 existingNormal in groupedByNormal.Keys)
+            {
+                float angle = Vector3.Angle(normal, existingNormal);
+                if (angle < minPlacementAngle) // If >50° from adjacent, it's a distinct plane
+                {
+                    groupedByNormal[existingNormal].Add(vertex);
+                    foundGroup = true;
+                    break;
+                }
+            }
+
+            if (!foundGroup)
+            {
+                groupedByNormal[normal] = new List<Vector3> { vertex };
+            }
+        }
+
+        // Create placement planes from groups
+        foreach (var group in groupedByNormal)
+        {
+            if (group.Value.Count >= 3) // Need at least 3 points for a plane
+            {
+                PlacementPlane plane = new PlacementPlane
+                {
+                    normal = group.Key,
+                    vertices = group.Value,
+                    center = CalculateCentroid(group.Value),
+                    area = CalculatePlaneArea(group.Value),
+                    angle = Vector3.Angle(group.Key, Vector3.up) // Angle from horizontal
+                };
+
+                // Evaluate stability
+                plane.stabilityScore = 1f - (plane.angle / 90f); // 0-1 scale
+                plane.isStable = plane.angle < 45f; // Stable if <45° from horizontal
+
+                // Evaluate grasping
+                plane.canGraspFromAbove = plane.angle < 30f;
+                plane.canGraspFromSide = plane.angle > 60f;
+
+                placementPlanes.Add(plane);
+            }
+        }
+
+        placementSurfaces[obj] = placementPlanes;
+        return placementPlanes;
+    }
+
+    /// <summary>
+    /// Find viable placement surfaces for an object.
+    /// </summary>
+    public List<PlacementPlane> FindViablePlacementSurfaces(GameObject obj, float minAngle = 50f)
+    {
+        List<PlacementPlane> allSurfaces = AnalyzePlacementSurfaces(obj);
+        return allSurfaces.Where(s => s.angle >= minAngle && s.isStable).ToList();
+    }
+
+    /// <summary>
+    /// Generate cards for placing objects on surfaces.
+    /// </summary>
+    public List<GoodSection> GeneratePlacementCards(GameObject obj, PlacementPlane surface, RagdollState state)
+    {
+        List<GoodSection> cards = new List<GoodSection>();
+
+        if (obj == null || surface == null)
+            return cards;
+
+        // Generate approach card to surface
+        GoodSection approachCard = CreatePrepositionCard($"approach_surface_{obj.name}", surface.center);
+        cards.Add(approachCard);
+
+        // Generate placement card
+        GoodSection placementCard = new GoodSection
+        {
+            sectionName = $"place_{obj.name}_on_surface",
+            description = $"Place {obj.name} on surface",
+            requiredState = state,
+            limits = new SectionLimits()
+        };
+
+        ImpulseAction action = new ImpulseAction
+        {
+            muscleGroup = "Hand",
+            activation = 0.6f,
+            duration = 0.5f
+        };
+
+        placementCard.impulseStack = new List<ImpulseAction> { action };
+        cards.Add(placementCard);
+
+        return cards;
+    }
+
+    private void GetSampledVertices(Mesh mesh, Transform transform, float density, out List<Vector3> vertices, out List<Vector3> normals)
+    {
+        vertices = new List<Vector3>();
+        normals = new List<Vector3>();
+
+        // Sample mesh vertices at specified density
+        Vector3[] meshVertices = mesh.vertices;
+        Vector3[] meshNormals = mesh.normals;
+
+        for (int i = 0; i < meshVertices.Length; i += Mathf.Max(1, Mathf.RoundToInt(1f / density)))
+        {
+            vertices.Add(transform.TransformPoint(meshVertices[i]));
+            normals.Add(transform.TransformDirection(meshNormals[i]));
+        }
+    }
+
+    private Vector3 GetNormalAtVertex(Mesh mesh, Transform transform, Vector3 worldVertex)
+    {
+        // Simplified: get average normal from nearby vertices
+        Vector3 localVertex = transform.InverseTransformPoint(worldVertex);
+        Vector3[] normals = mesh.normals;
+        
+        // Find closest vertex normal (simplified)
+        if (normals.Length > 0)
+        {
+            return transform.TransformDirection(normals[0]);
+        }
+        
+        return Vector3.up;
+    }
+
+    private Vector3 CalculateCentroid(List<Vector3> vertices)
+    {
+        if (vertices == null || vertices.Count == 0)
+            return Vector3.zero;
+
+        Vector3 sum = Vector3.zero;
+        foreach (var v in vertices)
+        {
+            sum += v;
+        }
+        return sum / vertices.Count;
+    }
+
+    private float CalculatePlaneArea(List<Vector3> vertices)
+    {
+        if (vertices == null || vertices.Count < 3)
+            return 0f;
+
+        // Simplified: calculate area using cross product
+        float area = 0f;
+        for (int i = 0; i < vertices.Count - 2; i++)
+        {
+            Vector3 v1 = vertices[i + 1] - vertices[0];
+            Vector3 v2 = vertices[i + 2] - vertices[0];
+            area += Vector3.Cross(v1, v2).magnitude * 0.5f;
+        }
+        return area;
+    }
+
+    // ========== Advanced Features: Hemispherical Enclosure ==========
+
+    /// <summary>
+    /// Check if object can be enclosed with hemispherical grasp.
+    /// </summary>
+    public bool CanEncloseHemispherically(GameObject obj, Hand hand)
+    {
+        EnclosureFeasibility feasibility = EvaluateHemisphericalEnclosure(obj, hand, hemisphereThreshold);
+        return feasibility.canEnclose;
+    }
+
+    /// <summary>
+    /// Generate hemispherical grasp card.
+    /// </summary>
+    public GoodSection GenerateHemisphericalGraspCard(GameObject obj, Hand hand, RagdollState state)
+    {
+        EnclosureFeasibility feasibility = EvaluateHemisphericalEnclosure(obj, hand, hemisphereThreshold);
+
+        if (!feasibility.canEnclose)
+            return null;
+
+        HemisphericalGraspCard card = new HemisphericalGraspCard
+        {
+            targetObject = obj,
+            hand = hand,
+            graspPoint = feasibility.optimalGraspPoint,
+            approachDirection = feasibility.optimalGraspDirection,
+            fingerSpread = feasibility.requiredFingerSpread,
+            gripStrength = feasibility.gripStrengthRequired,
+            enclosureRatio = feasibility.enclosureRatio,
+            requiredState = state,
+            limits = new SectionLimits()
+        };
+
+        // Create impulse action for grasping
+        ImpulseAction action = new ImpulseAction
+        {
+            muscleGroup = "Hand",
+            activation = Mathf.Clamp01(feasibility.gripStrengthRequired / 100f), // Normalize to 0-1
+            duration = 0.5f
+        };
+
+        card.impulseStack = new List<ImpulseAction> { action };
+        return card;
+    }
+
+    /// <summary>
+    /// Evaluate hemispherical enclosure feasibility.
+    /// </summary>
+    public EnclosureFeasibility EvaluateHemisphericalEnclosure(GameObject obj, Hand hand, float hemisphereThreshold = 0.55f)
+    {
+        EnclosureFeasibility feasibility = new EnclosureFeasibility
+        {
+            canEnclose = false,
+            feasibilityReason = ""
+        };
+
+        if (obj == null || hand == null)
+        {
+            feasibility.feasibilityReason = "Object or hand is null";
+            return feasibility;
+        }
+
+        // Get object bounds
+        Bounds objBounds = GetObjectBounds(obj);
+
+        // Calculate minimum enclosing sphere
+        float sphereRadius = Mathf.Max(
+            objBounds.size.x,
+            objBounds.size.y,
+            objBounds.size.z
+        ) / 2f;
+
+        // Get hand geometry (hemisphere radius)
+        float handHemisphereRadius = hand.hemisphereRadius;
+
+        // Check if hand can enclose object (slightly more than half sphere = 55%+)
+        float requiredEnclosure = sphereRadius / handHemisphereRadius;
+
+        if (requiredEnclosure > hemisphereThreshold)
+        {
+            feasibility.canEnclose = false;
+            feasibility.feasibilityReason = $"Object too large (requires {requiredEnclosure:P}, threshold {hemisphereThreshold:P})";
+            return feasibility;
+        }
+
+        // Calculate optimal grasp point (center of object)
+        feasibility.optimalGraspPoint = objBounds.center;
+
+        // Calculate optimal approach direction (from above, toward center)
+        feasibility.optimalGraspDirection = -Vector3.up;
+
+        // Calculate required finger spread
+        float angleToEdge = Mathf.Atan2(objBounds.extents.y, handHemisphereRadius) * Mathf.Rad2Deg;
+        feasibility.requiredFingerSpread = angleToEdge * 2f; // Total spread angle
+
+        // Check if finger spread is feasible
+        if (feasibility.requiredFingerSpread > hand.maxFingerSpread)
+        {
+            feasibility.canEnclose = false;
+            feasibility.feasibilityReason = $"Finger spread too large ({feasibility.requiredFingerSpread:F1}° > {hand.maxFingerSpread:F1}°)";
+            return feasibility;
+        }
+
+        // Calculate required grip strength (based on object weight)
+        float objectMass = GetObjectMass(obj);
+        feasibility.gripStrengthRequired = objectMass * 9.81f; // Weight in Newtons
+
+        // Check if grip strength is sufficient
+        if (feasibility.gripStrengthRequired > hand.maxGripStrength)
+        {
+            feasibility.canEnclose = false;
+            feasibility.feasibilityReason = $"Object too heavy ({feasibility.gripStrengthRequired:F1}N > {hand.maxGripStrength:F1}N)";
+            return feasibility;
+        }
+
+        // Calculate enclosure ratio (how well it encloses)
+        feasibility.enclosureRatio = 1f - requiredEnclosure; // Inverse: smaller required = better enclosure
+        feasibility.canEnclose = true;
+        feasibility.feasibilityReason = "Object can be enclosed hemispherically";
+
+        enclosureFeasibilities[obj] = feasibility;
+        return feasibility;
+    }
+
+    private Bounds GetObjectBounds(GameObject obj)
+    {
+        Renderer renderer = obj.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            return renderer.bounds;
+        }
+
+        Collider collider = obj.GetComponent<Collider>();
+        if (collider != null)
+        {
+            return collider.bounds;
+        }
+
+        return new Bounds(obj.transform.position, Vector3.one);
+    }
+
+    private float GetObjectMass(GameObject obj)
+    {
+        Rigidbody rb = obj.GetComponent<Rigidbody>();
+        return rb != null ? rb.mass : 1f;
+    }
+
+    private Hand GetDefaultHand()
+    {
+        // Simplified: create default hand
+        // In practice, would get actual hand from ragdoll system
+        return new Hand
+        {
+            maxFingerSpread = 90f,
+            maxGripStrength = 100f,
+            hemisphereRadius = 0.1f
+        };
+    }
+}
+
+/// <summary>
+/// Tipping analysis data structure.
+/// </summary>
+[System.Serializable]
+public class TippingAnalysis
+{
+    public GameObject object;
+    public List<TippingCard> cards;
+    public Vector3 centerOfMass;
 }
 
 /// <summary>
