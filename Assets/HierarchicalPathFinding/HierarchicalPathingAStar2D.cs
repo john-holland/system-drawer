@@ -11,6 +11,7 @@ public sealed class HierarchicalPathingAStar2D
     {
         public bool allowDiagonals;
         public int maxExpandedNodes;
+        public bool returnBestEffortPathWhenNoPath;
     }
 
     public static List<Vector3> FindPath(
@@ -37,13 +38,14 @@ public sealed class HierarchicalPathingAStar2D
 
         // Arrays
         float[] gScore = new float[total];
+        float[] bestF = new float[total];
         int[] cameFrom = new int[total];
-        bool[] inOpen = new bool[total];
         bool[] inClosed = new bool[total];
 
         for (int i = 0; i < total; i++)
         {
             gScore[i] = float.PositiveInfinity;
+            bestF[i] = float.PositiveInfinity;
             cameFrom[i] = -1;
         }
 
@@ -53,27 +55,52 @@ public sealed class HierarchicalPathingAStar2D
 
         // Priority queue via SortedSet (good enough for MVP)
         var open = new SortedSet<Node>(new NodeComparer());
-        open.Add(new Node(startIdx, Heuristic(sx, sz, gx, gz)));
-        inOpen[startIdx] = true;
+        float startH = Heuristic(sx, sz, gx, gz);
+        bestF[startIdx] = startH;
+        open.Add(new Node(startIdx, startH));
 
         int expanded = 0;
+        bool abortedByLimit = false;
+
+        // Best-effort fallback target (used only if we abort by limit)
+        int bestIdx = startIdx;
+        float bestH = startH;
 
         while (open.Count > 0)
         {
             Node currentNode = GetAndRemoveMin(open);
             int current = currentNode.index;
-            inOpen[current] = false;
+
+            // Skip stale entries (we allow duplicates instead of decrease-key).
+            if (inClosed[current])
+                continue;
+            if (currentNode.f > bestF[current] + 1e-6f)
+                continue;
+
             inClosed[current] = true;
 
             expanded++;
             if (settings.maxExpandedNodes > 0 && expanded > settings.maxExpandedNodes)
+            {
+                abortedByLimit = true;
                 break;
+            }
 
             if (current == goalIdx)
                 return Reconstruct(grid, cameFrom, current, sampleY);
 
             int cx = current % w;
             int cz = current / w;
+
+            // Track best candidate (closest to goal) for limit-abort fallback.
+            {
+                float hCur = Heuristic(cx, cz, gx, gz);
+                if (hCur < bestH)
+                {
+                    bestH = hCur;
+                    bestIdx = current;
+                }
+            }
 
             foreach (var n in Neighbors(cx, cz, settings.allowDiagonals))
             {
@@ -83,6 +110,13 @@ public sealed class HierarchicalPathingAStar2D
                     continue;
                 if (grid.IsBlocked(nx, nz))
                     continue;
+
+                // Prevent "corner cutting" when moving diagonally.
+                if (settings.allowDiagonals && nx != cx && nz != cz)
+                {
+                    if (grid.IsBlocked(nx, cz) || grid.IsBlocked(cx, nz))
+                        continue;
+                }
 
                 int ni = grid.Index(nx, nz);
                 if (inClosed[ni])
@@ -96,17 +130,15 @@ public sealed class HierarchicalPathingAStar2D
                     gScore[ni] = tentative;
 
                     float f = tentative + Heuristic(nx, nz, gx, gz);
-                    if (inOpen[ni])
-                    {
-                        // Update by removing then adding (SortedSet lacks decrease-key).
-                        open.Remove(new Node(ni, 0f)); // comparer ignores f for equality via index tie-break, see NodeComparer
-                    }
-
+                    bestF[ni] = f;
                     open.Add(new Node(ni, f));
-                    inOpen[ni] = true;
                 }
             }
         }
+
+        // Optional: return best-effort partial path toward the goal (useful for audio "awareness").
+        if ((abortedByLimit || settings.returnBestEffortPathWhenNoPath) && bestIdx != startIdx && cameFrom[bestIdx] != -1)
+            return Reconstruct(grid, cameFrom, bestIdx, sampleY);
 
         return new List<Vector3>();
     }

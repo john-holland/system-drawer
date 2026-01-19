@@ -32,6 +32,30 @@ public class SolverUnitTests
         Assert.IsTrue(grid.TryWorldToCell(Vector3.zero, out int x, out int z));
         Assert.IsTrue(grid.IsInBounds(x, z));
     }
+
+    [Test]
+    public void HierarchicalPathingAStar2D_FindPath_ReturnsNonEmptyPath()
+    {
+        // 5x5 grid centered at origin (cellSize=1 => width=5 height=5).
+        var grid = new HierarchicalPathingGrid2D(new Bounds(Vector3.zero, new Vector3(5f, 1f, 5f)), 1f);
+
+        Vector3 start = grid.CellCenterWorld(0, 0, 0f);
+        Vector3 goal = grid.CellCenterWorld(4, 4, 0f);
+
+        var path = HierarchicalPathingAStar2D.FindPath(
+            grid,
+            start,
+            goal,
+            0f,
+            new HierarchicalPathingAStar2D.Settings { allowDiagonals = true, maxExpandedNodes = 0, returnBestEffortPathWhenNoPath = false });
+
+        Assert.IsNotNull(path);
+        Assert.Greater(path.Count, 0);
+        Assert.AreEqual(start.x, path[0].x, 1e-4f);
+        Assert.AreEqual(start.z, path[0].z, 1e-4f);
+        Assert.AreEqual(goal.x, path[^1].x, 1e-4f);
+        Assert.AreEqual(goal.z, path[^1].z, 1e-4f);
+    }
 }
 #endif
 

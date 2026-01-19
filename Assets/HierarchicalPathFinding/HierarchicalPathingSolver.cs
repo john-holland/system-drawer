@@ -129,7 +129,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     /// <summary>
     /// Query a path on the current grid. Returns an empty list if no grid or no path.
     /// </summary>
-    public List<Vector3> FindPath(Vector3 startWorld, Vector3 goalWorld)
+    public List<Vector3> FindPath(Vector3 startWorld, Vector3 goalWorld, bool returnBestEffortPathWhenNoPath = false)
     {
         EnsureGridBuiltForQuery();
 
@@ -142,7 +142,8 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
             new HierarchicalPathingAStar2D.Settings
             {
                 allowDiagonals = allowDiagonals,
-                maxExpandedNodes = maxExpandedNodes
+                maxExpandedNodes = maxExpandedNodes,
+                returnBestEffortPathWhenNoPath = returnBestEffortPathWhenNoPath
             });
     }
 

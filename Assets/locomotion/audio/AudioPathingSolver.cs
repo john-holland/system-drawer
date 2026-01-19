@@ -84,6 +84,9 @@ namespace Locomotion.Audio
         [Tooltip("Clamp for detour ratio (pathLength/straightLength) used to compute fidelity. Higher = more tolerance for winding corridors.")]
         public float maxDetourRatioForFidelity = 3.0f;
 
+        [Tooltip("If enabled, uses best-effort paths even when no full path exists (does not count as traversable unless it reaches the listener).")]
+        public bool traversalAssistBestEffort = true;
+
         [Header("Caching")]
         [Tooltip("If enabled, cache transmission results for short periods (invalidated by pathing rebuilds).")]
         public bool enableCaching = true;
@@ -341,8 +344,19 @@ namespace Locomotion.Audio
                 return;
             }
 
-            List<Vector3> path = hierarchicalPathingSolver.FindPath(sourcePos, listenerPos);
+            List<Vector3> path = hierarchicalPathingSolver.FindPath(sourcePos, listenerPos, traversalAssistBestEffort);
             if (path == null || path.Count < 2)
+            {
+                result.hasTraversablePath = false;
+                result.pathDetourRatio = 0f;
+                result.pathFidelity = 0f;
+                return;
+            }
+
+            // Best-effort paths do not guarantee reaching the listener. Only treat as "traversable" if we actually reach it.
+            float endDist = Vector3.Distance(path[path.Count - 1], listenerPos);
+            bool reachesGoal = endDist <= Mathf.Max(0.5f, hierarchicalPathingSolver.cellSize * 0.75f);
+            if (!reachesGoal)
             {
                 result.hasTraversablePath = false;
                 result.pathDetourRatio = 0f;
