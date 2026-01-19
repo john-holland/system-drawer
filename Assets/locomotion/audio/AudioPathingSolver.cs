@@ -40,6 +40,26 @@ namespace Locomotion.Audio
         [Tooltip("Scales echo strength when echo is enabled.")]
         public float echoStrengthScale = 1f;
 
+        [Header("Heuristic Clamps / Thresholds")]
+        [Tooltip("If transmission drops below this threshold while traversing occluders, stop accumulating hits early.")]
+        [Range(0f, 1f)]
+        public float silenceTransmissionThreshold = 0.02f;
+
+        [Tooltip("How much better an offset sample must be than direct to count as a trackback/improvement.")]
+        [Range(0f, 1f)]
+        public float trackbackImprovementThreshold = 0.05f;
+
+        [Tooltip("Clamp range for material-derived transmission factors to keep results playable.")]
+        [Range(0f, 1f)]
+        public float minMaterialTransmission = 0.15f;
+
+        [Range(0f, 1f)]
+        public float maxMaterialTransmission = 0.95f;
+
+        [Tooltip("Fallback transmission factor when no material/override is present.")]
+        [Range(0f, 1f)]
+        public float defaultTransmissionFactor = 0.6f;
+
         [Header("AudioSource Effects (optional)")]
         public bool allowUnityAudioEffects = false;
         public float lowPassCutoffMin = 800f;
@@ -55,6 +75,14 @@ namespace Locomotion.Audio
         private RaycastHit[] raycastHits;
         private float lastSourceScanTime = -999f;
         private const float SourceScanInterval = 0.5f;
+
+        [Header("Debug")]
+        [Tooltip("If enabled, records the last query inputs/results for inspection.")]
+        public bool recordLastQuery = false;
+
+        [SerializeField] private Vector3 lastQuerySourcePos;
+        [SerializeField] private Vector3 lastQueryListenerPos;
+        [SerializeField] private AudioPathResult lastQueryResult;
 
         private void Awake()
         {
@@ -129,7 +157,7 @@ namespace Locomotion.Audio
             float distance = dir.magnitude;
             if (distance <= 0.0001f)
             {
-                return new AudioPathResult
+                AudioPathResult r0 = new AudioPathResult
                 {
                     transmission = 1f,
                     occluderCount = 0,
@@ -138,6 +166,8 @@ namespace Locomotion.Audio
                     echoEnabled = false,
                     echoStrength = 0f
                 };
+                RecordLastQuery(sourcePos, listenerPos, r0);
+                return r0;
             }
 
             dir /= distance;
@@ -182,7 +212,7 @@ namespace Locomotion.Audio
                         bestOccluders = occ;
                     }
 
-                    if (t > directTransmission + 0.05f)
+                    if (t > directTransmission + trackbackImprovementThreshold)
                         trackbacks++;
                 }
             }
@@ -191,7 +221,7 @@ namespace Locomotion.Audio
             bool echo = (trackbacks >= minTrackbacksForEcho) && (stdDev >= transmissionStdDevForEcho);
             float echoStrength = echo ? Mathf.Clamp01((stdDev / Mathf.Max(0.0001f, transmissionStdDevForEcho)) - 1f) * echoStrengthScale : 0f;
 
-            return new AudioPathResult
+            AudioPathResult r = new AudioPathResult
             {
                 transmission = Mathf.Clamp01(bestTransmission),
                 occluderCount = bestOccluders,
@@ -200,6 +230,18 @@ namespace Locomotion.Audio
                 echoEnabled = echo,
                 echoStrength = Mathf.Clamp01(echoStrength)
             };
+            RecordLastQuery(sourcePos, listenerPos, r);
+            return r;
+        }
+
+        private void RecordLastQuery(Vector3 sourcePos, Vector3 listenerPos, AudioPathResult result)
+        {
+            if (!recordLastQuery)
+                return;
+
+            lastQuerySourcePos = sourcePos;
+            lastQueryListenerPos = listenerPos;
+            lastQueryResult = result;
         }
 
         public void ApplyUnityAudioEffects(AudioSource src, AudioPathResult result)
@@ -275,7 +317,7 @@ namespace Locomotion.Audio
                 occluders++;
 
                 // Early-out if almost silent.
-                if (transmission < 0.02f)
+                if (transmission < silenceTransmissionThreshold)
                     break;
             }
 
@@ -287,7 +329,7 @@ namespace Locomotion.Audio
             // AcousticMaterial override
             var acoustic = c.GetComponentInParent<AcousticMaterial>();
             if (acoustic != null)
-                return Mathf.Clamp01(acoustic.transmission);
+                return Mathf.Clamp(acoustic.transmission, minMaterialTransmission, maxMaterialTransmission);
 
             // Heuristic from PhysicMaterial (friction/bounciness as a rough proxy).
             PhysicMaterial pm = c.sharedMaterial;
@@ -301,11 +343,11 @@ namespace Locomotion.Audio
                 float transmit = 1f - absorb;
 
                 // Clamp to keep the game playable.
-                return Mathf.Clamp(transmit, 0.15f, 0.95f);
+                return Mathf.Clamp(transmit, minMaterialTransmission, maxMaterialTransmission);
             }
 
             // Default: moderately occluding.
-            return 0.6f;
+            return Mathf.Clamp(defaultTransmissionFactor, 0f, 1f);
         }
 
         private void EnsureHitBuffer()
@@ -356,14 +398,14 @@ namespace Locomotion.Audio
                 mean += samples[i];
             mean /= samples.Length;
 
-            float var = 0f;
+            float variance = 0f;
             for (int i = 0; i < samples.Length; i++)
             {
                 float d = samples[i] - mean;
-                var += d * d;
+                variance += d * d;
             }
-            var /= samples.Length;
-            return Mathf.Sqrt(var);
+            variance /= samples.Length;
+            return Mathf.Sqrt(variance);
         }
 
         private sealed class RaycastHitDistanceComparer : IComparer<RaycastHit>
