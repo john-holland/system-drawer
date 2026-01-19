@@ -171,6 +171,13 @@ public class Consider : MonoBehaviour
             if (enableTippingAnalysis)
             {
                 var tippingCards = GenerateTippingCards(target, GetCurrentState());
+                // todo: review: tippingAnalysis wasn't used, what else do we want to do with this?
+                tippingAnalyses.Add(target, new TippingAnalysis
+                {
+                   cards = tippingCards,
+                   centerOfMass = GetCenterOfMass(target),
+                   _object = target 
+                });
                 generatedCards.AddRange(tippingCards);
             }
 
@@ -782,6 +789,9 @@ public class Consider : MonoBehaviour
             }
         }
 
+        // oddly enough we might want to repeat the above loop again, doing it twice will re-examine the vertexes missed in groupedByNormal
+        //  that would have completed a handle elsewhere
+
         // Create placement planes from groups
         foreach (var group in groupedByNormal)
         {
@@ -966,6 +976,15 @@ public class Consider : MonoBehaviour
     /// <summary>
     /// Evaluate hemispherical enclosure feasibility.
     /// </summary>
+    /// <remarks>
+    /// todo: review: this is excellent for cans and balls or screw drivers, things with handles, but
+    ///   perhaps we should also include an `EvaluateSemiCircularLoopEnclosure()`
+    ///   and for Peter Pan, `EvaluateHookEnclosure()` so we can get an excellent creepy remake of some of the "Hook" scenes!! *.* ~-
+    ///   hook and semi circular should be able to be used by the hands to pick up something with one finger, or pinch some sugar etc
+    ///    can't wait to get this working and write some cute novella shorts
+    /// 
+    ///   let's also write an `EvaluateGraspClosure(obj, hand, requiredStrength)` @returns `float completion`
+    /// </remarks>
     public EnclosureFeasibility EvaluateHemisphericalEnclosure(GameObject obj, Hand hand, float hemisphereThreshold = 0.55f)
     {
         EnclosureFeasibility feasibility = new EnclosureFeasibility
@@ -1084,7 +1103,7 @@ public class Consider : MonoBehaviour
 [System.Serializable]
 public class TippingAnalysis
 {
-    public GameObject object;
+    public GameObject _object;
     public List<TippingCard> cards;
     public Vector3 centerOfMass;
 }
