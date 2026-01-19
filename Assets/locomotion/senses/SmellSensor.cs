@@ -41,7 +41,24 @@ namespace Locomotion.Senses
         [Tooltip("Minimum perceived intensity to report as a detection.")]
         public float minimumReportIntensity = 0.01f;
 
+        [Header("High Definition Smell (optional)")]
+        [Tooltip("If enabled and a HighDefinitionSmellSolver is present, use it as an extra detection channel.")]
+        public bool enableHighDefinitionSmell = true;
+
+        [Tooltip("If true, HD smell can add detections even if no SmellEmitter was in range.")]
+        public bool hdCanAddDetectionsWithoutEmitters = false;
+
+        [Tooltip("HD sampling radius (meters).")]
+        public float hdSampleRadius = 2.0f;
+
+        [Tooltip("Minimum HD concentration to report (unitless).")]
+        public float hdMinimumReportConcentration = 0.05f;
+
+        [Tooltip("Optional signature filter. Empty = accept all signatures.")]
+        public string hdSignatureFilter = "";
+
         private readonly List<SmellEmitter> nearbyEmitters = new List<SmellEmitter>(64);
+        private Locomotion.Smell.HighDefinitionSmellSolver hdSolver;
 
         private void Awake()
         {
@@ -50,6 +67,11 @@ namespace Locomotion.Senses
             if (s != null)
             {
                 s.sensorType = SensorType.Smell;
+            }
+
+            if (enableHighDefinitionSmell)
+            {
+                hdSolver = FindObjectOfType<Locomotion.Smell.HighDefinitionSmellSolver>();
             }
         }
 
@@ -69,7 +91,7 @@ namespace Locomotion.Senses
 
             // todo: does this require an `out` parameter for nearby emitters?
             SmellEmitter.GetEmittersInRange(sensorPos, sensorRange, nearbyEmitters);
-            if (nearbyEmitters.Count == 0)
+            if (nearbyEmitters.Count == 0 && !(enableHighDefinitionSmell && hdCanAddDetectionsWithoutEmitters))
                 return data;
 
             var weights = new CombinedWind.Weights
@@ -143,6 +165,31 @@ namespace Locomotion.Senses
                     downwindAlignment = alignment,
                     windVector = wind
                 });
+            }
+
+            // HD smell sampling channel (adds a pseudo-detection with no specific emitter reference)
+            if (enableHighDefinitionSmell)
+            {
+                if (hdSolver == null)
+                    hdSolver = FindObjectOfType<Locomotion.Smell.HighDefinitionSmellSolver>();
+
+                if (hdSolver != null)
+                {
+                    string filter = string.IsNullOrWhiteSpace(hdSignatureFilter) ? null : hdSignatureFilter;
+                    float c = hdSolver.SampleConcentration(sensorPos, Mathf.Max(0.01f, hdSampleRadius), filter);
+                    if (c >= hdMinimumReportConcentration)
+                    {
+                        data.smellDetections.Add(new SensorData.SmellDetection
+                        {
+                            emitter = null,
+                            signature = filter ?? "any",
+                            perceivedIntensity = c,
+                            distance = 0f,
+                            downwindAlignment = 0f,
+                            windVector = Vector3.zero
+                        });
+                    }
+                }
             }
 
             return data;

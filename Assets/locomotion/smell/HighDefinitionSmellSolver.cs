@@ -36,6 +36,14 @@ namespace Locomotion.Smell
         [Tooltip("How far a puff contributes when sampling concentration.")]
         public float puffRadius = 2.0f;
 
+        [Header("Obstacle Awareness (via HierarchicalPathFinding)")]
+        [Tooltip("Optional pathing solver to dampen puffs when they enter blocked cells.")]
+        public HierarchicalPathingSolver hierarchicalPathingSolver;
+
+        [Tooltip("Multiplier applied each step when a puff is inside a blocked cell.")]
+        [Range(0f, 1f)]
+        public float blockedCellDampen = 0.6f;
+
         private float lastStepTime;
 
         private struct Puff
@@ -55,6 +63,9 @@ namespace Locomotion.Smell
 
             if (wind == null && weatherSystem != null)
                 wind = weatherSystem.wind;
+
+            if (hierarchicalPathingSolver == null)
+                hierarchicalPathingSolver = FindObjectOfType<HierarchicalPathingSolver>();
         }
 
         private void Update()
@@ -160,6 +171,15 @@ namespace Locomotion.Smell
 
                     p.position += windVec * deltaTime + jitter;
                     p.intensity *= Mathf.Clamp01(1f - decayPerSecond * deltaTime);
+
+                    // Obstacle awareness: if puff is in a blocked cell, dampen it.
+                    if (hierarchicalPathingSolver != null)
+                    {
+                        if (hierarchicalPathingSolver.IsBlockedAtWorld(p.position))
+                        {
+                            p.intensity *= blockedCellDampen;
+                        }
+                    }
 
                     list[i] = p;
                 }

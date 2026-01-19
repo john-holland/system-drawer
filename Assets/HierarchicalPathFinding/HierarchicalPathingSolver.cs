@@ -131,12 +131,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     /// </summary>
     public List<Vector3> FindPath(Vector3 startWorld, Vector3 goalWorld)
     {
-        if (grid2D == null)
-        {
-            // Lazy build if needed
-            RebuildOccupancyGrid2D();
-            gridVersion++;
-        }
+        EnsureGridBuiltForQuery();
 
         float sampleY = startWorld.y;
         return HierarchicalPathingAStar2D.FindPath(
@@ -149,6 +144,40 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
                 allowDiagonals = allowDiagonals,
                 maxExpandedNodes = maxExpandedNodes
             });
+    }
+
+    /// <summary>
+    /// Quick occupancy query for obstacle-aware systems (audio/smell) without running A*.
+    /// Returns true if the point is outside bounds or inside a blocked cell.
+    /// </summary>
+    public bool IsBlockedAtWorld(Vector3 worldPos)
+    {
+        EnsureGridBuiltForQuery();
+
+        if (grid2D == null)
+            return true;
+
+        if (!grid2D.TryWorldToCell(worldPos, out int x, out int z))
+            return true;
+
+        return grid2D.IsBlocked(x, z);
+    }
+
+    private void EnsureGridBuiltForQuery()
+    {
+        // If we don't have a grid or it's marked dirty, rebuild immediately for query correctness.
+        // (Debounce is for Update-driven rebuilds; query callers generally want a correct answer now.)
+        if (grid2D == null || dirty)
+        {
+            if (autoFindMarkers)
+            {
+                RefreshMarkers();
+            }
+
+            RebuildOccupancyGrid2D();
+            gridVersion++;
+            dirty = false;
+        }
     }
 
     private void RebuildOccupancyGrid2D()
