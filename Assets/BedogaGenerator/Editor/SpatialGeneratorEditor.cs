@@ -19,6 +19,11 @@ public class SpatialGeneratorEditor : Editor
             EditorUtility.SetDirty(generator);
         }
         
+        if (GUILayout.Button("Open Location Assertion Test Window", GUILayout.Height(25)))
+        {
+            LocationAssertionTestWindow.ShowWindow();
+        }
+        
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Test Results", EditorStyles.boldLabel);
         

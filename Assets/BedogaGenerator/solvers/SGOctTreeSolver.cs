@@ -23,8 +23,9 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
     
     void Awake()
     {
-        // Initialize with bounds from transform
-        Bounds bounds = new Bounds(transform.position, transform.localScale);
+        // Initialize with bounds from transform (local space - center at origin)
+        // This is a fallback; proper initialization happens via Initialize() from SpatialGenerator
+        Bounds bounds = new Bounds(Vector3.zero, transform.localScale);
         octTree = new SGOctTree(bounds);
         treeBounds = bounds;
     }
@@ -214,8 +215,20 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
                     continue;
                 }
                 
-                Bounds spaceBounds = emptySpace.GetBounds();
-                Bounds? availableSpace = FindSpaceInBounds(spaceBounds, minSpace, maxSpace, optimalSpace);
+                // Get world space bounds from empty space marker
+                Bounds worldSpaceBounds = emptySpace.GetBounds();
+                
+                // Convert to local space relative to SpatialGenerator transform
+                // (solver is a component on SpatialGenerator, so transform is SpatialGenerator transform)
+                Vector3 localCenter = transform.InverseTransformPoint(worldSpaceBounds.center);
+                Vector3 localSize = new Vector3(
+                    worldSpaceBounds.size.x / transform.lossyScale.x,
+                    worldSpaceBounds.size.y / transform.lossyScale.y,
+                    worldSpaceBounds.size.z / transform.lossyScale.z
+                );
+                Bounds localSpaceBounds = new Bounds(localCenter, localSize);
+                
+                Bounds? availableSpace = FindSpaceInBounds(localSpaceBounds, minSpace, maxSpace, optimalSpace);
                 if (availableSpace.HasValue)
                 {
                     return availableSpace.Value;
@@ -223,7 +236,7 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
             }
         }
         
-        // Otherwise search in tree bounds
+        // Otherwise search in tree bounds (already in local space)
         return FindSpaceInBounds(treeBounds, minSpace, maxSpace, optimalSpace);
     }
     
@@ -360,12 +373,17 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
             return;
         }
         
+        // Convert node bounds from local space to world space for visualization
+        // (solver is a component on SpatialGenerator, so transform is SpatialGenerator transform)
+        Vector3 worldCenter = transform.TransformPoint(node.bounds.center);
+        Vector3 worldSize = Vector3.Scale(node.bounds.size, transform.lossyScale);
+        
         // Get color based on occupancy
         Color nodeColor = GetNodeColor(node, maxDepth, depth);
         Gizmos.color = nodeColor;
         
-        // Draw wireframe for node bounds
-        Gizmos.DrawWireCube(node.bounds.center, node.bounds.size);
+        // Draw wireframe for node bounds (in world space)
+        Gizmos.DrawWireCube(worldCenter, worldSize);
         
         // Draw spheres for objects in this node
         if (node.objects != null && node.objects.Count > 0)
@@ -376,7 +394,8 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
             Gizmos.color = sphereColor;
             
             // Calculate sphere size based on node size (smaller nodes = smaller spheres)
-            float sphereSize = Mathf.Min(node.bounds.size.x, Mathf.Min(node.bounds.size.y, node.bounds.size.z)) * 0.1f;
+            // Use world size for sphere calculation
+            float sphereSize = Mathf.Min(worldSize.x, Mathf.Min(worldSize.y, worldSize.z)) * 0.1f;
             sphereSize = Mathf.Max(0.05f, Mathf.Min(0.2f, sphereSize)); // Clamp between 0.05 and 0.2
             
             foreach (GameObject obj in node.objects)

@@ -75,7 +75,8 @@ public class SpatialGenerator : MonoBehaviour
         }
         
         rng = new System.Random(seed);
-        generationBounds = new Bounds(transform.position, generationSize);
+        // Use local space bounds (center at origin, size is generationSize)
+        generationBounds = new Bounds(Vector3.zero, generationSize);
         lastScale = transform.localScale;
         
         // Setup solver based on mode
@@ -183,8 +184,11 @@ public class SpatialGenerator : MonoBehaviour
             }
             
             // Only include markers within generation bounds (or all if bounds checking is disabled)
-            Bounds markerBounds = marker.GetBounds();
-            if (generationBounds.Intersects(markerBounds) || !useEmptySpaceMarkers)
+            // Convert marker bounds from world space to local space relative to SpatialGenerator
+            Bounds worldMarkerBounds = marker.GetBounds();
+            Bounds localMarkerBounds = WorldToLocalBounds(worldMarkerBounds);
+            
+            if (generationBounds.Intersects(localMarkerBounds) || !useEmptySpaceMarkers)
             {
                 emptySpaceMarkers.Add(marker);
             }
@@ -264,13 +268,15 @@ public class SpatialGenerator : MonoBehaviour
             return null;
         }
         
+        Bounds? result = null;
+        
         // Use appropriate solver method
         if (mode == GenerationMode.TwoDimensional)
         {
             SGQuadTreeSolver quadSolver = treeSolver as SGQuadTreeSolver;
             if (quadSolver != null)
             {
-                return quadSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
+                result = quadSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
             }
         }
         else
@@ -278,11 +284,23 @@ public class SpatialGenerator : MonoBehaviour
             SGOctTreeSolver octSolver = treeSolver as SGOctTreeSolver;
             if (octSolver != null)
             {
-                return octSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
+                result = octSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
             }
         }
         
-        return null;
+        // Debug: log what the solver returned
+        if (result.HasValue)
+        {
+            Debug.Log($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name}\n" +
+                      $"  Solver returned (local space): center={result.Value.center}, size={result.Value.size}\n" +
+                      $"  Node requirements: min={node.minSpace}, max={node.maxSpace}, optimal={node.optimalSpace}");
+        }
+        else
+        {
+            Debug.LogWarning($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name} - No space found");
+        }
+        
+        return result;
     }
     
     private void PlaceNodeObjects(SGBehaviorTreeNode node, Bounds placementBounds)
@@ -291,6 +309,15 @@ public class SpatialGenerator : MonoBehaviour
         {
             return;
         }
+        
+        // Convert placement bounds from local space to world space
+        // The solver returns bounds in local space relative to SpatialGenerator transform
+        Debug.Log($"[SpatialGenerator] PlaceNodeObjects - Node: {node.name}\n" +
+                  $"  Placement bounds (local): center={placementBounds.center}, size={placementBounds.size}");
+        Bounds worldBounds = LocalToWorldBounds(placementBounds);
+        Debug.Log($"[SpatialGenerator] PlaceNodeObjects - Node: {node.name}\n" +
+                  $"  Placement bounds (world): center={worldBounds.center}, size={worldBounds.size}\n" +
+                  $"  SpatialGenerator transform: position={transform.position}, lossyScale={transform.lossyScale}");
         
         // Select a random prefab
         int prefabIndex = rng.Next(node.gameObjectPrefabs.Count);
@@ -302,7 +329,7 @@ public class SpatialGenerator : MonoBehaviour
         
         // Instantiate object
         GameObject instance = Instantiate(prefab, sceneTreeParent);
-        instance.transform.position = placementBounds.center;
+        instance.transform.position = worldBounds.center;
         
         // Get rotation based on alignment direction, or use default rotation preference
         // Combine with prefab's original rotation to preserve baked rotations
@@ -310,20 +337,35 @@ public class SpatialGenerator : MonoBehaviour
         instance.transform.rotation = Quaternion.Euler(rotationEuler) * prefab.transform.rotation;
         
         // Apply alignment (this may change the position)
-        ApplyAlignment(node, instance, placementBounds);
+        ApplyAlignment(node, instance, worldBounds);
         
-        // Get final bounds after alignment
-        // Note: We insert with final bounds since the object hasn't been inserted yet
-        Bounds instanceBounds = GetGameObjectBounds(instance);
+        // Get final bounds after alignment (in world space)
+        Bounds worldInstanceBounds = GetGameObjectBounds(instance);
         
-        // Add to spatial tree with final bounds
-        treeSolver.Insert(instanceBounds, node, instance);
+        // Convert to local space for tree insertion (tree works in local space)
+        Bounds localInstanceBounds = WorldToLocalBounds(worldInstanceBounds);
+        
+        // Add to spatial tree with local bounds
+        treeSolver.Insert(localInstanceBounds, node, instance);
     }
     
     private void ApplyAlignment(SGBehaviorTreeNode node, GameObject obj, Bounds bounds)
     {
         Vector3 position = obj.transform.position;
         Vector3 size = GetGameObjectBounds(obj).size;
+
+        // Debug output: bounds, scale, and world position of SpatialGenerator
+        Debug.Log($"[SpatialGenerator] ApplyAlignment - Node: {node.name}, Object: {obj.name}\n" +
+                  $"  Bounds center: {bounds.center}\n" +
+                  $"  Bounds min: {bounds.min}\n" +
+                  $"  Bounds max: {bounds.max}\n" +
+                  $"  Bounds size: {bounds.size}\n" +
+                  $"  SpatialGenerator world position: {transform.position}\n" +
+                  $"  SpatialGenerator local scale: {transform.localScale}\n" +
+                  $"  SpatialGenerator lossy scale: {transform.lossyScale}\n" +
+                  $"  Object current position: {position}\n" +
+                  $"  Object size: {size}\n" +
+                  $"  Alignment preference: {node.alignPreference}, Place flush: {node.placeFlush}");
         
         // Calculate offset coefficient
         // 0.0 = flush against edge, 1.0 = maximum offset from edge
@@ -384,7 +426,7 @@ public class SpatialGenerator : MonoBehaviour
             case SGBehaviorTreeNode.AlignmentPreference.Forward:
                 if (isFlush)
                 {
-                    // Object's front edge at bounds.max.z
+                    // Object's front edge at bounds.max.z (consistent with other axes)
                     position.z = bounds.max.z - size.z * 0.5f;
                 }
                 else
@@ -411,6 +453,7 @@ public class SpatialGenerator : MonoBehaviour
                 break;
         }
         
+        Debug.Log($"[SpatialGenerator] ApplyAlignment - Final position after alignment: {position}");
         obj.transform.position = position;
     }
     
@@ -438,8 +481,8 @@ public class SpatialGenerator : MonoBehaviour
             return;
         }
         
-        // Update generation bounds
-        Bounds newBounds = new Bounds(transform.position, transform.localScale);
+        // Update generation bounds (use local space)
+        Bounds newBounds = new Bounds(Vector3.zero, transform.localScale);
         
         // Update tree solver if bounds changed significantly
         if (treeSolver != null)
@@ -495,6 +538,38 @@ public class SpatialGenerator : MonoBehaviour
         }
         
         return new Bounds(obj.transform.position, Vector3.one);
+    }
+    
+    /// <summary>
+    /// Convert world space bounds to local space relative to SpatialGenerator transform
+    /// </summary>
+    private Bounds WorldToLocalBounds(Bounds worldBounds)
+    {
+        // Convert center from world to local space
+        Vector3 localCenter = transform.InverseTransformPoint(worldBounds.center);
+        
+        // Convert size from world to local (divide by lossyScale)
+        Vector3 localSize = new Vector3(
+            worldBounds.size.x / transform.lossyScale.x,
+            worldBounds.size.y / transform.lossyScale.y,
+            worldBounds.size.z / transform.lossyScale.z
+        );
+        
+        return new Bounds(localCenter, localSize);
+    }
+    
+    /// <summary>
+    /// Convert local space bounds to world space relative to SpatialGenerator transform
+    /// </summary>
+    private Bounds LocalToWorldBounds(Bounds localBounds)
+    {
+        // Convert center from local to world space
+        Vector3 worldCenter = transform.TransformPoint(localBounds.center);
+        
+        // Convert size from local to world (multiply by lossyScale)
+        Vector3 worldSize = Vector3.Scale(localBounds.size, transform.lossyScale);
+        
+        return new Bounds(worldCenter, worldSize);
     }
     
     public void SetSeed(int newSeed)

@@ -4,73 +4,73 @@ overview: Implement a complete weather system for Unity with physics integration
 todos:
   - id: update_weather_md
     content: "Update weather.md: fix typos (Percipitation→Precipitation, Forcast→Forecast), add Service Update Order section, add Data Flow diagram, clarify WeatherPhysicsManifold structure"
-    status: pending
+    status: completed
   - id: implement_weather_system
     content: "Implement WeatherSystem.cs: main controller, event collection, service update orchestration"
-    status: pending
+    status: completed
   - id: implement_weather_event
     content: "Implement WeatherEvent.cs: base event system for pressure changes, lightning, etc."
-    status: pending
+    status: completed
   - id: implement_meteorology
     content: "Implement Meteorology.cs: atmospheric conditions, weather event staging, cloud control"
-    status: pending
+    status: completed
     dependencies:
       - implement_weather_system
   - id: implement_wind
     content: "Implement Wind.cs: wind field generation, altitude-based wind, physics force application"
-    status: pending
+    status: completed
     dependencies:
       - implement_weather_system
   - id: implement_precipitation
     content: "Implement Precipitation.cs (rename from Percipitation.cs): rain/snow rendering, accumulation tracking"
-    status: pending
+    status: completed
     dependencies:
       - implement_weather_system
   - id: implement_water
     content: "Implement Water.cs: water body management, height maps, flow calculations"
-    status: pending
+    status: completed
     dependencies:
       - implement_weather_system
   - id: implement_river
     content: "Implement River.cs and RiverSpline.cs: river geometry, flow calculations, spline management"
-    status: pending
+    status: completed
     dependencies:
       - implement_water
   - id: implement_pond
     content: "Implement Pond.cs: water collection, lake effect, volume management"
-    status: pending
+    status: completed
     dependencies:
       - implement_water
   - id: implement_dam
     content: "Implement Dam.cs: water blocking, overflow calculations"
-    status: pending
+    status: completed
     dependencies:
       - implement_water
   - id: implement_cloud
     content: "Implement Cloud.cs: visual representation, pressure system integration, meteorology linking"
-    status: pending
+    status: completed
     dependencies:
       - implement_meteorology
       - implement_wind
   - id: implement_physics_manifold
     content: "Implement PhysicsManifold.cs: base manifold system for fluid/gas representation"
-    status: pending
+    status: completed
   - id: implement_weather_physics_manifold
     content: "Implement WeatherPhysicsManifold.cs: 3D matrix of weather data, spatial tree organization, shader access"
-    status: pending
+    status: completed
     dependencies:
       - implement_physics_manifold
   - id: implement_supporting_components
     content: "Implement supporting components: PhysicsProperties, RainProperties, Forecast (rename Forcast), etc."
-    status: pending
+    status: completed
   - id: unity_physics_integration
     content: "Add Unity physics integration: wind forces on Rigidbodies, tornado effects, OnWeatherForce interface"
-    status: pending
+    status: completed
     dependencies:
       - implement_wind
   - id: shader_integration
     content: Create shader library and expose WeatherPhysicsManifold data to shaders for water/cloud rendering
-    status: pending
+    status: completed
     dependencies:
       - implement_weather_physics_manifold
 ---
@@ -551,7 +551,7 @@ Implement a complete weather system that integrates with Unity's physics system,
 - Add `OnWeatherForce` interface for objects affected by wind
 - Apply wind forces to Rigidbodies
 - Support for tornado effects on physics objects
-    - perhaps with a WeatherEvent that introduces a vortex of Vector3 impulses by why of wind?
+    - perhaps with a WeatherEvent that introduces a vortex of Vector3 impulses of wind?
     - it's possible twisters could occur naturally in our physics wind engine with the WeatherSystem solver... :3
     - it'll be interesting to see which cloud formations we can get to render naturally...!
 
