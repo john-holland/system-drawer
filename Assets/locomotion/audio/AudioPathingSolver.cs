@@ -69,8 +69,63 @@ namespace Locomotion.Audio
         [Tooltip("If set, this solver will listen for runtime space updates.")]
         public HierarchicalPathingSolver hierarchicalPathingSolver;
 
+        [Header("Pathing Assist (Portal/Room Approximation)")]
+        [Tooltip("If enabled, uses HierarchicalPathingSolver traversal as a 'sound can go around' heuristic when direct LOS is blocked.")]
+        public bool enableTraversalAssist = true;
+
+        [Tooltip("Minimum transmission floor applied when a traversable path exists (scaled by path fidelity).")]
+        [Range(0f, 1f)]
+        public float traversalTransmissionFloor = 0.08f;
+
+        [Tooltip("Maximum additional transmission floor applied at perfect fidelity (added on top of traversalTransmissionFloor).")]
+        [Range(0f, 1f)]
+        public float traversalTransmissionBonus = 0.18f;
+
+        [Tooltip("Clamp for detour ratio (pathLength/straightLength) used to compute fidelity. Higher = more tolerance for winding corridors.")]
+        public float maxDetourRatioForFidelity = 3.0f;
+
+        [Header("Caching")]
+        [Tooltip("If enabled, cache transmission results for short periods (invalidated by pathing rebuilds).")]
+        public bool enableCaching = true;
+
+        [Tooltip("Cache time-to-live in seconds.")]
+        public float cacheTtlSeconds = 0.25f;
+
+        [Tooltip("Quantization size for cache keys (meters). Larger increases cache hits but reduces accuracy.")]
+        public float cacheQuantizeMeters = 0.5f;
+
+        [Tooltip("Hard cap on cache entries (simple eviction when exceeded).")]
+        public int maxCacheEntries = 2048;
+
         private readonly HashSet<Ears> registeredEars = new HashSet<Ears>();
         private readonly List<AudioSource> cachedSources = new List<AudioSource>(128);
+
+        private struct CacheKey : IEquatable<CacheKey>
+        {
+            public Vector3Int sourceQ;
+            public Vector3Int listenerQ;
+            public int gridVersion;
+            public int settingsHash;
+
+            public bool Equals(CacheKey other)
+            {
+                return sourceQ.Equals(other.sourceQ) &&
+                       listenerQ.Equals(other.listenerQ) &&
+                       gridVersion == other.gridVersion &&
+                       settingsHash == other.settingsHash;
+            }
+
+            public override bool Equals(object obj) => obj is CacheKey other && Equals(other);
+            public override int GetHashCode() => HashCode.Combine(sourceQ, listenerQ, gridVersion, settingsHash);
+        }
+
+        private struct CacheEntry
+        {
+            public float time;
+            public AudioPathResult result;
+        }
+
+        private readonly Dictionary<CacheKey, CacheEntry> cache = new Dictionary<CacheKey, CacheEntry>(2048);
 
         private RaycastHit[] raycastHits;
         private float lastSourceScanTime = -999f;
@@ -127,6 +182,9 @@ namespace Locomotion.Audio
             // after significant scene topology changes.
             cachedSources.Clear();
             lastSourceScanTime = -999f;
+
+            // Invalidate cached transmission computations.
+            cache.Clear();
         }
 
         public void RegisterEar(Ears ear)
@@ -149,10 +207,24 @@ namespace Locomotion.Audio
             public float transmissionStdDev;
             public bool echoEnabled;
             public float echoStrength;      // 0..1 (heuristic)
+
+            // Traversal assist
+            public bool hasTraversablePath;
+            public float pathDetourRatio;   // pathLength / straightLength
+            public float pathFidelity;      // 0..1
         }
 
         public AudioPathResult ComputeTransmission(Vector3 sourcePos, Vector3 listenerPos)
         {
+            if (enableCaching)
+            {
+                if (TryGetCached(sourcePos, listenerPos, out AudioPathResult cached))
+                {
+                    RecordLastQuery(sourcePos, listenerPos, cached);
+                    return cached;
+                }
+            }
+
             Vector3 dir = listenerPos - sourcePos;
             float distance = dir.magnitude;
             if (distance <= 0.0001f)
@@ -164,9 +236,13 @@ namespace Locomotion.Audio
                     trackbacks = 0,
                     transmissionStdDev = 0f,
                     echoEnabled = false,
-                    echoStrength = 0f
+                    echoStrength = 0f,
+                    hasTraversablePath = true,
+                    pathDetourRatio = 1f,
+                    pathFidelity = 1f
                 };
                 RecordLastQuery(sourcePos, listenerPos, r0);
+                PutCached(sourcePos, listenerPos, r0);
                 return r0;
             }
 
@@ -228,9 +304,19 @@ namespace Locomotion.Audio
                 trackbacks = trackbacks,
                 transmissionStdDev = stdDev,
                 echoEnabled = echo,
-                echoStrength = Mathf.Clamp01(echoStrength)
+                echoStrength = Mathf.Clamp01(echoStrength),
+                hasTraversablePath = false,
+                pathDetourRatio = 0f,
+                pathFidelity = 0f
             };
+
+            if (enableTraversalAssist && hierarchicalPathingSolver != null)
+            {
+                ApplyTraversalAssist(sourcePos, listenerPos, distance, ref r);
+            }
+
             RecordLastQuery(sourcePos, listenerPos, r);
+            PutCached(sourcePos, listenerPos, r);
             return r;
         }
 
@@ -242,6 +328,45 @@ namespace Locomotion.Audio
             lastQuerySourcePos = sourcePos;
             lastQueryListenerPos = listenerPos;
             lastQueryResult = result;
+        }
+
+        private void ApplyTraversalAssist(Vector3 sourcePos, Vector3 listenerPos, float straightDistance, ref AudioPathResult result)
+        {
+            // Only really matters when occluded.
+            if (result.occluderCount <= 0)
+            {
+                result.hasTraversablePath = true;
+                result.pathDetourRatio = 1f;
+                result.pathFidelity = 1f;
+                return;
+            }
+
+            List<Vector3> path = hierarchicalPathingSolver.FindPath(sourcePos, listenerPos);
+            if (path == null || path.Count < 2)
+            {
+                result.hasTraversablePath = false;
+                result.pathDetourRatio = 0f;
+                result.pathFidelity = 0f;
+                return;
+            }
+
+            float pathLen = 0f;
+            for (int i = 1; i < path.Count; i++)
+                pathLen += Vector3.Distance(path[i - 1], path[i]);
+
+            float detour = (straightDistance <= 0.0001f) ? 1f : (pathLen / straightDistance);
+            detour = Mathf.Max(1f, detour);
+
+            float maxDetour = Mathf.Max(1.01f, maxDetourRatioForFidelity);
+            float fidelity = 1f - Mathf.Clamp01((detour - 1f) / (maxDetour - 1f));
+
+            result.hasTraversablePath = true;
+            result.pathDetourRatio = detour;
+            result.pathFidelity = fidelity;
+
+            // Apply a soft floor to transmission when there is a viable corridor path.
+            float floor = Mathf.Clamp01(traversalTransmissionFloor + traversalTransmissionBonus * fidelity);
+            result.transmission = Mathf.Max(result.transmission, floor);
         }
 
         public void ApplyUnityAudioEffects(AudioSource src, AudioPathResult result)
@@ -291,6 +416,87 @@ namespace Locomotion.Audio
             cachedSources.Clear();
             cachedSources.AddRange(FindObjectsOfType<AudioSource>());
             lastSourceScanTime = Time.time;
+        }
+
+        private Vector3Int Quantize(Vector3 v)
+        {
+            float q = Mathf.Max(0.01f, cacheQuantizeMeters);
+            return new Vector3Int(
+                Mathf.RoundToInt(v.x / q),
+                Mathf.RoundToInt(v.y / q),
+                Mathf.RoundToInt(v.z / q)
+            );
+        }
+
+        private int ComputeSettingsHash()
+        {
+            // Include parameters that materially affect output.
+            return HashCode.Combine(
+                fuzzySampleCount,
+                Mathf.RoundToInt(fuzzyOffsetRadius * 1000f),
+                minTrackbacksForEcho,
+                Mathf.RoundToInt(transmissionStdDevForEcho * 1000f),
+                Mathf.RoundToInt(silenceTransmissionThreshold * 1000f),
+                Mathf.RoundToInt(trackbackImprovementThreshold * 1000f),
+                Mathf.RoundToInt(minMaterialTransmission * 1000f),
+                Mathf.RoundToInt(maxMaterialTransmission * 1000f),
+                Mathf.RoundToInt(defaultTransmissionFactor * 1000f),
+                enableTraversalAssist ? 1 : 0,
+                Mathf.RoundToInt(traversalTransmissionFloor * 1000f),
+                Mathf.RoundToInt(traversalTransmissionBonus * 1000f),
+                Mathf.RoundToInt(maxDetourRatioForFidelity * 1000f)
+            );
+        }
+
+        private bool TryGetCached(Vector3 sourcePos, Vector3 listenerPos, out AudioPathResult result)
+        {
+            result = default;
+            if (!enableCaching || cacheTtlSeconds <= 0f)
+                return false;
+
+            int gridVersion = hierarchicalPathingSolver != null ? hierarchicalPathingSolver.GridVersion : 0;
+            CacheKey key = new CacheKey
+            {
+                sourceQ = Quantize(sourcePos),
+                listenerQ = Quantize(listenerPos),
+                gridVersion = gridVersion,
+                settingsHash = ComputeSettingsHash()
+            };
+
+            if (cache.TryGetValue(key, out CacheEntry entry))
+            {
+                if (Time.time - entry.time <= cacheTtlSeconds)
+                {
+                    result = entry.result;
+                    return true;
+                }
+                cache.Remove(key);
+            }
+
+            return false;
+        }
+
+        private void PutCached(Vector3 sourcePos, Vector3 listenerPos, AudioPathResult result)
+        {
+            if (!enableCaching || cacheTtlSeconds <= 0f)
+                return;
+
+            int gridVersion = hierarchicalPathingSolver != null ? hierarchicalPathingSolver.GridVersion : 0;
+            CacheKey key = new CacheKey
+            {
+                sourceQ = Quantize(sourcePos),
+                listenerQ = Quantize(listenerPos),
+                gridVersion = gridVersion,
+                settingsHash = ComputeSettingsHash()
+            };
+
+            if (cache.Count > Mathf.Max(64, maxCacheEntries))
+            {
+                // Simple eviction: clear all (good enough for MVP; later use LRU).
+                cache.Clear();
+            }
+
+            cache[key] = new CacheEntry { time = Time.time, result = result };
         }
 
         private (float transmission, int occluders) EvaluateRay(Vector3 sourcePos, Vector3 listenerPos, Vector3 dir, float distance)
