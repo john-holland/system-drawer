@@ -17,7 +17,7 @@ public class BehaviorTree : MonoBehaviour
 
     [Header("Last Status")]
     [Tooltip("The last status the behavior tree node left")]
-    [ReadOnly()]
+    [ReadOnly]
     public BehaviorTreeStatus lastStatus;
 
     [Header("Decision Time")]
@@ -81,6 +81,7 @@ public class BehaviorTree : MonoBehaviour
             return BehaviorTreeStatus.Running;
 
         BehaviorTreeStatus status = execNode.Execute(this);
+        lastStatus = status;
 
         lastDecisionTime = Time.time;
         nextDecisionTime = Time.time + Mathf.Max(0f, decisionTime);
