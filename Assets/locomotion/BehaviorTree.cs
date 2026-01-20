@@ -11,9 +11,32 @@ public class BehaviorTree : MonoBehaviour
     [Tooltip("Root node of the behavior tree")]
     public BehaviorTreeNode rootNode;
 
+    [Header("Current Node")]
+    [Tooltip("The current node being executed")]
+    public BehaviorTreeNode currentNode;
+
+    [Header("Last Status")]
+    [Tooltip("The last status the behavior tree node left")]
+    [ReadOnly()]
+    public BehaviorTreeStatus lastStatus;
+
+    [Header("Decision Time")]
+    [Tooltip("Time between decisions (seconds). 0 = evaluate every call.")]
+    public float decisionTime = 0f;
+
+    [Tooltip("Time of last decision")]
+    public float lastDecisionTime = -999f;
+
+    [Tooltip("Time of next decision")]
+    public float nextDecisionTime = 0f;
+
     [Header("Current Goal")]
     [Tooltip("Current active goal")]
     public BehaviorTreeGoal currentGoal;
+
+    [Header("Reset Behavior")]
+    [Tooltip("Reset if currentNode reports anything other than root node")]
+    public bool resetIfNotRoot = false;
 
     [Header("Available Cards")]
     [Tooltip("Cards available from card solver")]
@@ -37,6 +60,9 @@ public class BehaviorTree : MonoBehaviour
         if (rootNode == null)
             return BehaviorTreeStatus.Failure;
 
+        if (decisionTime > 0f && Time.time < nextDecisionTime)
+            return BehaviorTreeStatus.Running;
+
         // Update available cards from solver
         if (cardSolver != null)
         {
@@ -44,8 +70,21 @@ public class BehaviorTree : MonoBehaviour
             availableCards = cardSolver.FindApplicableCards(state, currentGoal?.target);
         }
 
-        // Execute root node
-        return rootNode.Execute(this);
+        if (resetIfNotRoot && currentNode != rootNode) {
+            currentNode = rootNode;
+        }
+
+        BehaviorTreeNode execNode = rootNode;
+        currentNode = execNode;
+
+        if (!execNode.Predicate(this))
+            return BehaviorTreeStatus.Running;
+
+        BehaviorTreeStatus status = execNode.Execute(this);
+
+        lastDecisionTime = Time.time;
+        nextDecisionTime = Time.time + Mathf.Max(0f, decisionTime);
+        return status;
     }
 
     /// <summary>
@@ -96,6 +135,22 @@ public class BehaviorTree : MonoBehaviour
             return ragdollSystem.GetCurrentState();
         }
         return new RagdollState();
+    }
+
+    public bool Contains(BehaviorTreeNode node) {
+        if (rootNode == null)
+            return false;
+
+        Stack<BehaviorTreeNode> nodesToVisit = new Stack<BehaviorTreeNode>();
+        nodesToVisit.Push(rootNode);
+        while (nodesToVisit.Count > 0) {
+            BehaviorTreeNode currentNode = nodesToVisit.Pop();
+            if (currentNode == node)
+                return true;
+            foreach (var child in currentNode.children)
+                nodesToVisit.Push(child);
+        }
+        return false;
     }
 }
 

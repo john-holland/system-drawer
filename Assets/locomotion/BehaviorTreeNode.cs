@@ -23,33 +23,29 @@ public abstract class BehaviorTreeNode
     public abstract BehaviorTreeStatus Execute(BehaviorTree tree);
 
     /// <summary>
+    /// Should execute this node?
+    /// Useful for long-running / non-pruned nodes (idle, background behaviors) and for narrative gating.
+    /// </summary>
+    public virtual bool Predicate(BehaviorTree tree) => true;
+
+    /// <summary>
     /// Prune invalid branches based on available cards.
+    /// Default behavior: prune null children and recurse.
     /// </summary>
     public virtual void PruneForCards(List<GoodSection> cards)
     {
-        // Prune children
-        foreach (var child in children)
+        if (children == null)
+            return;
+
+        children.RemoveAll(c => c == null);
+        for (int i = 0; i < children.Count; i++)
         {
-            if (child != null)
-            {
-                child.PruneForCards(cards);
-            }
+            children[i].PruneForCards(cards);
         }
     }
 
-    /// <summary>
-    /// OnEnter callback (called when node starts executing).
-    /// </summary>
     public virtual void OnEnter(BehaviorTree tree) { }
-
-    /// <summary>
-    /// OnExit callback (called when node finishes executing).
-    /// </summary>
     public virtual void OnExit(BehaviorTree tree) { }
-
-    /// <summary>
-    /// OnUpdate callback (called every frame while node is running).
-    /// </summary>
     public virtual void OnUpdate(BehaviorTree tree) { }
 }
 
