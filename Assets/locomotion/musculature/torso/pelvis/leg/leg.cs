@@ -13,4 +13,13 @@
 // the top leg side muscles outside pull the leg open, they also help curl the lower leg with a twist, vital for a famous dance move
 // the top leg side muscles inside pull the leg closed, they also help curl the lower leg
 
+using UnityEngine;
+
+namespace Locomotion.Musculature
+{
+    public sealed class RagdollLeg : RagdollSidedBodyPart
+    {
+    }
+}
+
 

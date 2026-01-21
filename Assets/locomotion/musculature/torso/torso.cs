@@ -7,3 +7,12 @@
 // the torso can be bent forward by activating abs, groin, and chest
 // the torso side muscles, the lats pull the arms closed and back like a wing
 
+using UnityEngine;
+
+namespace Locomotion.Musculature
+{
+    public sealed class RagdollTorso : RagdollBodyPart
+    {
+    }
+}
+

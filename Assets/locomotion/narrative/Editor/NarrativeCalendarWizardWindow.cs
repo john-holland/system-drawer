@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Locomotion.Narrative;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -50,15 +51,15 @@ namespace Locomotion.Narrative.EditorTools
             var top = new VisualElement();
             top.style.flexDirection = FlexDirection.Row;
             top.style.alignItems = Align.Center;
-            top.style.gap = 8;
 
-            var calField = new ObjectField("Calendar")
+            var calField = new UnityEditor.UIElements.ObjectField("Calendar")
             {
                 objectType = typeof(NarrativeCalendarAsset),
                 value = calendar,
                 allowSceneObjects = false
             };
             calField.style.flexGrow = 1f;
+            calField.style.marginRight = 8;
             calField.RegisterValueChangedCallback(evt =>
             {
                 calendar = evt.newValue as NarrativeCalendarAsset;
@@ -69,6 +70,7 @@ namespace Locomotion.Narrative.EditorTools
             var monthYearText = new TextField("Month Year");
             monthYearText.value = $"{viewMonth} {viewYear}";
             monthYearText.style.width = 180;
+            monthYearText.style.marginRight = 8;
             monthYearText.RegisterValueChangedCallback(evt =>
             {
                 if (TryParseMonthYear(evt.newValue, out int m, out int y))
@@ -86,9 +88,11 @@ namespace Locomotion.Narrative.EditorTools
                 RefreshAll();
             })
             { text = "Jump" };
+            jumpBtn.style.marginRight = 8;
 
             var addBtn = new Button(() => CreateEventOnSelectedDate())
             { text = "Add Event" };
+            addBtn.style.marginRight = 8;
 
             headerLabel = new Label();
             headerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
@@ -106,12 +110,12 @@ namespace Locomotion.Narrative.EditorTools
             body.style.flexDirection = FlexDirection.Row;
             body.style.flexGrow = 1f;
             body.style.marginTop = 8;
-            body.style.gap = 10;
 
             // Left: calendar grid
             var left = new VisualElement();
             left.style.flexGrow = 1.6f;
             left.style.flexDirection = FlexDirection.Column;
+            left.style.marginRight = 10;
 
             // weekday header
             var weekdays = new VisualElement();
@@ -311,10 +315,10 @@ namespace Locomotion.Narrative.EditorTools
                 card.Add(header);
 
                 // Properties (using PropertyField so it works with nested structs)
-                card.Add(new PropertyField(evtProp.FindPropertyRelative("startDateTime"), "Start"));
-                card.Add(new PropertyField(evtProp.FindPropertyRelative("durationSeconds"), "Duration (s)"));
-                card.Add(new PropertyField(treeProp, "Tree"));
-                card.Add(new PropertyField(evtProp.FindPropertyRelative("actions"), "Actions"));
+                card.Add(new UnityEditor.UIElements.PropertyField(evtProp.FindPropertyRelative("startDateTime"), "Start"));
+                card.Add(new UnityEditor.UIElements.PropertyField(evtProp.FindPropertyRelative("durationSeconds"), "Duration (s)"));
+                card.Add(new UnityEditor.UIElements.PropertyField(treeProp, "Tree"));
+                card.Add(new UnityEditor.UIElements.PropertyField(evtProp.FindPropertyRelative("actions"), "Actions"));
 
                 // Commit changes on UI change
                 card.RegisterCallback<ChangeEvent<string>>(_ =>
@@ -328,7 +332,8 @@ namespace Locomotion.Narrative.EditorTools
             }
 
             // Bind property fields
-            stickyList.Bind(calendarSO);
+            // Older Unity versions may not support per-element binding consistently; binding at root is safest.
+            rootVisualElement.Bind(calendarSO);
         }
 
         private List<int> GetEventIndicesForSelectedDay(SerializedProperty eventsProp)

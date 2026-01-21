@@ -1,0 +1,19 @@
+{
+  "name": "Locomotion.Narrative.Serialization",
+  "rootNamespace": "Locomotion.Narrative.Serialization",
+  "references": [
+    "Locomotion.Narrative.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    "YamlDotNet.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+

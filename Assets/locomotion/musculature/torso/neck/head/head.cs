@@ -50,4 +50,13 @@
 // these 2 cards should order fairly simply, finding little good in finger grab and turn
 // but if the screw were entirely loose, the finger grab and turn might be a better option
 
+using UnityEngine;
+
+namespace Locomotion.Musculature
+{
+    public sealed class RagdollHead : RagdollBodyPart
+    {
+    }
+}
+
 

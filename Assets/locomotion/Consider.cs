@@ -545,7 +545,7 @@ public class Consider : MonoBehaviour
         }
     }
 
-    private void ProcessSensoryInput(SensoryData sensoryData)
+    public void ProcessSensoryInput(SensoryData sensoryData)
     {
         // Process sensory input from nervous system
         // This would trigger card regeneration or updates
@@ -1086,6 +1086,7 @@ public class Consider : MonoBehaviour
 
     private Hand GetDefaultHand()
     {
+        // todo: get the actual hand from the ragdoll system
         // Simplified: create default hand
         // In practice, would get actual hand from ragdoll system
         return new Hand

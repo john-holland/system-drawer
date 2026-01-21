@@ -10,3 +10,12 @@
 // the top leg back muscles (name?) pull the patella taught
 // the bottom leg muscles are mostly connected to the bottom leg bones, but have some small anchors in the patella and knee region
 // sinew passes through the leg under patella and fluid packet, while the pattella is pulled like a second person pushing your legs
+
+using UnityEngine;
+
+namespace Locomotion.Musculature
+{
+    public sealed class RagdollKnee : RagdollSidedBodyPart
+    {
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "Locomotion.Narrative.Editor",
+  "rootNamespace": "Locomotion.Narrative.EditorTools",
+  "references": [
+    "Locomotion.Narrative.Runtime",
+    "Locomotion.Narrative.Serialization"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+

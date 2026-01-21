@@ -4,3 +4,12 @@
 
 // the muscles that move the upper arm are the chest, shoulder (trap and top shoulder and front shoulder (names?)), 
 //    and back muscles
+
+using UnityEngine;
+
+namespace Locomotion.Musculature
+{
+    public sealed class RagdollUpperarm : RagdollSidedBodyPart
+    {
+    }
+}

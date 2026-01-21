@@ -53,8 +53,8 @@ public class SolverUnitTests
         Assert.Greater(path.Count, 0);
         Assert.AreEqual(start.x, path[0].x, 1e-4f);
         Assert.AreEqual(start.z, path[0].z, 1e-4f);
-        Assert.AreEqual(goal.x, path[^1].x, 1e-4f);
-        Assert.AreEqual(goal.z, path[^1].z, 1e-4f);
+        Assert.AreEqual(goal.x, path[path.Count - 1].x, 1e-4f);
+        Assert.AreEqual(goal.z, path[path.Count - 1].z, 1e-4f);
     }
 }
 #endif

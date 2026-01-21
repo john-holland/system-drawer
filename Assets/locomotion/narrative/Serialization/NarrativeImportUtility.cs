@@ -3,6 +3,7 @@ using Locomotion.Narrative;
 using Newtonsoft.Json;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;

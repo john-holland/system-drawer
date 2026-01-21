@@ -85,7 +85,8 @@ namespace Locomotion.Senses
             for (int i = 0; i < zones.Length; i++)
             {
                 WindZone z = zones[i];
-                if (z == null || !z.isActiveAndEnabled)
+                // WindZone doesn't derive from Behaviour in some Unity profiles, so it may not expose isActiveAndEnabled.
+                if (z == null || z.gameObject == null || !z.gameObject.activeInHierarchy)
                     continue;
 
                 // Unity's WindZone is not a physically rigorous wind model; treat it as an art-direction field.

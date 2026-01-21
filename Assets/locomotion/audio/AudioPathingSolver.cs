@@ -445,21 +445,25 @@ namespace Locomotion.Audio
         private int ComputeSettingsHash()
         {
             // Include parameters that materially affect output.
-            return HashCode.Combine(
-                fuzzySampleCount,
-                Mathf.RoundToInt(fuzzyOffsetRadius * 1000f),
-                minTrackbacksForEcho,
-                Mathf.RoundToInt(transmissionStdDevForEcho * 1000f),
-                Mathf.RoundToInt(silenceTransmissionThreshold * 1000f),
-                Mathf.RoundToInt(trackbackImprovementThreshold * 1000f),
-                Mathf.RoundToInt(minMaterialTransmission * 1000f),
-                Mathf.RoundToInt(maxMaterialTransmission * 1000f),
-                Mathf.RoundToInt(defaultTransmissionFactor * 1000f),
-                enableTraversalAssist ? 1 : 0,
-                Mathf.RoundToInt(traversalTransmissionFloor * 1000f),
-                Mathf.RoundToInt(traversalTransmissionBonus * 1000f),
-                Mathf.RoundToInt(maxDetourRatioForFidelity * 1000f)
-            );
+            // (Avoid HashCode.Combine overload limits on older Unity/.NET profiles.)
+            unchecked
+            {
+                int h = 17;
+                h = (h * 31) + fuzzySampleCount;
+                h = (h * 31) + Mathf.RoundToInt(fuzzyOffsetRadius * 1000f);
+                h = (h * 31) + minTrackbacksForEcho;
+                h = (h * 31) + Mathf.RoundToInt(transmissionStdDevForEcho * 1000f);
+                h = (h * 31) + Mathf.RoundToInt(silenceTransmissionThreshold * 1000f);
+                h = (h * 31) + Mathf.RoundToInt(trackbackImprovementThreshold * 1000f);
+                h = (h * 31) + Mathf.RoundToInt(minMaterialTransmission * 1000f);
+                h = (h * 31) + Mathf.RoundToInt(maxMaterialTransmission * 1000f);
+                h = (h * 31) + Mathf.RoundToInt(defaultTransmissionFactor * 1000f);
+                h = (h * 31) + (enableTraversalAssist ? 1 : 0);
+                h = (h * 31) + Mathf.RoundToInt(traversalTransmissionFloor * 1000f);
+                h = (h * 31) + Mathf.RoundToInt(traversalTransmissionBonus * 1000f);
+                h = (h * 31) + Mathf.RoundToInt(maxDetourRatioForFidelity * 1000f);
+                return h;
+            }
         }
 
         private bool TryGetCached(Vector3 sourcePos, Vector3 listenerPos, out AudioPathResult result)

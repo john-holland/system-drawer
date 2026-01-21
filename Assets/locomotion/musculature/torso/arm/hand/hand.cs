@@ -118,3 +118,255 @@
 // these 2 cards should order fairly simply, finding little good in finger grab and turn
 // but if the screw were entirely loose, the finger grab and turn might be a better option
 
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Locomotion.Musculature
+{
+    public enum FingerKind
+    {
+        Thumb,
+        Index,
+        Middle,
+        Ring,
+        Pinky,
+        Extra
+    }
+
+    /// <summary>
+    /// Marker + container for a hand on a rig.
+    /// </summary>
+    public sealed class RagdollHand : RagdollSidedBodyPart
+    {
+        [Tooltip("Resolved finger roots for this hand (thumb/index/middle/ring/pinky + extras).")]
+        public List<RagdollFinger> fingers = new List<RagdollFinger>(8);
+
+        [Header("Finger Utilities")]
+        [Tooltip("If true, LessFingers removes all fingers at/after the start index (truncate).")]
+        public bool lessFingersRemoveAllAfter = false;
+
+        public enum CabooseMode
+        {
+            None,
+            Append
+        }
+
+        public void LessFingers(int startIndex, int removeCount, bool removeAfter = false, CabooseMode caboose = CabooseMode.None, RagdollFinger cabooseTemplate = null)
+        {
+            if (fingers == null) fingers = new List<RagdollFinger>();
+            int count = fingers.Count;
+
+            if (startIndex < 0 || startIndex > count)
+            {
+                Debug.LogWarning($"[RagdollHand] LessFingers startIndex {startIndex} out of range (0..{count}).");
+                return;
+            }
+
+            int effectiveRemove = Mathf.Max(0, removeCount);
+            if (removeAfter || lessFingersRemoveAllAfter)
+            {
+                int removeAll = count - startIndex;
+                if (effectiveRemove != removeAll)
+                {
+                    Debug.LogWarning($"[RagdollHand] LessFingers(removeAfter=true) requested removeCount={effectiveRemove} but will remove {removeAll}.");
+                }
+                effectiveRemove = removeAll;
+            }
+
+            int available = count - startIndex;
+            if (effectiveRemove > available)
+            {
+                Debug.LogWarning($"[RagdollHand] LessFingers removing beyond list: requested {effectiveRemove} but only {available} available. Treating as partial removal.");
+            }
+
+            int toRemove = Mathf.Min(effectiveRemove, available);
+            if (toRemove > 0)
+                fingers.RemoveRange(startIndex, toRemove);
+
+            // Caboose append: if we removed beyond available (conceptual partial finger), allow appending a caboose finger.
+            if (caboose == CabooseMode.Append && effectiveRemove > available)
+            {
+                if (cabooseTemplate == null)
+                {
+                    Debug.LogWarning("[RagdollHand] Caboose requested, but no cabooseTemplate provided to append.");
+                    return;
+                }
+
+                var go = new GameObject($"{side}_CabooseFinger");
+                go.transform.SetParent(transform, worldPositionStays: false);
+                var f = go.AddComponent<RagdollFinger>();
+                f.side = side;
+                f.kind = FingerKind.Extra;
+                f.isCaboose = true;
+                fingers.Add(f);
+            }
+        }
+
+        public void ExtraFingers(int insertIndex, int addCount, RagdollFinger template = null)
+        {
+            if (fingers == null) fingers = new List<RagdollFinger>();
+            int count = fingers.Count;
+            insertIndex = Mathf.Clamp(insertIndex, 0, count);
+
+            int n = Mathf.Max(0, addCount);
+            for (int i = 0; i < n; i++)
+            {
+                var go = new GameObject($"{side}_ExtraFinger_{insertIndex + i}");
+                go.transform.SetParent(transform, worldPositionStays: false);
+                var f = go.AddComponent<RagdollFinger>();
+                f.side = side;
+                f.kind = FingerKind.Extra;
+                fingers.Insert(insertIndex + i, f);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Marker for a finger root. Digits are ordered proximal->distal.
+    /// </summary>
+    public sealed class RagdollFinger : MonoBehaviour
+    {
+        public BodySide side;
+        public FingerKind kind;
+
+        [Tooltip("Digit components from proximal->distal.")]
+        public List<RagdollDigit> digits = new List<RagdollDigit>(4);
+
+        [Tooltip("If true, this finger is a 'caboose' partial finger placeholder.")]
+        public bool isCaboose = false;
+    }
+
+    /// <summary>
+    /// Marker for a digit bone in a finger chain.
+    /// </summary>
+    public sealed class RagdollDigit : MonoBehaviour
+    {
+        public int indexInFinger = 0;
+
+        [Tooltip("If true, this is the last digit in the chain (caboose digit).")]
+        public bool isCabooseDigit = false;
+
+        [Tooltip("Optional nailbed mesh generated on caboose digit.")]
+        public RagdollNailbed nailbed;
+    }
+
+    /// <summary>
+    /// Optional curve-based nailbed mesh for the caboose digit.
+    /// Generates a simple ribbon mesh along local +Z.
+    /// </summary>
+    [ExecuteAlways]
+    public sealed class RagdollNailbed : MonoBehaviour
+    {
+        [Tooltip("Width profile along the nail (0..1 t). Output is multiplied by baseWidth.")]
+        public AnimationCurve widthProfile = AnimationCurve.EaseInOut(0f, 1f, 1f, 0.2f);
+
+        public float length = 0.03f;
+        public float baseWidth = 0.01f;
+        public float thickness = 0.0015f;
+        [Range(2, 64)] public int segments = 12;
+
+        public Material material;
+
+        private MeshFilter mf;
+        private MeshRenderer mr;
+        private Mesh mesh;
+
+        private void OnEnable()
+        {
+            EnsureComponents();
+            RebuildMesh();
+        }
+
+        private void OnValidate()
+        {
+            length = Mathf.Max(0.0001f, length);
+            baseWidth = Mathf.Max(0.0001f, baseWidth);
+            thickness = Mathf.Max(0f, thickness);
+            segments = Mathf.Clamp(segments, 2, 128);
+            EnsureComponents();
+            RebuildMesh();
+        }
+
+        private void EnsureComponents()
+        {
+            mf = GetComponent<MeshFilter>();
+            if (mf == null) mf = gameObject.AddComponent<MeshFilter>();
+            mr = GetComponent<MeshRenderer>();
+            if (mr == null) mr = gameObject.AddComponent<MeshRenderer>();
+            if (material != null) mr.sharedMaterial = material;
+        }
+
+        public void RebuildMesh()
+        {
+            if (mf == null) EnsureComponents();
+            if (mesh == null)
+            {
+                mesh = new Mesh { name = "NailbedMesh" };
+                mesh.MarkDynamic();
+            }
+
+            int vCount = (segments + 1) * 4; // top+bottom, left+right
+            var verts = new Vector3[vCount];
+            var uvs = new Vector2[vCount];
+
+            int triCount = segments * 6 * 2; // top and bottom ribbons (no sides)
+            var tris = new int[triCount];
+
+            int vi = 0;
+            for (int i = 0; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                float w = baseWidth * Mathf.Max(0f, widthProfile.Evaluate(t));
+                float z = t * length;
+
+                // top surface
+                verts[vi + 0] = new Vector3(-w * 0.5f, thickness * 0.5f, z);
+                verts[vi + 1] = new Vector3(+w * 0.5f, thickness * 0.5f, z);
+                // bottom surface
+                verts[vi + 2] = new Vector3(-w * 0.5f, -thickness * 0.5f, z);
+                verts[vi + 3] = new Vector3(+w * 0.5f, -thickness * 0.5f, z);
+
+                uvs[vi + 0] = new Vector2(0f, t);
+                uvs[vi + 1] = new Vector2(1f, t);
+                uvs[vi + 2] = new Vector2(0f, t);
+                uvs[vi + 3] = new Vector2(1f, t);
+
+                vi += 4;
+            }
+
+            int ti = 0;
+            for (int i = 0; i < segments; i++)
+            {
+                int baseV = i * 4;
+                int nextV = (i + 1) * 4;
+
+                // top quad (baseV+0, baseV+1, nextV+0, nextV+1)
+                tris[ti++] = baseV + 0;
+                tris[ti++] = nextV + 0;
+                tris[ti++] = nextV + 1;
+                tris[ti++] = baseV + 0;
+                tris[ti++] = nextV + 1;
+                tris[ti++] = baseV + 1;
+
+                // bottom quad (flip winding)
+                tris[ti++] = baseV + 2;
+                tris[ti++] = nextV + 3;
+                tris[ti++] = nextV + 2;
+                tris[ti++] = baseV + 2;
+                tris[ti++] = baseV + 3;
+                tris[ti++] = nextV + 3;
+            }
+
+            mesh.Clear();
+            mesh.vertices = verts;
+            mesh.uv = uvs;
+            mesh.triangles = tris;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            mf.sharedMesh = mesh;
+        }
+    }
+}
+

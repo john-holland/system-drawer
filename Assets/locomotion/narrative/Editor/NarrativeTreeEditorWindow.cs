@@ -5,6 +5,7 @@ using System.Linq;
 using Locomotion.Narrative;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -40,8 +41,9 @@ namespace Locomotion.Narrative.EditorTools
             var root = rootVisualElement;
             root.style.flexDirection = FlexDirection.Column;
 
-            var toolbar = new Toolbar();
-            var treeField = new ObjectField("Tree")
+            // Note: GraphView also defines an internal Toolbar type; use the public UIElements toolbar explicitly.
+            var toolbar = new UnityEditor.UIElements.Toolbar();
+            var treeField = new UnityEditor.UIElements.ObjectField("Tree")
             {
                 objectType = typeof(NarrativeTreeAsset),
                 allowSceneObjects = false,
@@ -55,10 +57,10 @@ namespace Locomotion.Narrative.EditorTools
             });
 
             toolbar.Add(treeField);
-            toolbar.Add(new ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Sequence)) { text = "Add Sequence" });
-            toolbar.Add(new ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Selector)) { text = "Add Selector" });
-            toolbar.Add(new ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Action)) { text = "Add Action" });
-            toolbar.Add(new ToolbarButton(() => Rebuild()) { text = "Refresh" });
+            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Sequence)) { text = "Add Sequence" });
+            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Selector)) { text = "Add Selector" });
+            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Action)) { text = "Add Action" });
+            toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => Rebuild()) { text = "Refresh" });
             root.Add(toolbar);
 
             var body = new VisualElement();
@@ -405,7 +407,7 @@ namespace Locomotion.Narrative.EditorTools
         {
             var gn = new NarrativeGraphNode(n);
             gn.SetPosition(new Rect(40 + depth * 240, 40 + siblingIndex * 120, 200, 80));
-            gn.OnSelected = () => OnNodeSelected?.Invoke(n);
+            gn.OnSelectedCallback = () => OnNodeSelected?.Invoke(n);
 
             AddElement(gn);
             nodesById[n.id] = gn;
@@ -464,7 +466,7 @@ namespace Locomotion.Narrative.EditorTools
     internal sealed class NarrativeGraphNode : Node
     {
         public NarrativeNode data;
-        public Action OnSelected;
+        public Action OnSelectedCallback;
 
         public Port input;
         public Port output;
@@ -489,7 +491,7 @@ namespace Locomotion.Narrative.EditorTools
         public override void OnSelected()
         {
             base.OnSelected();
-            OnSelected?.Invoke();
+            OnSelectedCallback?.Invoke();
         }
     }
 }

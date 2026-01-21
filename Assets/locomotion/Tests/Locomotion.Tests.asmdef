@@ -2,7 +2,8 @@
   "name": "Locomotion.Tests",
   "rootNamespace": "",
   "references": [
-    "Assembly-CSharp"
+    "Locomotion.Narrative.Runtime",
+    "Locomotion.Narrative.Serialization"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

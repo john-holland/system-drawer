@@ -8,3 +8,12 @@
 //  the big toe and the other toes have 3 digits, but the spring strength is higher and the control is more about position
 //    and leverage against what you're picking up or standing on
 
+using UnityEngine;
+
+namespace Locomotion.Musculature
+{
+    public sealed class RagdollFoot : RagdollSidedBodyPart
+    {
+    }
+}
+
