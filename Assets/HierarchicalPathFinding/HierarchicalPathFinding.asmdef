@@ -1,10 +1,7 @@
 {
-  "name": "Locomotion.Runtime",
+  "name": "HierarchicalPathFinding",
   "rootNamespace": "",
-  "references": [
-    "Weather.Runtime",
-    "HierarchicalPathFinding"
-  ],
+  "references": [],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
@@ -15,4 +12,3 @@
   "versionDefines": [],
   "noEngineReferences": false
 }
-

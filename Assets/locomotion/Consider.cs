@@ -1086,15 +1086,7 @@ public class Consider : MonoBehaviour
 
     private Hand GetDefaultHand()
     {
-        // todo: get the actual hand from the ragdoll system
-        // Simplified: create default hand
-        // In practice, would get actual hand from ragdoll system
-        return new Hand
-        {
-            maxFingerSpread = 90f,
-            maxGripStrength = 100f,
-            hemisphereRadius = 0.1f
-        };
+        return ragdollSystem.GetHand(HandType.Right);
     }
 }
 

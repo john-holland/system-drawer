@@ -349,6 +349,31 @@ namespace Weather
             }
             EditorGUILayout.EndHorizontal();
 
+            // Terrain Link Slot
+            if (terrainObject != null && waterObject != null)
+            {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("Link Terrain to Water:", GUILayout.Width(150));
+                if (GUILayout.Button("Link", GUILayout.Width(100)))
+                {
+                    LinkTerrainToWater();
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+
+            // Fit to Terrain Button
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Fit to Terrain", GUILayout.Height(25)))
+            {
+                FitToTerrain();
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.HelpBox(
+                "Fits WeatherPhysicsManifold and Wind bounds to match terrain size. " +
+                "Existing ponds and rivers are not modified.",
+                MessageType.Info
+            );
+
             // Water GameObject
             EditorGUILayout.BeginHorizontal();
             waterObject = (GameObject)EditorGUILayout.ObjectField(
@@ -594,6 +619,26 @@ namespace Weather
             SerializedObject so = new SerializedObject(water);
             EditorGUILayout.LabelField("Critical Settings:", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("terrain"));
+            
+            // Terrain Link Slot in Water Settings
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Link Terrain:", GUILayout.Width(150));
+            Terrain terrainLink = (Terrain)EditorGUILayout.ObjectField(
+                terrainObject != null ? terrainObject.GetComponent<Terrain>() : null,
+                typeof(Terrain),
+                true,
+                GUILayout.Width(200)
+            );
+            if (GUILayout.Button("Link", GUILayout.Width(60)))
+            {
+                LinkTerrainToWater();
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.HelpBox(
+                "Link the terrain to enable height map calculations for water level and terrain height queries.",
+                MessageType.None
+            );
+            
             EditorGUILayout.Space(3);
             EditorGUILayout.LabelField("Recommended Settings:", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("autoFindWaterBodies"));
@@ -716,6 +761,94 @@ namespace Weather
             }
 
             EditorUtility.DisplayDialog("Auto-Link Complete", "All references have been linked automatically.", "OK");
+        }
+
+        private void FitToTerrain()
+        {
+            if (terrainObject == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Please assign a Terrain GameObject first.", "OK");
+                return;
+            }
+
+            Terrain terrain = terrainObject.GetComponent<Terrain>();
+            if (terrain == null || terrain.terrainData == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Terrain object does not have valid Terrain component or data.", "OK");
+                return;
+            }
+
+            // Get terrain bounds
+            Vector3 terrainSize = terrain.terrainData.size;
+            Vector3 terrainPos = terrain.transform.position;
+            Bounds terrainBounds = new Bounds(
+                terrainPos + terrainSize * 0.5f,
+                terrainSize
+            );
+
+            // Fit WeatherPhysicsManifold bounds
+            if (weatherPhysicsManifold != null)
+            {
+                weatherPhysicsManifold.worldBounds = terrainBounds;
+                EditorUtility.SetDirty(weatherPhysicsManifold);
+            }
+
+            // Fit Wind bounds (use max X/Z for windFieldBounds)
+            if (windObject != null)
+            {
+                Wind wind = windObject.GetComponent<Wind>();
+                if (wind != null)
+                {
+                    wind.windFieldBounds = Mathf.Max(terrainSize.x, terrainSize.z) * 0.5f;
+                    EditorUtility.SetDirty(wind);
+                }
+            }
+
+            // Note: Pond.pondBounds and River splines are NOT modified (preserved)
+            // Clouds and Precipitation automatically use the manifolds, so they don't need bounds adjustment
+
+            EditorUtility.DisplayDialog("Fit to Terrain Complete",
+                $"Adjusted bounds to match terrain:\n" +
+                $"Terrain Size: {terrainSize}\n" +
+                $"WeatherPhysicsManifold bounds updated\n" +
+                $"Wind bounds updated\n\n" +
+                $"Note: Existing ponds and rivers were not modified.",
+                "OK");
+        }
+
+        private void LinkTerrainToWater()
+        {
+            if (terrainObject == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Please assign a Terrain GameObject first.", "OK");
+                return;
+            }
+
+            if (waterObject == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Please assign a Water GameObject first.", "OK");
+                return;
+            }
+
+            Terrain terrain = terrainObject.GetComponent<Terrain>();
+            if (terrain == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Terrain GameObject does not have a Terrain component.", "OK");
+                return;
+            }
+
+            Water water = waterObject.GetComponent<Water>();
+            if (water == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Water GameObject does not have a Water component.", "OK");
+                return;
+            }
+
+            SerializedObject waterSo = new SerializedObject(water);
+            waterSo.FindProperty("terrain").objectReferenceValue = terrain;
+            waterSo.ApplyModifiedProperties();
+
+            EditorUtility.DisplayDialog("Link Complete", "Terrain has been linked to Water component.", "OK");
         }
 
         private void ApplyRecommendedSettings()
