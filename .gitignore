@@ -56,3 +56,22 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 [Aa]ssets/[Ss]treamingAssets/aa.meta
 [Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Third-party assets (excluded from light package mode)
+# These are free assets from Unity Asset Store that developers must import separately
+# See THIRD_PARTY_ASSETS.md for import instructions
+Assets/CityPeople_Free/
+Assets/DevilWoman/
+Assets/Enviroment/
+Assets/Kiki/
+Assets/Mars Landscape 3D/
+Assets/Mountain Terrain rocks and tree/
+Assets/Pixelation/
+Assets/Sci-Fi Styled Modular Pack/
+Assets/Studio Horizon/
+Assets/Terrain Assets/
+Assets/Tiger/
+Assets/unity-chan!/
+Assets/UrsaAnimation/
+Assets/WhiteCity/
+Assets/LargeBitmaskSystem/
