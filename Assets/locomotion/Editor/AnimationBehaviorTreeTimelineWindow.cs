@@ -93,7 +93,8 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
             for (int i = 0; i < targetTree.toolUsageGoals.Count; i++)
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.ObjectField(targetTree.toolUsageGoals[i], typeof(BehaviorTreeGoal), false);
+                BehaviorTreeGoal goal = targetTree.toolUsageGoals[i];
+                EditorGUILayout.LabelField($"Goal {i + 1}: {goal.goalName} ({goal.type})", GUILayout.ExpandWidth(true));
                 if (GUILayout.Button("Remove", GUILayout.Width(60)))
                 {
                     targetTree.toolUsageGoals.RemoveAt(i);

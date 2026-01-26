@@ -584,6 +584,8 @@ namespace Weather
                 {
                     EditorGUI.indentLevel++;
                     DrawPrecipitationSettings();
+                    EditorGUILayout.Space(5);
+                    DrawPortalRainEffectsSection();
                     EditorGUI.indentLevel--;
                 }
             }
@@ -730,6 +732,96 @@ namespace Weather
             EditorGUILayout.PropertyField(so.FindProperty("snowTemperatureThreshold"));
             EditorGUILayout.PropertyField(so.FindProperty("sleetTemperatureThreshold"));
             so.ApplyModifiedProperties();
+        }
+
+        private void DrawPortalRainEffectsSection()
+        {
+            EditorGUILayout.LabelField("Portal Rain Effects", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Portal-based rain particle effects create accordion-like particle systems along portal openings. " +
+                "They automatically detect drip lines and transition from sheets to dribbles based on surface angle.",
+                MessageType.Info
+            );
+
+            SerializedObject so = new SerializedObject(precipitation);
+            EditorGUILayout.PropertyField(so.FindProperty("autoDetectPortals"));
+            EditorGUILayout.PropertyField(so.FindProperty("portalParticleSystems"), true);
+            so.ApplyModifiedProperties();
+
+            EditorGUILayout.Space(5);
+
+            // Buttons
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Auto-Detect Portals", GUILayout.Height(25)))
+            {
+                if (precipitation != null)
+                {
+                    precipitation.AutoDetectPortals();
+                    EditorUtility.SetDirty(precipitation);
+                }
+            }
+            if (GUILayout.Button("Generate Portal Rain Effects", GUILayout.Height(25)))
+            {
+                GeneratePortalRainEffects();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(3);
+
+            // Show registered portals
+            if (precipitation != null && precipitation.portalParticleSystems != null && precipitation.portalParticleSystems.Count > 0)
+            {
+                EditorGUILayout.LabelField($"Registered Portals: {precipitation.portalParticleSystems.Count}", EditorStyles.miniLabel);
+                EditorGUI.indentLevel++;
+                for (int i = 0; i < precipitation.portalParticleSystems.Count; i++)
+                {
+                    var portalPS = precipitation.portalParticleSystems[i];
+                    if (portalPS != null && portalPS.portal != null)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+                        EditorGUILayout.ObjectField(
+                            $"Portal {i + 1}",
+                            portalPS.portal,
+                            typeof(MeshTerrainPortal),
+                            true
+                        );
+                        if (GUILayout.Button("Remove", GUILayout.Width(60)))
+                        {
+                            precipitation.UnregisterPortalForRain(portalPS.portal);
+                            EditorUtility.SetDirty(precipitation);
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
+                }
+                EditorGUI.indentLevel--;
+            }
+        }
+
+        private void GeneratePortalRainEffects()
+        {
+            if (precipitation == null)
+                return;
+
+            // Find all portals in scene
+            MeshTerrainPortal[] portals = FindObjectsOfType<MeshTerrainPortal>();
+            if (portals == null || portals.Length == 0)
+            {
+                EditorUtility.DisplayDialog(
+                    "No Portals Found",
+                    "No MeshTerrainPortal components found in the scene. Create portals using the MeshTerrainSampler first.",
+                    "OK"
+                );
+                return;
+            }
+
+            // Register each portal
+            foreach (var portal in portals)
+            {
+                precipitation.RegisterPortalForRain(portal);
+            }
+
+            EditorUtility.SetDirty(precipitation);
+            Debug.Log($"WeatherServiceWizard: Generated rain effects for {portals.Length} portals");
         }
 
         private void DrawWeatherPhysicsManifoldSettings()
@@ -1018,37 +1110,6 @@ namespace Weather
             }
 
             return combinedBounds;
-        }
-
-        private void LinkMeshTerrainSamplerToWater()
-        {
-            if (meshTerrainSampler == null)
-            {
-                EditorUtility.DisplayDialog("Error", "Please assign a Mesh Terrain Sampler first.", "OK");
-                return;
-            }
-
-            if (waterObject == null)
-            {
-                EditorUtility.DisplayDialog("Error", "Please assign a Water GameObject first.", "OK");
-                return;
-            }
-
-            Water water = waterObject.GetComponent<Water>();
-            if (water == null)
-            {
-                EditorUtility.DisplayDialog("Error", "Water GameObject does not have a Water component.", "OK");
-                return;
-            }
-
-            SerializedObject waterSo = new SerializedObject(water);
-            waterSo.FindProperty("meshTerrainSampler").objectReferenceValue = meshTerrainSampler;
-            waterSo.ApplyModifiedProperties();
-
-            EditorUtility.DisplayDialog("Link Complete", 
-                "Mesh Terrain Sampler has been linked to Water component.\n\n" +
-                "The Water component will now use mesh terrain height sampling when terrain is not available.",
-                "OK");
         }
 
         private void LinkMeshTerrainSamplerToWater()

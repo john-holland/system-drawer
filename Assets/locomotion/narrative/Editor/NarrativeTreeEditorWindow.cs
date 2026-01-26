@@ -50,13 +50,13 @@ namespace Locomotion.Narrative.EditorTools
                 EditorGUI.BeginChangeCheck();
                 var newTree = EditorGUILayout.ObjectField("Tree", tree, typeof(NarrativeTreeAsset), true) as NarrativeTreeAsset;
                 if (EditorGUI.EndChangeCheck())
-                {
+            {
                     tree = newTree;
-                    Rebuild();
+                Rebuild();
                 }
             });
             treeFieldContainer.style.flexGrow = 1f;
-            
+
             toolbar.Add(treeFieldContainer);
             toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Sequence)) { text = "Add Sequence" });
             toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Selector)) { text = "Add Selector" });

@@ -2,8 +2,7 @@
   "name": "Locomotion.Narrative.Runtime",
   "rootNamespace": "Locomotion.Narrative",
   "references": [
-    "Locomotion.Runtime",
-    "Weather.Runtime"
+    "Locomotion.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

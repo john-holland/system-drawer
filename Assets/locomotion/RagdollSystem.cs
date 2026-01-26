@@ -56,6 +56,7 @@ public class RagdollSystem : MonoBehaviour
     public RagdollForearm leftForearmComponent;
     public RagdollForearm rightForearmComponent;
     public RagdollHead headComponent;
+    public RagdollJaw jawComponent;
     public RagdollNeck neckComponent;
     public RagdollPelvis pelvisComponent;
     public RagdollTorso torsoComponent;
@@ -436,6 +437,38 @@ public class RagdollSystem : MonoBehaviour
         return c;
     }
 
+    public RagdollJaw FindOrAddJaw()
+    {
+        // Jaw is typically a child of the head
+        if (headComponent != null)
+        {
+            var c = headComponent.GetComponentInChildren<RagdollJaw>();
+            if (c != null)
+            {
+                jawComponent = c;
+                return c;
+            }
+        }
+
+        // Try to resolve bone directly
+        var t = ResolveBone("Jaw", null);
+        if (t == null)
+        {
+            // Fallback: try to find in head's children
+            if (headComponent != null)
+            {
+                t = headComponent.transform.Find("Jaw");
+            }
+        }
+
+        if (t == null) return null;
+
+        var jaw = t.GetComponent<RagdollJaw>();
+        if (jaw == null) jaw = t.gameObject.AddComponent<RagdollJaw>();
+        jawComponent = jaw;
+        return jaw;
+    }
+
     public RagdollNeck FindOrAddNeck()
     {
         var t = ResolveBone("Neck", null);
@@ -612,6 +645,7 @@ public class RagdollSystem : MonoBehaviour
         FindOrAddTorso();
         FindOrAddNeck();
         FindOrAddHead();
+        FindOrAddJaw();
 
         FindOrAddCollarbone(BodySide.Left);
         FindOrAddCollarbone(BodySide.Right);
@@ -920,6 +954,9 @@ public class RagdollSystem : MonoBehaviour
             case "Head":
                 roleTokens = new[] { "head" };
                 break;
+            case "Jaw":
+                roleTokens = new[] { "jaw", "mandible" };
+                break;
             default:
                 roleTokens = new[] { role.ToLowerInvariant() };
                 break;
@@ -1055,6 +1092,11 @@ public class RagdollSystem : MonoBehaviour
             var t = ResolveViaBoneMap(boneMap, "Human:Head", "Generic:Head");
             if (t != null) return t;
         }
+        if (role == "Jaw")
+        {
+            var t = ResolveViaBoneMap(boneMap, "Human:Jaw", "Generic:Jaw");
+            if (t != null) return t;
+        }
 
         // 2) Animator humanoid fallback
         if (role == "Hand" && side.HasValue)
@@ -1084,6 +1126,8 @@ public class RagdollSystem : MonoBehaviour
             return ResolveViaAnimator(animator, HumanBodyBones.Neck) ?? ResolveViaNameHeuristics(role, null);
         if (role == "Head")
             return ResolveViaAnimator(animator, HumanBodyBones.Head) ?? ResolveViaNameHeuristics(role, null);
+        if (role == "Jaw")
+            return ResolveViaNameHeuristics(role, null); // No HumanBodyBones.Jaw, use name heuristics
         if (role == "Collarbone" && side.HasValue)
         {
             return ResolveViaAnimator(animator, side.Value == BodySide.Left ? HumanBodyBones.LeftShoulder : HumanBodyBones.RightShoulder)

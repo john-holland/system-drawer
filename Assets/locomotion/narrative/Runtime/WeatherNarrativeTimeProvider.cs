@@ -1,5 +1,5 @@
 using UnityEngine;
-using Weather;
+using System;
 
 namespace Locomotion.Narrative
 {
@@ -7,11 +7,15 @@ namespace Locomotion.Narrative
     /// Narrative time provider that is intended to stay in-step with the WeatherSystem update cadence.
     /// MVP: uses Unity time but keeps an explicit reference to WeatherSystem so later we can drive time
     /// from weather simulation steps / pausable manifolds.
+    /// Uses reflection to avoid compile-time dependency on Weather.Runtime.
     /// </summary>
     public class WeatherNarrativeTimeProvider : MonoBehaviour, INarrativeTimeProvider
     {
-        [Tooltip("Optional WeatherSystem reference (auto-found if null).")]
-        public WeatherSystem weatherSystem;
+        [Tooltip("Optional WeatherSystem GameObject (auto-found if null, uses reflection to avoid compile-time dependency).")]
+        public GameObject weatherSystemObject;
+        
+        private object weatherSystemComponent; // WeatherSystem via reflection
+        private Type weatherSystemType;
 
         [Header("Start Date (UTC-like)")]
         public NarrativeDateTime startDateTime = new NarrativeDateTime(2025, 1, 1, 0, 0, 0);
@@ -24,8 +28,28 @@ namespace Locomotion.Narrative
 
         private void Awake()
         {
-            if (weatherSystem == null)
-                weatherSystem = FindObjectOfType<WeatherSystem>();
+            // Use reflection to find WeatherSystem
+            weatherSystemType = Type.GetType("Weather.WeatherSystem, Weather.Runtime");
+            if (weatherSystemType != null)
+            {
+                if (weatherSystemObject == null)
+                {
+                    MonoBehaviour[] allMonoBehaviours = FindObjectsOfType<MonoBehaviour>();
+                    foreach (var mb in allMonoBehaviours)
+                    {
+                        if (weatherSystemType.IsAssignableFrom(mb.GetType()))
+                        {
+                            weatherSystemObject = mb.gameObject;
+                            weatherSystemComponent = mb;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    weatherSystemComponent = weatherSystemObject.GetComponent(weatherSystemType);
+                }
+            }
         }
 
         private void OnEnable()

@@ -29,6 +29,15 @@ public class PhysicsCardSolver : MonoBehaviour
     [Range(0f, 1f)]
     public float velocityWeight = 0.2f;
 
+    [Header("Radial Limits Sorting")]
+    [Tooltip("Weight for radial limits comfort score (default 0.3)")]
+    [Range(0f, 1f)]
+    public float comfortWeight = 0.3f;
+
+    [Tooltip("Weight for feasibility score when combined with comfort (default 0.7)")]
+    [Range(0f, 1f)]
+    public float feasibilityWeight = 0.7f;
+
     [Header("Walking Card Generation")]
     [Tooltip("Only allow leg muscle groups for walking cards (restricts arm/hand/head usage unless placement card)")]
     public bool onlyAllowLegsForWalking = true;
@@ -92,19 +101,27 @@ public class PhysicsCardSolver : MonoBehaviour
     }
 
     /// <summary>
-    /// Order cards by feasibility score (highest first).
+    /// Order cards by feasibility score and radial limits comfort (highest first).
     /// </summary>
     public List<GoodSection> OrderCardsByFeasibility(List<GoodSection> cards, RagdollState state)
     {
         if (cards == null || state == null)
             return new List<GoodSection>();
 
-        // Calculate feasibility scores
+        // Calculate combined scores (feasibility + comfort)
         var scoredCards = cards.Select(card => new
         {
             card = card,
-            score = CalculateFeasibilityScore(card, state)
-        }).OrderByDescending(x => x.score).ToList();
+            feasibilityScore = CalculateFeasibilityScore(card, state),
+            comfortScore = CalculateComfortScore(card, state),
+            totalLimitAngle = CalculateTotalLimitAngle(card, state)
+        }).Select(x => new
+        {
+            x.card,
+            combinedScore = (x.feasibilityScore * feasibilityWeight) + (x.comfortScore * comfortWeight)
+        }).OrderByDescending(x => x.combinedScore)
+          .ThenByDescending(x => x.card != null && x.card.limits != null ? CalculateTotalLimitAngle(x.card, state) : 0f)
+          .ToList();
 
         // Return ordered list
         return scoredCards.Select(x => x.card).ToList();
@@ -581,6 +598,77 @@ public class PhysicsCardSolver : MonoBehaviour
         };
         walkingCard.impulseStack.Add(torsoAction);
 
+        // todo: note: we may want to use the path finding component
+        //   and make ray casts down along foot falls on the path, then apply forces to the ground
+        //     or generate additional placement cards at the foot falls - this would allow us to
+        //     break the covenent for walking cards to only use leg muscle groups if the player character
+        // needs to squeeze through an opening, or climb a ladder, or etc.
+        // since we know the gate length, we can generate "foot accessible" chords along the path
         return walkingCard;
+    }
+
+    /// <summary>
+    /// Calculate total limit angle for all joints involved in a card.
+    /// Greater total limit angle = more comfortable/better fit.
+    /// </summary>
+    public float CalculateTotalLimitAngle(GoodSection card, RagdollState state)
+    {
+        if (card == null || card.limits == null || !card.limits.useRadialLimits)
+            return 0f;
+
+        float totalAngle = 0f;
+
+        // Calculate angle range for each axis
+        Vector3 lower = card.limits.lowerRadialReferenceRotation;
+        Vector3 upper = card.limits.upperRadialReferenceRotation;
+
+        // X axis range
+        float xRange = Mathf.Abs(upper.x - lower.x);
+        if (xRange > 180f) xRange = 360f - xRange; // Handle wraparound
+        totalAngle += xRange;
+
+        // Y axis range
+        float yRange = Mathf.Abs(upper.y - lower.y);
+        if (yRange > 180f) yRange = 360f - yRange;
+        totalAngle += yRange;
+
+        // Z axis range
+        float zRange = Mathf.Abs(upper.z - lower.z);
+        if (zRange > 180f) zRange = 360f - zRange;
+        totalAngle += zRange;
+
+        return totalAngle;
+    }
+
+    /// <summary>
+    /// Calculate comfort score based on radial limits (0-1).
+    /// Higher score = better fit within limits.
+    /// </summary>
+    public float CalculateComfortScore(GoodSection card, RagdollState state)
+    {
+        if (card == null || card.limits == null || state == null)
+            return 0f;
+
+        // Use SectionLimits' GetRadialLimitScore method
+        if (card.limits.useRadialLimits)
+        {
+            return card.limits.GetRadialLimitScore(state);
+        }
+
+        // If no radial limits, return neutral score
+        return 0.5f;
+    }
+
+    /// <summary>
+    /// Sort cards by radial limits (total limit angle) for best fit and comfort.
+    /// </summary>
+    public List<GoodSection> SortCardsByRadialLimits(List<GoodSection> cards, RagdollState state)
+    {
+        if (cards == null || state == null)
+            return new List<GoodSection>();
+
+        return cards.OrderByDescending(card => CalculateTotalLimitAngle(card, state))
+                   .ThenByDescending(card => CalculateComfortScore(card, state))
+                   .ToList();
     }
 }

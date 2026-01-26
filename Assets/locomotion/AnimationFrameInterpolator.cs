@@ -99,8 +99,10 @@ public static class AnimationFrameInterpolator
         interpolated.boneTransforms = new Dictionary<string, TransformData>();
         foreach (string boneName in allBoneNames)
         {
-            bool hasFrame1 = frame1.boneTransforms != null && frame1.boneTransforms.TryGetValue(boneName, out TransformData transform1);
-            bool hasFrame2 = frame2.boneTransforms != null && frame2.boneTransforms.TryGetValue(boneName, out TransformData transform2);
+            TransformData transform1 = default(TransformData);
+            TransformData transform2 = default(TransformData);
+            bool hasFrame1 = frame1.boneTransforms != null && frame1.boneTransforms.TryGetValue(boneName, out transform1);
+            bool hasFrame2 = frame2.boneTransforms != null && frame2.boneTransforms.TryGetValue(boneName, out transform2);
 
             TransformData interpolatedTransform;
             if (hasFrame1 && hasFrame2)

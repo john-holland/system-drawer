@@ -278,7 +278,13 @@ namespace Weather
             }
 
             // Get overall bounds
-            Bounds overallBounds = GetMeshBounds(meshTerrain);
+            Bounds? boundsNullable = GetMeshBounds(meshTerrain);
+            if (!boundsNullable.HasValue)
+            {
+                Debug.LogWarning("MeshTerrainSampler: Could not determine mesh bounds");
+                return;
+            }
+            Bounds overallBounds = boundsNullable.Value;
             if (overallBounds.size.magnitude < 0.001f)
             {
                 Debug.LogWarning("MeshTerrainSampler: Invalid mesh bounds");

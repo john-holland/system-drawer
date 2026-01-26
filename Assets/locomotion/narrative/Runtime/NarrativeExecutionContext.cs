@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using Weather;
 
 namespace Locomotion.Narrative
 {
@@ -11,9 +10,9 @@ namespace Locomotion.Narrative
     {
         public NarrativeClock clock;
         public NarrativeBindings bindings;
-        public WeatherSystem weatherSystem;
+        public object weatherSystem; // WeatherSystem via reflection to avoid compile-time dependency
 
-        public NarrativeExecutionContext(NarrativeClock clock, NarrativeBindings bindings, WeatherSystem weatherSystem)
+        public NarrativeExecutionContext(NarrativeClock clock, NarrativeBindings bindings, object weatherSystem)
         {
             this.clock = clock;
             this.bindings = bindings;

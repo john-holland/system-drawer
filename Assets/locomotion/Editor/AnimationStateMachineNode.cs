@@ -119,7 +119,7 @@ public class AnimationStateMachineNode : Node
     /// <summary>
     /// Handle node selection (syncs to timeline).
     /// </summary>
-    public void OnSelected()
+    public new void OnSelected()
     {
         // This would sync to timeline scrubber
         // Implementation depends on timeline window integration

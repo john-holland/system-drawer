@@ -266,9 +266,9 @@ namespace Locomotion.Narrative.Serialization
             else
             {
                 // ScriptableObject or other asset
-                string path = AssetDatabase.GetAssetPath(asset);
+            string path = AssetDatabase.GetAssetPath(asset);
                 if (!string.IsNullOrEmpty(path))
-                    return AssetDatabase.AssetPathToGUID(path);
+            return AssetDatabase.AssetPathToGUID(path);
             }
             
             return null;

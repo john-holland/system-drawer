@@ -829,6 +829,19 @@ public class SectionLimits
                 new Vector3(30f, 30f, 30f)       // Upper bounds
             );
         }
+        else if (typeName.Contains("Jaw"))
+        {
+            // Jaw: asymmetric limits for opening/closing
+            // Upper bound: (90, 15, 5) - maximum opening
+            // Lower bound: (135, -15, -5) - closed position
+            // Note: These are relative to current rotation, so we use the difference
+            // Upper (open): can rotate down 90 degrees on X, 15 on Y, 5 on Z
+            // Lower (closed): can rotate up to 135 degrees on X (from closed), -15 on Y, -5 on Z
+            return new RotationToleranceBounds(
+                new Vector3(-135f, -15f, -5f),   // Lower bounds (more closed)
+                new Vector3(90f, 15f, 5f)        // Upper bounds (more open)
+            );
+        }
 
         // Default: symmetric 45 degrees
         return new RotationToleranceBounds(

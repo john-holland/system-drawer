@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Weather
@@ -65,6 +66,13 @@ namespace Weather
         [Range(0f, 1f)]
         public float windDriftFactor = 0.5f;
 
+        [Header("Portal Rain Effects")]
+        [Tooltip("List of portal rain particle systems")]
+        public List<PortalRainParticleSystem> portalParticleSystems = new List<PortalRainParticleSystem>();
+
+        [Tooltip("Auto-detect portals in scene and create rain effects")]
+        public bool autoDetectPortals = false;
+
         [Header("Gizmos")]
         [Tooltip("Show gizmos in scene view")]
         public bool showGizmos = true;
@@ -87,6 +95,17 @@ namespace Weather
             if (autoConfigureParticleSystem && particleSystem != null)
             {
                 UpdateParticleSystem();
+            }
+
+            // Update portal particle systems
+            UpdatePortalParticleSystems();
+        }
+
+        private void Start()
+        {
+            if (autoDetectPortals)
+            {
+                AutoDetectPortals();
             }
         }
 
@@ -234,6 +253,85 @@ namespace Weather
                     return Color.cyan;
                 default:
                     return Color.blue;
+            }
+        }
+
+        /// <summary>
+        /// Register a portal for rain effects.
+        /// </summary>
+        public void RegisterPortalForRain(MeshTerrainPortal portal)
+        {
+            if (portal == null)
+                return;
+
+            // Check if already registered
+            foreach (var existing in portalParticleSystems)
+            {
+                if (existing != null && existing.portal == portal)
+                {
+                    return; // Already registered
+                }
+            }
+
+            // Create portal rain particle system
+            GameObject portalRainObj = new GameObject($"PortalRain_{portal.name}");
+            portalRainObj.transform.SetParent(portal.transform);
+            portalRainObj.transform.localPosition = Vector3.zero;
+
+            PortalRainParticleSystem portalRain = portalRainObj.AddComponent<PortalRainParticleSystem>();
+            portalRain.portal = portal;
+            portalRain.terrain = FindObjectOfType<Terrain>();
+
+            portalParticleSystems.Add(portalRain);
+        }
+
+        /// <summary>
+        /// Unregister a portal from rain effects.
+        /// </summary>
+        public void UnregisterPortalForRain(MeshTerrainPortal portal)
+        {
+            for (int i = portalParticleSystems.Count - 1; i >= 0; i--)
+            {
+                if (portalParticleSystems[i] != null && portalParticleSystems[i].portal == portal)
+                {
+                    if (portalParticleSystems[i].gameObject != null)
+                    {
+                        DestroyImmediate(portalParticleSystems[i].gameObject);
+                    }
+                    portalParticleSystems.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Auto-detect portals in scene and register them.
+        /// </summary>
+        public void AutoDetectPortals()
+        {
+            MeshTerrainPortal[] portals = FindObjectsOfType<MeshTerrainPortal>();
+            foreach (var portal in portals)
+            {
+                RegisterPortalForRain(portal);
+            }
+
+            Debug.Log($"Precipitation: Auto-detected and registered {portals.Length} portals for rain effects");
+        }
+
+        /// <summary>
+        /// Update all portal particle systems.
+        /// </summary>
+        private void UpdatePortalParticleSystems()
+        {
+            // Remove null references
+            portalParticleSystems.RemoveAll(ps => ps == null);
+
+            // Update each portal particle system
+            foreach (var portalPS in portalParticleSystems)
+            {
+                if (portalPS != null)
+                {
+                    portalPS.UpdateParticleSystem();
+                }
             }
         }
 

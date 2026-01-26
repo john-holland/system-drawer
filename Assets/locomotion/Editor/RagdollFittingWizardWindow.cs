@@ -197,7 +197,7 @@ namespace Locomotion.EditorTools
                 return;
             }
 
-            bodyPartsScroll = EditorGUILayout.BeginScrollView(bodyPartsScroll);
+            bodyPartsScroll = EditorGUILayout.BeginScrollView(bodyPartsScroll, GUILayout.Height(400));
 
             // Draw each category
             foreach (var category in bodyPartCategories.Keys)
@@ -469,8 +469,24 @@ namespace Locomotion.EditorTools
                 }
             }
 
-            // Auto-link all components
-            ragdollSystem.SendMessage("ValidateBoneComponents", SendMessageOptions.DontRequireReceiver);
+            // Auto-link all components (defer to avoid OnGUI restrictions)
+            // Use EditorApplication.update to ensure we're outside OnGUI context
+            UnityEditor.EditorApplication.CallbackFunction validateAction = null;
+            validateAction = () =>
+            {
+                EditorApplication.update -= validateAction;
+                if (ragdollSystem != null)
+                {
+                    // Use reflection to call the private method directly instead of SendMessage
+                    var method = ragdollSystem.GetType().GetMethod("ValidateBoneComponents", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (method != null)
+                    {
+                        method.Invoke(ragdollSystem, null);
+                    }
+                }
+            };
+            EditorApplication.update += validateAction;
 
             Undo.CollapseUndoOperations(group);
 

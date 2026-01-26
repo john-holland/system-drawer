@@ -1,5 +1,5 @@
 using UnityEngine;
-using Weather;
+using System;
 
 namespace Locomotion.Narrative
 {
@@ -12,7 +12,8 @@ namespace Locomotion.Narrative
         [Header("Context")]
         public NarrativeClock clock;
         public NarrativeBindings bindings;
-        public WeatherSystem weatherSystem;
+        [Tooltip("WeatherSystem GameObject (uses reflection to avoid compile-time dependency)")]
+        public GameObject weatherSystemObject;
 
         [Header("Debug")]
         public bool debugLogging = false;
@@ -21,13 +22,38 @@ namespace Locomotion.Narrative
 
         private NarrativeExecutionContext ctx;
         private NarrativeCalendarEvent activeEvent;
+        private object weatherSystemComponent; // WeatherSystem via reflection
+        private Type weatherSystemType;
 
         private void Awake()
         {
             if (clock == null) clock = FindObjectOfType<NarrativeClock>();
             if (bindings == null) bindings = FindObjectOfType<NarrativeBindings>();
-            if (weatherSystem == null) weatherSystem = FindObjectOfType<WeatherSystem>();
-            ctx = new NarrativeExecutionContext(clock, bindings, weatherSystem);
+            
+            // Use reflection to find WeatherSystem
+            weatherSystemType = Type.GetType("Weather.WeatherSystem, Weather.Runtime");
+            if (weatherSystemType != null)
+            {
+                if (weatherSystemObject == null)
+                {
+                    MonoBehaviour[] allMonoBehaviours = FindObjectsOfType<MonoBehaviour>();
+                    foreach (var mb in allMonoBehaviours)
+                    {
+                        if (weatherSystemType.IsAssignableFrom(mb.GetType()))
+                        {
+                            weatherSystemObject = mb.gameObject;
+                            weatherSystemComponent = mb;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    weatherSystemComponent = weatherSystemObject.GetComponent(weatherSystemType);
+                }
+            }
+            
+            ctx = new NarrativeExecutionContext(clock, bindings, weatherSystemComponent);
         }
 
         public NarrativeRuntimeState GetRuntimeState() => runtimeState;

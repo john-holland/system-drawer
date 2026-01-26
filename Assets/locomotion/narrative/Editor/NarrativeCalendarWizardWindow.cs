@@ -188,7 +188,6 @@ namespace Locomotion.Narrative.EditorTools
             int firstDow = (int)new DateTime(viewYear, viewMonth, 1).DayOfWeek; // 0=Sun
 
             // 6 rows x 7 columns
-            int cellCount = 42;
             for (int r = 0; r < 6; r++)
             {
                 var row = new VisualElement();

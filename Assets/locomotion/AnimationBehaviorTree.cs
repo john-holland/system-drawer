@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Locomotion.Rig;
 
 /// <summary>
 /// Root component that manages animation-to-behavior-tree conversion.
@@ -63,22 +64,44 @@ public class AnimationBehaviorTree : MonoBehaviour
     /// </summary>
     public IEnumerable<AnimationFrame> ConvertAnimationToFrames()
     {
-        AnimationClip clip = animationClip ?? GetClipFromAnimator();
+        AnimationClip clip = animationClip;
         if (clip == null)
+        {
+            // Try to get from animator controller if provided
+            clip = GetClipFromAnimator();
+        }
+        
+        if (clip == null)
+        {
+            Debug.LogError("[AnimationBehaviorTree.ConvertAnimationToFrames] No animation clip found! " +
+                "Please assign an AnimationClip to the 'Animation Clip' field in the inspector. " +
+                "If you're using an AnimatorController, assign it to 'Animator Controller' field instead.");
             yield break;
+        }
+
+        Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Processing clip: {clip.name}, length: {clip.length}s, frameRate: {clip.frameRate}, samplingRate: {frameSamplingRate}");
 
         float frameTime = 1f / clip.frameRate;
         int totalFrames = Mathf.RoundToInt(clip.length * clip.frameRate);
+        Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Total frames: {totalFrames}, frameTime: {frameTime}s");
 
+        int frameCount = 0;
         for (int i = 0; i < totalFrames; i += frameSamplingRate)
         {
             float time = i * frameTime;
             AnimationFrame frame = ExtractFrame(clip, time, i);
             if (frame != null)
             {
+                frameCount++;
                 yield return frame;
             }
+            else
+            {
+                Debug.LogWarning($"[AnimationBehaviorTree.ConvertAnimationToFrames] ExtractFrame returned null for frame {i} at time {time}s");
+            }
         }
+
+        Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Extracted {frameCount} frames from animation");
     }
 
     /// <summary>
@@ -92,33 +115,69 @@ public class AnimationBehaviorTree : MonoBehaviour
             return;
         }
 
+        string animatorControllerName = "null";
+        if (animatorController != null)
+        {
+            try
+            {
+                animatorControllerName = animatorController.name;
+            }
+            catch (System.Exception)
+            {
+                animatorControllerName = "unassigned";
+            }
+        }
+        Debug.Log($"[AnimationBehaviorTree] Starting generation. AnimationClip: {animationClip?.name ?? "null"}, AnimatorController: {animatorControllerName}");
+
         isGenerating = true;
 
         try
         {
             // Convert animation to frames
+            Debug.Log("[AnimationBehaviorTree] Converting animation to frames...");
             allFrames = new List<AnimationFrame>(ConvertAnimationToFrames());
+            Debug.Log($"[AnimationBehaviorTree] Converted {allFrames.Count} frames from animation.");
+
+            if (allFrames.Count == 0)
+            {
+                Debug.LogWarning("[AnimationBehaviorTree] No frames generated! Check animation clip and frame sampling settings.");
+            }
 
             // Apply breakout curves
             if (breakoutCurves != null && breakoutCurves.Count > 0)
             {
+                Debug.Log($"[AnimationBehaviorTree] Applying {breakoutCurves.Count} breakout curves...");
                 ApplyBreakoutCurves(allFrames);
             }
 
             // Remove dropped frames from active list
+            int droppedCount = allFrames.Count(f => f != null && f.isDropped);
             allFrames.RemoveAll(f => f != null && f.isDropped);
+            if (droppedCount > 0)
+            {
+                Debug.Log($"[AnimationBehaviorTree] Removed {droppedCount} dropped frames. Remaining: {allFrames.Count}");
+            }
 
             // Detect tool usage if enabled
             if (autoDetectToolUsage)
             {
+                Debug.Log("[AnimationBehaviorTree] Detecting tool usage requirements...");
                 DetectToolUsageRequirements();
             }
 
             // Create behavior tree structure
+            Debug.Log("[AnimationBehaviorTree] Creating behavior tree structure...");
             CreateBehaviorTreeStructure();
 
             // Estimate durations
+            Debug.Log("[AnimationBehaviorTree] Estimating durations...");
             EstimateDurations();
+
+            Debug.Log($"[AnimationBehaviorTree] Generation complete! Root node: {rootNode?.name ?? "null"}, Generated tree: {generatedTree?.name ?? "null"}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[AnimationBehaviorTree] Error during generation: {e.Message}\n{e.StackTrace}");
         }
         finally
         {
@@ -249,7 +308,16 @@ public class AnimationBehaviorTree : MonoBehaviour
     private AnimationFrame ExtractFrame(AnimationClip clip, float time, int frameIndex)
     {
         if (clip == null)
+        {
+            Debug.LogWarning($"[AnimationBehaviorTree.ExtractFrame] Clip is null for frame {frameIndex}");
             return null;
+        }
+
+        if (time < 0f || time > clip.length)
+        {
+            Debug.LogWarning($"[AnimationBehaviorTree.ExtractFrame] Time {time}s out of range [0, {clip.length}] for frame {frameIndex}");
+            return null;
+        }
 
         AnimationFrame frame = new AnimationFrame
         {
@@ -258,15 +326,107 @@ public class AnimationBehaviorTree : MonoBehaviour
         };
 
         // Sample animation at this time
-        // This is a simplified implementation - actual implementation would:
-        // 1. Sample all bone transforms at this time
-        // 2. Extract root motion
-        // 3. Store in frame.boneTransforms
-
-        // For now, create empty frame structure
         frame.boneTransforms = new Dictionary<string, TransformData>();
+        
+        // Try to sample the animation clip using AnimationClip.SampleAnimation
+        // This requires a GameObject with the same hierarchy as the animation
+        GameObject sampleTarget = GetComponent<RagdollSystem>()?.ragdollRoot?.gameObject ?? gameObject;
+        
+        if (sampleTarget != null)
+        {
+            try
+            {
+                // Sample the animation clip at this time
+                // This will apply the animation to the GameObject hierarchy
+                AnimationClip.SampleAnimation(sampleTarget, clip, time);
+                
+                // Extract bone transforms from the sampled hierarchy
+                ExtractBoneTransforms(sampleTarget, frame.boneTransforms);
+                
+                // Extract root motion if available
+                // Note: rootMotion is a delta, not absolute position
+                // For now, we'll store the current position/rotation
+                // A more sophisticated implementation would calculate the delta from the previous frame
+                frame.rootMotion = sampleTarget.transform.position;
+                frame.rootRotation = sampleTarget.transform.rotation;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[AnimationBehaviorTree.ExtractFrame] Error sampling animation at time {time}s: {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[AnimationBehaviorTree.ExtractFrame] No target GameObject found for sampling animation. " +
+                "Make sure the AnimationBehaviorTree component is on a GameObject with a RagdollSystem or use a sample target.");
+        }
+
+        Debug.Log($"[AnimationBehaviorTree.ExtractFrame] Extracted frame {frameIndex} at time {time}s (boneTransforms count: {frame.boneTransforms.Count})");
 
         return frame;
+    }
+
+    /// <summary>
+    /// Extract bone transforms from a GameObject hierarchy.
+    /// </summary>
+    private void ExtractBoneTransforms(GameObject root, Dictionary<string, TransformData> boneTransforms)
+    {
+        if (root == null || boneTransforms == null)
+            return;
+
+        // Get RagdollSystem to find bone mapping
+        RagdollSystem ragdoll = GetComponent<RagdollSystem>();
+        if (ragdoll == null)
+            ragdoll = root.GetComponent<RagdollSystem>();
+        
+        // If we have a ragdoll system, use its bone map
+        if (ragdoll != null)
+        {
+            BoneMap boneMap = ragdoll.GetComponent<BoneMap>();
+            if (boneMap != null)
+            {
+                // Extract transforms for all mapped bones
+                // This is a simplified implementation - would need to traverse bone map
+                ExtractTransformsRecursive(root.transform, boneTransforms);
+            }
+            else
+            {
+                // Fallback: extract all transforms
+                ExtractTransformsRecursive(root.transform, boneTransforms);
+            }
+        }
+        else
+        {
+            // No ragdoll system - extract all transforms
+            ExtractTransformsRecursive(root.transform, boneTransforms);
+        }
+    }
+
+    /// <summary>
+    /// Recursively extract transforms from a hierarchy.
+    /// </summary>
+    private void ExtractTransformsRecursive(Transform transform, Dictionary<string, TransformData> boneTransforms)
+    {
+        if (transform == null || boneTransforms == null)
+            return;
+
+        // Store this transform
+        string boneName = transform.name;
+        if (!boneTransforms.ContainsKey(boneName))
+        {
+            boneTransforms[boneName] = new TransformData
+            {
+                position = transform.localPosition,
+                rotation = transform.localRotation,
+                scale = transform.localScale
+            };
+        }
+
+        // Recursively process children
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            ExtractTransformsRecursive(transform.GetChild(i), boneTransforms);
+        }
     }
 
     /// <summary>
@@ -297,20 +457,29 @@ public class AnimationBehaviorTree : MonoBehaviour
     /// </summary>
     private void CreateBehaviorTreeStructure()
     {
+        Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Starting. allFrames: {(allFrames == null ? "null" : allFrames.Count.ToString())}, rootNode: {(rootNode == null ? "null" : rootNode.name)}");
+
         // Clear existing tree
         if (rootNode != null)
         {
+            Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Destroying existing root node: {rootNode.name}");
             DestroyImmediate(rootNode.gameObject);
             rootNode = null;
         }
 
         if (generatedTree != null)
         {
+            Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Clearing generatedTree.rootNode");
             generatedTree.rootNode = null;
         }
 
         if (allFrames == null || allFrames.Count == 0)
+        {
+            Debug.LogWarning($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] No frames to process! allFrames is {(allFrames == null ? "null" : "empty")}. Returning without creating tree structure.");
             return;
+        }
+
+        Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Creating root node with {allFrames.Count} frames...");
 
         // Create root node
         GameObject rootGO = new GameObject("AnimationRoot");
@@ -319,12 +488,20 @@ public class AnimationBehaviorTree : MonoBehaviour
         rootNode.nodeType = NodeType.Sequence;
         rootNode.rootBehaviorTree = this;
         rootNode.animationClip = animationClip;
+        Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Created root node: {rootNode.name}");
 
         // Create child nodes for each frame
+        int frameNodeCount = 0;
         foreach (var frame in allFrames)
         {
             if (frame == null || frame.isDropped)
+            {
+                if (frame != null && frame.isDropped)
+                {
+                    Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Skipping dropped frame {frame.frameIndex}");
+                }
                 continue;
+            }
 
             GameObject frameGO = new GameObject($"Frame_{frame.frameIndex}");
             frameGO.transform.SetParent(rootGO.transform);
@@ -343,10 +520,25 @@ public class AnimationBehaviorTree : MonoBehaviour
             if (ragdoll != null)
             {
                 frameNode.physicsCard = AnimationPhysicsCardGenerator.GenerateCardFromFrame(frame, ragdoll);
+                if (frameNode.physicsCard != null)
+                {
+                    Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Generated physics card for frame {frame.frameIndex}: {frameNode.physicsCard.sectionName}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Failed to generate physics card for frame {frame.frameIndex}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] No RagdollSystem found for frame {frame.frameIndex}");
             }
 
             rootNode.children.Add(frameNode);
+            frameNodeCount++;
         }
+
+        Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Created {frameNodeCount} frame nodes. Root node children count: {rootNode.children.Count}");
 
         // Set root node on behavior tree
         if (generatedTree == null)
@@ -354,11 +546,17 @@ public class AnimationBehaviorTree : MonoBehaviour
             generatedTree = GetComponent<BehaviorTree>();
             if (generatedTree == null)
             {
+                Debug.Log("[AnimationBehaviorTree.CreateBehaviorTreeStructure] Creating new BehaviorTree component");
                 generatedTree = gameObject.AddComponent<BehaviorTree>();
+            }
+            else
+            {
+                Debug.Log("[AnimationBehaviorTree.CreateBehaviorTreeStructure] Found existing BehaviorTree component");
             }
         }
 
         generatedTree.rootNode = rootNode;
+        Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Complete! Root node: {rootNode.name}, Generated tree root: {generatedTree.rootNode?.name ?? "null"}");
     }
 
     /// <summary>

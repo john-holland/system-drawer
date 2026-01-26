@@ -589,8 +589,8 @@ public class Consider : MonoBehaviour
                 muscleGroup = "Spinal",
                 activation = 0.7f,
                 duration = Mathf.Clamp(distance / 2f, 0.5f, 3f), // Duration based on distance
-                force = direction * 5f, // Apply force in direction of first waypoint
-                torque = Vector3.zero
+                forceDirection = direction, // Apply force in direction of first waypoint
+                torqueDirection = Vector3.zero
             };
 
             card.impulseStack = new List<ImpulseAction> { movementAction };
