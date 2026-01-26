@@ -17,6 +17,16 @@ public abstract class BehaviorTreeNode : MonoBehaviour
     [Tooltip("Current execution status")]
     public BehaviorTreeStatus status = BehaviorTreeStatus.Running;
 
+    [Header("Duration")]
+    [Tooltip("Estimated duration in seconds (calculated from cards)")]
+    public float estimatedDuration = 0f;
+
+    [Tooltip("Actual measured duration (runtime)")]
+    public float actualDuration = 0f;
+
+    [Tooltip("Use card-based duration estimation")]
+    public bool useCardEstimation = true;
+
     /// <summary>
     /// Execute this node.
     /// </summary>
@@ -47,6 +57,64 @@ public abstract class BehaviorTreeNode : MonoBehaviour
     public virtual void OnEnter(BehaviorTree tree) { }
     public virtual void OnExit(BehaviorTree tree) { }
     public virtual void OnUpdate(BehaviorTree tree) { }
+
+    /// <summary>
+    /// Estimate duration from available cards.
+    /// </summary>
+    public virtual float EstimateDurationFromCards(List<GoodSection> cards)
+    {
+        if (!useCardEstimation || cards == null || cards.Count == 0)
+            return estimatedDuration;
+
+        // Default implementation: sum durations of applicable cards
+        float totalDuration = 0f;
+        foreach (var card in cards)
+        {
+            if (card != null)
+            {
+                // Estimate from card's impulse actions
+                float cardDuration = 0f;
+                if (card.impulseStack != null)
+                {
+                    foreach (var action in card.impulseStack)
+                    {
+                        if (action != null && action.duration > 0f)
+                        {
+                            cardDuration += action.duration;
+                        }
+                        else if (action != null)
+                        {
+                            cardDuration += 0.1f; // Default duration for actions without explicit duration
+                        }
+                    }
+                }
+                totalDuration += cardDuration;
+            }
+        }
+
+        estimatedDuration = totalDuration;
+        return estimatedDuration;
+    }
+
+    /// <summary>
+    /// Calculate total duration including children.
+    /// </summary>
+    public virtual float CalculateDuration()
+    {
+        if (children == null || children.Count == 0)
+            return estimatedDuration;
+
+        float totalDuration = estimatedDuration;
+        foreach (var child in children)
+        {
+            if (child != null)
+            {
+                totalDuration += child.CalculateDuration();
+            }
+        }
+
+        return totalDuration;
+    }
 }
 
 /// <summary>
