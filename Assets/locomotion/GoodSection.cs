@@ -31,8 +31,12 @@ public class GoodSection
     public SectionLimits limits = new SectionLimits();
 
     [Header("Connections")]
-    [Tooltip("Other good sections reachable from this one")]
+    [Tooltip("Other good sections reachable from this one (use section names to avoid circular references)")]
+    [System.NonSerialized]
     public List<GoodSection> connectedSections = new List<GoodSection>();
+
+    [Tooltip("Names of connected sections (serialized to avoid circular references)")]
+    public List<string> connectedSectionNames = new List<string>();
 
     [Header("Behavior Tree")]
     [Tooltip("Associated behavior tree (optional)")]
@@ -284,6 +288,15 @@ public class GoodSection
         if (section != null && !connectedSections.Contains(section))
         {
             connectedSections.Add(section);
+            if (!string.IsNullOrEmpty(section.sectionName))
+            {
+                if (connectedSectionNames == null)
+                    connectedSectionNames = new List<string>();
+                if (!connectedSectionNames.Contains(section.sectionName))
+                {
+                    connectedSectionNames.Add(section.sectionName);
+                }
+            }
         }
     }
 
@@ -295,6 +308,53 @@ public class GoodSection
         if (section != null && connectedSections.Contains(section))
         {
             connectedSections.Remove(section);
+            if (!string.IsNullOrEmpty(section.sectionName))
+            {
+                connectedSectionNames.Remove(section.sectionName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Rebuild connected sections from names (call after deserialization).
+    /// </summary>
+    public void RebuildConnectionsFromNames(List<GoodSection> allSections)
+    {
+        if (allSections == null || connectedSectionNames == null)
+            return;
+
+        connectedSections.Clear();
+        foreach (var name in connectedSectionNames)
+        {
+            if (string.IsNullOrEmpty(name))
+                continue;
+
+            var section = allSections.Find(s => s != null && s.sectionName == name);
+            if (section != null && !connectedSections.Contains(section))
+            {
+                connectedSections.Add(section);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Update connected section names from current connections.
+    /// </summary>
+    public void UpdateConnectedSectionNames()
+    {
+        if (connectedSectionNames == null)
+            connectedSectionNames = new List<string>();
+
+        connectedSectionNames.Clear();
+        foreach (var section in connectedSections)
+        {
+            if (section != null && !string.IsNullOrEmpty(section.sectionName))
+            {
+                if (!connectedSectionNames.Contains(section.sectionName))
+                {
+                    connectedSectionNames.Add(section.sectionName);
+                }
+            }
         }
     }
 }

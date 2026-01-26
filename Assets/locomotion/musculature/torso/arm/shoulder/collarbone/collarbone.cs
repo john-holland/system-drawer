@@ -1,25 +1,22 @@
-// a large cratling bone at one end connected to the elbo, and a rotating 6 DOF 170 degrees limited ball joint
-// the upper arm is mostly concerned with lowering and raising the forearm, 
-//   but it also has some shoulder connective tissue / operating muscle at the top
-//
-// the muscles that move the upper arm are the chest, shoulder (trap and top shoulder and front shoulder (names?)), 
-//    and back muscles
+// the collarbone (clavicle) connects the neck to the shoulder
+// it provides structural support and allows the shoulder to move independently
+// the collarbone is a long bone that runs horizontally from the neck to the shoulder
 
 using UnityEngine;
 
 namespace Locomotion.Musculature
 {
-    public sealed class RagdollUpperarm : RagdollSidedBodyPart
+    public sealed class RagdollCollarbone : RagdollSidedBodyPart
     {
-        [Header("Upperarm Properties")]
-        [Tooltip("Reference to the shoulder component above this upper arm")]
+        [Header("Collarbone Properties")]
+        [Tooltip("Reference to the neck component above this collarbone")]
+        public RagdollNeck neck;
+
+        [Tooltip("Reference to the shoulder component below this collarbone")]
         public RagdollShoulder shoulder;
 
-        [Tooltip("Reference to the elbow component below this upper arm")]
-        public RagdollElbow elbow;
-
         [Header("Auto-Join Options")]
-        [Tooltip("If true, auto-creates shoulder GameObject if missing, placing it halfway between torso and elbow")]
+        [Tooltip("If true, auto-creates shoulder GameObject if missing, placing it halfway between collarbone and upper arm")]
         public bool autoCreateShoulder = false;
 
         private void Awake()
@@ -31,56 +28,52 @@ namespace Locomotion.Musculature
         }
 
         /// <summary>
-        /// Auto-create shoulder GameObject halfway between torso and elbow.
+        /// Auto-create shoulder GameObject halfway between collarbone and upper arm.
         /// </summary>
         private void AutoCreateShoulder()
         {
-            // Find torso (chest/spine) and elbow positions
-            Transform torsoTransform = null;
-            Transform elbowTransform = null;
-
-            // Find torso - this is the shoulder connection point
-            RagdollTorso torso = GetComponentInParent<RagdollTorso>();
-            if (torso != null)
+            // Find neck position
+            Transform neckTransform = null;
+            if (neck != null)
             {
-                torsoTransform = torso.PrimaryBoneTransform;
+                neckTransform = neck.PrimaryBoneTransform;
             }
             else
             {
-                // Try to find torso by name
+                // Try to find neck by name
                 Transform root = transform.root;
-                torsoTransform = FindBoneByName(root, new[] { "spine", "chest", "torso" }, null);
+                neckTransform = FindBoneByName(root, new[] { "neck" }, null);
             }
 
-            // Find elbow
-            if (elbow != null)
+            // Find upper arm position (to determine shoulder placement)
+            Transform upperarmTransform = null;
+            RagdollUpperarm upperarm = GetComponentInParent<RagdollUpperarm>();
+            if (upperarm != null)
             {
-                elbowTransform = elbow.PrimaryBoneTransform;
+                upperarmTransform = upperarm.PrimaryBoneTransform;
             }
             else
             {
-                // Try to find elbow by name
+                // Try to find upper arm by name
                 Transform root = transform.root;
-                elbowTransform = FindBoneByName(root, new[] { "elbow" }, side);
+                upperarmTransform = FindBoneByName(root, new[] { "upperarm", "upper_arm", "arm" }, side);
             }
 
-            if (torsoTransform == null || elbowTransform == null)
+            if (neckTransform == null || upperarmTransform == null)
             {
-                Debug.LogWarning($"[RagdollUpperarm] Cannot auto-create shoulder: missing torso or elbow reference. Torso: {torsoTransform != null}, Elbow: {elbowTransform != null}");
+                Debug.LogWarning($"[RagdollCollarbone] Cannot auto-create shoulder: missing neck or upper arm reference. Neck: {neckTransform != null}, Upper Arm: {upperarmTransform != null}");
                 return;
             }
 
-            // Create shoulder GameObject halfway between torso and elbow
-            Vector3 torsoPos = torsoTransform.position;
-            Vector3 elbowPos = elbowTransform.position;
-            Vector3 shoulderPos = (torsoPos + elbowPos) * 0.5f;
+            // Create shoulder GameObject halfway between collarbone and upper arm
+            Vector3 collarbonePos = PrimaryBoneTransform.position;
+            Vector3 upperarmPos = upperarmTransform.position;
+            Vector3 shoulderPos = (collarbonePos + upperarmPos) * 0.5f;
 
-            // Determine parent - prefer upper arm's parent, or torso if available
+            // Determine parent - prefer collarbone's parent
             Transform parentTransform = transform.parent;
-            if (torso != null && torso.transform != null)
-            {
-                parentTransform = torso.transform.parent ?? transform.parent;
-            }
+            if (parentTransform == null && transform.root != null)
+                parentTransform = transform.root;
 
             GameObject shoulderObj = new GameObject($"{side}_Shoulder_Auto");
             shoulderObj.transform.position = shoulderPos;
@@ -89,14 +82,14 @@ namespace Locomotion.Musculature
             // Add RagdollShoulder component
             RagdollShoulder shoulderComponent = shoulderObj.AddComponent<RagdollShoulder>();
             shoulderComponent.side = side;
-            shoulderComponent.upperarm = this;
-            if (elbow != null)
+            shoulderComponent.collarbone = this;
+            if (upperarm != null)
             {
-                shoulderComponent.elbow = elbow;
+                shoulderComponent.upperarm = upperarm;
             }
             shoulder = shoulderComponent;
 
-            Debug.Log($"[RagdollUpperarm] Auto-created shoulder GameObject at position {shoulderPos} for {side} arm");
+            Debug.Log($"[RagdollCollarbone] Auto-created shoulder GameObject at position {shoulderPos} for {side} arm");
         }
 
         /// <summary>

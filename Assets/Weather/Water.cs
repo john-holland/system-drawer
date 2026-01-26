@@ -54,8 +54,14 @@ namespace Weather
         [Tooltip("Terrain for height map calculations (optional)")]
         public Terrain terrain;
 
+        [Tooltip("Mesh terrain sampler for height calculations (optional, used if terrain is null)")]
+        public MeshTerrainSampler meshTerrainSampler;
+
         [Tooltip("Auto-find terrain in scene if not assigned")]
         public bool autoFindTerrain = true;
+
+        [Tooltip("Auto-find mesh terrain sampler if not assigned")]
+        public bool autoFindMeshTerrainSampler = true;
 
         [Tooltip("Height multiplier for terrain heights")]
         public float terrainHeightMultiplier = 1f;
@@ -74,6 +80,11 @@ namespace Weather
             if (autoFindTerrain && terrain == null)
             {
                 terrain = FindObjectOfType<Terrain>();
+            }
+
+            if (autoFindMeshTerrainSampler && meshTerrainSampler == null && terrain == null)
+            {
+                meshTerrainSampler = FindObjectOfType<MeshTerrainSampler>();
             }
         }
 
@@ -105,19 +116,8 @@ namespace Weather
         /// </summary>
         public float GetWaterLevelAt(Vector3 position)
         {
-            if (terrain != null && terrain.terrainData != null)
-            {
-                // Get terrain height at world position
-                float terrainHeight = terrain.SampleHeight(position);
-                
-                // Apply height multiplier
-                terrainHeight *= terrainHeightMultiplier;
-                
-                // Return terrain height plus base water level
-                return terrainHeight + waterLevel;
-            }
-
-            return waterLevel;
+            float terrainHeight = GetTerrainHeightAt(position);
+            return terrainHeight + waterLevel;
         }
 
         /// <summary>
@@ -125,10 +125,18 @@ namespace Weather
         /// </summary>
         public float GetTerrainHeightAt(Vector3 position)
         {
+            // Try Unity Terrain first
             if (terrain != null && terrain.terrainData != null)
             {
                 float terrainHeight = terrain.SampleHeight(position);
                 return terrainHeight * terrainHeightMultiplier;
+            }
+
+            // Fallback to mesh terrain sampler
+            if (meshTerrainSampler != null)
+            {
+                float meshHeight = meshTerrainSampler.SampleHeight(position);
+                return meshHeight * terrainHeightMultiplier;
             }
 
             return 0f;
@@ -139,15 +147,24 @@ namespace Weather
         /// </summary>
         public bool IsPositionInTerrain(Vector3 position)
         {
-            if (terrain == null || terrain.terrainData == null)
-                return false;
+            // Try Unity Terrain first
+            if (terrain != null && terrain.terrainData != null)
+            {
+                TerrainData terrainData = terrain.terrainData;
+                Vector3 terrainPos = terrain.transform.position;
+                
+                // Check if position is within terrain bounds
+                return position.x >= terrainPos.x && position.x <= terrainPos.x + terrainData.size.x &&
+                       position.z >= terrainPos.z && position.z <= terrainPos.z + terrainData.size.z;
+            }
 
-            TerrainData terrainData = terrain.terrainData;
-            Vector3 terrainPos = terrain.transform.position;
-            
-            // Check if position is within terrain bounds
-            return position.x >= terrainPos.x && position.x <= terrainPos.x + terrainData.size.x &&
-                   position.z >= terrainPos.z && position.z <= terrainPos.z + terrainData.size.z;
+            // Fallback to mesh terrain sampler
+            if (meshTerrainSampler != null)
+            {
+                return meshTerrainSampler.IsPositionInBounds(position);
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -261,6 +278,16 @@ namespace Weather
                     terrainPos + terrainSize * 0.5f,
                     terrainSize
                 );
+            }
+            else if (meshTerrainSampler != null)
+            {
+                // Draw mesh terrain bounds
+                Bounds? bounds = meshTerrainSampler.GetMeshBounds(meshTerrainSampler.meshTerrain);
+                if (bounds.HasValue)
+                {
+                    Gizmos.color = waterColor;
+                    Gizmos.DrawWireCube(bounds.Value.center, bounds.Value.size);
+                }
             }
 
             // Water level plane

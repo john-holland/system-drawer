@@ -233,9 +233,45 @@ namespace Locomotion.Narrative.Serialization
         {
 #if UNITY_EDITOR
             if (asset == null) return null;
-            string path = AssetDatabase.GetAssetPath(asset);
-            if (string.IsNullOrEmpty(path)) return null;
-            return AssetDatabase.AssetPathToGUID(path);
+            
+            // For MonoBehaviour components, get the prefab path
+            if (asset is MonoBehaviour mb)
+            {
+                // Check if it's a prefab asset
+                if (PrefabUtility.IsPartOfPrefabAsset(mb))
+                {
+                    string path = AssetDatabase.GetAssetPath(mb);
+                    if (!string.IsNullOrEmpty(path))
+                        return AssetDatabase.AssetPathToGUID(path);
+                }
+                // Check if it's a prefab instance
+                else if (PrefabUtility.IsPartOfPrefabInstance(mb))
+                {
+                    GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(mb.gameObject);
+                    if (prefab != null)
+                    {
+                        string path = AssetDatabase.GetAssetPath(prefab);
+                        if (!string.IsNullOrEmpty(path))
+                            return AssetDatabase.AssetPathToGUID(path);
+                    }
+                }
+                // Scene object - get the scene path
+                else
+                {
+                    string scenePath = mb.gameObject.scene.path;
+                    if (!string.IsNullOrEmpty(scenePath))
+                        return AssetDatabase.AssetPathToGUID(scenePath);
+                }
+            }
+            else
+            {
+                // ScriptableObject or other asset
+                string path = AssetDatabase.GetAssetPath(asset);
+                if (!string.IsNullOrEmpty(path))
+                    return AssetDatabase.AssetPathToGUID(path);
+            }
+            
+            return null;
 #else
             return null;
 #endif

@@ -3,7 +3,9 @@
   "rootNamespace": "",
   "references": [
     "Locomotion.Narrative.Runtime",
-    "Locomotion.Narrative.Serialization"
+    "Locomotion.Narrative.Serialization",
+    "Locomotion.Runtime",
+    "HierarchicalPathFinding"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

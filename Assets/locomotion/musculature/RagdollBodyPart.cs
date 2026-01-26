@@ -306,6 +306,163 @@ namespace Locomotion.Musculature
 
             return result;
         }
+
+        [Header("Gizmo Settings")]
+        [Tooltip("Show radial limits gizmo in scene view")]
+        public bool showRadialLimitsGizmo = true;
+
+        [Tooltip("Gizmo color for radial limits")]
+        public Color gizmoColor = new Color(0f, 1f, 1f, 0.3f); // Cyan with transparency
+
+        [Tooltip("Gizmo size scale")]
+        public float gizmoSize = 0.5f;
+
+        /// <summary>
+        /// Get radial limits from associated cards or establish from GameObject.
+        /// </summary>
+        private SectionLimits GetRadialLimits()
+        {
+            // First, try to find limits from associated cards
+            var cards = QueryCards();
+            foreach (var card in cards)
+            {
+                if (card?.limits != null && card.limits.useRadialLimits)
+                {
+                    return card.limits;
+                }
+            }
+
+            // If no limits found, establish them from this GameObject
+            SectionLimits limits = new SectionLimits();
+            limits.EstablishLimitsFromGameObject(gameObject);
+            return limits;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (!showRadialLimitsGizmo)
+                return;
+
+            SectionLimits limits = GetRadialLimits();
+            if (!limits.useRadialLimits)
+                return;
+
+            Transform bone = PrimaryBoneTransform;
+            if (bone == null)
+                return;
+
+            Vector3 position = limits.radialReferencePosition != Vector3.zero 
+                ? limits.radialReferencePosition 
+                : bone.position;
+
+            Vector3 currentEuler = bone.rotation.eulerAngles;
+            Vector3 lower = limits.lowerRadialReferenceRotation;
+            Vector3 upper = limits.upperRadialReferenceRotation;
+
+            // Normalize angles
+            lower = NormalizeEuler(lower);
+            upper = NormalizeEuler(upper);
+            currentEuler = NormalizeEuler(currentEuler);
+
+            // Draw position sphere
+            Gizmos.color = gizmoColor;
+            if (limits.maxRadialDistance > 0f)
+            {
+                Gizmos.DrawWireSphere(position, limits.maxRadialDistance);
+            }
+
+            // Draw rotation arcs for each axis
+            float arcRadius = gizmoSize;
+            int segments = 32;
+
+            // X axis (pitch) - draw as arc in YZ plane
+            if (lower.x != 0f || upper.x != 0f)
+            {
+                DrawRotationArc(position, bone.forward, bone.up, lower.x, upper.x, arcRadius, segments, Color.red);
+            }
+
+            // Y axis (yaw) - draw as arc in XZ plane
+            if (lower.y != 0f || upper.y != 0f)
+            {
+                DrawRotationArc(position, bone.right, bone.forward, lower.y, upper.y, arcRadius, segments, Color.green);
+            }
+
+            // Z axis (roll) - draw as arc in XY plane
+            if (lower.z != 0f || upper.z != 0f)
+            {
+                DrawRotationArc(position, bone.up, bone.right, lower.z, upper.z, arcRadius, segments, Color.blue);
+            }
+
+            // Draw current rotation indicator
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(position, position + bone.forward * arcRadius * 1.2f);
+        }
+
+        /// <summary>
+        /// Draw a rotation arc showing the range of rotation.
+        /// </summary>
+        private void DrawRotationArc(Vector3 center, Vector3 forward, Vector3 up, float lowerAngle, float upperAngle, float radius, int segments, Color color)
+        {
+            if (lowerAngle == 0f && upperAngle == 0f)
+                return;
+
+            Gizmos.color = color;
+
+            // Calculate start and end directions
+            Quaternion lowerRot = Quaternion.AngleAxis(lowerAngle, up);
+            Quaternion upperRot = Quaternion.AngleAxis(upperAngle, up);
+
+            Vector3 startDir = lowerRot * forward;
+            Vector3 endDir = upperRot * forward;
+
+            // Draw arc
+            Vector3 prevPoint = center + startDir * radius;
+            float angleRange = upperAngle - lowerAngle;
+
+            // Handle wraparound
+            if (angleRange < 0f)
+                angleRange += 360f;
+
+            for (int i = 1; i <= segments; i++)
+            {
+                float t = (float)i / segments;
+                float angle = lowerAngle + angleRange * t;
+                Quaternion rot = Quaternion.AngleAxis(angle, up);
+                Vector3 dir = rot * forward;
+                Vector3 point = center + dir * radius;
+
+                Gizmos.DrawLine(prevPoint, point);
+                prevPoint = point;
+            }
+
+            // Draw limit indicators
+            Gizmos.color = color * 0.5f;
+            Gizmos.DrawLine(center, center + startDir * radius);
+            Gizmos.DrawLine(center, center + endDir * radius);
+        }
+
+        /// <summary>
+        /// Normalize Euler angles to 0-360 range.
+        /// </summary>
+        private Vector3 NormalizeEuler(Vector3 euler)
+        {
+            return new Vector3(
+                NormalizeAngle(euler.x),
+                NormalizeAngle(euler.y),
+                NormalizeAngle(euler.z)
+            );
+        }
+
+        /// <summary>
+        /// Normalize a single angle to 0-360 range.
+        /// </summary>
+        private float NormalizeAngle(float angle)
+        {
+            angle = angle % 360f;
+            if (angle < 0f)
+                angle += 360f;
+            return angle;
+        }
     }
 
     public abstract class RagdollSidedBodyPart : RagdollBodyPart

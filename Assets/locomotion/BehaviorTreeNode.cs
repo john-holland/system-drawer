@@ -5,7 +5,7 @@ using UnityEngine;
 /// Base class for behavior tree nodes.
 /// Supports Sequence, Selector, Condition, Action, and Decorator node types.
 /// </summary>
-public abstract class BehaviorTreeNode
+public abstract class BehaviorTreeNode : MonoBehaviour
 {
     [Header("Node Properties")]
     [Tooltip("Type of this node")]

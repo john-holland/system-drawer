@@ -8,5 +8,11 @@ namespace Locomotion.Musculature
 {
     public sealed class RagdollNeck : RagdollBodyPart
     {
+        [Header("Neck Properties")]
+        [Tooltip("Reference to the left collarbone component")]
+        public RagdollCollarbone leftCollarbone;
+
+        [Tooltip("Reference to the right collarbone component")]
+        public RagdollCollarbone rightCollarbone;
     }
 }

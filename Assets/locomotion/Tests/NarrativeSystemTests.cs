@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using NUnit.Framework;
+using UnityEngine;
 using Locomotion.Narrative;
 using Locomotion.Narrative.Serialization;
 
@@ -20,7 +21,8 @@ public class NarrativeSystemTests
     [Test]
     public void NarrativeCalendar_JsonRoundTrip_DtoParity()
     {
-        var cal = UnityEngine.ScriptableObject.CreateInstance<NarrativeCalendarAsset>();
+        var go1 = new GameObject("TestCalendar");
+        var cal = go1.AddComponent<NarrativeCalendarAsset>();
         cal.events.Add(new NarrativeCalendarEvent
         {
             title = "make apple pie",
@@ -37,12 +39,15 @@ public class NarrativeSystemTests
         Assert.AreEqual(2025, dto.events[0].startDateTime.year);
         Assert.AreEqual(2, dto.events[0].startDateTime.month);
         Assert.AreEqual(1, dto.events[0].startDateTime.day);
+        
+        UnityEngine.Object.DestroyImmediate(go1);
     }
 
     [Test]
     public void NarrativeCalendar_YamlRoundTrip_DtoParity()
     {
-        var cal = UnityEngine.ScriptableObject.CreateInstance<NarrativeCalendarAsset>();
+        var go2 = new GameObject("TestCalendar");
+        var cal = go2.AddComponent<NarrativeCalendarAsset>();
         cal.events.Add(new NarrativeCalendarEvent
         {
             title = "friend drops by",
@@ -56,6 +61,8 @@ public class NarrativeSystemTests
         Assert.NotNull(dto);
         Assert.AreEqual(1, dto.events.Count);
         Assert.AreEqual("friend drops by", dto.events[0].title);
+        
+        UnityEngine.Object.DestroyImmediate(go2);
     }
 }
 #endif

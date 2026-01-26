@@ -45,10 +45,16 @@ public class RagdollSystem : MonoBehaviour
     [Header("Auto-wired Anatomy (cached)")]
     public RagdollHand leftHandComponent;
     public RagdollHand rightHandComponent;
-    public RagdollForearm leftForearmComponent;
-    public RagdollForearm rightForearmComponent;
+    public RagdollCollarbone leftCollarboneComponent;
+    public RagdollCollarbone rightCollarboneComponent;
+    public RagdollShoulder leftShoulderComponent;
+    public RagdollShoulder rightShoulderComponent;
     public RagdollUpperarm leftUpperarmComponent;
     public RagdollUpperarm rightUpperarmComponent;
+    public RagdollElbow leftElbowComponent;
+    public RagdollElbow rightElbowComponent;
+    public RagdollForearm leftForearmComponent;
+    public RagdollForearm rightForearmComponent;
     public RagdollHead headComponent;
     public RagdollNeck neckComponent;
     public RagdollPelvis pelvisComponent;
@@ -57,6 +63,8 @@ public class RagdollSystem : MonoBehaviour
     public RagdollLeg rightLegComponent;
     public RagdollKnee leftKneeComponent;
     public RagdollKnee rightKneeComponent;
+    public RagdollShin leftShinComponent;
+    public RagdollShin rightShinComponent;
     public RagdollFoot leftFootComponent;
     public RagdollFoot rightFootComponent;
 
@@ -312,6 +320,31 @@ public class RagdollSystem : MonoBehaviour
         return list;
     }
 
+    public RagdollElbow FindOrAddElbow(BodySide side)
+    {
+        var t = ResolveBone("Elbow", side);
+        if (t == null) return null;
+
+        var c = t.GetComponent<RagdollElbow>();
+        if (c == null) c = t.gameObject.AddComponent<RagdollElbow>();
+        c.side = side;
+
+        if (side == BodySide.Left) leftElbowComponent = c;
+        else rightElbowComponent = c;
+
+        return c;
+    }
+
+    public List<RagdollElbow> FindOrAddElbows()
+    {
+        var list = new List<RagdollElbow>(2);
+        var l = FindOrAddElbow(BodySide.Left);
+        if (l != null) list.Add(l);
+        var r = FindOrAddElbow(BodySide.Right);
+        if (r != null) list.Add(r);
+        return list;
+    }
+
     public RagdollForearm FindOrAddForearm(BodySide side)
     {
         var t = ResolveBone("Forearm", side);
@@ -325,6 +358,56 @@ public class RagdollSystem : MonoBehaviour
         else rightForearmComponent = c;
 
         return c;
+    }
+
+    public RagdollCollarbone FindOrAddCollarbone(BodySide side)
+    {
+        var t = ResolveBone("Collarbone", side);
+        if (t == null) return null;
+
+        var c = t.GetComponent<RagdollCollarbone>();
+        if (c == null) c = t.gameObject.AddComponent<RagdollCollarbone>();
+        c.side = side;
+
+        if (side == BodySide.Left) leftCollarboneComponent = c;
+        else rightCollarboneComponent = c;
+
+        return c;
+    }
+
+    public List<RagdollCollarbone> FindOrAddCollarbones()
+    {
+        var list = new List<RagdollCollarbone>(2);
+        var l = FindOrAddCollarbone(BodySide.Left);
+        if (l != null) list.Add(l);
+        var r = FindOrAddCollarbone(BodySide.Right);
+        if (r != null) list.Add(r);
+        return list;
+    }
+
+    public RagdollShoulder FindOrAddShoulder(BodySide side)
+    {
+        var t = ResolveBone("Shoulder", side);
+        if (t == null) return null;
+
+        var c = t.GetComponent<RagdollShoulder>();
+        if (c == null) c = t.gameObject.AddComponent<RagdollShoulder>();
+        c.side = side;
+
+        if (side == BodySide.Left) leftShoulderComponent = c;
+        else rightShoulderComponent = c;
+
+        return c;
+    }
+
+    public List<RagdollShoulder> FindOrAddShoulders()
+    {
+        var list = new List<RagdollShoulder>(2);
+        var l = FindOrAddShoulder(BodySide.Left);
+        if (l != null) list.Add(l);
+        var r = FindOrAddShoulder(BodySide.Right);
+        if (r != null) list.Add(r);
+        return list;
     }
 
     public RagdollUpperarm FindOrAddUpperarm(BodySide side)
@@ -416,6 +499,77 @@ public class RagdollSystem : MonoBehaviour
         return c;
     }
 
+    public RagdollShin FindOrAddShin(BodySide side)
+    {
+        var t = ResolveBone("Shin", side);
+        if (t == null) return null;
+
+        var c = t.GetComponent<RagdollShin>();
+        if (c == null) c = t.gameObject.AddComponent<RagdollShin>();
+        c.side = side;
+
+        if (side == BodySide.Left) leftShinComponent = c;
+        else rightShinComponent = c;
+
+        return c;
+    }
+
+    public List<RagdollShin> FindOrAddShins()
+    {
+        var list = new List<RagdollShin>(2);
+        var l = FindOrAddShin(BodySide.Left);
+        if (l != null) list.Add(l);
+        var r = FindOrAddShin(BodySide.Right);
+        if (r != null) list.Add(r);
+        return list;
+    }
+
+    /// <summary>
+    /// Create shin GameObject if missing, completing the tree map between knee and foot.
+    /// </summary>
+    public RagdollShin CreateShinIfMissing(BodySide side)
+    {
+        // Check if shin already exists
+        var existing = side == BodySide.Left ? leftShinComponent : rightShinComponent;
+        if (existing != null) return existing;
+
+        // Get knee and foot references
+        var knee = side == BodySide.Left ? leftKneeComponent : rightKneeComponent;
+        var foot = side == BodySide.Left ? leftFootComponent : rightFootComponent;
+
+        if (knee == null || foot == null)
+        {
+            Debug.LogWarning($"[RagdollSystem] Cannot create shin for {side} leg: missing knee or foot component");
+            return null;
+        }
+
+        // Create shin GameObject halfway between knee and foot
+        Vector3 kneePos = knee.PrimaryBoneTransform.position;
+        Vector3 footPos = foot.PrimaryBoneTransform.position;
+        Vector3 shinPos = (kneePos + footPos) * 0.5f;
+
+        // Determine parent - prefer knee's parent
+        Transform parentTransform = knee.transform.parent ?? foot.transform.parent;
+        if (parentTransform == null && ragdollRoot != null)
+            parentTransform = ragdollRoot;
+
+        GameObject shinObj = new GameObject($"{side}_Shin");
+        shinObj.transform.position = shinPos;
+        shinObj.transform.SetParent(parentTransform, worldPositionStays: true);
+
+        // Add RagdollShin component
+        RagdollShin shinComponent = shinObj.AddComponent<RagdollShin>();
+        shinComponent.side = side;
+        shinComponent.knee = knee;
+        shinComponent.foot = foot;
+
+        if (side == BodySide.Left) leftShinComponent = shinComponent;
+        else rightShinComponent = shinComponent;
+
+        Debug.Log($"[RagdollSystem] Created shin GameObject at position {shinPos} for {side} leg");
+        return shinComponent;
+    }
+
     public RagdollFoot FindOrAddFoot(BodySide side)
     {
         var t = ResolveBone("Foot", side);
@@ -459,17 +613,32 @@ public class RagdollSystem : MonoBehaviour
         FindOrAddNeck();
         FindOrAddHead();
 
+        FindOrAddCollarbone(BodySide.Left);
+        FindOrAddCollarbone(BodySide.Right);
+        FindOrAddShoulder(BodySide.Left);
+        FindOrAddShoulder(BodySide.Right);
         FindOrAddUpperarm(BodySide.Left);
         FindOrAddUpperarm(BodySide.Right);
+        FindOrAddElbow(BodySide.Left);
+        FindOrAddElbow(BodySide.Right);
         FindOrAddForearm(BodySide.Left);
         FindOrAddForearm(BodySide.Right);
         FindOrAddHands();
+
+        // Auto-link arm components
+        AutoLinkCollarbones();
+        AutoLinkShoulders();
+        AutoLinkForearms();
 
         FindOrAddLeg(BodySide.Left);
         FindOrAddLeg(BodySide.Right);
         FindOrAddKnee(BodySide.Left);
         FindOrAddKnee(BodySide.Right);
+        FindOrAddShins();
         FindOrAddFeet();
+
+        // Auto-link shin components
+        AutoLinkShins();
 
         Debug.Log(
             "[RagdollSystem] Validation complete:\n" +
@@ -477,13 +646,178 @@ public class RagdollSystem : MonoBehaviour
             $"Torso: {torsoComponent?.name ?? "(null)"}\n" +
             $"Neck: {neckComponent?.name ?? "(null)"}\n" +
             $"Head: {headComponent?.name ?? "(null)"}\n" +
+            $"Collarbone L/R: {leftCollarboneComponent?.name ?? "(null)"} / {rightCollarboneComponent?.name ?? "(null)"}\n" +
+            $"Shoulder L/R: {leftShoulderComponent?.name ?? "(null)"} / {rightShoulderComponent?.name ?? "(null)"}\n" +
             $"Upperarm L/R: {leftUpperarmComponent?.name ?? "(null)"} / {rightUpperarmComponent?.name ?? "(null)"}\n" +
+            $"Elbow L/R: {leftElbowComponent?.name ?? "(null)"} / {rightElbowComponent?.name ?? "(null)"}\n" +
             $"Forearm L/R: {leftForearmComponent?.name ?? "(null)"} / {rightForearmComponent?.name ?? "(null)"}\n" +
             $"Hand L/R: {leftHandComponent?.name ?? "(null)"} / {rightHandComponent?.name ?? "(null)"}\n" +
             $"Leg L/R: {leftLegComponent?.name ?? "(null)"} / {rightLegComponent?.name ?? "(null)"}\n" +
             $"Knee L/R: {leftKneeComponent?.name ?? "(null)"} / {rightKneeComponent?.name ?? "(null)"}\n" +
+            $"Shin L/R: {leftShinComponent?.name ?? "(null)"} / {rightShinComponent?.name ?? "(null)"}\n" +
             $"Foot L/R: {leftFootComponent?.name ?? "(null)"} / {rightFootComponent?.name ?? "(null)"}",
             this);
+    }
+
+    /// <summary>
+    /// Auto-link shin components to their knee and foot components.
+    /// </summary>
+    private void AutoLinkShins()
+    {
+        if (leftShinComponent != null)
+        {
+            if (leftShinComponent.knee == null && leftKneeComponent != null)
+                leftShinComponent.knee = leftKneeComponent;
+            if (leftShinComponent.foot == null && leftFootComponent != null)
+                leftShinComponent.foot = leftFootComponent;
+        }
+
+        if (rightShinComponent != null)
+        {
+            if (rightShinComponent.knee == null && rightKneeComponent != null)
+                rightShinComponent.knee = rightKneeComponent;
+            if (rightShinComponent.foot == null && rightFootComponent != null)
+                rightShinComponent.foot = rightFootComponent;
+        }
+
+        // Also link knee components to their shin components
+        if (leftKneeComponent != null)
+        {
+            if (leftKneeComponent.shin == null && leftShinComponent != null)
+                leftKneeComponent.shin = leftShinComponent;
+            if (leftKneeComponent.foot == null && leftFootComponent != null)
+                leftKneeComponent.foot = leftFootComponent;
+        }
+
+        if (rightKneeComponent != null)
+        {
+            if (rightKneeComponent.shin == null && rightShinComponent != null)
+                rightKneeComponent.shin = rightShinComponent;
+            if (rightKneeComponent.foot == null && rightFootComponent != null)
+                rightKneeComponent.foot = rightFootComponent;
+        }
+    }
+
+    /// <summary>
+    /// Auto-link collarbone components to their neck and shoulder components.
+    /// </summary>
+    private void AutoLinkCollarbones()
+    {
+        if (leftCollarboneComponent != null)
+        {
+            if (leftCollarboneComponent.neck == null && neckComponent != null)
+                leftCollarboneComponent.neck = neckComponent;
+            if (leftCollarboneComponent.shoulder == null && leftShoulderComponent != null)
+                leftCollarboneComponent.shoulder = leftShoulderComponent;
+        }
+
+        if (rightCollarboneComponent != null)
+        {
+            if (rightCollarboneComponent.neck == null && neckComponent != null)
+                rightCollarboneComponent.neck = neckComponent;
+            if (rightCollarboneComponent.shoulder == null && rightShoulderComponent != null)
+                rightCollarboneComponent.shoulder = rightShoulderComponent;
+        }
+
+        // Link shoulders to collarbones
+        if (leftShoulderComponent != null)
+        {
+            if (leftShoulderComponent.collarbone == null && leftCollarboneComponent != null)
+                leftShoulderComponent.collarbone = leftCollarboneComponent;
+        }
+
+        if (rightShoulderComponent != null)
+        {
+            if (rightShoulderComponent.collarbone == null && rightCollarboneComponent != null)
+                rightShoulderComponent.collarbone = rightCollarboneComponent;
+        }
+
+        // Link neck to collarbones
+        if (neckComponent != null)
+        {
+            if (neckComponent.leftCollarbone == null && leftCollarboneComponent != null)
+                neckComponent.leftCollarbone = leftCollarboneComponent;
+            if (neckComponent.rightCollarbone == null && rightCollarboneComponent != null)
+                neckComponent.rightCollarbone = rightCollarboneComponent;
+        }
+    }
+
+    /// <summary>
+    /// Auto-link shoulder components to their upper arm components.
+    /// </summary>
+    private void AutoLinkShoulders()
+    {
+        if (leftShoulderComponent != null)
+        {
+            if (leftShoulderComponent.upperarm == null && leftUpperarmComponent != null)
+                leftShoulderComponent.upperarm = leftUpperarmComponent;
+            if (leftShoulderComponent.elbow == null && leftElbowComponent != null)
+                leftShoulderComponent.elbow = leftElbowComponent;
+        }
+
+        if (rightShoulderComponent != null)
+        {
+            if (rightShoulderComponent.upperarm == null && rightUpperarmComponent != null)
+                rightShoulderComponent.upperarm = rightUpperarmComponent;
+            if (rightShoulderComponent.elbow == null && rightElbowComponent != null)
+                rightShoulderComponent.elbow = rightElbowComponent;
+        }
+
+        // Also link upper arm components to their shoulder components
+        if (leftUpperarmComponent != null)
+        {
+            if (leftUpperarmComponent.shoulder == null && leftShoulderComponent != null)
+                leftUpperarmComponent.shoulder = leftShoulderComponent;
+            if (leftUpperarmComponent.elbow == null && leftElbowComponent != null)
+                leftUpperarmComponent.elbow = leftElbowComponent;
+        }
+
+        if (rightUpperarmComponent != null)
+        {
+            if (rightUpperarmComponent.shoulder == null && rightShoulderComponent != null)
+                rightUpperarmComponent.shoulder = rightShoulderComponent;
+            if (rightUpperarmComponent.elbow == null && rightElbowComponent != null)
+                rightUpperarmComponent.elbow = rightElbowComponent;
+        }
+    }
+
+    /// <summary>
+    /// Auto-link forearm components to their elbow and hand components.
+    /// </summary>
+    private void AutoLinkForearms()
+    {
+        if (leftForearmComponent != null)
+        {
+            if (leftForearmComponent.elbow == null && leftElbowComponent != null)
+                leftForearmComponent.elbow = leftElbowComponent;
+            if (leftForearmComponent.hand == null && leftHandComponent != null)
+                leftForearmComponent.hand = leftHandComponent;
+        }
+
+        if (rightForearmComponent != null)
+        {
+            if (rightForearmComponent.elbow == null && rightElbowComponent != null)
+                rightForearmComponent.elbow = rightElbowComponent;
+            if (rightForearmComponent.hand == null && rightHandComponent != null)
+                rightForearmComponent.hand = rightHandComponent;
+        }
+
+        // Also link elbow components to their forearm components
+        if (leftElbowComponent != null)
+        {
+            if (leftElbowComponent.forearm == null && leftForearmComponent != null)
+                leftElbowComponent.forearm = leftForearmComponent;
+            if (leftElbowComponent.hand == null && leftHandComponent != null)
+                leftElbowComponent.hand = leftHandComponent;
+        }
+
+        if (rightElbowComponent != null)
+        {
+            if (rightElbowComponent.forearm == null && rightForearmComponent != null)
+                rightElbowComponent.forearm = rightForearmComponent;
+            if (rightElbowComponent.hand == null && rightHandComponent != null)
+                rightElbowComponent.hand = rightHandComponent;
+        }
     }
 
     private BoneMap FindBoneMap()
@@ -546,6 +880,15 @@ public class RagdollSystem : MonoBehaviour
             case "Hand":
                 roleTokens = new[] { "hand", "wrist" };
                 break;
+            case "Elbow":
+                roleTokens = new[] { "elbow" };
+                break;
+            case "Collarbone":
+                roleTokens = new[] { "collarbone", "clavicle" };
+                break;
+            case "Shoulder":
+                roleTokens = new[] { "shoulder", "clavicle", "scapula" };
+                break;
             case "Forearm":
                 roleTokens = new[] { "forearm", "lowerarm", "lower_arm", "radius", "ulna" };
                 break;
@@ -556,7 +899,11 @@ public class RagdollSystem : MonoBehaviour
                 roleTokens = new[] { "thigh", "upperleg", "upper_leg", "upleg" };
                 break;
             case "Knee":
-                roleTokens = new[] { "calf", "lowerleg", "lower_leg", "leg" };
+                roleTokens = new[] { "knee", "patella" };
+                break;
+            case "Shin":
+            case "Foreleg":
+                roleTokens = new[] { "shin", "foreleg", "calf", "lowerleg", "lower_leg", "tibia", "fibula" };
                 break;
             case "Foot":
                 roleTokens = new[] { "foot", "ankle" };
@@ -641,9 +988,24 @@ public class RagdollSystem : MonoBehaviour
             var t = ResolveViaBoneMap(boneMap, $"Human:{SideToken(side.Value)}Hand", $"Generic:Hand{SideToken(side.Value)}");
             if (t != null) return t;
         }
+        if (role == "Elbow" && side.HasValue)
+        {
+            var t = ResolveViaBoneMap(boneMap, $"Human:{SideToken(side.Value)}LowerArm", $"Generic:Elbow{SideToken(side.Value)}");
+            if (t != null) return t;
+        }
         if (role == "Forearm" && side.HasValue)
         {
             var t = ResolveViaBoneMap(boneMap, $"Human:{SideToken(side.Value)}LowerArm", $"Generic:Forearm{SideToken(side.Value)}");
+            if (t != null) return t;
+        }
+        if (role == "Collarbone" && side.HasValue)
+        {
+            var t = ResolveViaBoneMap(boneMap, $"Human:{SideToken(side.Value)}Shoulder", $"Generic:Collarbone{SideToken(side.Value)}");
+            if (t != null) return t;
+        }
+        if (role == "Shoulder" && side.HasValue)
+        {
+            var t = ResolveViaBoneMap(boneMap, $"Human:{SideToken(side.Value)}Shoulder", $"Generic:Shoulder{SideToken(side.Value)}");
             if (t != null) return t;
         }
         if (role == "Upperarm" && side.HasValue)
@@ -659,6 +1021,11 @@ public class RagdollSystem : MonoBehaviour
         if (role == "Knee" && side.HasValue)
         {
             var t = ResolveViaBoneMap(boneMap, $"Human:{SideToken(side.Value)}LowerLeg", $"Generic:Knee{SideToken(side.Value)}");
+            if (t != null) return t;
+        }
+        if ((role == "Shin" || role == "Foreleg") && side.HasValue)
+        {
+            var t = ResolveViaBoneMap(boneMap, $"Human:{SideToken(side.Value)}LowerLeg", $"Generic:Shin{SideToken(side.Value)}");
             if (t != null) return t;
         }
         if (role == "Foot" && side.HasValue)
@@ -717,6 +1084,11 @@ public class RagdollSystem : MonoBehaviour
             return ResolveViaAnimator(animator, HumanBodyBones.Neck) ?? ResolveViaNameHeuristics(role, null);
         if (role == "Head")
             return ResolveViaAnimator(animator, HumanBodyBones.Head) ?? ResolveViaNameHeuristics(role, null);
+        if (role == "Collarbone" && side.HasValue)
+        {
+            return ResolveViaAnimator(animator, side.Value == BodySide.Left ? HumanBodyBones.LeftShoulder : HumanBodyBones.RightShoulder)
+                ?? ResolveViaNameHeuristics(role, side);
+        }
 
         // 3) Name heuristics fallback
         return ResolveViaNameHeuristics(role, side);

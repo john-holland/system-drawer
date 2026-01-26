@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace Locomotion.Narrative
 {
-    [CreateAssetMenu(menuName = "Locomotion/Narrative/Narrative Tree", fileName = "NarrativeTree")]
-    public class NarrativeTreeAsset : ScriptableObject
+    [AddComponentMenu("Locomotion/Narrative/Narrative Tree")]
+    public class NarrativeTreeAsset : MonoBehaviour
     {
         [Header("Schema")]
         public int schemaVersion = 1;

@@ -25,6 +25,7 @@ namespace Weather
         private GameObject terrainObject;
         private GameObject waterObject;
         private GameObject rainObject;
+        private MeshTerrainSampler meshTerrainSampler;
 
         // UI State
         private Vector2 scrollPosition;
@@ -348,6 +349,10 @@ namespace Weather
                 terrainObject = CreateTerrainObject();
             }
             EditorGUILayout.EndHorizontal();
+            EditorGUILayout.HelpBox(
+                "Can be a GameObject with Terrain component or a mesh terrain (Transform with MeshRenderer/MeshFilter).",
+                MessageType.Info
+            );
 
             // Terrain Link Slot
             if (terrainObject != null && waterObject != null)
@@ -370,9 +375,132 @@ namespace Weather
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.HelpBox(
                 "Fits WeatherPhysicsManifold and Wind bounds to match terrain size. " +
+                "Works with Unity Terrain components or mesh terrains (Transform with MeshRenderer/MeshFilter). " +
                 "Existing ponds and rivers are not modified.",
                 MessageType.Info
             );
+
+            // Mesh Terrain Sampler
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Mesh Terrain Sampler", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            meshTerrainSampler = (MeshTerrainSampler)EditorGUILayout.ObjectField(
+                "Mesh Terrain Sampler",
+                meshTerrainSampler,
+                typeof(MeshTerrainSampler),
+                true
+            );
+            EditorGUILayout.EndHorizontal();
+
+            if (meshTerrainSampler != null)
+            {
+                // Recursive drain/flood portal creation checkbox
+                EditorGUILayout.BeginHorizontal();
+                meshTerrainSampler.recursiveDrainFloodPortalCreation = EditorGUILayout.Toggle(
+                    "Recursive drain / flood concave portal creation",
+                    meshTerrainSampler.recursiveDrainFloodPortalCreation
+                );
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.HelpBox(
+                    "When enabled, recursively explores connected concave spaces and creates portals for inter-space connections. " +
+                    "Also analyzes drain/fill behavior for each space.",
+                    MessageType.Info
+                );
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Detect Enclosed Spaces", GUILayout.Height(25)))
+                {
+                    meshTerrainSampler.DetectEnclosedSpaces();
+                    EditorUtility.SetDirty(meshTerrainSampler);
+                }
+                if (GUILayout.Button("Create Portals", GUILayout.Height(25)))
+                {
+                    meshTerrainSampler.CreatePortals();
+                    EditorUtility.SetDirty(meshTerrainSampler);
+                }
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Detect & Create All", GUILayout.Height(25)))
+                {
+                    meshTerrainSampler.DetectEnclosedSpaces();
+                    meshTerrainSampler.CreatePortals();
+                    EditorUtility.SetDirty(meshTerrainSampler);
+                }
+                if (GUILayout.Button("Clear Cache", GUILayout.Height(25)))
+                {
+                    meshTerrainSampler.ClearCache();
+                    EditorUtility.SetDirty(meshTerrainSampler);
+                }
+                EditorGUILayout.EndHorizontal();
+
+                // Show detected spaces and portals
+                if (meshTerrainSampler.enclosedSpaces != null && meshTerrainSampler.enclosedSpaces.Count > 0)
+                {
+                    EditorGUILayout.Space(5);
+                    EditorGUILayout.LabelField($"Detected Spaces: {meshTerrainSampler.enclosedSpaces.Count}", EditorStyles.miniLabel);
+                    int totalOpenings = 0;
+                    int drainCount = 0;
+                    int fillCount = 0;
+                    foreach (var space in meshTerrainSampler.enclosedSpaces)
+                    {
+                        if (space.openings != null)
+                            totalOpenings += space.openings.Count;
+                        if (space.willDrain)
+                            drainCount++;
+                        if (space.willFill)
+                            fillCount++;
+                    }
+                    EditorGUILayout.LabelField($"Total Openings: {totalOpenings}", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField($"Will Drain: {drainCount}", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField($"Will Fill: {fillCount}", EditorStyles.miniLabel);
+
+                    // Show drain/fill status for each space
+                    EditorGUILayout.Space(3);
+                    EditorGUILayout.LabelField("Space Details:", EditorStyles.miniBoldLabel);
+                    for (int i = 0; i < Mathf.Min(meshTerrainSampler.enclosedSpaces.Count, 10); i++)
+                    {
+                        var space = meshTerrainSampler.enclosedSpaces[i];
+                        string status = space.willDrain ? "DRAIN" : (space.willFill ? "FILL" : "UNKNOWN");
+                        Color statusColor = space.willDrain ? Color.green : (space.willFill ? Color.yellow : Color.gray);
+                        GUI.color = statusColor;
+                        EditorGUILayout.LabelField(
+                            $"  Space {i}: {status} | Floor: {space.lowestPoint:F2}m | Openings: {space.openings?.Count ?? 0}",
+                            EditorStyles.miniLabel
+                        );
+                        GUI.color = Color.white;
+                    }
+                    if (meshTerrainSampler.enclosedSpaces.Count > 10)
+                    {
+                        EditorGUILayout.LabelField($"  ... and {meshTerrainSampler.enclosedSpaces.Count - 10} more", EditorStyles.miniLabel);
+                    }
+                }
+
+                if (meshTerrainSampler.portals != null && meshTerrainSampler.portals.Count > 0)
+                {
+                    EditorGUILayout.LabelField($"Created Portals: {meshTerrainSampler.portals.Count}", EditorStyles.miniLabel);
+                }
+
+                // Link to Water component
+                if (waterObject != null)
+                {
+                    EditorGUILayout.Space(5);
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField("Link Sampler to Water:", GUILayout.Width(150));
+                    if (GUILayout.Button("Link", GUILayout.Width(100)))
+                    {
+                        LinkMeshTerrainSamplerToWater();
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(
+                    "Assign a MeshTerrainSampler component to enable height sampling for mesh terrains and portal detection.",
+                    MessageType.Info
+                );
+            }
 
             // Water GameObject
             EditorGUILayout.BeginHorizontal();
@@ -771,20 +899,43 @@ namespace Weather
                 return;
             }
 
-            Terrain terrain = terrainObject.GetComponent<Terrain>();
-            if (terrain == null || terrain.terrainData == null)
-            {
-                EditorUtility.DisplayDialog("Error", "Terrain object does not have valid Terrain component or data.", "OK");
-                return;
-            }
+            Bounds terrainBounds;
+            Vector3 terrainSize;
+            string terrainType;
 
-            // Get terrain bounds
-            Vector3 terrainSize = terrain.terrainData.size;
-            Vector3 terrainPos = terrain.transform.position;
-            Bounds terrainBounds = new Bounds(
-                terrainPos + terrainSize * 0.5f,
-                terrainSize
-            );
+            // Try Terrain component first
+            Terrain terrain = terrainObject.GetComponent<Terrain>();
+            if (terrain != null && terrain.terrainData != null)
+            {
+                // Unity Terrain component
+                terrainSize = terrain.terrainData.size;
+                Vector3 terrainPos = terrain.transform.position;
+                terrainBounds = new Bounds(
+                    terrainPos + terrainSize * 0.5f,
+                    terrainSize
+                );
+                terrainType = "Unity Terrain";
+            }
+            else
+            {
+                // Try mesh terrain (Transform with MeshRenderer/MeshFilter)
+                Bounds? meshBounds = GetMeshBounds(terrainObject.transform);
+                if (meshBounds.HasValue)
+                {
+                    terrainBounds = meshBounds.Value;
+                    terrainSize = terrainBounds.size;
+                    terrainType = "Mesh Terrain";
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Error", 
+                        "Terrain object must have either:\n" +
+                        "- A Terrain component with valid terrainData, or\n" +
+                        "- A MeshRenderer/MeshFilter component for mesh terrain.",
+                        "OK");
+                    return;
+                }
+            }
 
             // Fit WeatherPhysicsManifold bounds
             if (weatherPhysicsManifold != null)
@@ -808,11 +959,126 @@ namespace Weather
             // Clouds and Precipitation automatically use the manifolds, so they don't need bounds adjustment
 
             EditorUtility.DisplayDialog("Fit to Terrain Complete",
-                $"Adjusted bounds to match terrain:\n" +
+                $"Adjusted bounds to match {terrainType}:\n" +
                 $"Terrain Size: {terrainSize}\n" +
+                $"Terrain Center: {terrainBounds.center}\n" +
                 $"WeatherPhysicsManifold bounds updated\n" +
                 $"Wind bounds updated\n\n" +
                 $"Note: Existing ponds and rivers were not modified.",
+                "OK");
+        }
+
+        /// <summary>
+        /// Get bounds from a Transform, checking for MeshRenderer or MeshFilter components.
+        /// Also checks child objects recursively.
+        /// </summary>
+        private Bounds? GetMeshBounds(Transform transform)
+        {
+            if (transform == null)
+                return null;
+
+            Bounds? combinedBounds = null;
+
+            // Check this object's MeshRenderer
+            MeshRenderer meshRenderer = transform.GetComponent<MeshRenderer>();
+            if (meshRenderer != null && meshRenderer.bounds.size.magnitude > 0.001f)
+            {
+                combinedBounds = meshRenderer.bounds;
+            }
+            else
+            {
+                // Fallback to MeshFilter bounds
+                MeshFilter meshFilter = transform.GetComponent<MeshFilter>();
+                if (meshFilter != null && meshFilter.sharedMesh != null)
+                {
+                    Bounds meshBounds = meshFilter.sharedMesh.bounds;
+                    // Transform to world space
+                    Vector3 center = transform.TransformPoint(meshBounds.center);
+                    Vector3 size = transform.TransformVector(meshBounds.size);
+                    combinedBounds = new Bounds(center, size);
+                }
+            }
+
+            // Check children recursively
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Bounds? childBounds = GetMeshBounds(transform.GetChild(i));
+                if (childBounds.HasValue)
+                {
+                    if (combinedBounds.HasValue)
+                    {
+                        // Combine bounds
+                        combinedBounds.Value.Encapsulate(childBounds.Value);
+                    }
+                    else
+                    {
+                        combinedBounds = childBounds;
+                    }
+                }
+            }
+
+            return combinedBounds;
+        }
+
+        private void LinkMeshTerrainSamplerToWater()
+        {
+            if (meshTerrainSampler == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Please assign a Mesh Terrain Sampler first.", "OK");
+                return;
+            }
+
+            if (waterObject == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Please assign a Water GameObject first.", "OK");
+                return;
+            }
+
+            Water water = waterObject.GetComponent<Water>();
+            if (water == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Water GameObject does not have a Water component.", "OK");
+                return;
+            }
+
+            SerializedObject waterSo = new SerializedObject(water);
+            waterSo.FindProperty("meshTerrainSampler").objectReferenceValue = meshTerrainSampler;
+            waterSo.ApplyModifiedProperties();
+
+            EditorUtility.DisplayDialog("Link Complete", 
+                "Mesh Terrain Sampler has been linked to Water component.\n\n" +
+                "The Water component will now use mesh terrain height sampling when terrain is not available.",
+                "OK");
+        }
+
+        private void LinkMeshTerrainSamplerToWater()
+        {
+            if (meshTerrainSampler == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Please assign a Mesh Terrain Sampler first.", "OK");
+                return;
+            }
+
+            if (waterObject == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Please assign a Water GameObject first.", "OK");
+                return;
+            }
+
+            Water water = waterObject.GetComponent<Water>();
+            if (water == null)
+            {
+                EditorUtility.DisplayDialog("Error", "Water GameObject does not have a Water component.", "OK");
+                return;
+            }
+
+            SerializedObject waterSo = new SerializedObject(water);
+            waterSo.FindProperty("meshTerrainSampler").objectReferenceValue = meshTerrainSampler;
+            waterSo.ApplyModifiedProperties();
+
+            EditorUtility.DisplayDialog("Link Complete", 
+                "Mesh Terrain Sampler has been linked to Water component.\n\n" +
+                "The Water component will now use mesh terrain height sampling when terrain is not available.",
                 "OK");
         }
 
@@ -830,13 +1096,6 @@ namespace Weather
                 return;
             }
 
-            Terrain terrain = terrainObject.GetComponent<Terrain>();
-            if (terrain == null)
-            {
-                EditorUtility.DisplayDialog("Error", "Terrain GameObject does not have a Terrain component.", "OK");
-                return;
-            }
-
             Water water = waterObject.GetComponent<Water>();
             if (water == null)
             {
@@ -844,11 +1103,33 @@ namespace Weather
                 return;
             }
 
-            SerializedObject waterSo = new SerializedObject(water);
-            waterSo.FindProperty("terrain").objectReferenceValue = terrain;
-            waterSo.ApplyModifiedProperties();
+            // Try to get Terrain component
+            Terrain terrain = terrainObject.GetComponent<Terrain>();
+            if (terrain != null)
+            {
+                // Unity Terrain component - link it
+                SerializedObject waterSo = new SerializedObject(water);
+                waterSo.FindProperty("terrain").objectReferenceValue = terrain;
+                waterSo.ApplyModifiedProperties();
 
-            EditorUtility.DisplayDialog("Link Complete", "Terrain has been linked to Water component.", "OK");
+                EditorUtility.DisplayDialog("Link Complete", 
+                    "Unity Terrain has been linked to Water component.\n\n" +
+                    "Note: The Water component uses Terrain for height map calculations.",
+                    "OK");
+            }
+            else
+            {
+                // Mesh terrain - Water component requires Terrain for height calculations
+                // Show informative message
+                EditorUtility.DisplayDialog("Mesh Terrain Detected",
+                    "The selected GameObject is a mesh terrain (no Terrain component found).\n\n" +
+                    "The Water component requires a Unity Terrain component for height map calculations.\n\n" +
+                    "Mesh terrains cannot be directly linked to the Water component's terrain field.\n\n" +
+                    "For mesh terrains, you may need to:\n" +
+                    "1. Use a separate Terrain component for water height calculations, or\n" +
+                    "2. Implement custom height sampling for your mesh terrain.",
+                    "OK");
+            }
         }
 
         private void ApplyRecommendedSettings()
@@ -1258,6 +1539,9 @@ namespace Weather
 
             Water water = FindObjectOfType<Water>();
             if (water != null) waterObject = water.gameObject;
+
+            MeshTerrainSampler sampler = FindObjectOfType<MeshTerrainSampler>();
+            if (sampler != null) meshTerrainSampler = sampler;
 
             Precipitation[] precipitations = FindObjectsOfType<Precipitation>();
             if (precipitations.Length > 1)

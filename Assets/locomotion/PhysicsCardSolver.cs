@@ -29,6 +29,13 @@ public class PhysicsCardSolver : MonoBehaviour
     [Range(0f, 1f)]
     public float velocityWeight = 0.2f;
 
+    [Header("Walking Card Generation")]
+    [Tooltip("Only allow leg muscle groups for walking cards (restricts arm/hand/head usage unless placement card)")]
+    public bool onlyAllowLegsForWalking = true;
+
+    [Tooltip("Keywords that indicate a placement/manipulation card (case-insensitive)")]
+    public List<string> placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place" };
+
     // References
     private NervousSystem nervousSystem;
     private RagdollSystem ragdollSystem;
@@ -43,6 +50,12 @@ public class PhysicsCardSolver : MonoBehaviour
         if (nervousSystem != null)
         {
             temporalGraph = nervousSystem.GetTemporalGraph();
+        }
+
+        // Initialize default placement card keywords if empty
+        if (placementCardKeywords == null || placementCardKeywords.Count == 0)
+        {
+            placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place" };
         }
     }
 
@@ -278,5 +291,296 @@ public class PhysicsCardSolver : MonoBehaviour
         }
 
         return cards.Count > 0 ? cards[0] : null;
+    }
+
+    /// <summary>
+    /// Check if a card is a placement/manipulation card (not a walking gate animation).
+    /// </summary>
+    public bool IsPlacementCard(GoodSection card)
+    {
+        if (card == null)
+            return false;
+
+        // Check keyword matching (case-insensitive)
+        if (!string.IsNullOrEmpty(card.sectionName) && placementCardKeywords != null)
+        {
+            string lowerName = card.sectionName.ToLowerInvariant();
+            foreach (var keyword in placementCardKeywords)
+            {
+                if (!string.IsNullOrEmpty(keyword) && lowerName.Contains(keyword.ToLowerInvariant()))
+                {
+                    return true;
+                }
+            }
+        }
+
+        // Check subclass type
+        if (card is HemisphericalGraspCard || card is TippingCard)
+        {
+            return true;
+        }
+
+        // Heuristics: check if card has properties that indicate placement/manipulation
+        // Cards with target objects are likely placement cards
+        if (card is HemisphericalGraspCard graspCard && graspCard.targetObject != null)
+        {
+            return true;
+        }
+        if (card is TippingCard tippingCard && tippingCard.targetObject != null)
+        {
+            return true;
+        }
+
+        // Check if card has force/torque directions indicating manipulation
+        if (card.impulseStack != null)
+        {
+            bool hasManipulationForces = false;
+            foreach (var action in card.impulseStack)
+            {
+                if (action != null && (action.forceDirection.magnitude > 0.1f || action.torqueDirection.magnitude > 0.1f))
+                {
+                    hasManipulationForces = true;
+                    break;
+                }
+            }
+            if (hasManipulationForces)
+            {
+                // Check if it's NOT just leg movement (legs can have forces for walking)
+                if (!IsLegOnlyCard(card))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if a card only activates leg muscle groups.
+    /// </summary>
+    private bool IsLegOnlyCard(GoodSection card)
+    {
+        if (card == null || card.impulseStack == null)
+            return false;
+
+        // Leg muscle group keywords
+        string[] legKeywords = { "hip", "knee", "ankle", "foot", "leg", "thigh", "calf", "toe" };
+        string[] armKeywords = { "arm", "hand", "wrist", "elbow", "shoulder", "finger", "thumb" };
+        string[] headKeywords = { "head", "neck", "jaw", "eye" };
+
+        bool hasLegActivation = false;
+        bool hasArmActivation = false;
+        bool hasHeadActivation = false;
+
+        foreach (var action in card.impulseStack)
+        {
+            if (action == null || string.IsNullOrEmpty(action.muscleGroup))
+                continue;
+
+            string lowerGroup = action.muscleGroup.ToLowerInvariant();
+
+            // Check for leg activation
+            foreach (var keyword in legKeywords)
+            {
+                if (lowerGroup.Contains(keyword))
+                {
+                    hasLegActivation = true;
+                    break;
+                }
+            }
+
+            // Check for arm activation
+            foreach (var keyword in armKeywords)
+            {
+                if (lowerGroup.Contains(keyword))
+                {
+                    hasArmActivation = true;
+                    break;
+                }
+            }
+
+            // Check for head activation
+            foreach (var keyword in headKeywords)
+            {
+                if (lowerGroup.Contains(keyword))
+                {
+                    hasHeadActivation = true;
+                    break;
+                }
+            }
+        }
+
+        return hasLegActivation && !hasArmActivation && !hasHeadActivation;
+    }
+
+    /// <summary>
+    /// Check if a card would preclude a walking gate animation.
+    /// </summary>
+    public bool IsWalkingGateAnimation(GoodSection card)
+    {
+        if (card == null)
+            return false;
+
+        // Placement cards don't preclude walking gate (they're separate actions)
+        if (IsPlacementCard(card))
+            return false;
+
+        // Check if card activates arm/hand/head muscle groups
+        if (card.impulseStack != null)
+        {
+            string[] armKeywords = { "arm", "hand", "wrist", "elbow", "shoulder", "finger", "thumb", "forearm", "upperarm" };
+            string[] headKeywords = { "head", "neck", "jaw", "eye" };
+
+            foreach (var action in card.impulseStack)
+            {
+                if (action == null || string.IsNullOrEmpty(action.muscleGroup))
+                    continue;
+
+                string lowerGroup = action.muscleGroup.ToLowerInvariant();
+
+                // Check for arm/hand activation
+                foreach (var keyword in armKeywords)
+                {
+                    if (lowerGroup.Contains(keyword))
+                    {
+                        return true; // Precludes walking gate
+                    }
+                }
+
+                // Check for head activation
+                foreach (var keyword in headKeywords)
+                {
+                    if (lowerGroup.Contains(keyword))
+                    {
+                        return true; // Precludes walking gate
+                    }
+                }
+            }
+        }
+
+        // Card only uses leg/torso, so it's a walking gate animation
+        return false;
+    }
+
+    /// <summary>
+    /// Filter cards for walking based on "Only Allow Legs for Walking" option.
+    /// </summary>
+    public List<GoodSection> FilterCardsForWalking(List<GoodSection> cards)
+    {
+        if (cards == null)
+            return new List<GoodSection>();
+
+        if (!onlyAllowLegsForWalking)
+        {
+            return new List<GoodSection>(cards); // Return all cards unchanged
+        }
+
+        List<GoodSection> filtered = new List<GoodSection>();
+
+        foreach (var card in cards)
+        {
+            if (card == null)
+                continue;
+
+            // Always keep placement cards
+            if (IsPlacementCard(card))
+            {
+                filtered.Add(card);
+                continue;
+            }
+
+            // Keep cards that only activate leg muscle groups
+            if (IsLegOnlyCard(card))
+            {
+                filtered.Add(card);
+                continue;
+            }
+
+            // Remove cards that activate arm/hand/head (unless placement card)
+            // (Already handled by IsPlacementCard check above)
+        }
+
+        return filtered;
+    }
+
+    /// <summary>
+    /// Auto-generate a kinematic walking card for movement from one position to another.
+    /// </summary>
+    public GoodSection GenerateWalkingCard(Vector3 from, Vector3 to, RagdollState currentState)
+    {
+        if (ragdollSystem == null)
+            return null;
+
+        // Calculate direction and distance
+        Vector3 direction = (to - from);
+        direction.y = 0f; // Keep movement on horizontal plane
+        float distance = direction.magnitude;
+
+        if (distance < 0.01f)
+            return null; // Already at destination
+
+        direction.Normalize();
+
+        // Create walking card
+        GoodSection walkingCard = new GoodSection
+        {
+            sectionName = "auto_walking",
+            description = $"Auto-generated walking card from {from} to {to}",
+            impulseStack = new List<ImpulseAction>(),
+            requiredState = currentState.CopyState(),
+            targetState = new RagdollState(),
+            limits = new SectionLimits()
+        };
+
+        // Set target state
+        walkingCard.targetState.rootPosition = to;
+        walkingCard.targetState.rootVelocity = direction * 2f; // Walking speed
+        walkingCard.targetState.rootRotation = Quaternion.LookRotation(direction);
+
+        // Generate impulse actions for leg muscle groups
+        // Common leg muscle group names (will work with various naming conventions)
+        string[] legMuscleGroups = { "hip", "knee", "ankle", "foot", "leg", "thigh", "calf" };
+
+        // Create impulse actions for walking motion
+        // Left leg
+        foreach (var groupName in legMuscleGroups)
+        {
+            ImpulseAction leftAction = new ImpulseAction
+            {
+                muscleGroup = $"left_{groupName}",
+                activation = 0.6f,
+                duration = distance / 2f, // Duration based on distance
+                curve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f),
+                forceDirection = direction * 0.5f
+            };
+            walkingCard.impulseStack.Add(leftAction);
+        }
+
+        // Right leg (alternating pattern)
+        foreach (var groupName in legMuscleGroups)
+        {
+            ImpulseAction rightAction = new ImpulseAction
+            {
+                muscleGroup = $"right_{groupName}",
+                activation = 0.6f,
+                duration = distance / 2f,
+                curve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f),
+                forceDirection = direction * 0.5f
+            };
+            walkingCard.impulseStack.Add(rightAction);
+        }
+
+        // Add torso stabilization
+        ImpulseAction torsoAction = new ImpulseAction
+        {
+            muscleGroup = "torso",
+            activation = 0.3f,
+            duration = distance / 2f,
+            curve = AnimationCurve.Linear(0f, 1f, 1f, 1f)
+        };
+        walkingCard.impulseStack.Add(torsoAction);
+
+        return walkingCard;
     }
 }

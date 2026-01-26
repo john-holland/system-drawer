@@ -79,7 +79,6 @@ public class Consider : MonoBehaviour
     private Dictionary<GameObject, GoodSection> toolReturnCards = new Dictionary<GameObject, GoodSection>();
     private Dictionary<GameObject, float> cardTimeouts = new Dictionary<GameObject, float>();
     private float lastRefreshTime = 0f;
-    private float timeoutSeconds = 5f;
 
     // Advanced features state
     private Dictionary<GameObject, TippingAnalysis> tippingAnalyses = new Dictionary<GameObject, TippingAnalysis>();
@@ -333,6 +332,7 @@ public class Consider : MonoBehaviour
 
     /// <summary>
     /// Generate return cards for a tool to return it to original position.
+    /// Includes tool usage cards and pathfinding for navigation.
     /// </summary>
     public List<GoodSection> GenerateReturnCards(GameObject tool, Vector3 returnPosition)
     {
@@ -341,9 +341,38 @@ public class Consider : MonoBehaviour
         if (tool == null)
             return cards;
 
-        // Generate approach card to return position
-        GoodSection approachCard = GenerateApproachCardToPosition(returnPosition);
-        cards.Add(approachCard);
+        // Get current position for pathfinding
+        Vector3 currentPosition = transform.position;
+        if (ragdollSystem != null)
+        {
+            currentPosition = ragdollSystem.ragdollRoot != null ? ragdollSystem.ragdollRoot.position : transform.position;
+        }
+
+        // Include tool usage cards before returning (grasp, orient, use)
+        // Note: Tool may already be held, but we include usage cards for consistency
+        GoodSection graspCard = GenerateGraspCard(tool);
+        cards.Add(graspCard);
+
+        GoodSection orientCard = GenerateOrientCard(tool);
+        cards.Add(orientCard);
+
+        // Use card with current task (if available)
+        string task = GetCurrentTask();
+        GoodSection useCard = GenerateUseCard(tool, task);
+        cards.Add(useCard);
+
+        // Generate pathfinding card to return position (instead of simple approach)
+        GoodSection pathfindingCard = GeneratePathfindingCard(currentPosition, returnPosition);
+        if (pathfindingCard != null)
+        {
+            cards.Add(pathfindingCard);
+        }
+        else
+        {
+            // Fallback to simple approach card if pathfinding fails
+            GoodSection approachCard = GenerateApproachCardToPosition(returnPosition);
+            cards.Add(approachCard);
+        }
 
         // Generate release card
         GoodSection releaseCard = GenerateReleaseCard(tool);
@@ -511,6 +540,67 @@ public class Consider : MonoBehaviour
         };
 
         card.impulseStack = new List<ImpulseAction> { action };
+        return card;
+    }
+
+    /// <summary>
+    /// Generate a pathfinding card that uses PathfindingNode to navigate to destination.
+    /// </summary>
+    private GoodSection GeneratePathfindingCard(Vector3 origin, Vector3 destination)
+    {
+        // Find pathfinding solver
+        HierarchicalPathingSolver pathfindingSolver = FindObjectOfType<HierarchicalPathingSolver>();
+        if (pathfindingSolver == null)
+        {
+            Debug.LogWarning("Consider: No HierarchicalPathingSolver found, cannot generate pathfinding card");
+            return null;
+        }
+
+        // Query path from pathfinding solver
+        List<Vector3> path = pathfindingSolver.FindPath(origin, destination, returnBestEffortPathWhenNoPath: true);
+        
+        if (path == null || path.Count == 0)
+        {
+            Debug.LogWarning($"Consider: No path found from {origin} to {destination}");
+            return null;
+        }
+
+        // Create pathfinding card
+        GoodSection card = new GoodSection
+        {
+            sectionName = $"pathfind_{origin.ToString("F1")}_to_{destination.ToString("F1")}",
+            description = $"Pathfind from {origin.ToString("F1")} to {destination.ToString("F1")} ({path.Count} waypoints)",
+            requiredState = GetCurrentState(),
+            targetState = CreateStateAtPosition(destination),
+            limits = new SectionLimits()
+        };
+
+        // Store pathfinding data in card description or create a custom data structure
+        // For now, we'll create impulse actions for movement toward each waypoint
+        // In practice, this card would be handled by PathfindingNode in the behavior tree
+        // Create a movement impulse toward the first waypoint
+        if (path.Count > 0)
+        {
+            Vector3 direction = (path[0] - origin).normalized;
+            float distance = Vector3.Distance(origin, path[0]);
+            
+            ImpulseAction movementAction = new ImpulseAction
+            {
+                muscleGroup = "Spinal",
+                activation = 0.7f,
+                duration = Mathf.Clamp(distance / 2f, 0.5f, 3f), // Duration based on distance
+                force = direction * 5f, // Apply force in direction of first waypoint
+                torque = Vector3.zero
+            };
+
+            card.impulseStack = new List<ImpulseAction> { movementAction };
+        }
+
+        // Store pathfinding waypoints in a way that PathfindingNode can access
+        // We'll use the card's description to encode path info, or create a behavior tree reference
+        // For now, the card represents the pathfinding operation and will be handled by PathfindingNode
+        // when executed in the behavior tree context
+
         return card;
     }
 
@@ -809,7 +899,8 @@ public class Consider : MonoBehaviour
                 // Evaluate stability
                 plane.stabilityScore = 1f - (plane.angle / 90f); // 0-1 scale
                 plane.isStable = plane.angle < 45f; // Stable if <45° from horizontal
-
+                // todo: include mu for stability and use it to determine the stability score
+                //          include physics properties from weather physics manifolds if available
                 // Evaluate grasping
                 plane.canGraspFromAbove = plane.angle < 30f;
                 plane.canGraspFromSide = plane.angle > 60f;

@@ -50,6 +50,9 @@ public class NervousSystem : MonoBehaviour
             }
         }
 
+        // Auto-initialize common channels if they don't exist
+        InitializeCommonChannels();
+
         // Build good section dictionary
         foreach (var section in goodSections)
         {
@@ -75,6 +78,24 @@ public class NervousSystem : MonoBehaviour
         if (considerComponents == null || considerComponents.Count == 0)
         {
             considerComponents = GetComponentsInChildren<Consider>().ToList();
+        }
+    }
+
+    /// <summary>
+    /// Initialize common impulse channels that are frequently used.
+    /// </summary>
+    private void InitializeCommonChannels()
+    {
+        string[] commonChannels = { "Spinal", "Limb", "Emergency" };
+        
+        foreach (var channelName in commonChannels)
+        {
+            if (!channelDict.ContainsKey(channelName))
+            {
+                ImpulseChannel channel = new ImpulseChannel(channelName);
+                impulseChannels.Add(channel);
+                channelDict[channelName] = channel;
+            }
         }
     }
 
@@ -107,7 +128,12 @@ public class NervousSystem : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Impulse channel '{channel}' not found in NervousSystem");
+            // Auto-create missing channel
+            channelObj = CreateOrGetChannel(channel);
+            if (channelObj != null)
+            {
+                channelObj.SendImpulse(data);
+            }
         }
     }
 
@@ -128,8 +154,39 @@ public class NervousSystem : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Impulse channel '{channel}' not found in NervousSystem");
+            // Auto-create missing channel
+            channelObj = CreateOrGetChannel(channel);
+            if (channelObj != null)
+            {
+                channelObj.SendImpulse(data);
+            }
         }
+    }
+
+    /// <summary>
+    /// Create or get an impulse channel by name. Auto-creates if it doesn't exist.
+    /// </summary>
+    private ImpulseChannel CreateOrGetChannel(string channelName)
+    {
+        if (string.IsNullOrEmpty(channelName))
+            return null;
+
+        // Check if already exists
+        if (channelDict.TryGetValue(channelName, out ImpulseChannel existing))
+        {
+            return existing;
+        }
+
+        // Create new channel
+        ImpulseChannel newChannel = new ImpulseChannel(channelName);
+        
+        // Add to list and dictionary
+        impulseChannels.Add(newChannel);
+        channelDict[channelName] = newChannel;
+
+        Debug.LogWarning($"Auto-created impulse channel '{channelName}' in NervousSystem. Consider adding it manually in the Inspector.");
+        
+        return newChannel;
     }
 
     /// <summary>

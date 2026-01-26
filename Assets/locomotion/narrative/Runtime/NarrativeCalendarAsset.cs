@@ -26,8 +26,8 @@ namespace Locomotion.Narrative
         public List<NarrativeActionSpec> actions = new List<NarrativeActionSpec>();
     }
 
-    [CreateAssetMenu(menuName = "Locomotion/Narrative/Narrative Calendar", fileName = "NarrativeCalendar")]
-    public class NarrativeCalendarAsset : ScriptableObject
+    [AddComponentMenu("Locomotion/Narrative/Narrative Calendar")]
+    public class NarrativeCalendarAsset : MonoBehaviour
     {
         [Header("Schema")]
         public int schemaVersion = 1;

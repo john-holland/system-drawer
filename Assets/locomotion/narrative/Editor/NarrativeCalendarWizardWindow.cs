@@ -52,20 +52,20 @@ namespace Locomotion.Narrative.EditorTools
             top.style.flexDirection = FlexDirection.Row;
             top.style.alignItems = Align.Center;
 
-            var calField = new UnityEditor.UIElements.ObjectField("Calendar")
+            // Use IMGUIContainer for ObjectField to ensure scene objects work properly
+            var calField = new IMGUIContainer(() =>
             {
-                objectType = typeof(NarrativeCalendarAsset),
-                value = calendar,
-                allowSceneObjects = false
-            };
+                EditorGUI.BeginChangeCheck();
+                var newCalendar = EditorGUILayout.ObjectField("Calendar", calendar, typeof(NarrativeCalendarAsset), true) as NarrativeCalendarAsset;
+                if (EditorGUI.EndChangeCheck())
+                {
+                    calendar = newCalendar;
+                    RebindCalendar();
+                    RefreshAll();
+                }
+            });
             calField.style.flexGrow = 1f;
             calField.style.marginRight = 8;
-            calField.RegisterValueChangedCallback(evt =>
-            {
-                calendar = evt.newValue as NarrativeCalendarAsset;
-                RebindCalendar();
-                RefreshAll();
-            });
 
             var monthYearText = new TextField("Month Year");
             monthYearText.value = $"{viewMonth} {viewYear}";

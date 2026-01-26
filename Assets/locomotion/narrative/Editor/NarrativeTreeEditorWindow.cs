@@ -43,20 +43,21 @@ namespace Locomotion.Narrative.EditorTools
 
             // Note: GraphView also defines an internal Toolbar type; use the public UIElements toolbar explicitly.
             var toolbar = new UnityEditor.UIElements.Toolbar();
-            var treeField = new UnityEditor.UIElements.ObjectField("Tree")
+            
+            // Use IMGUIContainer for ObjectField to ensure scene objects work properly
+            var treeFieldContainer = new IMGUIContainer(() =>
             {
-                objectType = typeof(NarrativeTreeAsset),
-                allowSceneObjects = false,
-                value = tree
-            };
-            treeField.style.flexGrow = 1f;
-            treeField.RegisterValueChangedCallback(evt =>
-            {
-                tree = evt.newValue as NarrativeTreeAsset;
-                Rebuild();
+                EditorGUI.BeginChangeCheck();
+                var newTree = EditorGUILayout.ObjectField("Tree", tree, typeof(NarrativeTreeAsset), true) as NarrativeTreeAsset;
+                if (EditorGUI.EndChangeCheck())
+                {
+                    tree = newTree;
+                    Rebuild();
+                }
             });
-
-            toolbar.Add(treeField);
+            treeFieldContainer.style.flexGrow = 1f;
+            
+            toolbar.Add(treeFieldContainer);
             toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Sequence)) { text = "Add Sequence" });
             toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Selector)) { text = "Add Selector" });
             toolbar.Add(new UnityEditor.UIElements.ToolbarButton(() => AddChildToSelected(NarrativeNodeType.Action)) { text = "Add Action" });

@@ -2,7 +2,8 @@
   "name": "Locomotion.Editor",
   "rootNamespace": "",
   "references": [
-    "Locomotion.Runtime"
+    "Locomotion.Runtime",
+    "HierarchicalPathFinding"
   ],
   "includePlatforms": [
     "Editor"

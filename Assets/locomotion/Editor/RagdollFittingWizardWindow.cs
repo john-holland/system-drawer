@@ -5,6 +5,9 @@ using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 using Locomotion.EditorTools;
 using Locomotion.Rig;
+using Locomotion.Musculature;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Locomotion.EditorTools
 {
@@ -25,8 +28,25 @@ namespace Locomotion.EditorTools
         private bool ensureHybridRagdollPhysics = true;
 
         private Vector2 scroll;
+        private Vector2 bodyPartsScroll;
         private ValidationReport validation = new ValidationReport();
         private RagdollAutoWire.Report lastReport;
+
+        // Body parts section
+        private Dictionary<string, bool> categoryFoldouts = new Dictionary<string, bool>();
+        private Dictionary<string, List<BodyPartSlot>> bodyPartCategories = new Dictionary<string, List<BodyPartSlot>>();
+        private Dictionary<string, bool> handFoldouts = new Dictionary<string, bool>();
+
+        private class BodyPartSlot
+        {
+            public string label;
+            public GameObject assignedObject;
+            public System.Type componentType;
+            public BodySide? side; // null for non-sided parts
+            public bool isMergeable; // true for knee/shin, elbow/forearm, etc.
+            public string mergeGroup; // "knee-shin", "elbow-forearm", "shoulder-collarbone"
+            public string roleName; // "Knee", "Shin", "Elbow", etc. for FindOrAdd methods
+        }
 
         [MenuItem("Window/Locomotion/Ragdoll Fitting Wizard")]
         public static void ShowWindow()
@@ -44,6 +64,59 @@ namespace Locomotion.EditorTools
                 actorRoot = Selection.activeGameObject;
                 animator = RagdollAutoWire.FindAnimator(actorRoot);
             }
+
+            InitializeBodyPartCategories();
+        }
+
+        private void InitializeBodyPartCategories()
+        {
+            bodyPartCategories.Clear();
+            categoryFoldouts.Clear();
+
+            // Core body parts
+            var core = new List<BodyPartSlot>
+            {
+                new BodyPartSlot { label = "Head", componentType = typeof(RagdollHead), side = null, roleName = "Head" },
+                new BodyPartSlot { label = "Neck", componentType = typeof(RagdollNeck), side = null, roleName = "Neck" },
+                new BodyPartSlot { label = "Torso", componentType = typeof(RagdollTorso), side = null, roleName = "Torso" },
+                new BodyPartSlot { label = "Pelvis", componentType = typeof(RagdollPelvis), side = null, roleName = "Pelvis" }
+            };
+            bodyPartCategories["Core"] = core;
+            categoryFoldouts["Core"] = true;
+
+            // Arms - with mergeable groups
+            var arms = new List<BodyPartSlot>
+            {
+                new BodyPartSlot { label = "Collarbone (L)", componentType = typeof(RagdollCollarbone), side = BodySide.Left, isMergeable = true, mergeGroup = "shoulder-collarbone", roleName = "Collarbone" },
+                new BodyPartSlot { label = "Collarbone (R)", componentType = typeof(RagdollCollarbone), side = BodySide.Right, isMergeable = true, mergeGroup = "shoulder-collarbone", roleName = "Collarbone" },
+                new BodyPartSlot { label = "Shoulder (L)", componentType = typeof(RagdollShoulder), side = BodySide.Left, isMergeable = true, mergeGroup = "shoulder-collarbone", roleName = "Shoulder" },
+                new BodyPartSlot { label = "Shoulder (R)", componentType = typeof(RagdollShoulder), side = BodySide.Right, isMergeable = true, mergeGroup = "shoulder-collarbone", roleName = "Shoulder" },
+                new BodyPartSlot { label = "Upperarm (L)", componentType = typeof(RagdollUpperarm), side = BodySide.Left, roleName = "Upperarm" },
+                new BodyPartSlot { label = "Upperarm (R)", componentType = typeof(RagdollUpperarm), side = BodySide.Right, roleName = "Upperarm" },
+                new BodyPartSlot { label = "Elbow (L)", componentType = typeof(RagdollElbow), side = BodySide.Left, isMergeable = true, mergeGroup = "elbow-forearm", roleName = "Elbow" },
+                new BodyPartSlot { label = "Elbow (R)", componentType = typeof(RagdollElbow), side = BodySide.Right, isMergeable = true, mergeGroup = "elbow-forearm", roleName = "Elbow" },
+                new BodyPartSlot { label = "Forearm (L)", componentType = typeof(RagdollForearm), side = BodySide.Left, isMergeable = true, mergeGroup = "elbow-forearm", roleName = "Forearm" },
+                new BodyPartSlot { label = "Forearm (R)", componentType = typeof(RagdollForearm), side = BodySide.Right, isMergeable = true, mergeGroup = "elbow-forearm", roleName = "Forearm" },
+                new BodyPartSlot { label = "Hand (L)", componentType = typeof(RagdollHand), side = BodySide.Left, roleName = "Hand" },
+                new BodyPartSlot { label = "Hand (R)", componentType = typeof(RagdollHand), side = BodySide.Right, roleName = "Hand" }
+            };
+            bodyPartCategories["Arms"] = arms;
+            categoryFoldouts["Arms"] = true;
+
+            // Legs - with mergeable groups
+            var legs = new List<BodyPartSlot>
+            {
+                new BodyPartSlot { label = "Leg (L)", componentType = typeof(RagdollLeg), side = BodySide.Left, roleName = "Leg" },
+                new BodyPartSlot { label = "Leg (R)", componentType = typeof(RagdollLeg), side = BodySide.Right, roleName = "Leg" },
+                new BodyPartSlot { label = "Knee (L)", componentType = typeof(RagdollKnee), side = BodySide.Left, isMergeable = true, mergeGroup = "knee-shin", roleName = "Knee" },
+                new BodyPartSlot { label = "Knee (R)", componentType = typeof(RagdollKnee), side = BodySide.Right, isMergeable = true, mergeGroup = "knee-shin", roleName = "Knee" },
+                new BodyPartSlot { label = "Shin (L)", componentType = typeof(RagdollShin), side = BodySide.Left, isMergeable = true, mergeGroup = "knee-shin", roleName = "Shin" },
+                new BodyPartSlot { label = "Shin (R)", componentType = typeof(RagdollShin), side = BodySide.Right, isMergeable = true, mergeGroup = "knee-shin", roleName = "Shin" },
+                new BodyPartSlot { label = "Foot (L)", componentType = typeof(RagdollFoot), side = BodySide.Left, roleName = "Foot" },
+                new BodyPartSlot { label = "Foot (R)", componentType = typeof(RagdollFoot), side = BodySide.Right, roleName = "Foot" }
+            };
+            bodyPartCategories["Legs"] = legs;
+            categoryFoldouts["Legs"] = true;
         }
 
         private void OnGUI()
@@ -53,6 +126,9 @@ namespace Locomotion.EditorTools
             EditorGUILayout.Space(8);
 
             DrawActorSection();
+            EditorGUILayout.Space(8);
+
+            DrawBodyPartsSection();
             EditorGUILayout.Space(8);
 
             DrawOptions();
@@ -99,6 +175,393 @@ namespace Locomotion.EditorTools
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawBodyPartsSection()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Body Parts", EditorStyles.boldLabel);
+
+            if (actorRoot == null)
+            {
+                EditorGUILayout.HelpBox("Select an Actor Root to configure body parts.", MessageType.Info);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
+            var ragdollSystem = actorRoot.GetComponent<RagdollSystem>();
+            if (ragdollSystem == null)
+            {
+                EditorGUILayout.HelpBox("RagdollSystem component not found. Run Auto-Wire first or add it manually.", MessageType.Warning);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
+            bodyPartsScroll = EditorGUILayout.BeginScrollView(bodyPartsScroll);
+
+            // Draw each category
+            foreach (var category in bodyPartCategories.Keys)
+            {
+                if (!categoryFoldouts.ContainsKey(category))
+                    categoryFoldouts[category] = true;
+
+                categoryFoldouts[category] = EditorGUILayout.Foldout(categoryFoldouts[category], category, true);
+
+                if (categoryFoldouts[category])
+                {
+                    EditorGUI.indentLevel++;
+                    DrawBodyPartCategory(category, bodyPartCategories[category], ragdollSystem);
+                    EditorGUI.indentLevel--;
+                }
+            }
+
+            EditorGUILayout.EndScrollView();
+
+            // Auto-Create Missing button
+            EditorGUILayout.Space(4);
+            if (GUILayout.Button("Auto-Create Missing Components", GUILayout.Height(25)))
+            {
+                AutoCreateMissingComponents(ragdollSystem);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawBodyPartCategory(string category, List<BodyPartSlot> slots, RagdollSystem ragdollSystem)
+        {
+            // Group mergeable components together
+            var mergeGroups = slots.Where(s => s.isMergeable).GroupBy(s => s.mergeGroup).ToList();
+            var nonMergeable = slots.Where(s => !s.isMergeable).ToList();
+
+            // Draw non-mergeable slots first
+            foreach (var slot in nonMergeable)
+            {
+                DrawBodyPartSlot(slot, ragdollSystem);
+            }
+
+            // Draw mergeable groups
+            foreach (var mergeGroup in mergeGroups)
+            {
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.LabelField(mergeGroup.Key.Replace("-", " / "), EditorStyles.miniLabel);
+
+                var groupSlots = mergeGroup.ToList();
+                foreach (var slot in groupSlots)
+                {
+                    EditorGUI.indentLevel++;
+                    DrawBodyPartSlot(slot, ragdollSystem);
+                    EditorGUI.indentLevel--;
+                }
+
+                EditorGUILayout.EndVertical();
+            }
+        }
+
+        private void DrawBodyPartSlot(BodyPartSlot slot, RagdollSystem ragdollSystem)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            // Status indicator
+            bool hasComponent = slot.assignedObject != null && slot.assignedObject.GetComponent(slot.componentType) != null;
+            EditorGUILayout.LabelField(hasComponent ? "✓" : "✗", GUILayout.Width(18));
+
+            // Object field
+            EditorGUI.BeginChangeCheck();
+            GameObject newObject = (GameObject)EditorGUILayout.ObjectField(slot.label, slot.assignedObject, typeof(GameObject), true);
+            if (EditorGUI.EndChangeCheck())
+            {
+                slot.assignedObject = newObject;
+                if (newObject != null)
+                {
+                    AddComponentToObject(slot, ragdollSystem);
+                }
+            }
+
+            // Auto-Detect button
+            if (GUILayout.Button("Auto", GUILayout.Width(50)))
+            {
+                AutoDetectBodyPart(slot, ragdollSystem);
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            // Show hand details if this is a hand
+            if (slot.componentType == typeof(RagdollHand) && slot.assignedObject != null)
+            {
+                DrawHandDetails(slot, ragdollSystem);
+            }
+        }
+
+        private void DrawHandDetails(BodyPartSlot handSlot, RagdollSystem ragdollSystem)
+        {
+            var hand = handSlot.assignedObject.GetComponent<RagdollHand>();
+            if (hand == null) return;
+
+            string handKey = $"{handSlot.side}_{handSlot.assignedObject.GetInstanceID()}";
+            if (!handFoldouts.ContainsKey(handKey))
+                handFoldouts[handKey] = false;
+
+            EditorGUI.indentLevel++;
+            handFoldouts[handKey] = EditorGUILayout.Foldout(handFoldouts[handKey], "Fingers", true);
+
+            if (handFoldouts[handKey])
+            {
+                EditorGUI.indentLevel++;
+                if (GUILayout.Button("Auto-Fill Fingers", GUILayout.Width(150)))
+                {
+                    AutoFillFingers(hand);
+                }
+
+                // Show finger list
+                if (hand.fingers != null && hand.fingers.Count > 0)
+                {
+                    for (int i = 0; i < hand.fingers.Count; i++)
+                    {
+                        var finger = hand.fingers[i];
+                        if (finger != null)
+                        {
+                            EditorGUILayout.ObjectField($"{finger.kind} ({finger.side})", finger, typeof(RagdollFinger), true);
+                        }
+                    }
+                }
+                EditorGUI.indentLevel--;
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        private void AutoDetectBodyPart(BodyPartSlot slot, RagdollSystem ragdollSystem)
+        {
+            if (ragdollSystem == null) return;
+
+            UnityEngine.Component component = null;
+
+            // Use reflection to find the appropriate FindOrAdd method
+            System.Reflection.MethodInfo method = null;
+            if (slot.side.HasValue)
+            {
+                method = ragdollSystem.GetType().GetMethod($"FindOrAdd{slot.roleName}", 
+                    new System.Type[] { typeof(BodySide) });
+                if (method != null)
+                {
+                    component = method.Invoke(ragdollSystem, new object[] { slot.side.Value }) as UnityEngine.Component;
+                }
+            }
+            else
+            {
+                method = ragdollSystem.GetType().GetMethod($"FindOrAdd{slot.roleName}", new System.Type[0]);
+                if (method != null)
+                {
+                    component = method.Invoke(ragdollSystem, null) as UnityEngine.Component;
+                }
+            }
+
+            if (component != null)
+            {
+                slot.assignedObject = component.gameObject;
+                EditorUtility.SetDirty(actorRoot);
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            }
+        }
+
+        private void AddComponentToObject(BodyPartSlot slot, RagdollSystem ragdollSystem)
+        {
+            if (slot.assignedObject == null) return;
+
+            // Check if component already exists
+            var existingComponent = slot.assignedObject.GetComponent(slot.componentType);
+            if (existingComponent != null) return;
+
+            // Safety check: check for other body part components
+            var otherBodyParts = slot.assignedObject.GetComponents<RagdollBodyPart>()
+                .Where(c => c.GetType() != slot.componentType)
+                .ToList();
+
+            if (otherBodyParts.Count > 0)
+            {
+                string componentNames = string.Join(", ", otherBodyParts.Select(c => c.GetType().Name));
+                int choice = EditorUtility.DisplayDialogComplex(
+                    "Body Part Component Conflict",
+                    $"This GameObject already has body part components: {componentNames}\n\nAdd {slot.componentType.Name} anyway?",
+                    "Yes",
+                    "Cancel",
+                    "No"
+                );
+
+                if (choice != 0) // 0 = Yes, 1 = Cancel, 2 = No
+                    return;
+            }
+
+            // Add component
+            Undo.AddComponent(slot.assignedObject, slot.componentType);
+            var newComponent = slot.assignedObject.GetComponent(slot.componentType);
+
+            // Set side if applicable
+            if (slot.side.HasValue && newComponent is RagdollSidedBodyPart sidedPart)
+            {
+                sidedPart.side = slot.side.Value;
+            }
+
+            EditorUtility.SetDirty(slot.assignedObject);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        }
+
+        private void AutoCreateMissingComponents(RagdollSystem ragdollSystem)
+        {
+            if (ragdollSystem == null) return;
+
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Auto-Create Missing Body Parts");
+
+            var created = new List<string>();
+
+            // Group mergeable components by merge group and side
+            var mergeableGroups = bodyPartCategories.Values
+                .SelectMany(slots => slots)
+                .Where(s => s.isMergeable)
+                .GroupBy(s => new { s.mergeGroup, s.side })
+                .ToList();
+
+            foreach (var mergeGroup in mergeableGroups)
+            {
+                var slots = mergeGroup.ToList();
+                if (slots.Count != 2) continue; // Should have exactly 2 components in a mergeable pair
+
+                var slot1 = slots[0];
+                var slot2 = slots[1];
+
+                // Smart detection strategy
+                // First, try to find existing bones/components
+                AutoDetectBodyPart(slot1, ragdollSystem);
+                AutoDetectBodyPart(slot2, ragdollSystem);
+
+                bool has1 = slot1.assignedObject != null && slot1.assignedObject.GetComponent(slot1.componentType) != null;
+                bool has2 = slot2.assignedObject != null && slot2.assignedObject.GetComponent(slot2.componentType) != null;
+
+                if (has1 && !has2)
+                {
+                    // Component 1 exists, try to auto-create component 2
+                    var comp1 = slot1.assignedObject.GetComponent(slot1.componentType);
+                    TryAutoCreateFromComponent(comp1, slot2, created);
+                }
+                else if (!has1 && has2)
+                {
+                    // Component 2 exists, try to auto-create component 1
+                    var comp2 = slot2.assignedObject.GetComponent(slot2.componentType);
+                    TryAutoCreateFromComponent(comp2, slot1, created);
+                }
+                else if (!has1 && !has2)
+                {
+                    // Neither exists, create both in logical order
+                    // Determine logical order based on component types
+                    if (slot1.roleName == "Knee" || slot1.roleName == "Elbow" || slot1.roleName == "Shoulder")
+                    {
+                        // Create slot1 first (knee/elbow/shoulder), then slot2 (shin/forearm/collarbone)
+                        CreateComponentGameObject(slot1, ragdollSystem, created);
+                        TryAutoCreateFromComponent(slot1.assignedObject?.GetComponent(slot1.componentType), slot2, created);
+                    }
+                    else
+                    {
+                        // Create slot2 first, then slot1
+                        CreateComponentGameObject(slot2, ragdollSystem, created);
+                        TryAutoCreateFromComponent(slot2.assignedObject?.GetComponent(slot2.componentType), slot1, created);
+                    }
+                }
+            }
+
+            // Auto-link all components
+            ragdollSystem.SendMessage("ValidateBoneComponents", SendMessageOptions.DontRequireReceiver);
+
+            Undo.CollapseUndoOperations(group);
+
+            if (created.Count > 0)
+            {
+                EditorUtility.DisplayDialog("Auto-Create Complete", $"Created {created.Count} components:\n" + string.Join("\n", created), "OK");
+            }
+            else
+            {
+                EditorUtility.DisplayDialog("Auto-Create Complete", "No missing components found. All components are present.", "OK");
+            }
+
+            EditorUtility.SetDirty(actorRoot);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        }
+
+        private void TryAutoCreateFromComponent(UnityEngine.Component sourceComponent, BodyPartSlot targetSlot, List<string> created)
+        {
+            if (sourceComponent == null) return;
+
+            // Use reflection to find and call auto-create method
+            var autoCreateMethod = sourceComponent.GetType().GetMethod($"AutoCreate{targetSlot.roleName}", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (autoCreateMethod != null)
+            {
+                autoCreateMethod.Invoke(sourceComponent, null);
+                var targetComponent = sourceComponent.gameObject.GetComponentsInChildren(targetSlot.componentType)
+                    .FirstOrDefault(c => c != sourceComponent);
+                if (targetComponent != null)
+                {
+                    targetSlot.assignedObject = targetComponent.gameObject;
+                    created.Add($"{targetSlot.label} (auto-created from {sourceComponent.GetType().Name})");
+                }
+            }
+        }
+
+        private void CreateComponentGameObject(BodyPartSlot slot, RagdollSystem ragdollSystem, List<string> created)
+        {
+            // Try to find bone first
+            AutoDetectBodyPart(slot, ragdollSystem);
+            
+            if (slot.assignedObject == null)
+            {
+                // Create new GameObject
+                GameObject newObj = new GameObject($"{slot.side?.ToString() ?? ""}_{slot.roleName}");
+                newObj.transform.SetParent(ragdollSystem.transform, worldPositionStays: false);
+                slot.assignedObject = newObj;
+                AddComponentToObject(slot, ragdollSystem);
+                created.Add($"{slot.label} (new GameObject created)");
+            }
+        }
+
+        private void AutoFillFingers(RagdollHand hand)
+        {
+            if (hand == null) return;
+
+            Undo.RecordObject(hand, "Auto-Fill Fingers");
+
+            // Find all RagdollFinger components as direct children
+            var fingers = hand.GetComponentsInChildren<RagdollFinger>()
+                .Where(f => f.transform.parent == hand.transform)
+                .ToList();
+
+            hand.fingers = fingers;
+
+            // Auto-fill digits for each finger (similar to RagdollFingerEditor)
+            foreach (var finger in fingers)
+            {
+                if (finger == null) continue;
+
+                Undo.RecordObject(finger, "Auto-Fill Digits");
+                var digits = finger.GetComponentsInChildren<RagdollDigit>()
+                    .Where(d => d.transform.IsChildOf(finger.transform) && d.transform.parent == finger.transform)
+                    .ToList();
+
+                finger.digits = digits;
+
+                // Mark last digit as caboose if applicable
+                if (digits.Count > 0)
+                {
+                    var lastDigit = digits[digits.Count - 1];
+                    if (lastDigit != null)
+                    {
+                        lastDigit.isCabooseDigit = true;
+                    }
+                }
+            }
+
+            EditorUtility.SetDirty(hand);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         }
 
         private void DrawOptions()
@@ -166,6 +629,12 @@ namespace Locomotion.EditorTools
             DrawCheck("WorldInteraction present", validation.hasWorldInteraction);
             DrawCheck("At least one Sensor present", validation.hasAnySensor);
             DrawCheck("At least one Ear present", validation.hasAnyEar);
+
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Body Parts", EditorStyles.boldLabel);
+            DrawCheck("Core body parts (Head/Neck/Torso/Pelvis)", validation.hasCoreBodyParts);
+            DrawCheck("Arm body parts (at least one hand)", validation.hasArmBodyParts);
+            DrawCheck("Leg body parts (at least one foot)", validation.hasLegBodyParts);
 
             EditorGUILayout.EndVertical();
         }
@@ -244,6 +713,16 @@ namespace Locomotion.EditorTools
             validation.hasWorldInteraction = actorRoot.GetComponent<WorldInteraction>() != null;
             validation.hasAnySensor = actorRoot.GetComponentInChildren<Sensor>() != null;
             validation.hasAnyEar = actorRoot.GetComponentInChildren<Locomotion.Audio.Ears>() != null;
+
+            // Validate body parts
+            var ragdollSystem = actorRoot.GetComponent<RagdollSystem>();
+            if (ragdollSystem != null)
+            {
+                validation.hasCoreBodyParts = ragdollSystem.headComponent != null && ragdollSystem.neckComponent != null 
+                    && ragdollSystem.torsoComponent != null && ragdollSystem.pelvisComponent != null;
+                validation.hasArmBodyParts = (ragdollSystem.leftHandComponent != null || ragdollSystem.rightHandComponent != null);
+                validation.hasLegBodyParts = (ragdollSystem.leftFootComponent != null || ragdollSystem.rightFootComponent != null);
+            }
         }
 
         private static void DrawCheck(string label, bool ok)
@@ -326,6 +805,9 @@ namespace Locomotion.EditorTools
             public bool hasWorldInteraction;
             public bool hasAnySensor;
             public bool hasAnyEar;
+            public bool hasCoreBodyParts;
+            public bool hasArmBodyParts;
+            public bool hasLegBodyParts;
 
             public bool IsReadyToSave()
             {

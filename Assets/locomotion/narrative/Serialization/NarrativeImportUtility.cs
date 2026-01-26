@@ -7,6 +7,7 @@ using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 
 namespace Locomotion.Narrative.Serialization
@@ -42,21 +43,53 @@ namespace Locomotion.Narrative.Serialization
 #if UNITY_EDITOR
         public static NarrativeCalendarAsset CreateCalendarAssetFromDto(NarrativeCalendarDto dto, string assetPath)
         {
-            var asset = ScriptableObject.CreateInstance<NarrativeCalendarAsset>();
+            // Create a GameObject with the NarrativeCalendarAsset component
+            GameObject go = new GameObject("NarrativeCalendar");
+            var asset = go.AddComponent<NarrativeCalendarAsset>();
             ApplyDto(asset, dto);
-            AssetDatabase.CreateAsset(asset, assetPath);
+            
+            // Save as prefab
+            string prefabPath = assetPath.Replace(".asset", ".prefab");
+            PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            
+            // Load the prefab asset
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab != null)
+            {
+                asset = prefab.GetComponent<NarrativeCalendarAsset>();
+            }
+            
+            // Clean up the temporary GameObject
+            UnityEngine.Object.DestroyImmediate(go);
+            
             return asset;
         }
 
         public static NarrativeTreeAsset CreateTreeAssetFromDto(NarrativeTreeDto dto, string assetPath)
         {
-            var asset = ScriptableObject.CreateInstance<NarrativeTreeAsset>();
+            // Create a GameObject with the NarrativeTreeAsset component
+            GameObject go = new GameObject("NarrativeTree");
+            var asset = go.AddComponent<NarrativeTreeAsset>();
             ApplyDto(asset, dto);
-            AssetDatabase.CreateAsset(asset, assetPath);
+            
+            // Save as prefab
+            string prefabPath = assetPath.Replace(".asset", ".prefab");
+            PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            
+            // Load the prefab asset
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab != null)
+            {
+                asset = prefab.GetComponent<NarrativeTreeAsset>();
+            }
+            
+            // Clean up the temporary GameObject
+            UnityEngine.Object.DestroyImmediate(go);
+            
             return asset;
         }
 #endif
@@ -218,7 +251,19 @@ namespace Locomotion.Narrative.Serialization
 #if UNITY_EDITOR
             if (string.IsNullOrWhiteSpace(guid)) return null;
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            return string.IsNullOrWhiteSpace(path) ? null : AssetDatabase.LoadAssetAtPath<NarrativeTreeAsset>(path);
+            if (string.IsNullOrWhiteSpace(path)) return null;
+            
+            // Try loading as prefab first (new MonoBehaviour approach)
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab != null)
+            {
+                var component = prefab.GetComponent<NarrativeTreeAsset>();
+                if (component != null) return component;
+            }
+            
+            // Note: NarrativeTreeAsset is now a MonoBehaviour, so we can't load it as ScriptableObject
+            // Backwards compatibility would require checking if the asset is a prefab with the component
+            return null;
 #else
             return null;
 #endif
