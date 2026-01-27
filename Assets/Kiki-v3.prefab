@@ -931,6 +931,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1265177029828767838, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      propertyPath: ref_SMR_EL_DEF
+      value: 
+      objectReference: {fileID: 7944354316090640831}
+    - target: {fileID: 1265177029828767838, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      propertyPath: ref_SMR_EYE_DEF
+      value: 
+      objectReference: {fileID: 7944354316090640831}
     - target: {fileID: 1586523481853375397, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -1028,6 +1036,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2078974436995976791, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4206105087777656455}
+    - targetCorrespondingSourceObject: {fileID: 2078974436995976791, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2875933531966570721}
     - targetCorrespondingSourceObject: {fileID: 2383211800584791942, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8560322228607589080}
@@ -1037,6 +1048,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2383211800584791942, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 198717191414737249}
+    - targetCorrespondingSourceObject: {fileID: 2383211800584791942, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7055737414611501666}
     - targetCorrespondingSourceObject: {fileID: 6573196332745997815, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2599250124266615222}
@@ -1067,6 +1081,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6914928419546127067, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 53738620882574592}
+    - targetCorrespondingSourceObject: {fileID: 4704255178509632017, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6893930484476489180}
+    - targetCorrespondingSourceObject: {fileID: 4704255178509632017, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4051413800385171221}
     - targetCorrespondingSourceObject: {fileID: 4760227186161861964, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 9107928083107744009}
@@ -1091,6 +1111,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3556801944857677628, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5703269738541316020}
+    - targetCorrespondingSourceObject: {fileID: 3556801944857677628, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7262647303473320374}
     - targetCorrespondingSourceObject: {fileID: 5891308901281342546, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8177425524281889934}
@@ -1208,6 +1231,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8549441191093611294, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 552624190817311613}
+    - targetCorrespondingSourceObject: {fileID: 4062016866131177949, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4048570899690513343}
+    - targetCorrespondingSourceObject: {fileID: 4062016866131177949, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4660827502046353449}
     - targetCorrespondingSourceObject: {fileID: 3403656321863586809, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7437599075651907076}
@@ -1232,6 +1261,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3970536293789712698, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7946354484532153927}
+    - targetCorrespondingSourceObject: {fileID: 3970536293789712698, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 142523727652968328}
     - targetCorrespondingSourceObject: {fileID: 3305704032789263256, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4868671525079704669}
@@ -1373,6 +1405,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 410022846295290123, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6643612077760750897}
+    - targetCorrespondingSourceObject: {fileID: 410022846295290123, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 748754722743075905}
     - targetCorrespondingSourceObject: {fileID: 3104628065738792057, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4969203344314617105}
@@ -1409,6 +1444,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 719043231457799527, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3873687994552198557}
+    - targetCorrespondingSourceObject: {fileID: 719043231457799527, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6562513273349954160}
     - targetCorrespondingSourceObject: {fileID: 5840926548408979464, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4504486356386569879}
@@ -1465,20 +1503,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -1608,6 +1646,58 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4727121920403166976, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
   m_PrefabInstance: {fileID: 5023008209407159249}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &359602370571561408 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4704255178509632017, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+  m_PrefabInstance: {fileID: 5023008209407159249}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6893930484476489180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 359602370571561408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6e0174b15bc1074194a22b342cc948a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 7761850679775973305}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 0
+  neck: {fileID: 5904694215909347281}
+  shoulder: {fileID: 4051413800385171221}
+  autoCreateShoulder: 0
+--- !u!114 &4051413800385171221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 359602370571561408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096adef0d31d97a4685e3aa5db1dbef4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 7761850679775973305}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 0
+  collarbone: {fileID: 6893930484476489180}
+  upperarm: {fileID: 6697728057419680029}
+  elbow: {fileID: 7262647303473320374}
+  autoCreateUpperarm: 0
 --- !u!1 &461745547717996540 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4890131271215006765, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -1861,7 +1951,13 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 0
+  shoulder: {fileID: 4051413800385171221}
+  elbow: {fileID: 7262647303473320374}
+  autoCreateShoulder: 0
 --- !u!1 &838456973781669126 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5627110804804419287, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -2073,6 +2169,11 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  leftCollarbone: {fileID: 6893930484476489180}
+  rightCollarbone: {fileID: 4048570899690513343}
 --- !u!1 &936231886903628820 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5281427871303040965, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -2264,6 +2365,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 0
 --- !u!1 &988703950717522776 stripped
 GameObject:
@@ -2483,6 +2587,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 0
   fingers:
   - {fileID: 0}
@@ -2678,6 +2785,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 1
 --- !u!4 &1637701856630017388 stripped
 Transform:
@@ -2924,6 +3034,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
 --- !u!4 &1985630475113587835 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6790072814809403306, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -3044,6 +3157,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
 --- !u!1 &2204868536223997467 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6569638162984121802, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -3235,6 +3351,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 1
 --- !u!4 &2426423298667136202 stripped
 Transform:
@@ -3309,20 +3428,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -3455,20 +3574,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -3786,7 +3905,36 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 0
+  shin: {fileID: 748754722743075905}
+  foot: {fileID: 6492870239996090498}
+  autoCreateShin: 0
+--- !u!114 &748754722743075905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4613373499512986330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2b9a4617aacdd9439176e910a10aed1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 3769900542011570757}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 0
+  knee: {fileID: 6643612077760750897}
+  foot: {fileID: 6492870239996090498}
+  autoCreateKnee: 0
 --- !u!1 &4765902528780827843 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 546813809198126866, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -3825,20 +3973,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -3946,20 +4094,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -3997,7 +4145,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 31c867482b6a9ba4fbd710d95c07c252, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4210,6 +4358,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
 --- !u!1 &5324560225426678608 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 887750129466902657, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -4248,20 +4399,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -4557,7 +4708,36 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 1
+  shin: {fileID: 6562513273349954160}
+  foot: {fileID: 6680319483336393952}
+  autoCreateShin: 0
+--- !u!114 &6562513273349954160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5498826254224541366}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2b9a4617aacdd9439176e910a10aed1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 7091775812428678451}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 1
+  knee: {fileID: 3873687994552198557}
+  foot: {fileID: 6680319483336393952}
+  autoCreateKnee: 0
 --- !u!4 &5766509037750139470 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1563749835066610079, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -4666,20 +4846,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -4883,18 +5063,27 @@ MonoBehaviour:
   breakableSections: []
   leftHandComponent: {fileID: 250965168655845304}
   rightHandComponent: {fileID: 3718837491708389982}
-  leftForearmComponent: {fileID: 5703269738541316020}
-  rightForearmComponent: {fileID: 7946354484532153927}
+  leftCollarboneComponent: {fileID: 6893930484476489180}
+  rightCollarboneComponent: {fileID: 4048570899690513343}
+  leftShoulderComponent: {fileID: 4051413800385171221}
+  rightShoulderComponent: {fileID: 4660827502046353449}
   leftUpperarmComponent: {fileID: 6697728057419680029}
   rightUpperarmComponent: {fileID: 3599187122582286473}
+  leftElbowComponent: {fileID: 7262647303473320374}
+  rightElbowComponent: {fileID: 142523727652968328}
+  leftForearmComponent: {fileID: 5703269738541316020}
+  rightForearmComponent: {fileID: 7946354484532153927}
   headComponent: {fileID: 53738620882574592}
+  jawComponent: {fileID: 0}
   neckComponent: {fileID: 5904694215909347281}
   pelvisComponent: {fileID: 3329590337228934598}
-  torsoComponent: {fileID: 2599250124266615222}
+  torsoComponent: {fileID: 2875933531966570721}
   leftLegComponent: {fileID: 7208320358967196215}
   rightLegComponent: {fileID: 4727063338091840546}
   leftKneeComponent: {fileID: 6643612077760750897}
   rightKneeComponent: {fileID: 3873687994552198557}
+  leftShinComponent: {fileID: 748754722743075905}
+  rightShinComponent: {fileID: 6562513273349954160}
   leftFootComponent: {fileID: 6492870239996090498}
   rightFootComponent: {fileID: 6680319483336393952}
   leftHand:
@@ -4939,6 +5128,18 @@ MonoBehaviour:
   torqueWeight: 0.3
   forceWeight: 0.2
   velocityWeight: 0.2
+  comfortWeight: 0.3
+  feasibilityWeight: 0.7
+  onlyAllowLegsForWalking: 1
+  placementCardKeywords:
+  - placement
+  - grasp
+  - hold
+  - tip
+  - manipulate
+  - grip
+  - pick
+  - place
 --- !u!114 &832837752884085111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5128,6 +5329,25 @@ MonoBehaviour:
     m_RotationOrder: 4
   attachedJoint: {fileID: 0}
   forceMode: 0
+--- !u!114 &2875933531966570721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6444456892232557958}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80468b8153003b3499e625f73a437469, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 6494376500979930533}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
 --- !u!4 &6494376500979930533 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2275978480843243124, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -5400,6 +5620,25 @@ MonoBehaviour:
     m_RotationOrder: 4
   attachedJoint: {fileID: 0}
   forceMode: 0
+--- !u!114 &7055737414611501666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7252926094820871255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80468b8153003b3499e625f73a437469, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 5982498808758641150}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
 --- !u!4 &7305279633665597258 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2365760093621662875, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -5590,10 +5829,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 0
+      time: 0.18888855
+      value: 0.7574768
       inSlope: 0
-      outSlope: 1
+      outSlope: 0
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
@@ -5602,7 +5841,7 @@ MonoBehaviour:
       time: 1
       value: 1
       inSlope: 1
-      outSlope: 0
+      outSlope: 1
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
@@ -5628,6 +5867,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 1
   fingers: []
   lessFingersRemoveAllAfter: 0
@@ -5827,7 +6069,13 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
-  side: 0
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 1
+  shoulder: {fileID: 4660827502046353449}
+  elbow: {fileID: 142523727652968328}
+  autoCreateShoulder: 0
 --- !u!1 &7679612876790780571 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3397464968431728970, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -5900,6 +6148,11 @@ MonoBehaviour:
   indexInFinger: 1
   isCabooseDigit: 0
   nailbed: {fileID: 0}
+--- !u!137 &7944354316090640831 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3167520868842152558, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+  m_PrefabInstance: {fileID: 5023008209407159249}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7971535840436565928 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3104628065738792057, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -6091,6 +6344,9 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 0
 --- !u!4 &7975296669355098993 stripped
 Transform:
@@ -6320,7 +6576,36 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
-  side: 0
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 1
+  elbow: {fileID: 142523727652968328}
+  hand: {fileID: 3718837491708389982}
+  autoCreateElbow: 0
+--- !u!114 &142523727652968328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8263932566578686699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ba60c28e3672d8498a6d871c53497f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 3976315824171923485}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 1
+  forearm: {fileID: 7946354484532153927}
+  hand: {fileID: 3718837491708389982}
+  autoCreateForearm: 0
 --- !u!1 &8407641308122190509 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3537786840114510204, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -6359,20 +6644,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -6623,7 +6908,36 @@ MonoBehaviour:
   additionalBoneTransforms: []
   linkedMuscleGroups: []
   linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
   side: 0
+  elbow: {fileID: 7262647303473320374}
+  hand: {fileID: 250965168655845304}
+  autoCreateElbow: 0
+--- !u!114 &7262647303473320374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8424268822780617965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ba60c28e3672d8498a6d871c53497f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 3614030565680849114}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 0
+  forearm: {fileID: 5703269738541316020}
+  hand: {fileID: 250965168655845304}
+  autoCreateForearm: 0
 --- !u!4 &8472770511379809080 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3467803297386555625, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -6682,20 +6996,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -6775,6 +7089,58 @@ MonoBehaviour:
   indexInFinger: 1
   isCabooseDigit: 0
   nailbed: {fileID: 0}
+--- !u!1 &9073171648935451148 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4062016866131177949, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
+  m_PrefabInstance: {fileID: 5023008209407159249}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4048570899690513343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9073171648935451148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6e0174b15bc1074194a22b342cc948a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 5766509037750139470}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 1
+  neck: {fileID: 5904694215909347281}
+  shoulder: {fileID: 4660827502046353449}
+  autoCreateShoulder: 0
+--- !u!114 &4660827502046353449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9073171648935451148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 096adef0d31d97a4685e3aa5db1dbef4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boneTransform: {fileID: 5766509037750139470}
+  additionalBoneTransforms: []
+  linkedMuscleGroups: []
+  linkedBehaviorTrees: []
+  showRadialLimitsGizmo: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 0.3}
+  gizmoSize: 0.5
+  side: 1
+  collarbone: {fileID: 4048570899690513343}
+  upperarm: {fileID: 3599187122582286473}
+  elbow: {fileID: 142523727652968328}
+  autoCreateUpperarm: 0
 --- !u!1 &9091977074607603344 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4294322570480489793, guid: a41ab576c3b016540aed7505ecaf832f, type: 3}
@@ -6813,20 +7179,20 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -0.3556089
+      outSlope: -0.3556089
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.37633598
     - serializedVersion: 3
-      time: 1
-      value: 0.2
-      inSlope: 0
-      outSlope: 0
+      time: 0.27384612
+      value: -0.20884621
+      inSlope: -10.602121
+      outSlope: -10.602121
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.18183956
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2

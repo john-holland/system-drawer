@@ -105,7 +105,6 @@ namespace Locomotion.Audio
 
             // Create tag vector (one-hot like encoding for common tags)
             float[] tagVector = new float[10];
-            int index = 0;
 
             // Map common tags to vector positions
             Dictionary<string, int> tagMap = new Dictionary<string, int>

@@ -3,7 +3,8 @@
   "rootNamespace": "",
   "references": [
     "Weather.Runtime",
-    "HierarchicalPathFinding"
+    "HierarchicalPathFinding",
+    "Locomotion.Audio"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

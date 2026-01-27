@@ -17,8 +17,10 @@ namespace Locomotion.Audio
         [Tooltip("Path to ONNX model file (relative to Assets folder)")]
         public string modelPath = "Models/audio_lstm.onnx";
 
+#if UNITY_BARRACUDA
         [Tooltip("Model asset (if using NNModel)")]
         public NNModel modelAsset;
+#endif
 
         [Header("Inference Settings")]
         [Tooltip("Input feature dimension")]
@@ -34,10 +36,11 @@ namespace Locomotion.Audio
         [Tooltip("Enable debug logging")]
         public bool enableDebugLogging = false;
 
+        private bool modelLoaded = false;
+
 #if UNITY_BARRACUDA
         private Model runtimeModel;
         private IWorker worker;
-        private bool modelLoaded = false;
 #endif
 
         private void Awake()

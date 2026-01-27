@@ -40,15 +40,24 @@ public class RagdollFingerEditor : Editor
         if (finger.digits == null)
             finger.digits = new System.Collections.Generic.List<RagdollDigit>();
 
-        // Find direct child RagdollDigit components only
+        // Find or create direct child RagdollDigit components
         System.Collections.Generic.List<RagdollDigit> directChildDigits = new System.Collections.Generic.List<RagdollDigit>();
         
         for (int i = 0; i < finger.transform.childCount; i++)
         {
             Transform child = finger.transform.GetChild(i);
             RagdollDigit digit = child.GetComponent<RagdollDigit>();
+            
+            // Create RagdollDigit component if it doesn't exist
+            if (digit == null)
+            {
+                digit = Undo.AddComponent<RagdollDigit>(child.gameObject);
+            }
+            
             if (digit != null)
             {
+                // Auto-assign digit number based on sibling index
+                digit.indexInFinger = i;
                 directChildDigits.Add(digit);
             }
         }
@@ -56,7 +65,7 @@ public class RagdollFingerEditor : Editor
         if (directChildDigits.Count == 0)
         {
             EditorUtility.DisplayDialog("Auto Fill Complete",
-                "No RagdollDigit components found in direct child GameObjects.",
+                "No child GameObjects found to create RagdollDigit components on.",
                 "OK");
             return;
         }
@@ -118,14 +127,30 @@ public class RagdollFingerEditor : Editor
             }
         }
 
-        // Mark the last digit as caboose
+        // Mark the last digit as caboose and add nailbed
         if (finger.digits.Count > 0)
         {
             for (int i = 0; i < finger.digits.Count; i++)
             {
                 if (finger.digits[i] != null)
                 {
-                    finger.digits[i].isCabooseDigit = (i == finger.digits.Count - 1);
+                    bool isCaboose = (i == finger.digits.Count - 1);
+                    finger.digits[i].isCabooseDigit = isCaboose;
+                    
+                    // Add nailbed to caboose digit if it doesn't exist
+                    if (isCaboose && finger.digits[i].nailbed == null)
+                    {
+                        RagdollNailbed nailbed = finger.digits[i].GetComponent<RagdollNailbed>();
+                        if (nailbed == null)
+                        {
+                            nailbed = Undo.AddComponent<RagdollNailbed>(finger.digits[i].gameObject);
+                        }
+                        
+                        if (nailbed != null)
+                        {
+                            finger.digits[i].nailbed = nailbed;
+                        }
+                    }
                 }
             }
         }

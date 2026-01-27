@@ -18,17 +18,29 @@ namespace Locomotion.Audio
 
         /// <summary>
         /// Generate embedding vector for a behavior tree.
+        /// Uses reflection to avoid direct dependency on BehaviorTree types.
         /// </summary>
-        public static float[] EmbedBehaviorTree(BehaviorTree tree)
+        public static float[] EmbedBehaviorTree(object tree)
         {
-            if (tree == null || tree.rootNode == null)
+            if (tree == null)
+            {
+                return new float[EMBEDDING_DIMENSION];
+            }
+
+            // Use reflection to get rootNode
+            var rootNodeProp = tree.GetType().GetProperty("rootNode");
+            if (rootNodeProp == null)
+                return new float[EMBEDDING_DIMENSION];
+
+            object rootNode = rootNodeProp.GetValue(tree);
+            if (rootNode == null)
             {
                 return new float[EMBEDDING_DIMENSION];
             }
 
             // Combine class structure and spatial distance features
-            float[] classVec = CalculateClassStructureVector(tree.rootNode);
-            float[] spatialVec = CalculateSpatialDistanceVector(tree.rootNode);
+            float[] classVec = CalculateClassStructureVector(rootNode);
+            float[] spatialVec = CalculateSpatialDistanceVector(rootNode);
 
             // Combine embeddings
             return CombineEmbeddings(classVec, spatialVec);
@@ -36,8 +48,9 @@ namespace Locomotion.Audio
 
         /// <summary>
         /// Extract class hierarchy features from a behavior tree node.
+        /// Uses reflection to avoid direct dependency on BehaviorTreeNode types.
         /// </summary>
-        public static float[] CalculateClassStructureVector(BehaviorTreeNode node)
+        public static float[] CalculateClassStructureVector(object node)
         {
             float[] embedding = new float[EMBEDDING_DIMENSION];
             if (node == null)
@@ -47,7 +60,8 @@ namespace Locomotion.Audio
             List<float> features = new List<float>();
 
             // Node type encoding (one-hot like)
-            features.AddRange(EncodeNodeType(node.nodeType));
+            var nodeType = GetProperty<object>(node, "nodeType");
+            features.AddRange(EncodeNodeType(nodeType));
 
             // Class hierarchy depth
             features.Add(CalculateDepth(node));
@@ -83,8 +97,9 @@ namespace Locomotion.Audio
 
         /// <summary>
         /// Calculate 3D spatial distance features between nodes.
+        /// Uses reflection to avoid direct dependency on BehaviorTreeNode types.
         /// </summary>
-        public static float[] CalculateSpatialDistanceVector(BehaviorTreeNode rootNode)
+        public static float[] CalculateSpatialDistanceVector(object rootNode)
         {
             float[] embedding = new float[EMBEDDING_DIMENSION];
             if (rootNode == null)
@@ -198,30 +213,98 @@ namespace Locomotion.Audio
             return combined;
         }
 
+        #region Reflection Helpers
+
+        /// <summary>
+        /// Get property value using reflection.
+        /// </summary>
+        private static T GetProperty<T>(object obj, string propertyName, T defaultValue = default(T))
+        {
+            if (obj == null) return defaultValue;
+            var prop = obj.GetType().GetProperty(propertyName);
+            if (prop != null && prop.CanRead)
+            {
+                var value = prop.GetValue(obj);
+                if (value is T)
+                    return (T)value;
+            }
+            return defaultValue;
+        }
+
+        /// <summary>
+        /// Get field value using reflection.
+        /// </summary>
+        private static T GetField<T>(object obj, string fieldName, T defaultValue = default(T))
+        {
+            if (obj == null) return defaultValue;
+            var field = obj.GetType().GetField(fieldName);
+            if (field != null)
+            {
+                var value = field.GetValue(obj);
+                if (value is T)
+                    return (T)value;
+            }
+            return defaultValue;
+        }
+
+        /// <summary>
+        /// Get transform position from MonoBehaviour.
+        /// </summary>
+        private static Vector3 GetPosition(object obj)
+        {
+            if (obj == null) return Vector3.zero;
+            var transformProp = obj.GetType().GetProperty("transform");
+            if (transformProp != null)
+            {
+                var transform = transformProp.GetValue(obj);
+                if (transform != null)
+                {
+                    var positionProp = transform.GetType().GetProperty("position");
+                    if (positionProp != null)
+                    {
+                        var pos = positionProp.GetValue(transform);
+                        if (pos is Vector3)
+                            return (Vector3)pos;
+                    }
+                }
+            }
+            return Vector3.zero;
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
         /// Encode node type as feature vector.
         /// </summary>
-        private static float[] EncodeNodeType(NodeType nodeType)
+        private static float[] EncodeNodeType(object nodeTypeObj)
         {
             float[] encoding = new float[5]; // One for each NodeType
-            encoding[(int)nodeType] = 1f;
+            if (nodeTypeObj != null)
+            {
+                int nodeTypeInt = Convert.ToInt32(nodeTypeObj);
+                if (nodeTypeInt >= 0 && nodeTypeInt < encoding.Length)
+                {
+                    encoding[nodeTypeInt] = 1f;
+                }
+            }
             return encoding;
         }
 
         /// <summary>
         /// Calculate depth of node in tree.
         /// </summary>
-        private static float CalculateDepth(BehaviorTreeNode node)
+        private static float CalculateDepth(object node)
         {
             if (node == null)
                 return 0f;
 
             float maxChildDepth = 0f;
-            if (node.children != null)
+            var children = GetProperty<System.Collections.IList>(node, "children");
+            if (children != null)
             {
-                foreach (var child in node.children)
+                foreach (var child in children)
                 {
                     if (child != null)
                     {
@@ -236,28 +319,30 @@ namespace Locomotion.Audio
         /// <summary>
         /// Encode parent-child relationships.
         /// </summary>
-        private static float[] EncodeParentChildRelationships(BehaviorTreeNode node)
+        private static float[] EncodeParentChildRelationships(object node)
         {
             List<float> features = new List<float>();
 
-            if (node.children != null && node.children.Count > 0)
+            var children = GetProperty<System.Collections.IList>(node, "children");
+            if (children != null && children.Count > 0)
             {
                 // Number of children
-                features.Add(node.children.Count);
+                features.Add(children.Count);
 
                 // Child node types
-                foreach (var child in node.children)
+                foreach (var child in children)
                 {
                     if (child != null)
                     {
-                        features.Add((int)child.nodeType);
+                        var childNodeType = GetProperty<object>(child, "nodeType");
+                        features.Add(Convert.ToInt32(childNodeType));
                     }
                 }
 
                 // Average child depth
                 float avgChildDepth = 0f;
                 int childCount = 0;
-                foreach (var child in node.children)
+                foreach (var child in children)
                 {
                     if (child != null)
                     {
@@ -281,7 +366,7 @@ namespace Locomotion.Audio
         /// <summary>
         /// Encode sibling relationships.
         /// </summary>
-        private static float[] EncodeSiblingRelationships(BehaviorTreeNode node)
+        private static float[] EncodeSiblingRelationships(object node)
         {
             List<float> features = new List<float>();
 
@@ -295,7 +380,7 @@ namespace Locomotion.Audio
         /// <summary>
         /// Encode execution order features.
         /// </summary>
-        private static float[] EncodeExecutionOrder(BehaviorTreeNode node)
+        private static float[] EncodeExecutionOrder(object node)
         {
             List<float> features = new List<float>();
 
@@ -303,7 +388,8 @@ namespace Locomotion.Audio
             features.Add(0f); // Placeholder
 
             // Estimated duration
-            features.Add(node.estimatedDuration);
+            var estimatedDuration = GetProperty<float>(node, "estimatedDuration", 0f);
+            features.Add(estimatedDuration);
 
             return features.ToArray();
         }
@@ -311,7 +397,7 @@ namespace Locomotion.Audio
         /// <summary>
         /// Encode class name as features.
         /// </summary>
-        private static float[] EncodeClassName(BehaviorTreeNode node)
+        private static float[] EncodeClassName(object node)
         {
             List<float> features = new List<float>();
 
@@ -329,19 +415,20 @@ namespace Locomotion.Audio
         /// <summary>
         /// Collect all nodes with their 3D world positions.
         /// </summary>
-        private static void CollectNodePositions(BehaviorTreeNode node, List<NodePosition> positions)
+        private static void CollectNodePositions(object node, List<NodePosition> positions)
         {
             if (node == null)
                 return;
 
             // Get world position from GameObject
-            Vector3 position = node.transform != null ? node.transform.position : Vector3.zero;
+            Vector3 position = GetPosition(node);
             positions.Add(new NodePosition { node = node, position = position });
 
             // Recursively collect children
-            if (node.children != null)
+            var children = GetProperty<System.Collections.IList>(node, "children");
+            if (children != null)
             {
-                foreach (var child in node.children)
+                foreach (var child in children)
                 {
                     if (child != null)
                     {
@@ -354,33 +441,36 @@ namespace Locomotion.Audio
         /// <summary>
         /// Calculate distances between connected nodes (parent-child, siblings).
         /// </summary>
-        private static float[] CalculateConnectedNodeDistances(BehaviorTreeNode node, List<NodePosition> nodePositions)
+        private static float[] CalculateConnectedNodeDistances(object node, List<NodePosition> nodePositions)
         {
             List<float> distances = new List<float>();
 
-            if (node.children != null && node.children.Count > 0)
+            var children = GetProperty<System.Collections.IList>(node, "children");
+            if (children != null && children.Count > 0)
             {
-                Vector3 parentPos = node.transform != null ? node.transform.position : Vector3.zero;
+                Vector3 parentPos = GetPosition(node);
 
-                foreach (var child in node.children)
+                foreach (var child in children)
                 {
                     if (child != null)
                     {
-                        Vector3 childPos = child.transform != null ? child.transform.position : Vector3.zero;
+                        Vector3 childPos = GetPosition(child);
                         float dist = Vector3.Distance(parentPos, childPos);
                         distances.Add(dist);
                     }
                 }
 
                 // Sibling distances
-                for (int i = 0; i < node.children.Count; i++)
+                for (int i = 0; i < children.Count; i++)
                 {
-                    for (int j = i + 1; j < node.children.Count; j++)
+                    for (int j = i + 1; j < children.Count; j++)
                     {
-                        if (node.children[i] != null && node.children[j] != null)
+                        var child1 = children[i];
+                        var child2 = children[j];
+                        if (child1 != null && child2 != null)
                         {
-                            Vector3 pos1 = node.children[i].transform != null ? node.children[i].transform.position : Vector3.zero;
-                            Vector3 pos2 = node.children[j].transform != null ? node.children[j].transform.position : Vector3.zero;
+                            Vector3 pos1 = GetPosition(child1);
+                            Vector3 pos2 = GetPosition(child2);
                             float dist = Vector3.Distance(pos1, pos2);
                             distances.Add(dist);
                         }
@@ -448,7 +538,7 @@ namespace Locomotion.Audio
         /// </summary>
         private class NodePosition
         {
-            public BehaviorTreeNode node;
+            public object node;
             public Vector3 position;
         }
 

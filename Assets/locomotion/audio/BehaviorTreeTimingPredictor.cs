@@ -1,18 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Locomotion.Narrative;
 
 namespace Locomotion.Audio
 {
     /// <summary>
     /// Analyzes behavior trees to predict sound effect timing.
     /// Uses narrative timeline data to estimate when sounds should occur.
+    /// Uses reflection to avoid direct dependency on Narrative.Runtime.
     /// </summary>
     public class BehaviorTreeTimingPredictor : MonoBehaviour
     {
         [Header("References")]
-        [Tooltip("Reference to narrative calendar")]
-        public NarrativeCalendarAsset narrativeCalendar;
+        [Tooltip("Reference to narrative calendar (MonoBehaviour, resolved via reflection)")]
+        public MonoBehaviour narrativeCalendar;
 
         [Header("Prediction Settings")]
         [Tooltip("Use behavior tree duration estimation")]
@@ -30,17 +30,26 @@ namespace Locomotion.Audio
 
         private void Awake()
         {
-            // Auto-find narrative calendar if not assigned
+            // Auto-find narrative calendar if not assigned (using reflection)
             if (narrativeCalendar == null)
             {
-                narrativeCalendar = FindObjectOfType<NarrativeCalendarAsset>();
+                var narrativeCalendarType = System.Type.GetType("Locomotion.Narrative.NarrativeCalendarAsset, Locomotion.Narrative.Runtime");
+                if (narrativeCalendarType != null)
+                {
+                    var found = FindObjectOfType(narrativeCalendarType);
+                    if (found != null)
+                    {
+                        narrativeCalendar = found as MonoBehaviour;
+                    }
+                }
             }
         }
 
         /// <summary>
         /// Predict sound timing for a behavior tree using narrative calendar.
+        /// Uses reflection to avoid direct dependency on BehaviorTree and Narrative types.
         /// </summary>
-        public float PredictSoundTiming(BehaviorTree tree, NarrativeCalendarAsset calendar)
+        public float PredictSoundTiming(object tree, object calendar)
         {
             if (tree == null)
                 return defaultTiming;
@@ -50,15 +59,38 @@ namespace Locomotion.Audio
                 calendar = narrativeCalendar;
             }
 
+            // Convert calendar to proper type if needed
+            if (calendar != null && !(calendar is MonoBehaviour))
+            {
+                // Try to get as MonoBehaviour
+                calendar = calendar as MonoBehaviour;
+            }
+
             float predictedTime = defaultTiming;
 
             // Method 1: Use behavior tree duration estimation
-            if (useDurationEstimation && tree.rootNode != null)
+            if (useDurationEstimation)
             {
-                predictedTime = tree.rootNode.CalculateDuration();
-                if (enableDebugLogging)
+                var rootNodeProp = tree.GetType().GetProperty("rootNode");
+                if (rootNodeProp != null)
                 {
-                    Debug.Log($"[BehaviorTreeTimingPredictor] Duration-based prediction: {predictedTime}s");
+                    object rootNode = rootNodeProp.GetValue(tree);
+                    if (rootNode != null)
+                    {
+                        var calculateDurationMethod = rootNode.GetType().GetMethod("CalculateDuration");
+                        if (calculateDurationMethod != null)
+                        {
+                            var result = calculateDurationMethod.Invoke(rootNode, null);
+                            if (result is float)
+                            {
+                                predictedTime = (float)result;
+                            }
+                        }
+                        if (enableDebugLogging)
+                        {
+                            Debug.Log($"[BehaviorTreeTimingPredictor] Duration-based prediction: {predictedTime}s");
+                        }
+                    }
                 }
             }
 
@@ -77,7 +109,7 @@ namespace Locomotion.Audio
             }
 
             // Method 3: Extract sound nodes and calculate timing
-            List<BehaviorTreeNode> soundNodes = ExtractSoundNodes(tree);
+            var soundNodes = ExtractSoundNodes(tree);
             if (soundNodes.Count > 0)
             {
                 float soundNodeTiming = CalculateNodeTiming(soundNodes[0]);
@@ -96,16 +128,25 @@ namespace Locomotion.Audio
 
         /// <summary>
         /// Extract all sound-related nodes from a behavior tree.
+        /// Uses reflection to avoid direct dependency on BehaviorTree types.
         /// </summary>
-        public List<BehaviorTreeNode> ExtractSoundNodes(BehaviorTree tree)
+        public List<object> ExtractSoundNodes(object tree)
         {
-            List<BehaviorTreeNode> soundNodes = new List<BehaviorTreeNode>();
+            List<object> soundNodes = new List<object>();
 
-            if (tree == null || tree.rootNode == null)
+            if (tree == null)
+                return soundNodes;
+
+            var rootNodeProp = tree.GetType().GetProperty("rootNode");
+            if (rootNodeProp == null)
+                return soundNodes;
+
+            object rootNode = rootNodeProp.GetValue(tree);
+            if (rootNode == null)
                 return soundNodes;
 
             // Recursively search for sound nodes
-            ExtractSoundNodesRecursive(tree.rootNode, soundNodes);
+            ExtractSoundNodesRecursive(rootNode, soundNodes);
 
             return soundNodes;
         }
@@ -113,7 +154,7 @@ namespace Locomotion.Audio
         /// <summary>
         /// Recursively extract sound nodes.
         /// </summary>
-        private void ExtractSoundNodesRecursive(BehaviorTreeNode node, List<BehaviorTreeNode> soundNodes)
+        private void ExtractSoundNodesRecursive(object node, List<object> soundNodes)
         {
             if (node == null)
                 return;
@@ -126,13 +167,18 @@ namespace Locomotion.Audio
             }
 
             // Recursively check children
-            if (node.children != null)
+            var childrenProp = node.GetType().GetProperty("children");
+            if (childrenProp != null)
             {
-                foreach (var child in node.children)
+                var children = childrenProp.GetValue(node) as System.Collections.IList;
+                if (children != null)
                 {
-                    if (child != null)
+                    foreach (var child in children)
                     {
-                        ExtractSoundNodesRecursive(child, soundNodes);
+                        if (child != null)
+                        {
+                            ExtractSoundNodesRecursive(child, soundNodes);
+                        }
                     }
                 }
             }
@@ -140,30 +186,51 @@ namespace Locomotion.Audio
 
         /// <summary>
         /// Calculate timing for a specific node.
+        /// Uses reflection to avoid direct dependency on BehaviorTreeNode types.
         /// </summary>
-        public float CalculateNodeTiming(BehaviorTreeNode node)
+        public float CalculateNodeTiming(object node)
         {
             if (node == null)
                 return defaultTiming;
 
             // Use estimated duration if available
-            if (node.estimatedDuration > 0f)
+            var estimatedDurationProp = node.GetType().GetProperty("estimatedDuration");
+            if (estimatedDurationProp != null)
             {
-                return node.estimatedDuration;
+                var estimatedDuration = estimatedDurationProp.GetValue(node);
+                if (estimatedDuration is float && (float)estimatedDuration > 0f)
+                {
+                    return (float)estimatedDuration;
+                }
             }
 
             // Calculate from children (for sequence nodes)
-            if (node.nodeType == NodeType.Sequence && node.children != null)
+            var nodeTypeProp = node.GetType().GetProperty("nodeType");
+            if (nodeTypeProp != null)
             {
-                float totalTime = 0f;
-                foreach (var child in node.children)
+                var nodeType = nodeTypeProp.GetValue(node);
+                // Check if it's Sequence (typically enum value 0 or 1, but we'll check by name)
+                string nodeTypeName = nodeType != null ? nodeType.ToString() : "";
+                if (nodeTypeName.Contains("Sequence"))
                 {
-                    if (child != null)
+                    var childrenProp = node.GetType().GetProperty("children");
+                    if (childrenProp != null)
                     {
-                        totalTime += CalculateNodeTiming(child);
+                        var children = childrenProp.GetValue(node) as System.Collections.IList;
+                        if (children != null)
+                        {
+                            float totalTime = 0f;
+                            foreach (var child in children)
+                            {
+                                if (child != null)
+                                {
+                                    totalTime += CalculateNodeTiming(child);
+                                }
+                            }
+                            return totalTime;
+                        }
                     }
                 }
-                return totalTime;
             }
 
             // Use default timing
@@ -172,8 +239,9 @@ namespace Locomotion.Audio
 
         /// <summary>
         /// Predict timing from narrative timeline events.
+        /// Uses reflection to avoid direct dependency on Narrative types.
         /// </summary>
-        private float PredictFromTimeline(BehaviorTree tree, NarrativeCalendarAsset calendar)
+        private float PredictFromTimeline(object tree, object calendar)
         {
             if (calendar == null)
                 return 0f;

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using Locomotion.Rig;
 
@@ -81,8 +82,35 @@ public class AnimationBehaviorTree : MonoBehaviour
 
         Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Processing clip: {clip.name}, length: {clip.length}s, frameRate: {clip.frameRate}, samplingRate: {frameSamplingRate}");
 
+        // Check if animation has any bindings/curves
+        #if UNITY_EDITOR
+        var bindings = UnityEditor.AnimationUtility.GetCurveBindings(clip);
+        var objectBindings = UnityEditor.AnimationUtility.GetObjectReferenceCurveBindings(clip);
+        bool hasData = (bindings != null && bindings.Length > 0) || (objectBindings != null && objectBindings.Length > 0);
+        Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Animation has {bindings?.Length ?? 0} curve bindings and {objectBindings?.Length ?? 0} object bindings. Has data: {hasData}");
+        #else
+        bool hasData = true; // Assume has data in runtime
+        #endif
+
         float frameTime = 1f / clip.frameRate;
         int totalFrames = Mathf.RoundToInt(clip.length * clip.frameRate);
+        
+        // Handle zero-length or very short animations (e.g., face animations)
+        // Sample at least one frame at time 0 if the animation has data
+        int minFrames = hasData ? 1 : 0;
+        if (totalFrames < minFrames && hasData)
+        {
+            Debug.LogWarning($"[AnimationBehaviorTree.ConvertAnimationToFrames] Animation clip '{clip.name}' has zero or very short length ({clip.length}s) but contains animation data. " +
+                $"Will sample at least {minFrames} frame(s) at time 0.");
+            totalFrames = minFrames;
+        }
+        else if (totalFrames < minFrames && !hasData)
+        {
+            Debug.LogError($"[AnimationBehaviorTree.ConvertAnimationToFrames] Animation clip '{clip.name}' has zero length ({clip.length}s) and no animation data. " +
+                $"This clip cannot be converted to frames. Please use a different animation clip.");
+            yield break;
+        }
+        
         Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Total frames: {totalFrames}, frameTime: {frameTime}s");
 
         int frameCount = 0;
@@ -105,6 +133,28 @@ public class AnimationBehaviorTree : MonoBehaviour
     }
 
     /// <summary>
+    /// Safely gets the name of a Unity object, handling unassigned references.
+    /// </summary>
+    private static string SafeGetObjectName(UnityEngine.Object obj, string defaultValue = "null")
+    {
+        try
+        {
+            if (obj == null)
+                return defaultValue;
+            
+            return obj.name;
+        }
+        catch (UnityEngine.UnassignedReferenceException)
+        {
+            return "unassigned";
+        }
+        catch (System.Exception)
+        {
+            return defaultValue;
+        }
+    }
+
+    /// <summary>
     /// Generate behavior tree from animation.
     /// </summary>
     public void GenerateBehaviorTree()
@@ -115,19 +165,60 @@ public class AnimationBehaviorTree : MonoBehaviour
             return;
         }
 
+        // Safely get animator controller name (handle unassigned references)
+        // Note: Accessing the field itself can throw UnassignedReferenceException
+        // We use reflection to safely access the field value
         string animatorControllerName = "null";
-        if (animatorController != null)
+        string animationClipName = "null";
+        
+        // Use reflection to safely get field values without triggering UnassignedReferenceException
+        try
         {
+            var animatorControllerField = typeof(AnimationBehaviorTree).GetField("animatorController", BindingFlags.Public | BindingFlags.Instance);
+            var animatorControllerValue = animatorControllerField?.GetValue(this) as RuntimeAnimatorController;
+            animatorControllerName = SafeGetObjectName(animatorControllerValue, "null");
+        }
+        catch (UnityEngine.UnassignedReferenceException)
+        {
+            animatorControllerName = "unassigned";
+        }
+        catch (System.Exception)
+        {
+            // Fallback: try direct access
             try
             {
-                animatorControllerName = animatorController.name;
+                animatorControllerName = SafeGetObjectName(animatorController, "null");
             }
-            catch (System.Exception)
+            catch
             {
                 animatorControllerName = "unassigned";
             }
         }
-        Debug.Log($"[AnimationBehaviorTree] Starting generation. AnimationClip: {animationClip?.name ?? "null"}, AnimatorController: {animatorControllerName}");
+        
+        try
+        {
+            var animationClipField = typeof(AnimationBehaviorTree).GetField("animationClip", BindingFlags.Public | BindingFlags.Instance);
+            var animationClipValue = animationClipField?.GetValue(this) as AnimationClip;
+            animationClipName = SafeGetObjectName(animationClipValue, "null");
+        }
+        catch (UnityEngine.UnassignedReferenceException)
+        {
+            animationClipName = "unassigned";
+        }
+        catch (System.Exception)
+        {
+            // Fallback: try direct access
+            try
+            {
+                animationClipName = SafeGetObjectName(animationClip, "null");
+            }
+            catch
+            {
+                animationClipName = "unassigned";
+            }
+        }
+        
+        Debug.Log($"[AnimationBehaviorTree] Starting generation. AnimationClip: {animationClipName}, AnimatorController: {animatorControllerName}");
 
         isGenerating = true;
 
@@ -338,7 +429,8 @@ public class AnimationBehaviorTree : MonoBehaviour
             {
                 // Sample the animation clip at this time
                 // This will apply the animation to the GameObject hierarchy
-                AnimationClip.SampleAnimation(sampleTarget, clip, time);
+                // Note: SampleAnimation is an instance method that takes (GameObject, time)
+                clip.SampleAnimation(sampleTarget, time);
                 
                 // Extract bone transforms from the sampled hierarchy
                 ExtractBoneTransforms(sampleTarget, frame.boneTransforms);

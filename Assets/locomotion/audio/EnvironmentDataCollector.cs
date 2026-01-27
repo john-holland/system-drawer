@@ -14,8 +14,8 @@ namespace Locomotion.Audio
         [Tooltip("Reference to WeatherSystem (auto-found if null)")]
         public MonoBehaviour weatherSystemObject;
 
-        [Tooltip("Reference to actor's RagdollSystem for physics state")]
-        public RagdollSystem ragdollSystem;
+        [Tooltip("Reference to actor's RagdollSystem for physics state (MonoBehaviour, resolved via reflection)")]
+        public MonoBehaviour ragdollSystem;
 
         [Header("Collection Settings")]
         [Tooltip("Include weather data in collection")]
@@ -59,10 +59,27 @@ namespace Locomotion.Audio
             // Auto-find ragdoll system if not assigned
             if (ragdollSystem == null)
             {
-                ragdollSystem = GetComponentInParent<RagdollSystem>();
-                if (ragdollSystem == null)
+                // Use reflection to find RagdollSystem (to avoid Runtime dependency)
+                var ragdollSystemType = System.Type.GetType("RagdollSystem, Locomotion.Runtime");
+                if (ragdollSystemType == null)
                 {
-                    ragdollSystem = FindObjectOfType<RagdollSystem>();
+                    ragdollSystemType = System.Type.GetType("RagdollSystem, Assembly-CSharp");
+                }
+                if (ragdollSystemType != null)
+                {
+                    var found = GetComponentInParent(ragdollSystemType) as MonoBehaviour;
+                    if (found == null)
+                    {
+                        var foundObj = FindObjectOfType(ragdollSystemType);
+                        if (foundObj != null)
+                        {
+                            found = foundObj as MonoBehaviour;
+                        }
+                    }
+                    if (found != null)
+                    {
+                        ragdollSystem = found;
+                    }
                 }
             }
         }
@@ -202,29 +219,53 @@ namespace Locomotion.Audio
 
         /// <summary>
         /// Collect physics state data from ragdoll system.
+        /// Uses reflection to avoid direct dependency on Runtime.
         /// </summary>
         private void CollectPhysicsData(EnvironmentData data)
         {
             if (ragdollSystem == null)
                 return;
 
-            // Get velocity
-            if (ragdollSystem.ragdollRoot != null)
+            // Get ragdollRoot property using reflection
+            var ragdollRootProp = ragdollSystem.GetType().GetProperty("ragdollRoot");
+            if (ragdollRootProp != null)
             {
-                var rigidbody = ragdollSystem.ragdollRoot.GetComponent<Rigidbody>();
-                if (rigidbody != null)
+                var ragdollRoot = ragdollRootProp.GetValue(ragdollSystem) as Transform;
+                if (ragdollRoot != null)
                 {
-                    data.velocity = rigidbody.velocity;
-                    data.angularVelocity = rigidbody.angularVelocity;
+                    var rigidbody = ragdollRoot.GetComponent<Rigidbody>();
+                    if (rigidbody != null)
+                    {
+                        data.velocity = rigidbody.velocity;
+                        data.angularVelocity = rigidbody.angularVelocity;
+                    }
                 }
             }
 
-            // Get current state
-            var state = ragdollSystem.GetCurrentState();
-            if (state != null)
+            // Get current state using reflection
+            var getCurrentStateMethod = ragdollSystem.GetType().GetMethod("GetCurrentState");
+            if (getCurrentStateMethod != null)
             {
-                data.rootPosition = state.rootPosition;
-                data.rootRotation = state.rootRotation;
+                var state = getCurrentStateMethod.Invoke(ragdollSystem, null);
+                if (state != null)
+                {
+                    var rootPositionProp = state.GetType().GetProperty("rootPosition");
+                    var rootRotationProp = state.GetType().GetProperty("rootRotation");
+                    
+                    if (rootPositionProp != null)
+                    {
+                        var pos = rootPositionProp.GetValue(state);
+                        if (pos is Vector3)
+                            data.rootPosition = (Vector3)pos;
+                    }
+                    
+                    if (rootRotationProp != null)
+                    {
+                        var rot = rootRotationProp.GetValue(state);
+                        if (rot is Quaternion)
+                            data.rootRotation = (Quaternion)rot;
+                    }
+                }
             }
         }
 
@@ -241,9 +282,13 @@ namespace Locomotion.Audio
                 if (collider == null || collider.transform == null)
                     continue;
 
-                // Skip self
-                if (ragdollSystem != null && collider.transform.IsChildOf(ragdollSystem.transform))
-                    continue;
+                // Skip self (using reflection to access transform)
+                if (ragdollSystem != null)
+                {
+                    var ragdollTransform = ragdollSystem.transform;
+                    if (collider.transform.IsChildOf(ragdollTransform))
+                        continue;
+                }
 
                 NearbyObjectData objData = new NearbyObjectData
                 {

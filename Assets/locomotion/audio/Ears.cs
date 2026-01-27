@@ -35,15 +35,47 @@ namespace Locomotion.Audio
         [Tooltip("Optional override. If null, uses solver instance or finds one.")]
         public AudioPathingSolver solver;
 
-        private NervousSystem nervousSystem;
+        private MonoBehaviour nervousSystem;
         private float lastScanTime = -999f;
 
         private readonly List<AuditoryDetection> detections = new List<AuditoryDetection>(16);
         private readonly List<AuditoryDetection> topDetections = new List<AuditoryDetection>(16);
+        
+        // Cached reflection data to avoid repeated lookups
+        private static System.Type cachedSensoryDataType = null;
+        private static System.Reflection.ConstructorInfo cachedSensoryDataConstructor = null;
+        private static bool sensoryDataTypeLookupFailed = false;
+
+        /// <summary>
+        /// Helper method to set property using reflection.
+        /// </summary>
+        private void SetProperty(object obj, string propertyName, object value)
+        {
+            if (obj == null) return;
+            var prop = obj.GetType().GetProperty(propertyName);
+            if (prop != null && prop.CanWrite)
+            {
+                prop.SetValue(obj, value);
+            }
+        }
 
         private void Awake()
         {
-            nervousSystem = GetComponentInParent<NervousSystem>();
+            // Use reflection to find NervousSystem (to avoid Runtime dependency)
+            var nervousSystemType = System.Type.GetType("NervousSystem, Locomotion.Runtime");
+            if (nervousSystemType == null)
+            {
+                nervousSystemType = System.Type.GetType("NervousSystem, Assembly-CSharp");
+            }
+            if (nervousSystemType != null)
+            {
+                var found = GetComponentInParent(nervousSystemType);
+                if (found != null)
+                {
+                    nervousSystem = found as MonoBehaviour;
+                }
+            }
+            
             if (solver == null)
                 solver = AudioPathingSolver.Instance != null ? AudioPathingSolver.Instance : FindObjectOfType<AudioPathingSolver>();
         }
@@ -81,26 +113,208 @@ namespace Locomotion.Audio
 
             if (topDetections.Count > 0)
             {
-                // Create a single auditory impulse containing a batch of detections.
+                // Create a single auditory impulse containing a batch of detections using reflection
                 var strongest = topDetections[0];
-                var sensory = new SensoryData(
-                    position: transform.position,
-                    normal: transform.forward,
-                    force: strongest.perceivedLoudness,
-                    contactObject: strongest.sourceObject,
-                    sensorType: SensorType.Auditory.ToString(),
-                    payload: topDetections
-                );
+                
+                // Use cached type and constructor if available, otherwise look them up
+                if (cachedSensoryDataType == null && !sensoryDataTypeLookupFailed)
+                {
+                    try
+                    {
+                        // Create SensoryData using reflection - try fully qualified names first
+                        cachedSensoryDataType = System.Type.GetType("SensoryData, Locomotion.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+                        if (cachedSensoryDataType == null)
+                        {
+                            cachedSensoryDataType = System.Type.GetType("SensoryData, Locomotion.Runtime");
+                        }
+                        if (cachedSensoryDataType == null)
+                        {
+                            cachedSensoryDataType = System.Type.GetType("SensoryData, Assembly-CSharp");
+                        }
+                        
+                        // If still not found, try loading from all loaded assemblies
+                        if (cachedSensoryDataType == null)
+                        {
+                            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+                            {
+                                try
+                                {
+                                    // Try fully qualified name first
+                                    cachedSensoryDataType = assembly.GetType("SensoryData", false, false);
+                                    if (cachedSensoryDataType != null)
+                                        break;
+                                }
+                                catch (System.Exception ex)
+                                {
+                                    // Ignore exceptions during type lookup
+                                    Debug.LogWarning($"[Ears] Exception looking up SensoryData in assembly {assembly.FullName}: {ex.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"[Ears] Exception during SensoryData type lookup: {ex.Message}\n{ex.StackTrace}");
+                        sensoryDataTypeLookupFailed = true;
+                    }
+                    
+                    if (cachedSensoryDataType != null)
+                    {
+                        try
+                        {
+                            // Get all constructors and find the one that matches
+                            var constructors = cachedSensoryDataType.GetConstructors(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                            
+                            // Look for constructor with 6 parameters (Vector3, Vector3, float, GameObject, string, object)
+                            foreach (var ctor in constructors)
+                            {
+                                var parameters = ctor.GetParameters();
+                                if (parameters.Length == 6 &&
+                                    parameters[0].ParameterType == typeof(Vector3) &&
+                                    parameters[1].ParameterType == typeof(Vector3) &&
+                                    parameters[2].ParameterType == typeof(float) &&
+                                    parameters[3].ParameterType == typeof(GameObject) &&
+                                    parameters[4].ParameterType == typeof(string) &&
+                                    parameters[5].ParameterType == typeof(object))
+                                {
+                                    cachedSensoryDataConstructor = ctor;
+                                    break;
+                                }
+                            }
+                            
+                            // If 6-parameter constructor not found, try 5-parameter (without optional object payload)
+                            if (cachedSensoryDataConstructor == null)
+                            {
+                                foreach (var ctor in constructors)
+                                {
+                                    var parameters = ctor.GetParameters();
+                                    if (parameters.Length == 5 &&
+                                        parameters[0].ParameterType == typeof(Vector3) &&
+                                        parameters[1].ParameterType == typeof(Vector3) &&
+                                        parameters[2].ParameterType == typeof(float) &&
+                                        parameters[3].ParameterType == typeof(GameObject) &&
+                                        parameters[4].ParameterType == typeof(string))
+                                    {
+                                        cachedSensoryDataConstructor = ctor;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (cachedSensoryDataConstructor == null)
+                            {
+                                Debug.LogError($"[Ears] Could not find SensoryData constructor. Found {constructors.Length} constructor(s).");
+                                foreach (var ctor in constructors)
+                                {
+                                    var paramList = string.Join(", ", System.Array.ConvertAll(ctor.GetParameters(), p => p.ParameterType.Name));
+                                    Debug.LogError($"[Ears] Constructor: ({paramList})");
+                                }
+                                sensoryDataTypeLookupFailed = true;
+                            }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Debug.LogError($"[Ears] Exception looking up SensoryData constructor: {ex.Message}\n{ex.StackTrace}");
+                            sensoryDataTypeLookupFailed = true;
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("[Ears] Could not find SensoryData type");
+                        sensoryDataTypeLookupFailed = true;
+                    }
+                }
+                
+                object sensory = null;
+                if (cachedSensoryDataConstructor != null)
+                {
+                    try
+                    {
+                        // Invoke constructor with parameters
+                        if (cachedSensoryDataConstructor.GetParameters().Length == 6)
+                        {
+                            sensory = cachedSensoryDataConstructor.Invoke(new object[] 
+                            { 
+                                transform.position, 
+                                transform.forward, 
+                                strongest.perceivedLoudness, 
+                                strongest.sourceObject, 
+                                "Auditory", 
+                                topDetections 
+                            });
+                        }
+                        else
+                        {
+                            // 5-parameter version (without payload)
+                            sensory = cachedSensoryDataConstructor.Invoke(new object[] 
+                            { 
+                                transform.position, 
+                                transform.forward, 
+                                strongest.perceivedLoudness, 
+                                strongest.sourceObject, 
+                                "Auditory"
+                            });
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"[Ears] Exception creating SensoryData instance: {ex.Message}\n{ex.StackTrace}");
+                    }
+                }
 
-                var impulse = new ImpulseData(
-                    ImpulseType.Sensory,
-                    source: "Ears",
-                    target: "NervousSystem",
-                    data: sensory,
-                    priority: impulsePriority
-                );
+                // Create ImpulseData using reflection
+                var impulseDataType = System.Type.GetType("ImpulseData, Locomotion.Runtime");
+                if (impulseDataType == null)
+                {
+                    impulseDataType = System.Type.GetType("ImpulseData, Assembly-CSharp");
+                }
+                
+                object impulse = null;
+                if (impulseDataType != null)
+                {
+                    // Get ImpulseType enum value
+                    var impulseTypeEnum = System.Type.GetType("ImpulseType, Locomotion.Runtime");
+                    if (impulseTypeEnum == null)
+                    {
+                        impulseTypeEnum = System.Type.GetType("ImpulseType, Assembly-CSharp");
+                    }
+                    object sensoryImpulseType = null;
+                    if (impulseTypeEnum != null)
+                    {
+                        sensoryImpulseType = System.Enum.Parse(impulseTypeEnum, "Sensory");
+                    }
+                    
+                    // Create ImpulseData using constructor
+                    var constructor = impulseDataType.GetConstructor(new System.Type[] 
+                    { 
+                        impulseTypeEnum ?? typeof(int), 
+                        typeof(string), 
+                        typeof(string), 
+                        typeof(object), 
+                        typeof(int) 
+                    });
+                    if (constructor != null)
+                    {
+                        impulse = constructor.Invoke(new object[] 
+                        { 
+                            sensoryImpulseType ?? 0, 
+                            "Ears", 
+                            "NervousSystem", 
+                            sensory, 
+                            impulsePriority 
+                        });
+                    }
+                }
 
-                nervousSystem.SendImpulseUp(impulseChannelName, impulse);
+                // Use reflection to call SendImpulseUp (to avoid Runtime dependency)
+                if (nervousSystem != null && impulse != null)
+                {
+                    var sendImpulseMethod = nervousSystem.GetType().GetMethod("SendImpulseUp");
+                    if (sendImpulseMethod != null)
+                    {
+                        sendImpulseMethod.Invoke(nervousSystem, new object[] { impulseChannelName, impulse });
+                    }
+                }
             }
         }
 

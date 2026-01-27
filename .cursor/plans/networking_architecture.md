@@ -77,6 +77,8 @@ Glenn Fiedler's approach (detailed in "Building a Game Network Protocol") emphas
 
 1. **Deterministic Lockstep with Rollback** - All clients simulate the same physics, server corrects deviations
 2. **Client-Side Prediction** - Clients immediately respond to input, server reconciles later
+3. **Entity Trading** - Client physics interaction cause entities to switch over to interacting client control,
+                         other clients receive interpolation position rather than rendering client side.
 3. **Entity Interpolation** - Smooth rendering of networked entities between updates
 4. **Snapshot Compression** - Efficient encoding of world state
 
@@ -802,3 +804,7 @@ By factoring our systems mathematically as communicative and associative operati
 5. **Deterministic Reconciliation** - Server corrections can be applied associatively
 
 The hierarchical nature of our ragdoll system and spatial trees naturally maps to entity relationship graphs, enabling efficient object path-based networking. Glenn Fiedler's techniques provide the foundation for deterministic physics networking, which we extend with mathematical factoring for distributed system compatibility.
+
+### Questions
+
+Photon integration, or another asset to try?

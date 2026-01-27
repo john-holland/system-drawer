@@ -219,9 +219,31 @@ namespace Locomotion.EditorTools
 
             // Auto-Create Missing button
             EditorGUILayout.Space(4);
-            if (GUILayout.Button("Auto-Create Missing Components", GUILayout.Height(25)))
+            using (new EditorGUI.DisabledScope(Application.isPlaying))
             {
-                AutoCreateMissingComponents(ragdollSystem);
+                if (Application.isPlaying)
+                {
+                    EditorGUILayout.HelpBox("Auto-Create cannot be used during play mode. Please stop play mode first.", MessageType.Warning);
+                }
+                
+                if (GUILayout.Button("Auto-Create Missing Components", GUILayout.Height(25)))
+                {
+                    if (Application.isPlaying)
+                    {
+                        EditorUtility.DisplayDialog("Play Mode Active", "Auto-Create cannot be used during play mode. Please stop play mode first.", "OK");
+                        return;
+                    }
+                    
+                    try
+                    {
+                        AutoCreateMissingComponents(ragdollSystem);
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[RagdollFittingWizardWindow] Error during auto-create: {e.Message}\n{e.StackTrace}");
+                        EditorUtility.DisplayDialog("Auto-Create Error", $"An error occurred during auto-create:\n{e.Message}", "OK");
+                    }
+                }
             }
 
             EditorGUILayout.EndVertical();
@@ -359,7 +381,10 @@ namespace Locomotion.EditorTools
             {
                 slot.assignedObject = component.gameObject;
                 EditorUtility.SetDirty(actorRoot);
-                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+                if (!Application.isPlaying)
+                {
+                    EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+                }
             }
         }
 
@@ -402,12 +427,21 @@ namespace Locomotion.EditorTools
             }
 
             EditorUtility.SetDirty(slot.assignedObject);
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            if (!Application.isPlaying)
+            {
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            }
         }
 
         private void AutoCreateMissingComponents(RagdollSystem ragdollSystem)
         {
             if (ragdollSystem == null) return;
+            
+            if (Application.isPlaying)
+            {
+                Debug.LogWarning("[RagdollFittingWizardWindow] AutoCreateMissingComponents cannot be used during play mode.");
+                return;
+            }
 
             Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();
@@ -475,15 +509,22 @@ namespace Locomotion.EditorTools
             validateAction = () =>
             {
                 EditorApplication.update -= validateAction;
-                if (ragdollSystem != null)
+                try
                 {
-                    // Use reflection to call the private method directly instead of SendMessage
-                    var method = ragdollSystem.GetType().GetMethod("ValidateBoneComponents", 
-                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    if (method != null)
+                    if (ragdollSystem != null)
                     {
-                        method.Invoke(ragdollSystem, null);
+                        // Use reflection to call the private method directly instead of SendMessage
+                        var method = ragdollSystem.GetType().GetMethod("ValidateBoneComponents", 
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        if (method != null)
+                        {
+                            method.Invoke(ragdollSystem, null);
+                        }
                     }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[RagdollFittingWizardWindow] Error during validation callback: {e.Message}\n{e.StackTrace}");
                 }
             };
             EditorApplication.update += validateAction;
@@ -500,7 +541,10 @@ namespace Locomotion.EditorTools
             }
 
             EditorUtility.SetDirty(actorRoot);
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            if (!Application.isPlaying)
+            {
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            }
         }
 
         private void TryAutoCreateFromComponent(UnityEngine.Component sourceComponent, BodyPartSlot targetSlot, List<string> created)
@@ -553,31 +597,88 @@ namespace Locomotion.EditorTools
 
             hand.fingers = fingers;
 
-            // Auto-fill digits for each finger (similar to RagdollFingerEditor)
+            // Auto-fill digits for each finger
             foreach (var finger in fingers)
             {
                 if (finger == null) continue;
 
                 Undo.RecordObject(finger, "Auto-Fill Digits");
-                var digits = finger.GetComponentsInChildren<RagdollDigit>()
-                    .Where(d => d.transform.IsChildOf(finger.transform) && d.transform.parent == finger.transform)
-                    .ToList();
+                
+                // Get or create digits for all direct child transforms
+                var digits = new List<RagdollDigit>();
+                
+                // Process all direct children of the finger
+                for (int i = 0; i < finger.transform.childCount; i++)
+                {
+                    Transform childTransform = finger.transform.GetChild(i);
+                    
+                    // Check if child already has a RagdollDigit component
+                    RagdollDigit digit = childTransform.GetComponent<RagdollDigit>();
+                    
+                    if (digit == null)
+                    {
+                        // Create RagdollDigit component if it doesn't exist
+                        Undo.AddComponent<RagdollDigit>(childTransform.gameObject);
+                        digit = childTransform.GetComponent<RagdollDigit>();
+                    }
+                    
+                    if (digit != null)
+                    {
+                        // Auto-assign digit number based on sibling index
+                        digit.indexInFinger = i;
+                        digits.Add(digit);
+                    }
+                }
+
+                // Sort digits by sibling index to ensure correct order
+                digits.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+                
+                // Re-assign indexInFinger based on final order
+                for (int i = 0; i < digits.Count; i++)
+                {
+                    if (digits[i] != null)
+                    {
+                        digits[i].indexInFinger = i;
+                        Undo.RecordObject(digits[i], "Set Digit Index");
+                    }
+                }
 
                 finger.digits = digits;
 
-                // Mark last digit as caboose if applicable
+                // Mark last digit as caboose and add nailbed if applicable
                 if (digits.Count > 0)
                 {
                     var lastDigit = digits[digits.Count - 1];
                     if (lastDigit != null)
                     {
+                        Undo.RecordObject(lastDigit, "Set Caboose Digit");
                         lastDigit.isCabooseDigit = true;
+                        
+                        // Add nailbed component if it doesn't exist
+                        if (lastDigit.nailbed == null)
+                        {
+                            RagdollNailbed nailbed = lastDigit.GetComponent<RagdollNailbed>();
+                            if (nailbed == null)
+                            {
+                                Undo.AddComponent<RagdollNailbed>(lastDigit.gameObject);
+                                nailbed = lastDigit.GetComponent<RagdollNailbed>();
+                            }
+                            
+                            if (nailbed != null)
+                            {
+                                lastDigit.nailbed = nailbed;
+                                Undo.RecordObject(lastDigit, "Assign Nailbed");
+                            }
+                        }
                     }
                 }
             }
 
             EditorUtility.SetDirty(hand);
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            if (!Application.isPlaying)
+            {
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            }
         }
 
         private void DrawOptions()
@@ -598,12 +699,31 @@ namespace Locomotion.EditorTools
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
 
-            using (new EditorGUI.DisabledScope(actorRoot == null))
+            using (new EditorGUI.DisabledScope(actorRoot == null || Application.isPlaying))
             {
+                if (Application.isPlaying)
+                {
+                    EditorGUILayout.HelpBox("Auto-Wire cannot be used during play mode. Please stop play mode first.", MessageType.Warning);
+                }
+                
                 if (GUILayout.Button("Auto-Wire / Auto-Create", GUILayout.Height(30)))
                 {
-                    RunAutoWire();
-                    Validate();
+                    if (Application.isPlaying)
+                    {
+                        EditorUtility.DisplayDialog("Play Mode Active", "Auto-Wire cannot be used during play mode. Please stop play mode first.", "OK");
+                        return;
+                    }
+                    
+                    try
+                    {
+                        RunAutoWire();
+                        Validate();
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[RagdollFittingWizardWindow] Error during auto-wire: {e.Message}\n{e.StackTrace}");
+                        EditorUtility.DisplayDialog("Auto-Wire Error", $"An error occurred during auto-wire:\n{e.Message}", "OK");
+                    }
                 }
 
                 if (GUILayout.Button("Select Actor Root"))
@@ -679,6 +799,12 @@ namespace Locomotion.EditorTools
 
         private void RunAutoWire()
         {
+            if (Application.isPlaying)
+            {
+                Debug.LogWarning("[RagdollFittingWizardWindow] RunAutoWire cannot be used during play mode.");
+                return;
+            }
+            
             lastReport = new RagdollAutoWire.Report();
 
             Undo.IncrementCurrentGroup();
@@ -709,7 +835,10 @@ namespace Locomotion.EditorTools
             Undo.CollapseUndoOperations(group);
 
             EditorUtility.SetDirty(actorRoot);
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            if (!Application.isPlaying)
+            {
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            }
         }
 
         private void Validate()

@@ -3,7 +3,7 @@ using UnityEngine;
 using Locomotion.Audio;
 using Locomotion.Narrative;
 
-namespace Locomotion.Narrative.Nodes
+namespace Locomotion.Narrative
 {
     /// <summary>
     /// Narrative action spec for playing sounds from the actor store.
@@ -68,14 +68,23 @@ namespace Locomotion.Narrative.Nodes
             }
 
             // Use behavior tree timing predictor if available
-            var predictor = FindObjectOfType<BehaviorTreeTimingPredictor>();
+            var predictor = UnityEngine.Object.FindObjectOfType<BehaviorTreeTimingPredictor>();
             if (predictor != null)
             {
-                // Get behavior tree from parent
-                var behaviorTree = GetComponentInParent<BehaviorTree>();
-                if (behaviorTree != null)
+                // Try to get behavior tree from context or find it using reflection
+                // Note: NarrativeActionSpec is not a MonoBehaviour, so we can't use GetComponentInParent
+                var behaviorTreeType = System.Type.GetType("BehaviorTree, Locomotion.Runtime");
+                if (behaviorTreeType == null)
                 {
-                    predictedTime = predictor.PredictSoundTiming(behaviorTree, calendar);
+                    behaviorTreeType = System.Type.GetType("BehaviorTree, Assembly-CSharp");
+                }
+                if (behaviorTreeType != null)
+                {
+                    var behaviorTree = UnityEngine.Object.FindObjectOfType(behaviorTreeType);
+                    if (behaviorTree != null)
+                    {
+                        predictedTime = predictor.PredictSoundTiming(behaviorTree, calendar);
+                    }
                 }
             }
             else
@@ -148,18 +157,13 @@ namespace Locomotion.Narrative.Nodes
             }
 
             // Get or create audio source (need to find a GameObject to attach to)
-            // Since this is a NarrativeActionSpec, we need to get the GameObject from context
+            // Since this is a NarrativeActionSpec, we need to find a GameObject
             GameObject targetObject = null;
-            if (ctx != null)
-            {
-                // Try to get target from context
-                // This is a simplified approach - may need adjustment based on actual context structure
-            }
 
             if (targetObject == null)
             {
                 // Fallback: find or create a temporary audio source
-                var existingSource = FindObjectOfType<AudioSource>();
+                var existingSource = UnityEngine.Object.FindObjectOfType<AudioSource>();
                 if (existingSource != null)
                 {
                     audioSource = existingSource;
@@ -236,13 +240,13 @@ namespace Locomotion.Narrative.Nodes
             // Auto-find sound store if not assigned
             if (soundStore == null)
             {
-                soundStore = FindObjectOfType<ActorSoundStore>();
+                soundStore = UnityEngine.Object.FindObjectOfType<ActorSoundStore>();
             }
 
             // Auto-find narrative calendar if not assigned
             if (narrativeCalendar == null)
             {
-                narrativeCalendar = FindObjectOfType<NarrativeCalendarAsset>();
+                narrativeCalendar = UnityEngine.Object.FindObjectOfType<NarrativeCalendarAsset>();
             }
 
             // Predict timing on initialize

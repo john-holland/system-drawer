@@ -3,6 +3,7 @@
   "rootNamespace": "",
   "references": [
     "Locomotion.Runtime",
+    "Locomotion.Audio",
     "HierarchicalPathFinding"
   ],
   "includePlatforms": [

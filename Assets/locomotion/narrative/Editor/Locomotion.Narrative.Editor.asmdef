@@ -3,8 +3,7 @@
   "rootNamespace": "Locomotion.Narrative.EditorTools",
   "references": [
     "Locomotion.Narrative.Runtime",
-    "Locomotion.Narrative.Serialization",
-    "Locomotion.Runtime"
+    "Locomotion.Narrative.Serialization"
   ],
   "includePlatforms": [
     "Editor"

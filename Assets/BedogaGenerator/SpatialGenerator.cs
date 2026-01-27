@@ -270,21 +270,68 @@ public class SpatialGenerator : MonoBehaviour
         
         Bounds? result = null;
         
-        // Use appropriate solver method
-        if (mode == GenerationMode.TwoDimensional)
+        // For child nodes, try to get parent bounds first
+        // This allows alignment to work correctly within parent space
+        Transform parent = node.transform.parent;
+        if (parent != null)
         {
-            SGQuadTreeSolver quadSolver = treeSolver as SGQuadTreeSolver;
-            if (quadSolver != null)
+            SGBehaviorTreeNode parentNode = parent.GetComponent<SGBehaviorTreeNode>();
+            if (parentNode != null)
             {
-                result = quadSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
+                // Get parent's world position and convert to local space
+                Vector3 parentWorldPos = parent.position;
+                Vector3 parentLocalPos = transform.InverseTransformPoint(parentWorldPos);
+                
+                // Get parent's optimal space and convert to local space (accounting for scale)
+                Vector3 parentWorldSize = Vector3.Scale(parentNode.optimalSpace, parent.lossyScale);
+                Vector3 parentLocalSize = new Vector3(
+                    parentWorldSize.x / transform.lossyScale.x,
+                    parentWorldSize.y / transform.lossyScale.y,
+                    parentWorldSize.z / transform.lossyScale.z
+                );
+                
+                // Create parent bounds in local space
+                Bounds parentLocalBounds = new Bounds(parentLocalPos, parentLocalSize);
+                
+                // Use appropriate solver method to find space within parent bounds
+                if (mode == GenerationMode.TwoDimensional)
+                {
+                    SGQuadTreeSolver quadSolver = treeSolver as SGQuadTreeSolver;
+                    if (quadSolver != null)
+                    {
+                        // Find space within parent bounds, considering alignment preference
+                        result = FindSpaceInParentBounds(quadSolver, parentLocalBounds, node, emptySpaceMarkers);
+                    }
+                }
+                else
+                {
+                    SGOctTreeSolver octSolver = treeSolver as SGOctTreeSolver;
+                    if (octSolver != null)
+                    {
+                        result = FindSpaceInParentBounds(octSolver, parentLocalBounds, node, emptySpaceMarkers);
+                    }
+                }
             }
         }
-        else
+        
+        // If no parent or no space found in parent, use default solver method
+        if (!result.HasValue)
         {
-            SGOctTreeSolver octSolver = treeSolver as SGOctTreeSolver;
-            if (octSolver != null)
+            if (mode == GenerationMode.TwoDimensional)
             {
-                result = octSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
+                SGQuadTreeSolver quadSolver = treeSolver as SGQuadTreeSolver;
+                if (quadSolver != null)
+                {
+                    result = quadSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
+                }
+            }
+            else
+            {
+                SGOctTreeSolver octSolver = treeSolver as SGOctTreeSolver;
+                if (octSolver != null)
+                {
+                    result = octSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers);
+                }
             }
         }
         
@@ -293,7 +340,8 @@ public class SpatialGenerator : MonoBehaviour
         {
             Debug.Log($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name}\n" +
                       $"  Solver returned (local space): center={result.Value.center}, size={result.Value.size}\n" +
-                      $"  Node requirements: min={node.minSpace}, max={node.maxSpace}, optimal={node.optimalSpace}");
+                      $"  Node requirements: min={node.minSpace}, max={node.maxSpace}, optimal={node.optimalSpace}\n" +
+                      $"  Alignment preference: {node.alignPreference}, Place flush: {node.placeFlush}");
         }
         else
         {
@@ -301,6 +349,80 @@ public class SpatialGenerator : MonoBehaviour
         }
         
         return result;
+    }
+    
+    /// <summary>
+    /// Find space within parent bounds, considering alignment preference.
+    /// This allows walls to be placed at edges rather than always at the center.
+    /// </summary>
+    private Bounds? FindSpaceInParentBounds(SGTreeSolverInterface solver, Bounds parentBounds, SGBehaviorTreeNode node, List<SGBehaviorTreeEmptySpace> emptySpaces)
+    {
+        Vector3 optimalSize = node.optimalSpace;
+        Vector3 minSize = node.minSpace;
+        
+        // Calculate bounds position based on alignment preference
+        // We'll create a bounds that's positioned according to alignment, then check if it's clear
+        Vector3 boundsCenter = parentBounds.center;
+        Vector3 boundsSize = optimalSize;
+        
+        // Adjust center based on alignment preference to place at edges
+        switch (node.alignPreference)
+        {
+            case SGBehaviorTreeNode.AlignmentPreference.Left:
+                // Place at left edge of parent
+                boundsCenter.x = parentBounds.min.x + optimalSize.x * 0.5f;
+                break;
+            case SGBehaviorTreeNode.AlignmentPreference.Right:
+                // Place at right edge of parent
+                boundsCenter.x = parentBounds.max.x - optimalSize.x * 0.5f;
+                break;
+            case SGBehaviorTreeNode.AlignmentPreference.Up:
+                // Place at top edge of parent
+                boundsCenter.y = parentBounds.max.y - optimalSize.y * 0.5f;
+                break;
+            case SGBehaviorTreeNode.AlignmentPreference.Down:
+                // Place at bottom edge of parent
+                boundsCenter.y = parentBounds.min.y + optimalSize.y * 0.5f;
+                break;
+            case SGBehaviorTreeNode.AlignmentPreference.Forward:
+                // Place at front edge of parent
+                boundsCenter.z = parentBounds.max.z - optimalSize.z * 0.5f;
+                break;
+            case SGBehaviorTreeNode.AlignmentPreference.Backward:
+                // Place at back edge of parent
+                boundsCenter.z = parentBounds.min.z + optimalSize.z * 0.5f;
+                break;
+            case SGBehaviorTreeNode.AlignmentPreference.Center:
+                // Keep center
+                break;
+        }
+        
+        // Check if this space is clear
+        Bounds testBounds = new Bounds(boundsCenter, boundsSize);
+        
+        // Use solver's Search method to check for overlaps
+        // We need to convert to world space for the search, then back to local
+        Bounds worldTestBounds = LocalToWorldBounds(testBounds);
+        
+        // Get overlapping objects (this is a bit tricky since we need to search in local space)
+        // For now, let's just return the bounds - the alignment will handle positioning
+        // and the tree insertion will handle collision detection
+        
+        // Make sure the bounds fit within parent
+        if (parentBounds.Contains(testBounds.min) && parentBounds.Contains(testBounds.max))
+        {
+            return testBounds;
+        }
+        
+        // If it doesn't fit, try with min size
+        boundsSize = minSize;
+        testBounds = new Bounds(boundsCenter, boundsSize);
+        if (parentBounds.Contains(testBounds.min) && parentBounds.Contains(testBounds.max))
+        {
+            return testBounds;
+        }
+        
+        return null;
     }
     
     private void PlaceNodeObjects(SGBehaviorTreeNode node, Bounds placementBounds)
@@ -336,8 +458,20 @@ public class SpatialGenerator : MonoBehaviour
         Vector3 rotationEuler = node.GetRotationForDirection(node.alignPreference);
         instance.transform.rotation = Quaternion.Euler(rotationEuler) * prefab.transform.rotation;
         
+        // Debug: Draw gizmo showing placement bounds before alignment
+        #if UNITY_EDITOR
+        Debug.DrawLine(worldBounds.center - Vector3.up * 0.5f, worldBounds.center + Vector3.up * 0.5f, Color.cyan, 5f);
+        Debug.DrawLine(worldBounds.center - Vector3.right * 0.5f, worldBounds.center + Vector3.right * 0.5f, Color.cyan, 5f);
+        Debug.DrawLine(worldBounds.center - Vector3.forward * 0.5f, worldBounds.center + Vector3.forward * 0.5f, Color.cyan, 5f);
+        #endif
+        
         // Apply alignment (this may change the position)
         ApplyAlignment(node, instance, worldBounds);
+        
+        // Debug: Draw line from bounds center to final position
+        #if UNITY_EDITOR
+        Debug.DrawLine(worldBounds.center, instance.transform.position, Color.magenta, 5f);
+        #endif
         
         // Get final bounds after alignment (in world space)
         Bounds worldInstanceBounds = GetGameObjectBounds(instance);
@@ -352,19 +486,29 @@ public class SpatialGenerator : MonoBehaviour
     private void ApplyAlignment(SGBehaviorTreeNode node, GameObject obj, Bounds bounds)
     {
         Vector3 position = obj.transform.position;
-        Vector3 size = GetGameObjectBounds(obj).size;
+        Bounds objBounds = GetGameObjectBounds(obj);
+        Vector3 size = objBounds.size;
+        
+        // If object size is default (1,1,1), it might not have a renderer/collider
+        // Try to use the node's optimal space as fallback
+        if (size == Vector3.one && (obj.GetComponent<Renderer>() == null && obj.GetComponent<Collider>() == null))
+        {
+            Debug.LogWarning($"[SpatialGenerator] ApplyAlignment - Object '{obj.name}' has no Renderer or Collider, using node optimalSpace as size estimate");
+            size = Vector3.Scale(node.optimalSpace, obj.transform.lossyScale);
+        }
 
         // Debug output: bounds, scale, and world position of SpatialGenerator
         Debug.Log($"[SpatialGenerator] ApplyAlignment - Node: {node.name}, Object: {obj.name}\n" +
-                  $"  Bounds center: {bounds.center}\n" +
-                  $"  Bounds min: {bounds.min}\n" +
-                  $"  Bounds max: {bounds.max}\n" +
-                  $"  Bounds size: {bounds.size}\n" +
+                  $"  Placement bounds center: {bounds.center}\n" +
+                  $"  Placement bounds min: {bounds.min}\n" +
+                  $"  Placement bounds max: {bounds.max}\n" +
+                  $"  Placement bounds size: {bounds.size}\n" +
+                  $"  Object bounds center: {objBounds.center}\n" +
+                  $"  Object size (used): {size}\n" +
+                  $"  Object transform position (before): {position}\n" +
+                  $"  Object transform lossyScale: {obj.transform.lossyScale}\n" +
                   $"  SpatialGenerator world position: {transform.position}\n" +
-                  $"  SpatialGenerator local scale: {transform.localScale}\n" +
                   $"  SpatialGenerator lossy scale: {transform.lossyScale}\n" +
-                  $"  Object current position: {position}\n" +
-                  $"  Object size: {size}\n" +
                   $"  Alignment preference: {node.alignPreference}, Place flush: {node.placeFlush}");
         
         // Calculate offset coefficient

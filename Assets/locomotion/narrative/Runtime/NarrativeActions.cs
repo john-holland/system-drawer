@@ -4,6 +4,38 @@ using UnityEngine;
 
 namespace Locomotion.Narrative
 {
+    /// <summary>
+    /// Behavior tree execution status enum (local copy to avoid Runtime dependency).
+    /// </summary>
+    public enum BehaviorTreeStatus
+    {
+        Success,
+        Failure,
+        Running
+    }
+
+    /// <summary>
+    /// Types of behavior tree goals (local copy to avoid Runtime dependency).
+    /// </summary>
+    public enum GoalType
+    {
+        ToolUsage,
+        Movement,
+        Interaction,
+        Cleanup,
+        Composite // Multiple sub-goals
+    }
+
+    /// <summary>
+    /// Cleanup urgency levels for tool return goals (local copy to avoid Runtime dependency).
+    /// </summary>
+    public enum CleanupUrgency
+    {
+        Immediate,    // Return immediately after use
+        AfterTask,    // Return after current task complete
+        LowPriority   // Return when convenient
+    }
+
     [Serializable]
     public abstract class NarrativeActionSpec
     {
@@ -123,50 +155,81 @@ namespace Locomotion.Narrative
 
         public List<NarrativeGoalParam> parameters = new List<NarrativeGoalParam>();
 
-        public BehaviorTreeGoal ToRuntimeGoal(NarrativeExecutionContext ctx)
+        public object ToRuntimeGoal(NarrativeExecutionContext ctx)
         {
-            var g = new BehaviorTreeGoal
+            // Use reflection to create BehaviorTreeGoal from Runtime assembly
+            var goalType = System.Type.GetType("BehaviorTreeGoal, Locomotion.Runtime");
+            if (goalType == null)
             {
-                goalName = goalName,
-                type = type,
-                targetPosition = targetPosition,
-                priority = priority,
-                requiresCleanup = requiresCleanup,
-                cleanupUrgency = cleanupUrgency
-            };
+                // Fallback to Assembly-CSharp if Runtime is in default assembly
+                goalType = System.Type.GetType("BehaviorTreeGoal, Assembly-CSharp");
+            }
+            if (goalType == null)
+            {
+                Debug.LogError("[BehaviorTreeGoalSpec] Could not find BehaviorTreeGoal type");
+                return null;
+            }
+
+            var g = System.Activator.CreateInstance(goalType);
+            if (g == null)
+                return null;
+
+            // Set properties using reflection
+            SetProperty(g, "goalName", goalName);
+            SetProperty(g, "type", Convert.ToInt32(type)); // Convert enum to int
+            SetProperty(g, "targetPosition", targetPosition);
+            SetProperty(g, "priority", priority);
+            SetProperty(g, "requiresCleanup", requiresCleanup);
+            SetProperty(g, "cleanupUrgency", Convert.ToInt32(cleanupUrgency)); // Convert enum to int
 
             if (!string.IsNullOrWhiteSpace(targetKey) && ctx.TryResolveObject(targetKey, out var obj))
             {
-                if (obj is GameObject go) g.target = go;
-                else if (obj is Component c) g.target = c.gameObject;
+                GameObject targetGo = null;
+                if (obj is GameObject go) targetGo = go;
+                else if (obj is Component c) targetGo = c.gameObject;
+                SetProperty(g, "target", targetGo);
             }
 
-            // Best-effort: map NarrativeValue into object values for the existing BT goal structure.
-            // (Note: BehaviorTreeGoal.parameters uses Dictionary<string, object> which isn't Unity-serializable,
-            // but is fine for runtime injection.)
-            if (parameters != null)
+            // Set parameters dictionary
+            var parametersProp = goalType.GetProperty("parameters");
+            if (parametersProp != null)
             {
-                for (int i = 0; i < parameters.Count; i++)
+                var parametersDict = parametersProp.GetValue(g) as System.Collections.IDictionary;
+                if (parametersDict != null && parameters != null)
                 {
-                    var p = parameters[i];
-                    if (p == null || string.IsNullOrWhiteSpace(p.key))
-                        continue;
-
-                    object v = p.value.type switch
+                    for (int i = 0; i < parameters.Count; i++)
                     {
-                        NarrativeValueType.Bool => p.value.boolValue,
-                        NarrativeValueType.Int => p.value.intValue,
-                        NarrativeValueType.Float => p.value.floatValue,
-                        NarrativeValueType.String => p.value.stringValue,
-                        NarrativeValueType.Vector3 => p.value.vector3Value,
-                        _ => null
-                    };
+                        var p = parameters[i];
+                        if (p == null || string.IsNullOrWhiteSpace(p.key))
+                            continue;
 
-                    g.parameters[p.key] = v;
+                        object v = p.value.type switch
+                        {
+                            NarrativeValueType.Bool => p.value.boolValue,
+                            NarrativeValueType.Int => p.value.intValue,
+                            NarrativeValueType.Float => p.value.floatValue,
+                            NarrativeValueType.String => p.value.stringValue,
+                            NarrativeValueType.Vector3 => p.value.vector3Value,
+                            _ => null
+                        };
+
+                        if (v != null)
+                            parametersDict[p.key] = v;
+                    }
                 }
             }
 
             return g;
+        }
+
+        private void SetProperty(object obj, string propertyName, object value)
+        {
+            if (obj == null) return;
+            var prop = obj.GetType().GetProperty(propertyName);
+            if (prop != null && prop.CanWrite)
+            {
+                prop.SetValue(obj, value);
+            }
         }
     }
 
@@ -188,17 +251,54 @@ namespace Locomotion.Narrative
             if (!ctx.TryResolveGameObject(actorKey, out var go) || go == null)
                 return BehaviorTreeStatus.Failure;
 
-            var bt = go.GetComponent<BehaviorTree>();
+            // Use reflection to get BehaviorTree component
+            var behaviorTreeType = System.Type.GetType("BehaviorTree, Locomotion.Runtime");
+            if (behaviorTreeType == null)
+            {
+                // Fallback to Assembly-CSharp if Runtime is in default assembly
+                behaviorTreeType = System.Type.GetType("BehaviorTree, Assembly-CSharp");
+            }
+            if (behaviorTreeType == null)
+            {
+                Debug.LogError("[RunBehaviorTreeAction] Could not find BehaviorTree type");
+                return BehaviorTreeStatus.Failure;
+            }
+
+            var bt = go.GetComponent(behaviorTreeType);
             if (bt == null)
                 return BehaviorTreeStatus.Failure;
 
             if (!started)
             {
-                bt.SetGoal(goal.ToRuntimeGoal(ctx));
+                var goalObj = goal.ToRuntimeGoal(ctx);
+                if (goalObj != null)
+                {
+                    var setGoalMethod = behaviorTreeType.GetMethod("SetGoal");
+                    if (setGoalMethod != null)
+                    {
+                        setGoalMethod.Invoke(bt, new object[] { goalObj });
+                    }
+                }
                 started = true;
             }
 
-            return bt.Execute();
+            // Execute behavior tree
+            var executeMethod = behaviorTreeType.GetMethod("Execute");
+            if (executeMethod != null)
+            {
+                var result = executeMethod.Invoke(bt, null);
+                if (result != null)
+                {
+                    // Convert Runtime's BehaviorTreeStatus to our local enum
+                    int statusInt = Convert.ToInt32(result);
+                    if (statusInt >= 0 && statusInt <= 2)
+                    {
+                        return (BehaviorTreeStatus)statusInt;
+                    }
+                }
+            }
+
+            return BehaviorTreeStatus.Failure;
         }
     }
 }

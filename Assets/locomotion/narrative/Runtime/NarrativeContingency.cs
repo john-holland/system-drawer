@@ -4,6 +4,19 @@ using UnityEngine;
 
 namespace Locomotion.Narrative
 {
+    /// <summary>
+    /// Comparison operators for narrative value comparisons (local copy to avoid Runtime dependency).
+    /// </summary>
+    public enum ComparisonOperator
+    {
+        LessThan,
+        LessThanOrEqual,
+        GreaterThan,
+        GreaterThanOrEqual,
+        Equal,
+        NotEqual
+    }
+
     public enum NarrativeLogicalOperator
     {
         All,
