@@ -397,29 +397,29 @@ public class SpatialGenerator : MonoBehaviour
                 break;
         }
         
-        // Check if this space is clear
+        // Check if this space is clear (solver uses local space)
         Bounds testBounds = new Bounds(boundsCenter, boundsSize);
         
-        // Use solver's Search method to check for overlaps
-        // We need to convert to world space for the search, then back to local
-        Bounds worldTestBounds = LocalToWorldBounds(testBounds);
-        
-        // Get overlapping objects (this is a bit tricky since we need to search in local space)
-        // For now, let's just return the bounds - the alignment will handle positioning
-        // and the tree insertion will handle collision detection
-        
-        // Make sure the bounds fit within parent
+        // Make sure the bounds fit within parent and don't overlap already-placed objects (siblings)
         if (parentBounds.Contains(testBounds.min) && parentBounds.Contains(testBounds.max))
         {
-            return testBounds;
+            List<GameObject> overlapping = solver.Search(testBounds);
+            if (overlapping == null || overlapping.Count == 0)
+            {
+                return testBounds;
+            }
         }
         
-        // If it doesn't fit, try with min size
+        // If it doesn't fit or overlaps, try with min size
         boundsSize = minSize;
         testBounds = new Bounds(boundsCenter, boundsSize);
         if (parentBounds.Contains(testBounds.min) && parentBounds.Contains(testBounds.max))
         {
-            return testBounds;
+            List<GameObject> overlapping = solver.Search(testBounds);
+            if (overlapping == null || overlapping.Count == 0)
+            {
+                return testBounds;
+            }
         }
         
         return null;
@@ -608,9 +608,14 @@ public class SpatialGenerator : MonoBehaviour
             treeSolver.Clear();
         }
         
-        // Clear scene tree
+        // Clear scene tree (regeneration always replaces it)
         if (sceneTreeParent != null)
         {
+            int childCount = sceneTreeParent.childCount;
+            if (childCount > 0)
+            {
+                Debug.LogWarning($"[SpatialGenerator] Clearing {childCount} existing object(s) from SceneTree for regeneration. SceneTree is repopulated each time Generate() runs; do not rely on keeping objects under SceneTree.");
+            }
             for (int i = sceneTreeParent.childCount - 1; i >= 0; i--)
             {
                 DestroyImmediate(sceneTreeParent.GetChild(i).gameObject);
@@ -625,24 +630,8 @@ public class SpatialGenerator : MonoBehaviour
             return;
         }
         
-        // Update generation bounds (use local space)
-        Bounds newBounds = new Bounds(Vector3.zero, transform.localScale);
-        
-        // Update tree solver if bounds changed significantly
-        if (treeSolver != null)
-        {
-            // For now, always update tree (can be enhanced with comparison logic)
-            if (treeSolver is SGQuadTreeSolver quadSolver)
-            {
-                quadSolver.UpdateTree(newBounds);
-            }
-            else if (treeSolver is SGOctTreeSolver octSolver)
-            {
-                octSolver.UpdateTree(newBounds);
-            }
-        }
-        
-        generationBounds = newBounds;
+        // Update generation bounds (use local space). Generate() will ClearGeneration() and repopulate, so no need to call UpdateTree() here.
+        generationBounds = new Bounds(Vector3.zero, transform.localScale);
         
         // Re-evaluate empty space markers
         if (useEmptySpaceMarkers)
@@ -650,7 +639,7 @@ public class SpatialGenerator : MonoBehaviour
             CollectEmptySpaceMarkers();
         }
         
-        // Regenerate with same seed
+        // Regenerate with same seed (clears tree and SceneTree, then refills)
         Generate();
     }
     
