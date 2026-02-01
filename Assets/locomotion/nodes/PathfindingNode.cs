@@ -38,7 +38,7 @@ public class PathfindingNode : BehaviorTreeNode
         // Auto-find pathfinding solver if not assigned
         if (pathfindingSolver == null)
         {
-            pathfindingSolver = FindObjectOfType<HierarchicalPathingSolver>();
+            pathfindingSolver = FindAnyObjectByType<HierarchicalPathingSolver>();
         }
     }
 

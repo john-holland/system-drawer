@@ -22,7 +22,7 @@ namespace Locomotion.Audio.Editor
         private void OnEnable()
         {
             // Auto-find sound cache
-            soundCache = FindObjectOfType<SoundEffectCache>();
+            soundCache = FindAnyObjectByType<SoundEffectCache>();
             if (soundCache == null)
             {
                 GameObject go = new GameObject("SoundEffectCache");
@@ -30,7 +30,7 @@ namespace Locomotion.Audio.Editor
             }
 
             // Auto-find sound store
-            soundStore = FindObjectOfType<ActorSoundStore>();
+            soundStore = FindAnyObjectByType<ActorSoundStore>();
         }
 
         private void OnGUI()

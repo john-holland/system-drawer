@@ -65,8 +65,8 @@ public class PhysicsSolver2D : MonoBehaviour
                     rb = room.gameObject.AddComponent<Rigidbody2D>();
                 }
                 rb.gravityScale = 0f; // No gravity
-                rb.drag = 0.5f; // Some drag for stability
-                rb.angularDrag = 0.5f;
+                rb.linearDamping = 0.5f; // Some drag for stability
+                rb.angularDamping = 0.5f;
 
                 // Ensure Collider2D exists
                 Collider2D collider = room.GetComponent<Collider2D>();
@@ -186,7 +186,7 @@ public class PhysicsSolver2D : MonoBehaviour
             if (rb != null)
             {
                 // Check linear velocity
-                if (rb.velocity.magnitude > stabilityThreshold)
+                if (rb.linearVelocity.magnitude > stabilityThreshold)
                 {
                     return false;
                 }
@@ -250,7 +250,7 @@ public class PhysicsSolver2D : MonoBehaviour
                 filter.NoFilter();
                 List<Collider2D> results = new List<Collider2D>();
 
-                int count = collider.OverlapCollider(filter, results);
+                int count = collider.Overlap(filter, results);
                 // Subtract 1 because it includes itself
                 activeCollisions += Mathf.Max(0, count - 1);
             }

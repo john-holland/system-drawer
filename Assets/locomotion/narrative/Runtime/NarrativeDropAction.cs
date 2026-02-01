@@ -60,7 +60,7 @@ namespace Locomotion.Narrative
                 Rigidbody rb = objectGo.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
-                    rb.velocity = dropVelocity;
+                    rb.linearVelocity = dropVelocity;
                 }
             }
 

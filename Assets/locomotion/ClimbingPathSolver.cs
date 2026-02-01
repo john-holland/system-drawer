@@ -53,7 +53,7 @@ public class ClimbingPathSolver : MonoBehaviour
         grabDetector = GetComponent<SurfaceGrabDetector>();
         if (grabDetector == null)
         {
-            grabDetector = FindObjectOfType<SurfaceGrabDetector>();
+            grabDetector = FindAnyObjectByType<SurfaceGrabDetector>();
         }
 
         if (cardGenerator == null)
@@ -61,7 +61,7 @@ public class ClimbingPathSolver : MonoBehaviour
             cardGenerator = GetComponent<ClimbingCardGenerator>();
             if (cardGenerator == null)
             {
-                cardGenerator = FindObjectOfType<ClimbingCardGenerator>();
+                cardGenerator = FindAnyObjectByType<ClimbingCardGenerator>();
             }
         }
     }

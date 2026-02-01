@@ -98,7 +98,7 @@ public static class AnimationToolUsageDetector
         // Search for tools in the scene
         // This is a simplified implementation - actual implementation would use
         // a more sophisticated tool detection system
-        GameObject[] allObjects = Object.FindObjectsOfType<GameObject>();
+        GameObject[] allObjects = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
         
         foreach (var obj in allObjects)
         {

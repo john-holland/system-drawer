@@ -199,7 +199,7 @@ public class RagdollSystem : MonoBehaviour
             {
                 state.rootPosition = ragdollRoot.position;
                 state.rootRotation = ragdollRoot.rotation;
-                state.rootVelocity = rootRb.velocity;
+                state.rootVelocity = rootRb.linearVelocity;
                 state.rootAngularVelocity = rootRb.angularVelocity;
             }
             else

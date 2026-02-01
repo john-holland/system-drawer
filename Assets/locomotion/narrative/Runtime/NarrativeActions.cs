@@ -139,20 +139,29 @@ namespace Locomotion.Narrative
         public NarrativeValue value;
     }
 
+    /// <summary>
+    /// Defines a behavior tree goal for Run Behavior Tree actions. Set goalName (e.g. "GoTo", "PickUp"),
+    /// type (Movement, Interaction, Composite), targetKey (NarrativeBindings key for the target GameObject),
+    /// targetPosition (world position), and optional parameters. The behavior tree runs with this goal when the action executes.
+    /// </summary>
     [Serializable]
     public class BehaviorTreeGoalSpec
     {
+        [Tooltip("Goal name the behavior tree recognizes (e.g. GoTo, PickUp, Sit).")]
         public string goalName;
+        [Tooltip("Movement = go to position/target; Interaction = use object; Composite = multiple sub-goals.")]
         public GoalType type = GoalType.Movement;
 
-        [Tooltip("Key resolved via NarrativeBindings for the goal target.")]
+        [Tooltip("NarrativeBindings key for the goal target GameObject (e.g. \"chair\", \"player\").")]
         public string targetKey;
 
+        [Tooltip("World position for movement goals when no targetKey is used.")]
         public Vector3 targetPosition;
         public int priority = 5;
         public bool requiresCleanup = false;
         public CleanupUrgency cleanupUrgency = CleanupUrgency.AfterTask;
 
+        [Tooltip("Optional key-value parameters passed to the behavior tree goal.")]
         public List<NarrativeGoalParam> parameters = new List<NarrativeGoalParam>();
 
         public object ToRuntimeGoal(NarrativeExecutionContext ctx)

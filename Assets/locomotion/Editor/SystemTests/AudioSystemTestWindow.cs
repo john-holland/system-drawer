@@ -22,7 +22,7 @@ namespace Locomotion.EditorTools.SystemTests
 
         private void OnEnable()
         {
-            solver = FindObjectOfType<AudioPathingSolver>();
+            solver = FindAnyObjectByType<AudioPathingSolver>();
         }
 
         private void OnGUI()

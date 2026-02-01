@@ -16,6 +16,8 @@ namespace Locomotion.Narrative
         [Header("Behavior")]
         public bool autoFindReferences = true;
         public bool applyPastEventsOnEnable = true;
+        [Tooltip("When an event has spatiotemporalVolume, this key is used to resolve player/listener position from bindings for region check.")]
+        public string playerPositionKey = "player";
 
         [Header("Debug")]
         public bool debugLogging = false;
@@ -26,8 +28,8 @@ namespace Locomotion.Narrative
         {
             if (autoFindReferences)
             {
-                if (clock == null) clock = FindObjectOfType<NarrativeClock>();
-                if (executor == null) executor = FindObjectOfType<NarrativeExecutor>();
+                if (clock == null) clock = FindAnyObjectByType<NarrativeClock>();
+                if (executor == null) executor = FindAnyObjectByType<NarrativeExecutor>();
             }
 
             if (applyPastEventsOnEnable)
@@ -57,14 +59,28 @@ namespace Locomotion.Narrative
             NarrativeRuntimeState state = executor.GetRuntimeState();
 
             scratch.Clear();
+            float tNow = NarrativeCalendarMath.DateTimeToSeconds(now);
             for (int i = 0; i < calendar.events.Count; i++)
             {
                 var e = calendar.events[i];
                 if (e == null) continue;
-                if (e.startDateTime <= now)
+                if (state.triggeredEventIds.Contains(e.id))
+                    continue;
+
+                if (e.spatiotemporalVolume.HasValue)
                 {
-                    if (state.triggeredEventIds.Contains(e.id))
+                    var vol = e.spatiotemporalVolume.Value;
+                    if (!NarrativeVolumeQuery.IsEventActiveAt(vol.tMin, vol.tMax, tNow))
                         continue;
+                    if (executor.bindings == null || string.IsNullOrEmpty(playerPositionKey)
+                        || !executor.bindings.TryResolveGameObject(playerPositionKey, out GameObject go) || go == null)
+                        continue;
+                    if (!vol.Contains(go.transform.position, tNow))
+                        continue;
+                    scratch.Add(e);
+                }
+                else if (e.startDateTime <= now)
+                {
                     scratch.Add(e);
                 }
             }

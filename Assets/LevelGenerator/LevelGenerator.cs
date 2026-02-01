@@ -164,7 +164,7 @@ public class LevelGenerator : MonoBehaviour
                 {
                     rb = roomObj.AddComponent<Rigidbody2D>();
                 }
-                rb.velocity = Vector2.zero;
+                rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
                 rb.gravityScale = 0f; // No gravity for 2D level generation
             }
@@ -300,7 +300,7 @@ public class LevelGenerator : MonoBehaviour
                     Rigidbody2D rb = room.GetComponent<Rigidbody2D>();
                     if (rb != null)
                     {
-                        rb.velocity = Vector2.zero;
+                        rb.linearVelocity = Vector2.zero;
                         rb.angularVelocity = 0f;
                     }
                 }
@@ -343,7 +343,7 @@ public class LevelGenerator : MonoBehaviour
                 {
                     rb = roomObj.AddComponent<Rigidbody2D>();
                 }
-                rb.velocity = Vector2.zero;
+                rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
                 rb.gravityScale = 0f;
             }

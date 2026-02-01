@@ -43,12 +43,12 @@ namespace Locomotion.Audio
             // Auto-find weather system if not assigned
             if (weatherSystemObject == null && includeWeather)
             {
-                weatherSystemObject = FindObjectOfType<MonoBehaviour>();
+                weatherSystemObject = FindAnyObjectByType<MonoBehaviour>();
                 // Try to find WeatherSystem via reflection
                 var weatherSystemType = System.Type.GetType("Weather.WeatherSystem");
                 if (weatherSystemType != null)
                 {
-                    var weatherSystems = FindObjectsOfType(weatherSystemType);
+                    var weatherSystems = FindObjectsByType(weatherSystemType, FindObjectsSortMode.None);
                     if (weatherSystems != null && weatherSystems.Length > 0)
                     {
                         weatherSystemObject = weatherSystems[0] as MonoBehaviour;
@@ -70,7 +70,7 @@ namespace Locomotion.Audio
                     var found = GetComponentInParent(ragdollSystemType) as MonoBehaviour;
                     if (found == null)
                     {
-                        var foundObj = FindObjectOfType(ragdollSystemType);
+                        var foundObj = FindAnyObjectByType(ragdollSystemType);
                         if (foundObj != null)
                         {
                             found = foundObj as MonoBehaviour;
@@ -236,7 +236,7 @@ namespace Locomotion.Audio
                     var rigidbody = ragdollRoot.GetComponent<Rigidbody>();
                     if (rigidbody != null)
                     {
-                        data.velocity = rigidbody.velocity;
+                        data.velocity = rigidbody.linearVelocity;
                         data.angularVelocity = rigidbody.angularVelocity;
                     }
                 }

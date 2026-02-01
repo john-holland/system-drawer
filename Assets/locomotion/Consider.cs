@@ -549,7 +549,7 @@ public class Consider : MonoBehaviour
     private GoodSection GeneratePathfindingCard(Vector3 origin, Vector3 destination)
     {
         // Find pathfinding solver
-        HierarchicalPathingSolver pathfindingSolver = FindObjectOfType<HierarchicalPathingSolver>();
+        HierarchicalPathingSolver pathfindingSolver = FindAnyObjectByType<HierarchicalPathingSolver>();
         if (pathfindingSolver == null)
         {
             Debug.LogWarning("Consider: No HierarchicalPathingSolver found, cannot generate pathfinding card");

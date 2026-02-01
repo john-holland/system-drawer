@@ -11,6 +11,14 @@ public class SpatialGeneratorEditor : Editor
         SpatialGenerator generator = (SpatialGenerator)target;
         
         EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Gizmos", EditorStyles.boldLabel);
+        if (GUILayout.Button("Recalculate / Refresh Gizmos", GUILayout.Height(22)))
+        {
+            EditorUtility.SetDirty(generator);
+            SceneView.RepaintAll();
+        }
+        
+        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Testing", EditorStyles.boldLabel);
         
         if (GUILayout.Button("Run Test", GUILayout.Height(30)))

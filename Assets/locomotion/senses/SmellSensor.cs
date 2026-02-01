@@ -71,7 +71,7 @@ namespace Locomotion.Senses
 
             if (enableHighDefinitionSmell)
             {
-                hdSolver = FindObjectOfType<Locomotion.Smell.HighDefinitionSmellSolver>();
+                hdSolver = FindAnyObjectByType<Locomotion.Smell.HighDefinitionSmellSolver>();
             }
         }
 
@@ -171,7 +171,7 @@ namespace Locomotion.Senses
             if (enableHighDefinitionSmell)
             {
                 if (hdSolver == null)
-                    hdSolver = FindObjectOfType<Locomotion.Smell.HighDefinitionSmellSolver>();
+                    hdSolver = FindAnyObjectByType<Locomotion.Smell.HighDefinitionSmellSolver>();
 
                 if (hdSolver != null)
                 {

@@ -68,7 +68,7 @@ namespace Locomotion.Senses
         {
             if (cachedWeatherWind == null)
             {
-                cachedWeatherWind = Object.FindObjectOfType<Wind>();
+                cachedWeatherWind = Object.FindAnyObjectByType<Wind>();
             }
 
             return cachedWeatherWind;
@@ -128,7 +128,7 @@ namespace Locomotion.Senses
             // Keep this lightweight; it’s OK to miss a WindZone for up to ~1s.
             if (cachedWindZones == null || Time.time - lastWindZoneScanTime >= WindZoneScanIntervalSeconds)
             {
-                cachedWindZones = Object.FindObjectsOfType<WindZone>();
+                cachedWindZones = Object.FindObjectsByType<WindZone>(FindObjectsSortMode.None);
                 lastWindZoneScanTime = Time.time;
             }
 

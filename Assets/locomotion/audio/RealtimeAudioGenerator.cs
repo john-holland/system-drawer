@@ -54,7 +54,7 @@ namespace Locomotion.Audio
                 lstmModel = GetComponent<AudioLSTMModel>();
                 if (lstmModel == null)
                 {
-                    lstmModel = FindObjectOfType<AudioLSTMModel>();
+                    lstmModel = FindAnyObjectByType<AudioLSTMModel>();
                 }
             }
 
@@ -63,7 +63,7 @@ namespace Locomotion.Audio
                 environmentCollector = GetComponent<EnvironmentDataCollector>();
                 if (environmentCollector == null)
                 {
-                    environmentCollector = FindObjectOfType<EnvironmentDataCollector>();
+                    environmentCollector = FindAnyObjectByType<EnvironmentDataCollector>();
                 }
             }
         }

@@ -322,6 +322,8 @@ namespace Weather
         /// </summary>
         private void UpdatePortalParticleSystems()
         {
+            if (portalParticleSystems == null)
+                return;
             // Remove null references
             portalParticleSystems.RemoveAll(ps => ps == null);
 

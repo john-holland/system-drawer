@@ -36,7 +36,7 @@ namespace Locomotion.Audio
                 var narrativeCalendarType = System.Type.GetType("Locomotion.Narrative.NarrativeCalendarAsset, Locomotion.Narrative.Runtime");
                 if (narrativeCalendarType != null)
                 {
-                    var found = FindObjectOfType(narrativeCalendarType);
+                    var found = FindAnyObjectByType(narrativeCalendarType);
                     if (found != null)
                     {
                         narrativeCalendar = found as MonoBehaviour;

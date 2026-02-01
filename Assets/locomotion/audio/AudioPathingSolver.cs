@@ -157,7 +157,7 @@ namespace Locomotion.Audio
         private void OnEnable()
         {
             if (hierarchicalPathingSolver == null)
-                hierarchicalPathingSolver = FindObjectOfType<HierarchicalPathingSolver>();
+                hierarchicalPathingSolver = FindAnyObjectByType<HierarchicalPathingSolver>();
 
             if (hierarchicalPathingSolver != null)
                 hierarchicalPathingSolver.Rebuilt += HandleHierarchicalPathingRebuilt;
@@ -428,7 +428,7 @@ namespace Locomotion.Audio
                 return;
 
             cachedSources.Clear();
-            cachedSources.AddRange(FindObjectsOfType<AudioSource>());
+            cachedSources.AddRange(FindObjectsByType<AudioSource>(FindObjectsSortMode.None));
             lastSourceScanTime = Time.time;
         }
 
@@ -556,7 +556,7 @@ namespace Locomotion.Audio
                 return Mathf.Clamp(acoustic.transmission, minMaterialTransmission, maxMaterialTransmission);
 
             // Heuristic from PhysicMaterial (friction/bounciness as a rough proxy).
-            PhysicMaterial pm = c.sharedMaterial;
+            PhysicsMaterial pm = c.sharedMaterial;
             if (pm != null)
             {
                 float friction = Mathf.Clamp01((pm.dynamicFriction + pm.staticFriction) * 0.5f);

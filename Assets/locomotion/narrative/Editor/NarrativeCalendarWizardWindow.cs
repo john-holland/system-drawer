@@ -25,9 +25,26 @@ namespace Locomotion.Narrative.EditorTools
         [MenuItem("Window/Locomotion/Narrative/Calendar Wizard")]
         public static void ShowWindow()
         {
+            ShowWindow(null);
+        }
+
+        /// <summary>Opens the Calendar Wizard and optionally focuses the given calendar.</summary>
+        public static void ShowWindow(NarrativeCalendarAsset focusCalendar)
+        {
             var w = GetWindow<NarrativeCalendarWizardWindow>("Narrative Calendar");
             w.minSize = new Vector2(980, 620);
+            if (focusCalendar != null)
+                w.SetCalendar(focusCalendar);
             w.Show();
+        }
+
+        /// <summary>Assign a calendar and refresh the wizard view (no-op if GUI not yet built).</summary>
+        public void SetCalendar(NarrativeCalendarAsset cal)
+        {
+            calendar = cal;
+            RebindCalendar();
+            if (headerLabel != null)
+                RefreshAll();
         }
 
         private void OnEnable()
@@ -306,7 +323,11 @@ namespace Locomotion.Narrative.EditorTools
                 {
                     calendarSO.ApplyModifiedProperties();
                     if (treeProp != null && treeProp.objectReferenceValue is NarrativeTreeAsset tree)
+                    {
                         NarrativeTreeEditorWindow.ShowWindow(tree);
+                        Selection.activeGameObject = tree.gameObject;
+                        EditorGUIUtility.PingObject(tree.gameObject);
+                    }
                 })
                 { text = "Open" };
                 header.Add(tLabel);
@@ -316,7 +337,23 @@ namespace Locomotion.Narrative.EditorTools
                 // Properties (using PropertyField so it works with nested structs)
                 card.Add(new UnityEditor.UIElements.PropertyField(evtProp.FindPropertyRelative("startDateTime"), "Start"));
                 card.Add(new UnityEditor.UIElements.PropertyField(evtProp.FindPropertyRelative("durationSeconds"), "Duration (s)"));
-                card.Add(new UnityEditor.UIElements.PropertyField(treeProp, "Tree"));
+
+                // Tree: use IMGUI ObjectField so scene objects are assignable (PropertyField can be read-only in bound lists)
+                var treeFieldContainer = new IMGUIContainer(() =>
+                {
+                    EditorGUI.BeginChangeCheck();
+                    var current = treeProp != null ? treeProp.objectReferenceValue as NarrativeTreeAsset : null;
+                    var newTree = EditorGUILayout.ObjectField("Tree", current, typeof(NarrativeTreeAsset), true) as NarrativeTreeAsset;
+                    if (EditorGUI.EndChangeCheck() && treeProp != null)
+                    {
+                        treeProp.objectReferenceValue = newTree;
+                        calendarSO.ApplyModifiedProperties();
+                        EditorUtility.SetDirty(calendar);
+                        RefreshAll();
+                    }
+                });
+                card.Add(treeFieldContainer);
+
                 card.Add(new UnityEditor.UIElements.PropertyField(evtProp.FindPropertyRelative("actions"), "Actions"));
 
                 // Commit changes on UI change

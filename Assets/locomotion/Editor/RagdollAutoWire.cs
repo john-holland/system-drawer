@@ -75,7 +75,7 @@ namespace Locomotion.EditorTools
 
         public static void EnsureGlobalSolvers(Report report)
         {
-            if (Object.FindObjectOfType<AudioPathingSolver>() == null)
+            if (Object.FindAnyObjectByType<AudioPathingSolver>() == null)
             {
                 var go = new GameObject("AudioPathingSolver");
                 Undo.RegisterCreatedObjectUndo(go, "Create AudioPathingSolver");
@@ -83,7 +83,7 @@ namespace Locomotion.EditorTools
                 report?.info.Add("Created global AudioPathingSolver");
             }
 
-            if (Object.FindObjectOfType<HierarchicalPathingSolver>() == null)
+            if (Object.FindAnyObjectByType<HierarchicalPathingSolver>() == null)
             {
                 var go = new GameObject("HierarchicalPathingSolver");
                 Undo.RegisterCreatedObjectUndo(go, "Create HierarchicalPathingSolver");

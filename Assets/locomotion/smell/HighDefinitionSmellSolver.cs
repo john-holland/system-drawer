@@ -59,7 +59,7 @@ namespace Locomotion.Smell
         private void Awake()
         {
             if (weatherSystem == null)
-                weatherSystem = FindObjectOfType<WeatherSystem>();
+                weatherSystem = FindAnyObjectByType<WeatherSystem>();
 
             if (wind == null && weatherSystem != null)
                 wind = weatherSystem.wind;
@@ -117,7 +117,7 @@ namespace Locomotion.Smell
             // Later: Semi-Lagrangian field advection + obstacle interaction + manifold coupling.
 
             // Collect active emitters
-            var emitters = FindObjectsOfType<SmellEmitter>();
+            var emitters = FindObjectsByType<SmellEmitter>(FindObjectsSortMode.None);
             for (int e = 0; e < emitters.Length; e++)
             {
                 var emitter = emitters[e];

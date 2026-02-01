@@ -4,6 +4,16 @@ namespace Locomotion.Narrative
 {
     public static class NarrativeCalendarMath
     {
+        private static readonly DateTime EpochUtc = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        /// <summary>
+        /// Converts narrative date/time to a scalar time in seconds (since epoch) for 4D placement and queries.
+        /// </summary>
+        public static float DateTimeToSeconds(NarrativeDateTime dt)
+        {
+            return (float)(dt.ToDateTimeUtc() - EpochUtc).TotalSeconds;
+        }
+
         /// <summary>
         /// Returns a 6x7 month grid as a flat array (row-major), with 0 for empty cells.
         /// Sunday-first. Length is always 42.

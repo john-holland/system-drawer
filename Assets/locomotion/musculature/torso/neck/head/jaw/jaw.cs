@@ -128,7 +128,7 @@ namespace Locomotion.Musculature
                 audioGenerator = GetComponentInParent<Locomotion.Audio.RealtimeAudioGenerator>();
                 if (audioGenerator == null)
                 {
-                    audioGenerator = FindObjectOfType<Locomotion.Audio.RealtimeAudioGenerator>();
+                    audioGenerator = FindAnyObjectByType<Locomotion.Audio.RealtimeAudioGenerator>();
                 }
             }
 
@@ -148,7 +148,7 @@ namespace Locomotion.Musculature
                 behaviorTree = GetComponentInParent<BehaviorTree>();
                 if (behaviorTree == null)
                 {
-                    behaviorTree = FindObjectOfType<BehaviorTree>();
+                    behaviorTree = FindAnyObjectByType<BehaviorTree>();
                 }
             }
         }

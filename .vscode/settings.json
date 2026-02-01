@@ -51,7 +51,7 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Drawer 2.sln",
+    "dotnet.defaultSolution": "Drawer 2.slnx",
     "dotrush.roslyn.projectOrSolutionFiles": [
         "c:\\Users\\John\\Drawer 2\\Drawer 2.sln",
         "c:\\Users\\John\\Drawer 2\\Drawer.sln",

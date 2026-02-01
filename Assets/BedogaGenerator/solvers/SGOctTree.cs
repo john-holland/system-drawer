@@ -21,6 +21,8 @@ public class SGOctTree
     {
         public Bounds bounds;
         public List<GameObject> objects = new List<GameObject>();
+        /// <summary>Bounds stored at Insert (same coordinate space as tree). Used for Search so overlap checks match Insert space.</summary>
+        public List<Bounds> objectBounds = new List<Bounds>();
         public List<object> objectBehaviorTreeProperties = new List<object>();
         public OctTreeNode[] children;
         public bool isLeaf = true;
@@ -32,12 +34,16 @@ public class SGOctTree
     }
     
     private OctTreeNode root;
-    private int maxObjectsPerNode = 8;
-    private int maxDepth = 8;
+    private int maxObjectsPerNode;
+    private int maxDepth;
+    private float minCellSize;
     
-    public SGOctTree(Bounds bounds)
+    public SGOctTree(Bounds bounds, int maxObjectsPerNode = 8, int maxDepth = 8, float minCellSize = 0f)
     {
         root = new OctTreeNode(bounds);
+        this.maxObjectsPerNode = Mathf.Max(1, maxObjectsPerNode);
+        this.maxDepth = Mathf.Max(0, maxDepth);
+        this.minCellSize = Mathf.Max(0f, minCellSize);
     }
     
     public void Insert(Bounds objectBounds, GameObject obj, object behaviorTreeProperties)
@@ -55,10 +61,11 @@ public class SGOctTree
         if (node.isLeaf)
         {
             node.objects.Add(obj);
+            node.objectBounds.Add(objectBounds);
             node.objectBehaviorTreeProperties.Add(behaviorTreeProperties);
             
-            // Subdivide if necessary
-            if (node.objects.Count > maxObjectsPerNode && depth < maxDepth)
+            // Subdivide only if over bucket size, under max depth, and child size respects minCellSize
+            if (node.objects.Count > maxObjectsPerNode && depth < maxDepth && ShouldSubdivide(node))
             {
                 Subdivide(node, depth);
             }
@@ -73,9 +80,18 @@ public class SGOctTree
         }
     }
     
+    /// <summary>True if child half-size meets minCellSize (when set) so we respect partition/bucket size.</summary>
+    private bool ShouldSubdivide(OctTreeNode node)
+    {
+        if (minCellSize <= 0f)
+            return true;
+        Vector3 halfSize = node.bounds.size * 0.5f;
+        return halfSize.x >= minCellSize && halfSize.y >= minCellSize && halfSize.z >= minCellSize;
+    }
+    
     private void Subdivide(OctTreeNode node, int depth)
     {
-        if (node.isLeaf && node.objects.Count > maxObjectsPerNode && depth < maxDepth)
+        if (node.isLeaf && node.objects.Count > maxObjectsPerNode && depth < maxDepth && ShouldSubdivide(node))
         {
             node.isLeaf = false;
             node.children = new OctTreeNode[8];
@@ -117,17 +133,18 @@ public class SGOctTree
                 new Vector3(center.x - quarterSize.x, center.y + quarterSize.y, center.z + quarterSize.z),
                 size));
             
-            // Redistribute objects
+            // Redistribute objects using stored bounds (same coordinate space as Insert/Search)
             List<GameObject> objectsToRedistribute = new List<GameObject>(node.objects);
+            List<Bounds> boundsToRedistribute = new List<Bounds>(node.objectBounds);
             List<object> propertiesToRedistribute = new List<object>(node.objectBehaviorTreeProperties);
             
             node.objects.Clear();
+            node.objectBounds.Clear();
             node.objectBehaviorTreeProperties.Clear();
             
             for (int i = 0; i < objectsToRedistribute.Count; i++)
             {
-                Bounds objBounds = GetGameObjectBounds(objectsToRedistribute[i]);
-                InsertRecursive(node, objBounds, objectsToRedistribute[i], propertiesToRedistribute[i], depth);
+                InsertRecursive(node, boundsToRedistribute[i], objectsToRedistribute[i], propertiesToRedistribute[i], depth);
             }
         }
     }
@@ -148,12 +165,11 @@ public class SGOctTree
         
         if (node.isLeaf)
         {
-            foreach (GameObject obj in node.objects)
+            for (int i = 0; i < node.objects.Count; i++)
             {
-                Bounds objBounds = GetGameObjectBounds(obj);
-                if (objBounds.Intersects(searchBounds))
+                if (node.objectBounds[i].Intersects(searchBounds))
                 {
-                    results.Add(obj);
+                    results.Add(node.objects[i]);
                 }
             }
         }

@@ -214,9 +214,9 @@ namespace Weather.Tests
             angle = portalRain.CalculateSurfaceAngle(Vector3.zero, Vector3.right);
             Assert.AreEqual(90f, angle, 0.1f);
 
-            // Test with downward normal (overhanging)
+            // Test with downward normal (overhanging): angle is 180 for directly down
             angle = portalRain.CalculateSurfaceAngle(Vector3.zero, Vector3.down);
-            Assert.Greater(angle, 180f);
+            Assert.GreaterOrEqual(angle, 180f);
 
             Object.DestroyImmediate(portalObj);
         }

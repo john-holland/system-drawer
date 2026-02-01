@@ -40,7 +40,7 @@ public class ClimbingCardGenerator : MonoBehaviour
         grabDetector = GetComponent<SurfaceGrabDetector>();
         if (grabDetector == null)
         {
-            grabDetector = FindObjectOfType<SurfaceGrabDetector>();
+            grabDetector = FindAnyObjectByType<SurfaceGrabDetector>();
         }
     }
 

@@ -23,7 +23,7 @@ namespace Locomotion.EditorTools.SystemTests
 
         private void OnEnable()
         {
-            hd = FindObjectOfType<HighDefinitionSmellSolver>();
+            hd = FindAnyObjectByType<HighDefinitionSmellSolver>();
         }
 
         private void OnGUI()
@@ -51,7 +51,7 @@ namespace Locomotion.EditorTools.SystemTests
                 if (GUILayout.Button("Sample HD Concentration (at sensor)", GUILayout.Height(28)))
                 {
                     if (hd == null)
-                        hd = FindObjectOfType<HighDefinitionSmellSolver>();
+                        hd = FindAnyObjectByType<HighDefinitionSmellSolver>();
 
                     float c = hd != null ? hd.SampleConcentration(smellSensor.transform.position, Mathf.Max(0.01f, smellSensor.hdSampleRadius)) : 0f;
                     EditorUtility.DisplayDialog("HD Smell", $"Concentration: {c:F3}", "OK");

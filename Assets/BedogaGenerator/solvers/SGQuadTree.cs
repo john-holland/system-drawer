@@ -28,12 +28,16 @@ public class SGQuadTree
     }
     
     private QuadTreeNode root;
-    private int maxObjectsPerNode = 4;
-    private int maxDepth = 8;
+    private int maxObjectsPerNode;
+    private int maxDepth;
+    private float minCellSize;
     
-    public SGQuadTree(Bounds bounds)
+    public SGQuadTree(Bounds bounds, int maxObjectsPerNode = 4, int maxDepth = 8, float minCellSize = 0f)
     {
         root = new QuadTreeNode(bounds);
+        this.maxObjectsPerNode = Mathf.Max(1, maxObjectsPerNode);
+        this.maxDepth = Mathf.Max(0, maxDepth);
+        this.minCellSize = Mathf.Max(0f, minCellSize);
     }
     
     public void Insert(Bounds objectBounds, GameObject obj, object behaviorTreeProperties)
@@ -53,8 +57,8 @@ public class SGQuadTree
             node.objects.Add(obj);
             node.objectBehaviorTreeProperties.Add(behaviorTreeProperties);
             
-            // Subdivide if necessary
-            if (node.objects.Count > maxObjectsPerNode && depth < maxDepth)
+            // Subdivide only if over bucket size, under max depth, and child size respects minCellSize
+            if (node.objects.Count > maxObjectsPerNode && depth < maxDepth && ShouldSubdivide(node))
             {
                 Subdivide(node, depth);
             }
@@ -69,9 +73,18 @@ public class SGQuadTree
         }
     }
     
+    /// <summary>True if child half-size meets minCellSize (when set) so we respect partition/bucket size.</summary>
+    private bool ShouldSubdivide(QuadTreeNode node)
+    {
+        if (minCellSize <= 0f)
+            return true;
+        Vector3 halfSize = node.bounds.size * 0.5f;
+        return halfSize.x >= minCellSize && halfSize.y >= minCellSize;
+    }
+    
     private void Subdivide(QuadTreeNode node, int depth)
     {
-        if (node.isLeaf && node.objects.Count > maxObjectsPerNode && depth < maxDepth)
+        if (node.isLeaf && node.objects.Count > maxObjectsPerNode && depth < maxDepth && ShouldSubdivide(node))
         {
             node.isLeaf = false;
             node.children = new QuadTreeNode[4];

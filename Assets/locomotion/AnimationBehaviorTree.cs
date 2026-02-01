@@ -297,7 +297,7 @@ public class AnimationBehaviorTree : MonoBehaviour
 
         RagdollSystem ragdoll = GetComponent<RagdollSystem>();
         if (ragdoll == null)
-            ragdoll = FindObjectOfType<RagdollSystem>();
+            ragdoll = FindAnyObjectByType<RagdollSystem>();
 
         if (ragdoll == null)
             return;
@@ -607,7 +607,7 @@ public class AnimationBehaviorTree : MonoBehaviour
             // Generate physics card for this frame
             RagdollSystem ragdoll = GetComponent<RagdollSystem>();
             if (ragdoll == null)
-                ragdoll = FindObjectOfType<RagdollSystem>();
+                ragdoll = FindAnyObjectByType<RagdollSystem>();
 
             if (ragdoll != null)
             {
@@ -661,7 +661,7 @@ public class AnimationBehaviorTree : MonoBehaviour
 
         PhysicsCardSolver cardSolver = GetComponent<PhysicsCardSolver>();
         if (cardSolver == null)
-            cardSolver = FindObjectOfType<PhysicsCardSolver>();
+            cardSolver = FindAnyObjectByType<PhysicsCardSolver>();
 
         List<GoodSection> cards = new List<GoodSection>();
         if (cardSolver != null)

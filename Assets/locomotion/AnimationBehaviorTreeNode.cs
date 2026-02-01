@@ -107,7 +107,7 @@ public class AnimationBehaviorTreeNode : BehaviorTreeNode
 
         RagdollSystem ragdoll = GetComponentInParent<RagdollSystem>();
         if (ragdoll == null)
-            ragdoll = FindObjectOfType<RagdollSystem>();
+            ragdoll = FindAnyObjectByType<RagdollSystem>();
 
         if (ragdoll == null)
             return;

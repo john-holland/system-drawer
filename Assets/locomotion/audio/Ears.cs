@@ -77,13 +77,13 @@ namespace Locomotion.Audio
             }
             
             if (solver == null)
-                solver = AudioPathingSolver.Instance != null ? AudioPathingSolver.Instance : FindObjectOfType<AudioPathingSolver>();
+                solver = AudioPathingSolver.Instance != null ? AudioPathingSolver.Instance : FindAnyObjectByType<AudioPathingSolver>();
         }
 
         private void OnEnable()
         {
             if (solver == null)
-                solver = AudioPathingSolver.Instance != null ? AudioPathingSolver.Instance : FindObjectOfType<AudioPathingSolver>();
+                solver = AudioPathingSolver.Instance != null ? AudioPathingSolver.Instance : FindAnyObjectByType<AudioPathingSolver>();
 
             solver?.RegisterEar(this);
         }
@@ -102,7 +102,7 @@ namespace Locomotion.Audio
                 return;
 
             if (solver == null)
-                solver = AudioPathingSolver.Instance != null ? AudioPathingSolver.Instance : FindObjectOfType<AudioPathingSolver>();
+                solver = AudioPathingSolver.Instance != null ? AudioPathingSolver.Instance : FindAnyObjectByType<AudioPathingSolver>();
 
             if (solver == null || nervousSystem == null)
                 return;

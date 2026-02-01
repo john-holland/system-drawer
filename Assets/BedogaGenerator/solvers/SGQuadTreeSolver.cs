@@ -22,19 +22,26 @@ public class SGQuadTreeSolver : MonoBehaviour, SGTreeSolverInterface
     private List<GameObject> pruneBuffer = new List<GameObject>();
     private Dictionary<GameObject, object> pruneBufferProperties = new Dictionary<GameObject, object>();
     
+    [Header("Partitioning (QuadTree bucket / cell size)")]
+    [Tooltip("Max objects per leaf before subdividing. Respected during partition.")]
+    public int maxObjectsPerNode = 4;
+    [Tooltip("Max subdivision depth.")]
+    public int maxDepth = 8;
+    [Tooltip("Minimum cell size (x/y). Don't subdivide if child half-size would be smaller. 0 = no limit.")]
+    public float minCellSize = 0f;
+    
     void Awake()
     {
-        // Initialize with bounds from transform (local space - center at origin)
-        // This is a fallback; proper initialization happens via Initialize() from SpatialGenerator
+        // Fallback; proper initialization happens via Initialize() from SpatialGenerator
         Bounds bounds = new Bounds(Vector3.zero, transform.localScale);
-        quadTree = new SGQuadTree(bounds);
+        quadTree = new SGQuadTree(bounds, maxObjectsPerNode, maxDepth, minCellSize);
         treeBounds = bounds;
     }
     
     public void Initialize(Bounds bounds, int seed)
     {
         treeBounds = bounds;
-        quadTree = new SGQuadTree(bounds);
+        quadTree = new SGQuadTree(bounds, maxObjectsPerNode, maxDepth, minCellSize);
         rng = new System.Random(seed);
         objectProperties.Clear();
         
@@ -43,7 +50,7 @@ public class SGQuadTreeSolver : MonoBehaviour, SGTreeSolverInterface
         {
             //todo: review: we may want to search up the object hierarchy to find the spatial generator
             //  that is most closely related to this one
-            spatialGenerator = FindObjectOfType<SpatialGenerator>();
+            spatialGenerator = FindAnyObjectByType<SpatialGenerator>();
         }
     }
     
@@ -204,25 +211,21 @@ public class SGQuadTreeSolver : MonoBehaviour, SGTreeSolverInterface
         return treeBounds;
     }
     
-    // Find available space for placement, considering empty space markers
-    public Bounds? FindAvailableSpace(Vector3 minSpace, Vector3 maxSpace, Vector3 optimalSpace, List<SGBehaviorTreeEmptySpace> emptySpaces)
+    // Find available space for placement. placementIndex: 0 = try center then grid; >0 = use the placementIndex-th slot so multiple placements get different positions (avoids relying on Search overlap when coords differ).
+    // When placementConfig is set, uses fit/stack/wrap from config (X,Y only for 2D); otherwise legacy row-major from min.
+    public Bounds? FindAvailableSpace(Vector3 minSpace, Vector3 maxSpace, Vector3 optimalSpace, List<SGBehaviorTreeEmptySpace> emptySpaces, int placementIndex = 0, PlacementSlotConfig? placementConfig = null)
     {
         // If we have empty space markers, search within them first
         if (emptySpaces != null && emptySpaces.Count > 0)
         {
-            foreach (var emptySpace in emptySpaces)
+            int spaceIndex = placementIndex % emptySpaces.Count;
+            int slotInSpace = placementIndex / emptySpaces.Count;
+            for (int k = 0; k < emptySpaces.Count; k++)
             {
-                // Skip destroyed objects
-                if (emptySpace == null)
-                {
-                    continue;
-                }
-                
-                // Get world space bounds from empty space marker
+                int idx = (spaceIndex + k) % emptySpaces.Count;
+                var emptySpace = emptySpaces[idx];
+                if (emptySpace == null) continue;
                 Bounds worldSpaceBounds = emptySpace.GetBounds();
-                
-                // Convert to local space relative to SpatialGenerator transform
-                // (solver is a component on SpatialGenerator, so transform is SpatialGenerator transform)
                 Vector3 localCenter = transform.InverseTransformPoint(worldSpaceBounds.center);
                 Vector3 localSize = new Vector3(
                     worldSpaceBounds.size.x / transform.lossyScale.x,
@@ -230,48 +233,91 @@ public class SGQuadTreeSolver : MonoBehaviour, SGTreeSolverInterface
                     worldSpaceBounds.size.z / transform.lossyScale.z
                 );
                 Bounds localSpaceBounds = new Bounds(localCenter, localSize);
-                
-                Bounds? availableSpace = FindSpaceInBounds(localSpaceBounds, minSpace, maxSpace, optimalSpace);
+                Bounds? availableSpace = FindSpaceInBounds(localSpaceBounds, minSpace, maxSpace, optimalSpace, k == 0 ? slotInSpace : 0, placementConfig);
                 if (availableSpace.HasValue)
-                {
                     return availableSpace.Value;
-                }
             }
         }
-        
-        // Otherwise search in tree bounds (already in local space)
-        return FindSpaceInBounds(treeBounds, minSpace, maxSpace, optimalSpace);
+        return FindSpaceInBounds(treeBounds, minSpace, maxSpace, optimalSpace, placementIndex, placementConfig);
     }
     
-    private Bounds? FindSpaceInBounds(Bounds searchBounds, Vector3 minSpace, Vector3 maxSpace, Vector3 optimalSpace)
+    /// <summary>Returns placement slot bounds (center + size) using the same step/grid logic as the solver, for gizmo visualization. Bounds are in local space. Does not check occupancy.</summary>
+    public List<Bounds> GetPlacementSlotsForGizmo(Bounds searchBounds, Vector3 minSpace, Vector3 maxSpace, Vector3 optimalSpace, int maxSlots = 64, PlacementSlotConfig? placementConfig = null)
     {
-        // Simple implementation: try to find a space that fits
-        // More sophisticated algorithms can be added later
+        var list = new List<Bounds>();
+        float stepX = Mathf.Max(optimalSpace.x, minSpace.x * 0.5f);
+        float stepY = Mathf.Max(optimalSpace.y, minSpace.y * 0.5f);
+        if (stepX <= 0f) stepX = 1f;
+        if (stepY <= 0f) stepY = 1f;
+        int numX = Mathf.Max(0, Mathf.FloorToInt((searchBounds.size.x - optimalSpace.x) / stepX) + 1);
+        int numY = Mathf.Max(0, Mathf.FloorToInt((searchBounds.size.y - optimalSpace.y) / stepY) + 1);
+        int gridCount = numX * numY;
+        int totalSlots = 1 + gridCount;
+        int count = Mathf.Min(maxSlots, totalSlots);
+        Vector3 size = new Vector3(optimalSpace.x, optimalSpace.y, optimalSpace.z);
+        for (int slot = 0; slot < count; slot++)
+        {
+            if (PlacementSlotConfig.ComputeSlotCenter2D(searchBounds, optimalSpace, minSpace, slot, placementConfig, out Vector3 slotCenter))
+                list.Add(new Bounds(slotCenter, size));
+            else
+                list.Add(new Bounds(new Vector3(searchBounds.center.x, searchBounds.center.y, searchBounds.center.z), size));
+        }
+        return list;
+    }
+    
+    private Bounds? FindSpaceInBounds(Bounds searchBounds, Vector3 minSpace, Vector3 maxSpace, Vector3 optimalSpace, int placementIndex = 0, PlacementSlotConfig? placementConfig = null)
+    {
+        float stepX = Mathf.Max(optimalSpace.x, minSpace.x * 0.5f);
+        float stepY = Mathf.Max(optimalSpace.y, minSpace.y * 0.5f);
+        if (stepX <= 0f) stepX = 1f;
+        if (stepY <= 0f) stepY = 1f;
+        float halfXOpt = optimalSpace.x * 0.5f;
+        float halfYOpt = optimalSpace.y * 0.5f;
+        float halfXMin = minSpace.x * 0.5f;
+        float halfYMin = minSpace.y * 0.5f;
+        int numX = Mathf.Max(0, Mathf.FloorToInt((searchBounds.size.x - optimalSpace.x) / stepX) + 1);
+        int numY = Mathf.Max(0, Mathf.FloorToInt((searchBounds.size.y - optimalSpace.y) / stepY) + 1);
+        int gridCount = numX * numY;
+        int totalSlots = 1 + gridCount;
+        int slot = placementIndex % Mathf.Max(1, totalSlots);
+
+        if (!PlacementSlotConfig.ComputeSlotCenter2D(searchBounds, optimalSpace, minSpace, slot, placementConfig, out Vector3 slotCenter))
+            slotCenter = searchBounds.center;
         
-        // Try optimal space first
         if (searchBounds.size.x >= optimalSpace.x && searchBounds.size.y >= optimalSpace.y)
         {
-            // Check if this space is clear
-            Bounds testBounds = new Bounds(searchBounds.center, optimalSpace);
-            List<GameObject> overlapping = Search(testBounds);
-            if (overlapping.Count == 0)
-            {
-                return testBounds;
-            }
+            Bounds testBounds = new Bounds(slotCenter, optimalSpace);
+            if (Search(testBounds).Count == 0) return testBounds;
+        }
+        if (searchBounds.size.x >= minSpace.x && searchBounds.size.y >= minSpace.y)
+        {
+            Bounds testBounds = new Bounds(slotCenter, minSpace);
+            if (Search(testBounds).Count == 0) return testBounds;
         }
         
-        // Try min space
+        // Fallback: try center then full grid
+        if (searchBounds.size.x >= optimalSpace.x && searchBounds.size.y >= optimalSpace.y)
+        {
+            Bounds testBounds = new Bounds(searchBounds.center, optimalSpace);
+            if (Search(testBounds).Count == 0) return testBounds;
+        }
         if (searchBounds.size.x >= minSpace.x && searchBounds.size.y >= minSpace.y)
         {
             Bounds testBounds = new Bounds(searchBounds.center, minSpace);
-            List<GameObject> overlapping = Search(testBounds);
-            if (overlapping.Count == 0)
-            {
-                return testBounds;
-            }
+            if (Search(testBounds).Count == 0) return testBounds;
         }
-        
-        // TODO: More sophisticated space finding algorithm
+        for (float x = searchBounds.min.x + halfXOpt; x <= searchBounds.max.x - halfXOpt; x += stepX)
+        for (float y = searchBounds.min.y + halfYOpt; y <= searchBounds.max.y - halfYOpt; y += stepY)
+        {
+            Bounds testBounds = new Bounds(new Vector3(x, y, searchBounds.center.z), optimalSpace);
+            if (Search(testBounds).Count == 0) return testBounds;
+        }
+        for (float x = searchBounds.min.x + halfXMin; x <= searchBounds.max.x - halfXMin; x += stepX)
+        for (float y = searchBounds.min.y + halfYMin; y <= searchBounds.max.y - halfYMin; y += stepY)
+        {
+            Bounds testBounds = new Bounds(new Vector3(x, y, searchBounds.center.z), minSpace);
+            if (Search(testBounds).Count == 0) return testBounds;
+        }
         return null;
     }
     
@@ -326,7 +372,7 @@ public class SGQuadTreeSolver : MonoBehaviour, SGTreeSolverInterface
         // Check SpatialGenerator toggle
         if (spatialGenerator == null)
         {
-            spatialGenerator = FindObjectOfType<SpatialGenerator>();
+            spatialGenerator = FindAnyObjectByType<SpatialGenerator>();
         }
         
         if (spatialGenerator == null || !spatialGenerator.showTreeVisualization)
