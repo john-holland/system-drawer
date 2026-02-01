@@ -25,10 +25,20 @@ public class SGBehaviorTreeNode : MonoBehaviour
         Max,
         Specific
     }
+
+    public enum FitX { Center, Left, Right }
+    public enum FitY { Center, Down, Up }
+    public enum FitZ { Center, Backward, Forward }
+    public enum AxisDirection { PosX, NegX, PosY, NegY, PosZ, NegZ }
+    public enum PlaceSearchMode { CenterFirst = 0, GridFromMin = 1, GridFromMax = 2, FromFit = 3, Random = 4, SlotIndexOnly = 5 }
+    public enum PlacementMode { In, Left, Right, Forward, Down, Under, Up }
     
     [Header("Node Configuration")]
+    [Tooltip("When true, placement limit is applied per parent instance (e.g. 1 wall of each type per room). When false, limit is global across all parents.")]
+    public bool perParentPlacementLimits = false;
     public bool isEnabled = true;
     public PlacementLimitType placementLimitType = PlacementLimitType.Specific;
+    [Tooltip("Max instances to place. For multiple rooms/containers, set > 1 (e.g. 8). Default 1 = only one instance.")]
     public int placementLimit = 1;
     public int placementMin = 0;
     public int placementMax = 10;
@@ -38,10 +48,23 @@ public class SGBehaviorTreeNode : MonoBehaviour
     public Vector3 maxSpace = Vector3.one * 2f;
     public Vector3 optimalSpace = Vector3.one * 1.5f;
     
-    [Header("Alignment")]
-    public AlignmentPreference alignPreference = AlignmentPreference.Center;
-    public AlignmentPreference placeSearchMode = AlignmentPreference.Center; // Opposite to align
-    public bool placeFlush = false; // Place object flush against bounds edge
+    [Header("Fit / Stack")]
+    [Tooltip("Where to anchor the placement grid on the X axis (center, left/min, right/max).")]
+    public FitX fitX = FitX.Center;
+    [Tooltip("Where to anchor the placement grid on the Y axis (center, down/min, up/max).")]
+    public FitY fitY = FitY.Center;
+    [Tooltip("Where to anchor the placement grid on the Z axis (center, backward/min, forward/max).")]
+    public FitZ fitZ = FitZ.Center;
+    [Tooltip("Axis and sign incremented first when filling slots (e.g. PosX = fill along +X first).")]
+    public AxisDirection stackDirection = AxisDirection.PosX;
+    [Tooltip("Axis and sign incremented when stack direction is exhausted (e.g. PosZ = next row along +Z).")]
+    public AxisDirection wrapDirection = AxisDirection.PosZ;
+    [Tooltip("Place object flush against bounds edge (no offset). When false, alignmentOffsetCoefficient on SpatialGenerator is used.")]
+    public bool placeFlush = false;
+    [Tooltip("How to search for a placement slot: CenterFirst = try center then grid; GridFromMin/Max = scan from min/max; FromFit = use fit anchor then stack/wrap; Random = random slot; SlotIndexOnly = use placement index only.")]
+    public PlaceSearchMode placeSearchMode = PlaceSearchMode.CenterFirst;
+    [Tooltip("Where to place this node's child nodes: In = no translate (center). Left/Right/Forward/Down/Under/Up = outside that face of this node's bounds (child center past min/max).")]
+    public PlacementMode placementMode = PlacementMode.In;
     
     [Header("Rotation")]
     public bool allowRotation = true;
@@ -62,7 +85,7 @@ public class SGBehaviorTreeNode : MonoBehaviour
     [Header("Child Nodes")]
     public List<SGBehaviorTreeNode> childNodes = new List<SGBehaviorTreeNode>();
     
-    // Runtime tracking
+    // Runtime tracking (exposed read-only in custom editor as "Placed (runtime)")
     private int currentPlacementCount = 0;
     
     void Start()
@@ -120,6 +143,12 @@ public class SGBehaviorTreeNode : MonoBehaviour
         currentPlacementCount++;
     }
     
+    /// <summary>Number of times this node has been placed so far (used to distribute children across multiple parent instances).</summary>
+    public int GetPlacementCount()
+    {
+        return currentPlacementCount;
+    }
+    
     public void ResetPlacementCount()
     {
         currentPlacementCount = 0;
@@ -140,6 +169,30 @@ public class SGBehaviorTreeNode : MonoBehaviour
         }
     }
     
+    /// <summary>Effective placement limit value (max count) for the current limit type. Used when perParentPlacementLimits is true to cap per-parent count.</summary>
+    public int GetPlacementLimitValue()
+    {
+        switch (placementLimitType)
+        {
+            case PlacementLimitType.Specific:
+                return placementLimit;
+            case PlacementLimitType.Max:
+            case PlacementLimitType.Min:
+                return placementMax;
+            default:
+                return placementLimit;
+        }
+    }
+    
+    /// <summary>Derives alignment direction from fit X/Y/Z (first non-center wins: X then Y then Z). Used for placement position and rotation.</summary>
+    public AlignmentPreference GetAlignmentFromFit()
+    {
+        if (fitX != FitX.Center) return fitX == FitX.Left ? AlignmentPreference.Left : AlignmentPreference.Right;
+        if (fitY != FitY.Center) return fitY == FitY.Down ? AlignmentPreference.Down : AlignmentPreference.Up;
+        if (fitZ != FitZ.Center) return fitZ == FitZ.Backward ? AlignmentPreference.Backward : AlignmentPreference.Forward;
+        return AlignmentPreference.Center;
+    }
+
     public Vector3 GetRotationForDirection(AlignmentPreference direction)
     {
         if (rotationByDirection.ContainsKey(direction))
@@ -224,7 +277,7 @@ public class SGBehaviorTreeNode : MonoBehaviour
     }
     
     /// <summary>
-    /// Draw a filled yellow square showing where the object will align on parent bounds.
+    /// Draw a filled yellow square showing where the object will be placed on parent bounds using fit X/Y/Z and place-flush.
     /// </summary>
     private void DrawPlacementHighlight()
     {
@@ -272,8 +325,8 @@ public class SGBehaviorTreeNode : MonoBehaviour
         Gizmos.color = Color.white;
         Vector3 direction = Vector3.zero;
         float arrowLength = 0.5f;
-        
-        switch (alignPreference)
+        AlignmentPreference align = GetAlignmentFromFit();
+        switch (align)
         {
             case AlignmentPreference.Up:
                 direction = Vector3.up;
@@ -310,83 +363,40 @@ public class SGBehaviorTreeNode : MonoBehaviour
     }
     
     /// <summary>
-    /// Calculate where the object would be placed based on alignment preference and flush setting.
-    /// Uses the same logic as SpatialGenerator.ApplyAlignment.
+    /// Calculate where the object would be placed based on fit X/Y/Z and place-flush setting.
+    /// Matches PlacementSlotConfig slot-zero anchor and SpatialGenerator.ApplyAlignment per-axis.
     /// </summary>
     private Vector3 CalculatePlacementPosition(Bounds parentBounds, Vector3 objectSize, float alignmentOffsetCoefficient = 0.5f)
     {
-        Vector3 position = parentBounds.center;
         float offsetCoeff = alignmentOffsetCoefficient;
         bool isFlush = placeFlush;
+        float halfX = objectSize.x * 0.5f;
+        float halfY = objectSize.y * 0.5f;
+        float halfZ = objectSize.z * 0.5f;
+        float offX = isFlush ? halfX : objectSize.x * (0.5f + offsetCoeff * 0.5f);
+        float offY = isFlush ? halfY : objectSize.y * (0.5f + offsetCoeff * 0.5f);
+        float offZ = isFlush ? halfZ : objectSize.z * (0.5f + offsetCoeff * 0.5f);
         
-        switch (alignPreference)
+        float x = parentBounds.center.x;
+        switch (fitX)
         {
-            case AlignmentPreference.Up:
-                if (isFlush)
-                {
-                    position.y = parentBounds.max.y - objectSize.y * 0.5f;
-                }
-                else
-                {
-                    position.y = parentBounds.max.y - objectSize.y * (0.5f + offsetCoeff * 0.5f);
-                }
-                break;
-            case AlignmentPreference.Down:
-                if (isFlush)
-                {
-                    position.y = parentBounds.min.y + objectSize.y * 0.5f;
-                }
-                else
-                {
-                    position.y = parentBounds.min.y + objectSize.y * (0.5f + offsetCoeff * 0.5f);
-                }
-                break;
-            case AlignmentPreference.Left:
-                if (isFlush)
-                {
-                    position.x = parentBounds.min.x + objectSize.x * 0.5f;
-                }
-                else
-                {
-                    position.x = parentBounds.min.x + objectSize.x * (0.5f + offsetCoeff * 0.5f);
-                }
-                break;
-            case AlignmentPreference.Right:
-                if (isFlush)
-                {
-                    position.x = parentBounds.max.x - objectSize.x * 0.5f;
-                }
-                else
-                {
-                    position.x = parentBounds.max.x - objectSize.x * (0.5f + offsetCoeff * 0.5f);
-                }
-                break;
-            case AlignmentPreference.Forward:
-                if (isFlush)
-                {
-                    position.z = parentBounds.max.z - objectSize.z * 0.5f;
-                }
-                else
-                {
-                    position.z = parentBounds.max.z - objectSize.z * (0.5f + offsetCoeff * 0.5f);
-                }
-                break;
-            case AlignmentPreference.Backward:
-                if (isFlush)
-                {
-                    position.z = parentBounds.min.z + objectSize.z * 0.5f;
-                }
-                else
-                {
-                    position.z = parentBounds.min.z + objectSize.z * (0.5f + offsetCoeff * 0.5f);
-                }
-                break;
-            case AlignmentPreference.Center:
-                position = parentBounds.center;
-                break;
+            case FitX.Left:  x = parentBounds.min.x + offX; break;
+            case FitX.Right: x = parentBounds.max.x - offX; break;
+        }
+        float y = parentBounds.center.y;
+        switch (fitY)
+        {
+            case FitY.Down: y = parentBounds.min.y + offY; break;
+            case FitY.Up:   y = parentBounds.max.y - offY; break;
+        }
+        float z = parentBounds.center.z;
+        switch (fitZ)
+        {
+            case FitZ.Backward: z = parentBounds.min.z + offZ; break;
+            case FitZ.Forward:   z = parentBounds.max.z - offZ; break;
         }
         
-        return position;
+        return new Vector3(x, y, z);
     }
     
     /// <summary>
