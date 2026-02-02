@@ -48,7 +48,7 @@ namespace Locomotion.Narrative
         [Header("Events")]
         public List<NarrativeCalendarEvent> events = new List<NarrativeCalendarEvent>();
 
-        [Header("4D / Causal (Phase 6–7)")]
+        [Header("4D Causal Links")]
         [Tooltip("Causal links: fromEventId enables toEventId. Used for causal overlay in editor.")]
         public List<NarrativeCausalLink> causalLinks = new List<NarrativeCausalLink>();
         [Tooltip("When true, editor gizmos draw causal links between event volumes/centers.")]

@@ -6,7 +6,7 @@ using System.Text;
 
 // Main component for procedural spatial generation
 // Manages generation lifecycle, coordinates with behavior tree and spatial trees
-public class SpatialGenerator : MonoBehaviour
+public class SpatialGenerator : SpatialGeneratorBase
 {
     public enum GenerationMode
     {
@@ -72,6 +72,13 @@ public class SpatialGenerator : MonoBehaviour
     
     /// <summary>Minimum size per axis when node/object has zero size (e.g. spotlight with no Renderer/Collider and zero optimalSpace). Avoids "doesn't fit in parent bounds" and degenerate bounds.</summary>
     private const float MinSizeEpsilon = 0.01f;
+
+    /// <inheritdoc />
+    public override Bounds GetSpatialBounds()
+    {
+        Bounds local = isInitialized ? generationBounds : new Bounds(Vector3.zero, generationSize);
+        return LocalToWorldBounds(local);
+    }
     
     void Start()
     {

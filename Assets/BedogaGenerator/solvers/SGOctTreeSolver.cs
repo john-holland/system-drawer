@@ -191,7 +191,7 @@ public class SGOctTreeSolver : MonoBehaviour, SGTreeSolverInterface
     public bool CompareTree(SGTreeSolverInterface otherTree)
     {
         // Compare tree structures
-        // For now, simple comparison - can be enhanced in Phase 7
+        // For now, simple comparison - can be enhanced for visualization
         List<GameObject> thisObjects = GetAllObjects();
         List<GameObject> otherObjects = otherTree.GetAllObjects();
         

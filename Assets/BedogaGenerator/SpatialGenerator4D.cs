@@ -17,9 +17,9 @@ public enum TemporalPlacementStrategy
 
 /// <summary>
 /// Fourth-dimensional spatial generator: places and queries (x,y,z,t) using time-sliced 3D OctTrees.
-/// Use for narrative/calendar volumes; temporal strategy and buffer/padding applied in Phase 3.
+/// Use for narrative/calendar volumes; temporal strategy and buffer/padding applied in Temporal Placement.
 /// </summary>
-public class SpatialGenerator4D : MonoBehaviour
+public class SpatialGenerator4D : SpatialGeneratorBase
 {
     [Header("4D Bounds")]
     [Tooltip("Spatial bounds in local/world space (center and size).")]
@@ -47,7 +47,7 @@ public class SpatialGenerator4D : MonoBehaviour
     public int maxDepth = 8;
     public float minCellSize = 0f;
 
-    [Header("4D Grid / SDF (Phase 5)")]
+    [Header("4D Grid & SDF")]
     [Tooltip("When true, build a 4D grid from placed volumes and register Sample4D query API.")]
     public bool buildGrid = false;
     [Tooltip("Grid resolution (x, y, z, t). Lower = faster, coarser.")]
@@ -56,7 +56,7 @@ public class SpatialGenerator4D : MonoBehaviour
     public int gridResZ = 16;
     public int gridResT = 32;
 
-    [Header("Gizmos (Phase 7)")]
+    [Header("Editor Gizmos / Slice")]
     [Tooltip("Draw 3D slice of 4D occupancy at editorSliceT when selected.")]
     public bool showGizmoSlice = true;
     [Tooltip("Time (narrative seconds) for the 3D slice.")]
@@ -68,7 +68,7 @@ public class SpatialGenerator4D : MonoBehaviour
     [Tooltip("Color for causal gradient (depth); alpha scales with causal value.")]
     public Color gizmoCausalColor = new Color(1f, 0.5f, 0f, 0.3f);
 
-    [Header("Emergence (Phase 8)")]
+    [Header("Emergence Visualization")]
     [Tooltip("Draw layered ventricular SDF max: multiple time slices with per-layer opacity (older = more transparent).")]
     public bool showEmergenceViz = false;
     [Tooltip("Number of time layers to draw (spaced between tMin and tMax).")]
@@ -98,6 +98,12 @@ public class SpatialGenerator4D : MonoBehaviour
             this.volume = volume;
             this.payload = payload;
         }
+    }
+
+    /// <inheritdoc />
+    public override Bounds GetSpatialBounds()
+    {
+        return transform.TransformBounds(spatialBounds);
     }
 
     private void Awake()

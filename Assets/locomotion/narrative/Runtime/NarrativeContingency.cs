@@ -106,7 +106,7 @@ namespace Locomotion.Narrative
 
     /// <summary>
     /// Condition: is the resolved position inside a narrative volume at current narrative time?
-    /// Uses the 4D query API (stub in Phase 1; implemented in Phase 4-5).
+    /// Uses the 4D query API (Narrative Volume Query stub; implemented in 4D Query API).
     /// </summary>
     [Serializable]
     public class InsideNarrativeVolumeCondition : NarrativeCondition
@@ -129,7 +129,7 @@ namespace Locomotion.Narrative
     }
 
     /// <summary>
-    /// 4D query API. Set by SpatialGenerator4D or 4D grid in Phase 4-5.
+    /// 4D query API. Set by SpatialGenerator4D or 4D grid (Narrative Volume Query).
     /// </summary>
     public static class NarrativeVolumeQuery
     {

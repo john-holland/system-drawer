@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Locomotion.Narrative
 {
     /// <summary>
-    /// 4D grid (x,y,z,t) for narrative occupancy and causal gradient. Used by Phase 5 query API.
+    /// 4D grid (x,y,z,t) for narrative occupancy and causal gradient. Used by 4D Query API.
     /// Occupancy: max over volumes (1 inside any volume, 0 outside). Causal: depth/rank per cell when volumes have order.
     /// </summary>
     public class NarrativeVolumeGrid4D

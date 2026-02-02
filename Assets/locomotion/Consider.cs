@@ -74,6 +74,10 @@ public class Consider : MonoBehaviour
     [Tooltip("Tolerance for enclosure fit")]
     public float enclosureTolerance = 0.05f;
 
+    [Header("Physics Manifold (optional)")]
+    [Tooltip("Optional physics manifold (e.g. WeatherPhysicsManifold) for placement stability. When set, stability score uses manifold data at position (e.g. temperature, mu).")]
+    public MonoBehaviour physicsManifoldObject;
+
     // Internal state
     private Dictionary<GameObject, List<GoodSection>> toolUsageCards = new Dictionary<GameObject, List<GoodSection>>();
     private Dictionary<GameObject, GoodSection> toolReturnCards = new Dictionary<GameObject, GoodSection>();
@@ -898,9 +902,12 @@ public class Consider : MonoBehaviour
 
                 // Evaluate stability
                 plane.stabilityScore = 1f - (plane.angle / 90f); // 0-1 scale
+                if (physicsManifoldObject != null)
+                {
+                    float manifoldFactor = GetManifoldStabilityFactorAt(plane.center);
+                    plane.stabilityScore = Mathf.Clamp01(plane.stabilityScore * manifoldFactor);
+                }
                 plane.isStable = plane.angle < 45f; // Stable if <45° from horizontal
-                // todo: include mu for stability and use it to determine the stability score
-                //          include physics properties from weather physics manifolds if available
                 // Evaluate grasping
                 plane.canGraspFromAbove = plane.angle < 30f;
                 plane.canGraspFromSide = plane.angle > 60f;
@@ -911,6 +918,35 @@ public class Consider : MonoBehaviour
 
         placementSurfaces[obj] = placementPlanes;
         return placementPlanes;
+    }
+
+    /// <summary>Get stability factor (0-1) from optional physics manifold at world position. Uses reflection to avoid hard dependency on Weather.</summary>
+    private float GetManifoldStabilityFactorAt(Vector3 worldPosition)
+    {
+        if (physicsManifoldObject == null) return 1f;
+        var type = physicsManifoldObject.GetType();
+        var method = type.GetMethod("GetDataAtPosition", new[] { typeof(Vector3) });
+        if (method == null) return 1f;
+        try
+        {
+            object result = method.Invoke(physicsManifoldObject, new object[] { worldPosition });
+            if (result == null) return 1f;
+            var resultType = result.GetType();
+            var tempField = resultType.GetField("temperature");
+            if (tempField != null)
+            {
+                float temp = (float)tempField.GetValue(result);
+                return Mathf.Clamp01(1f - Mathf.Abs(temp) / 100f);
+            }
+            var densityField = resultType.GetField("density");
+            if (densityField != null)
+            {
+                float density = (float)densityField.GetValue(result);
+                return Mathf.Clamp01(density / 2f);
+            }
+        }
+        catch { }
+        return 1f;
     }
 
     /// <summary>
