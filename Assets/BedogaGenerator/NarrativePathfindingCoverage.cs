@@ -3,7 +3,7 @@ using UnityEngine;
 using Locomotion.Narrative;
 
 /// <summary>
-/// Phase 6: Pathfinding-driven coverage volume. Builds SDF max over reachable (x,y,z) by sampling paths
+/// Pathfinding-driven coverage volume. Builds SDF max over reachable (x,y,z) by sampling paths
 /// from an agent to goals; supports display modes (likelihood, fitness, possible placement) for visualization.
 /// </summary>
 public class NarrativePathfindingCoverage : MonoBehaviour
@@ -121,6 +121,7 @@ public class NarrativePathfindingCoverage : MonoBehaviour
     /// <summary>Get display value at position (depends on displayMode). For PossiblePlacement same as SampleReachable.</summary>
     public float GetDisplayValueAt(Vector3 world)
     {
+        
         float occ = SampleReachable(world);
         switch (displayMode)
         {

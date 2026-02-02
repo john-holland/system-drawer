@@ -73,10 +73,11 @@ namespace Locomotion.EditorTools
             bodyPartCategories.Clear();
             categoryFoldouts.Clear();
 
-            // Core body parts
+            // Core body parts — Head + Jaw as merged body part group (head-jaw)
             var core = new List<BodyPartSlot>
             {
-                new BodyPartSlot { label = "Head", componentType = typeof(RagdollHead), side = null, roleName = "Head" },
+                new BodyPartSlot { label = "Head", componentType = typeof(RagdollHead), side = null, isMergeable = true, mergeGroup = "head-jaw", roleName = "Head" },
+                new BodyPartSlot { label = "Jaw", componentType = typeof(RagdollJaw), side = null, isMergeable = true, mergeGroup = "head-jaw", roleName = "Jaw" },
                 new BodyPartSlot { label = "Neck", componentType = typeof(RagdollNeck), side = null, roleName = "Neck" },
                 new BodyPartSlot { label = "Torso", componentType = typeof(RagdollTorso), side = null, roleName = "Torso" },
                 new BodyPartSlot { label = "Pelvis", componentType = typeof(RagdollPelvis), side = null, roleName = "Pelvis" }

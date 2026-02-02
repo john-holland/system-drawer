@@ -1,0 +1,464 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99a41b42bd41ab842a4f8b604b092526, type: 3}
+  m_Name: unitychan-PhysicsIKTrainingRun
+  m_EditorClassIdentifier: Locomotion.Runtime::PhysicsIKTrainingRunAsset
+  displayName: IK Training Run
+  creationTime: 2026-02-02T11:12:32.5529627Z
+  animationTree: {fileID: 0}
+  solver: {fileID: 0}
+  testCategory: 0
+  trainedSets:
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.5
+    completionTime: 1.0713547
+    accuracyScore: 0.8788079
+    powerUsed: 0.49218047
+    seed: 319015
+    tag: Locomotion_0
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.5483871
+    completionTime: 1.3014851
+    accuracyScore: 0.8498157
+    powerUsed: 0.575064
+    seed: 363361
+    tag: Locomotion_1
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.5967742
+    completionTime: 1.3151572
+    accuracyScore: 0.50452936
+    powerUsed: 0.5635453
+    seed: 378402
+    tag: Locomotion_2
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.6451613
+    completionTime: 1.4040086
+    accuracyScore: 0.91670203
+    powerUsed: 0.6358661
+    seed: 383534
+    tag: Locomotion_3
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.6935484
+    completionTime: 1.5600348
+    accuracyScore: 0.92196274
+    powerUsed: 0.69552284
+    seed: 398666
+    tag: Locomotion_4
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.7419355
+    completionTime: 1.37422
+    accuracyScore: 0.80283654
+    powerUsed: 0.76295596
+    seed: 418698
+    tag: Locomotion_5
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.79032254
+    completionTime: 1.6259744
+    accuracyScore: 0.83011067
+    powerUsed: 0.7905318
+    seed: 428718
+    tag: Locomotion_6
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.83870965
+    completionTime: 1.4115058
+    accuracyScore: 0.8363614
+    powerUsed: 0.8530142
+    seed: 438714
+    tag: Locomotion_7
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.88709676
+    completionTime: 1.7115452
+    accuracyScore: 0.5974748
+    powerUsed: 0.9047485
+    seed: 459846
+    tag: Locomotion_8
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.9354839
+    completionTime: 1.5300965
+    accuracyScore: 0.9839814
+    powerUsed: 1.0060891
+    seed: 469848
+    tag: Locomotion_9
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.983871
+    completionTime: 1.5110806
+    accuracyScore: 0.591161
+    powerUsed: 0.967756
+    seed: 485025
+    tag: Locomotion_10
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.032258
+    completionTime: 1.5261279
+    accuracyScore: 0.8789468
+    powerUsed: 1.0664514
+    seed: 495057
+    tag: Locomotion_11
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.0806451
+    completionTime: 1.5617481
+    accuracyScore: 0.9496153
+    powerUsed: 1.1806172
+    seed: 506720
+    tag: Locomotion_12
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.1290323
+    completionTime: 1.7738283
+    accuracyScore: 0.51604706
+    powerUsed: 1.2230344
+    seed: 526726
+    tag: Locomotion_13
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.1774193
+    completionTime: 1.6977876
+    accuracyScore: 0.66900706
+    powerUsed: 1.2243361
+    seed: 536723
+    tag: Locomotion_14
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.2258065
+    completionTime: 1.7350268
+    accuracyScore: 0.5842324
+    powerUsed: 1.2418538
+    seed: 551776
+    tag: Locomotion_15
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.2741935
+    completionTime: 1.6562763
+    accuracyScore: 0.7371924
+    powerUsed: 1.2355592
+    seed: 561773
+    tag: Locomotion_16
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.3225807
+    completionTime: 1.7623707
+    accuracyScore: 0.66430116
+    powerUsed: 1.3090973
+    seed: 576792
+    tag: Locomotion_17
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.3709677
+    completionTime: 1.6560607
+    accuracyScore: 0.88947135
+    powerUsed: 1.2614015
+    seed: 586919
+    tag: Locomotion_18
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.4193549
+    completionTime: 1.6597195
+    accuracyScore: 0.6772572
+    powerUsed: 1.3761855
+    seed: 596951
+    tag: Locomotion_19
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.467742
+    completionTime: 1.823218
+    accuracyScore: 0.8634331
+    powerUsed: 1.3525934
+    seed: 616951
+    tag: Locomotion_20
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.516129
+    completionTime: 1.8229213
+    accuracyScore: 0.817507
+    powerUsed: 1.395227
+    seed: 631977
+    tag: Locomotion_21
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.5645161
+    completionTime: 1.9303964
+    accuracyScore: 0.74156326
+    powerUsed: 1.5776756
+    seed: 637075
+    tag: Locomotion_22
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.6129032
+    completionTime: 1.7071522
+    accuracyScore: 0.62243706
+    powerUsed: 1.6675746
+    seed: 657107
+    tag: Locomotion_23
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.6612903
+    completionTime: 1.8079195
+    accuracyScore: 0.5495458
+    powerUsed: 1.7510366
+    seed: 672126
+    tag: Locomotion_24
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.7096775
+    completionTime: 1.9240252
+    accuracyScore: 0.60378516
+    powerUsed: 1.7174363
+    seed: 682153
+    tag: Locomotion_25
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.7580645
+    completionTime: 1.7689127
+    accuracyScore: 0.78546387
+    powerUsed: 1.89659
+    seed: 697201
+    tag: Locomotion_26
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.8064516
+    completionTime: 1.9957457
+    accuracyScore: 0.7318425
+    powerUsed: 1.6528628
+    seed: 707200
+    tag: Locomotion_27
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.8548386
+    completionTime: 1.7519444
+    accuracyScore: 0.9449836
+    powerUsed: 1.939276
+    seed: 727207
+    tag: Locomotion_28
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.9032258
+    completionTime: 1.7373405
+    accuracyScore: 0.9068823
+    powerUsed: 2.0900822
+    seed: 738508
+    tag: Locomotion_29
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 1.9516128
+    completionTime: 1.9052624
+    accuracyScore: 0.634796
+    powerUsed: 1.8873574
+    seed: 748543
+    tag: Locomotion_30
+    rigidbodyConstraints: 0
+  - degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 2
+    completionTime: 2.0301092
+    accuracyScore: 0.6487421
+    powerUsed: 1.8927839
+    seed: 763566
+    tag: Locomotion_31
+    rigidbodyConstraints: 0
+  rangeDiamondMin:
+    degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 0.5
+    completionTime: 0
+    accuracyScore: 0
+    powerUsed: 0
+    seed: 0
+    tag: 
+    rigidbodyConstraints: 0
+  rangeDiamondMax:
+    degreesWeight: 0.3
+    torqueWeight: 0.3
+    forceWeight: 0.2
+    velocityWeight: 0.2
+    comfortWeight: 0.3
+    feasibilityWeight: 0.7
+    powerScale: 2
+    completionTime: 0
+    accuracyScore: 0
+    powerUsed: 0
+    seed: 0
+    tag: 
+    rigidbodyConstraints: 0

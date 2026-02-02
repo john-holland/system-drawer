@@ -166,7 +166,7 @@ namespace Locomotion.EditorTools
             if (rootRb == null) rootRb = Undo.AddComponent<Rigidbody>(actor);
             rootRb.isKinematic = false;
 
-            // Bone list (MVP)
+            // Bone list (MVP) — Head group includes Head + Jaw (merged body part group)
             HumanBodyBones[] required =
             {
                 HumanBodyBones.Hips,
@@ -174,6 +174,7 @@ namespace Locomotion.EditorTools
                 HumanBodyBones.Chest,
                 HumanBodyBones.Neck,
                 HumanBodyBones.Head,
+                HumanBodyBones.Jaw,
                 HumanBodyBones.LeftUpperArm,
                 HumanBodyBones.LeftLowerArm,
                 HumanBodyBones.LeftHand,
@@ -234,8 +235,8 @@ namespace Locomotion.EditorTools
                 Muscle m = go.GetComponent<Muscle>();
                 if (m == null) m = Undo.AddComponent<Muscle>(go);
 
-                // Group assignment
-                if (bone == HumanBodyBones.Head || bone == HumanBodyBones.Neck)
+                // Group assignment — Head = merged head+jaw body part group
+                if (bone == HumanBodyBones.Head || bone == HumanBodyBones.Neck || bone == HumanBodyBones.Jaw)
                     musclesByRegion["Head"].Add(m);
                 else if (bone.ToString().StartsWith("LeftUpperArm") || bone.ToString().StartsWith("LeftLowerArm") || bone == HumanBodyBones.LeftHand)
                     musclesByRegion["LeftArm"].Add(m);

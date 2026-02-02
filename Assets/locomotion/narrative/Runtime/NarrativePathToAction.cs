@@ -92,7 +92,7 @@ namespace Locomotion.Narrative
 
             if (pathfindingType != null)
             {
-                var pathfindingSolver = UnityEngine.Object.FindObjectOfType(pathfindingType);
+                var pathfindingSolver = UnityEngine.Object.FindAnyObjectByType(pathfindingType);
                 if (pathfindingSolver != null)
                 {
                     // Use reflection to call pathfinding methods

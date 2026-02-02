@@ -22,7 +22,7 @@ namespace Locomotion.Narrative
                     return provider.GetNow();
 
                 // Try auto-find a Unity provider in the scene.
-                var unityProvider = FindObjectOfType<UnityNarrativeTimeProvider>();
+                var unityProvider = FindAnyObjectByType<UnityNarrativeTimeProvider>();
                 if (unityProvider != null)
                     return unityProvider.GetNow();
 

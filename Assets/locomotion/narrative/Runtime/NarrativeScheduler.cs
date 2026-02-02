@@ -16,8 +16,8 @@ namespace Locomotion.Narrative
         [Header("Behavior")]
         public bool autoFindReferences = true;
         public bool applyPastEventsOnEnable = true;
-        [Tooltip("When an event has spatiotemporalVolume, this key is used to resolve player/listener position from bindings for region check.")]
-        public string playerPositionKey = "player";
+        [Tooltip("When an event has spatiotemporalVolume, these keys are used to resolve player/listener positions from bindings for region check. Event triggers when any key resolves to a GameObject inside the volume. Event can override with its own positionKeys.")]
+        public List<string> positionKeys = new List<string> { "player" };
 
         [Header("Debug")]
         public bool debugLogging = false;
@@ -72,10 +72,22 @@ namespace Locomotion.Narrative
                     var vol = e.spatiotemporalVolume.Value;
                     if (!NarrativeVolumeQuery.IsEventActiveAt(vol.tMin, vol.tMax, tNow))
                         continue;
-                    if (executor.bindings == null || string.IsNullOrEmpty(playerPositionKey)
-                        || !executor.bindings.TryResolveGameObject(playerPositionKey, out GameObject go) || go == null)
+                    var keysToUse = (e.positionKeys != null && e.positionKeys.Count > 0) ? e.positionKeys : positionKeys;
+                    if (executor.bindings == null || keysToUse == null || keysToUse.Count == 0)
                         continue;
-                    if (!vol.Contains(go.transform.position, tNow))
+                    bool anyInVolume = false;
+                    for (int k = 0; k < keysToUse.Count; k++)
+                    {
+                        string key = keysToUse[k];
+                        if (string.IsNullOrWhiteSpace(key)) continue;
+                        if (executor.bindings.TryResolveGameObject(key.Trim(), out GameObject go) && go != null
+                            && vol.Contains(go.transform.position, tNow))
+                        {
+                            anyInVolume = true;
+                            break;
+                        }
+                    }
+                    if (!anyInVolume)
                         continue;
                     scratch.Add(e);
                 }

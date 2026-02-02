@@ -274,6 +274,12 @@ namespace Weather
                         gustSpeed += eventData.magnitude;
                     else
                         gustSpeed *= eventData.magnitude;
+                    if (eventData.vectorData.sqrMagnitude > 0.0001f)
+                    {
+                        float deg = Mathf.Atan2(eventData.vectorData.x, -eventData.vectorData.z) * Mathf.Rad2Deg;
+                        if (deg < 0f) deg += 360f;
+                        direction = deg;
+                    }
                     break;
 
                 case WeatherEventType.Tornado:

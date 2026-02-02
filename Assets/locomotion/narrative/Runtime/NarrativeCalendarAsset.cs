@@ -37,6 +37,8 @@ namespace Locomotion.Narrative
         [Header("4D Placement (optional)")]
         [Tooltip("When set, this event is placed in (region, time_window) for 4D spatial generator and spatial+temporal triggers. When null, only startDateTime/durationSeconds apply.")]
         public Bounds4? spatiotemporalVolume;
+        [Tooltip("When set and non-empty, these keys are used for spatiotemporal region check instead of the scheduler's positionKeys. Empty or null = use scheduler default.")]
+        public List<string> positionKeys;
     }
 
     [AddComponentMenu("Locomotion/Narrative/Narrative Calendar")]

@@ -27,6 +27,10 @@ namespace Locomotion.Narrative
         [Tooltip("Which systems this event affects")]
         public AffectedSystem affectedSystems = AffectedSystem.Meteorology;
 
+        [Tooltip("Wind direction in degrees (0-360, meteorological: direction wind comes from). Used for WindGust when set.")]
+        [Range(0f, 360f)]
+        public float windDirectionDegrees = 0f;
+
         [Tooltip("Weather event GameObject (optional, creates new if null)")]
         public GameObject weatherEventPrefab;
 
@@ -59,7 +63,7 @@ namespace Locomotion.Narrative
 
                 if (weatherSystemType != null)
                 {
-                    var weatherSystem = UnityEngine.Object.FindObjectOfType(weatherSystemType);
+                    var weatherSystem = UnityEngine.Object.FindAnyObjectByType(weatherSystemType);
                     if (weatherSystem != null)
                     {
                         weatherSystemGo = (weatherSystem as MonoBehaviour)?.gameObject;
@@ -103,6 +107,15 @@ namespace Locomotion.Narrative
                         SetProperty(weatherEvent, "duration", duration);
                     }
 
+                    if (weatherType == WeatherEventType.WindGust)
+                    {
+                        Vector3 dir = new Vector3(
+                            Mathf.Sin(windDirectionDegrees * Mathf.Deg2Rad),
+                            0f,
+                            -Mathf.Cos(windDirectionDegrees * Mathf.Deg2Rad));
+                        SetProperty(weatherEvent, "vectorData", dir);
+                    }
+
                     createdWeatherEvent = weatherEventObj;
                 }
                 else
@@ -134,6 +147,14 @@ namespace Locomotion.Narrative
                         SetProperty(weatherEvent, "magnitude", intensity);
                         SetProperty(weatherEvent, "isAdditive", isAdditive);
                         SetProperty(weatherEvent, "affectedSystems", Convert.ToInt32(affectedSystems));
+                        if (weatherType == WeatherEventType.WindGust)
+                        {
+                            Vector3 dir = new Vector3(
+                                Mathf.Sin(windDirectionDegrees * Mathf.Deg2Rad),
+                                0f,
+                                -Mathf.Cos(windDirectionDegrees * Mathf.Deg2Rad));
+                            SetProperty(weatherEvent, "vectorData", dir);
+                        }
                     }
                 }
             }

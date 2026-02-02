@@ -56,6 +56,9 @@ namespace Locomotion.Musculature
 {
     public sealed class RagdollHead : RagdollBodyPart
     {
+        [Header("Property Links")]
+        [Tooltip("Linked jaw component (child or sibling). When null, resolved via RagdollSystem or GetComponentInChildren<RagdollJaw>.")]
+        public RagdollJaw jaw;
     }
 }
 

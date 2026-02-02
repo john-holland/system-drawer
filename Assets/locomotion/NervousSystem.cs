@@ -41,6 +41,13 @@ public class NervousSystem : MonoBehaviour
 
     private void Awake()
     {
+        // Ensure lists are initialized (prefab/scene can deserialize null)
+        if (impulseChannels == null) impulseChannels = new List<ImpulseChannel>();
+        if (goodSections == null) goodSections = new List<GoodSection>();
+        if (considerComponents == null) considerComponents = new List<Consider>();
+        if (goalQueue == null) goalQueue = new Queue<BehaviorTreeGoal>();
+        if (cleanupStack == null) cleanupStack = new Stack<BehaviorTreeGoal>();
+
         // Build channel dictionary
         foreach (var channel in impulseChannels)
         {
@@ -375,6 +382,8 @@ public class NervousSystem : MonoBehaviour
     /// </summary>
     private void ProcessImpulseChannels()
     {
+        if (impulseChannels == null)
+            return;
         foreach (var channel in impulseChannels)
         {
             if (channel != null && channel.HasImpulses())
@@ -418,7 +427,7 @@ public class NervousSystem : MonoBehaviour
             // Route sensory impulse to brain/behavior tree system
             // This would be handled by Brain components in practice
             SensoryData sensoryData = impulse.GetData<SensoryData>();
-            if (sensoryData != null)
+            if (sensoryData != null && considerComponents != null)
             {
                 // Notify consider components of sensory input
                 foreach (var consider in considerComponents)

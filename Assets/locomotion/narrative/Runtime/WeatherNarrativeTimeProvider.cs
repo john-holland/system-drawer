@@ -34,7 +34,7 @@ namespace Locomotion.Narrative
             {
                 if (weatherSystemObject == null)
                 {
-                    MonoBehaviour[] allMonoBehaviours = FindObjectsOfType<MonoBehaviour>();
+                   MonoBehaviour[] allMonoBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
                     foreach (var mb in allMonoBehaviours)
                     {
                         if (weatherSystemType.IsAssignableFrom(mb.GetType()))

@@ -15,6 +15,15 @@ namespace Locomotion.Narrative
         }
 
         /// <summary>
+        /// Converts narrative seconds (since epoch 2025-01-01 00:00 UTC) to NarrativeDateTime for display and bar layout.
+        /// </summary>
+        public static NarrativeDateTime SecondsToNarrativeDateTime(float t)
+        {
+            var dt = EpochUtc.AddSeconds(t);
+            return NarrativeDateTime.FromDateTimeUtc(dt);
+        }
+
+        /// <summary>
         /// Returns a 6x7 month grid as a flat array (row-major), with 0 for empty cells.
         /// Sunday-first. Length is always 42.
         /// </summary>

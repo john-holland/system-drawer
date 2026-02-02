@@ -103,7 +103,9 @@ public class SpatialGenerator4D : SpatialGeneratorBase
     /// <inheritdoc />
     public override Bounds GetSpatialBounds()
     {
-        return transform.TransformBounds(spatialBounds);
+        Vector3 worldCenter = transform.TransformPoint(spatialBounds.center);
+        Vector3 worldSize = Vector3.Scale(spatialBounds.size, transform.lossyScale);
+        return new Bounds(worldCenter, worldSize);
     }
 
     private void Awake()

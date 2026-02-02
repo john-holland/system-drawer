@@ -68,7 +68,7 @@ namespace Locomotion.Narrative
             }
 
             // Use behavior tree timing predictor if available
-            var predictor = UnityEngine.Object.FindObjectOfType<BehaviorTreeTimingPredictor>();
+            var predictor = UnityEngine.Object.FindAnyObjectByType<BehaviorTreeTimingPredictor>();
             if (predictor != null)
             {
                 // Try to get behavior tree from context or find it using reflection
@@ -80,7 +80,7 @@ namespace Locomotion.Narrative
                 }
                 if (behaviorTreeType != null)
                 {
-                    var behaviorTree = UnityEngine.Object.FindObjectOfType(behaviorTreeType);
+                    var behaviorTree = UnityEngine.Object.FindAnyObjectByType(behaviorTreeType);
                     if (behaviorTree != null)
                     {
                         predictedTime = predictor.PredictSoundTiming(behaviorTree, calendar);
@@ -163,7 +163,7 @@ namespace Locomotion.Narrative
             if (targetObject == null)
             {
                 // Fallback: find or create a temporary audio source
-                var existingSource = UnityEngine.Object.FindObjectOfType<AudioSource>();
+                var existingSource = UnityEngine.Object.FindAnyObjectByType<AudioSource>();
                 if (existingSource != null)
                 {
                     audioSource = existingSource;
@@ -240,13 +240,13 @@ namespace Locomotion.Narrative
             // Auto-find sound store if not assigned
             if (soundStore == null)
             {
-                soundStore = UnityEngine.Object.FindObjectOfType<ActorSoundStore>();
+                soundStore = UnityEngine.Object.FindAnyObjectByType<ActorSoundStore>();
             }
 
             // Auto-find narrative calendar if not assigned
             if (narrativeCalendar == null)
             {
-                narrativeCalendar = UnityEngine.Object.FindObjectOfType<NarrativeCalendarAsset>();
+                narrativeCalendar = UnityEngine.Object.FindAnyObjectByType<NarrativeCalendarAsset>();
             }
 
             // Predict timing on initialize

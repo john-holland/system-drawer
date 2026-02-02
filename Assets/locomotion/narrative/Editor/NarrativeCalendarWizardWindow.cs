@@ -21,6 +21,7 @@ namespace Locomotion.Narrative.EditorTools
         private VisualElement gridRoot;
         private ScrollView stickyList;
         private Label headerLabel;
+        private VisualElement eventBarsRoot;
 
         [MenuItem("Window/Locomotion/Narrative/Calendar Wizard")]
         public static void ShowWindow()
@@ -111,6 +112,10 @@ namespace Locomotion.Narrative.EditorTools
             { text = "Add Event" };
             addBtn.style.marginRight = 8;
 
+            var weatherWizardBtn = new Button(() => WeatherEventWizardWindow.ShowWindow())
+            { text = "Weather Event Wizard" };
+            weatherWizardBtn.style.marginRight = 8;
+
             headerLabel = new Label();
             headerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             headerLabel.style.marginLeft = 8;
@@ -119,6 +124,7 @@ namespace Locomotion.Narrative.EditorTools
             top.Add(monthYearText);
             top.Add(jumpBtn);
             top.Add(addBtn);
+            top.Add(weatherWizardBtn);
             top.Add(headerLabel);
             root.Add(top);
 
@@ -182,6 +188,18 @@ namespace Locomotion.Narrative.EditorTools
             body.Add(right);
             root.Add(body);
 
+            // Event bars (Outlook-style solid color bars spanning days)
+            var barsSectionTitle = new Label("Event bars");
+            barsSectionTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
+            barsSectionTitle.style.marginTop = 12;
+            barsSectionTitle.style.marginBottom = 4;
+            root.Add(barsSectionTitle);
+            eventBarsRoot = new VisualElement();
+            eventBarsRoot.style.flexDirection = FlexDirection.Column;
+            eventBarsRoot.style.minHeight = 80;
+            eventBarsRoot.style.marginBottom = 8;
+            root.Add(eventBarsRoot);
+
             RefreshAll();
         }
 
@@ -195,6 +213,7 @@ namespace Locomotion.Narrative.EditorTools
             headerLabel.text = $"{new DateTime(viewYear, viewMonth, 1):MMMM yyyy}  (selected {viewMonth}/{selectedDay}/{viewYear})";
             RebuildGrid();
             RebuildStickyList();
+            RebuildEventBars();
         }
 
         private void RebuildGrid()
@@ -440,6 +459,151 @@ namespace Locomotion.Narrative.EditorTools
                 return false;
 
             return int.TryParse(parts[0], out month) && int.TryParse(parts[1], out year);
+        }
+
+        private static readonly Color[] EventBarColors = new[]
+        {
+            new Color(0.3f, 0.6f, 1f, 0.85f),
+            new Color(0.4f, 0.8f, 0.4f, 0.85f),
+            new Color(0.95f, 0.75f, 0.2f, 0.85f),
+            new Color(0.85f, 0.4f, 0.5f, 0.85f),
+            new Color(0.6f, 0.4f, 0.9f, 0.85f),
+            new Color(0.2f, 0.75f, 0.75f, 0.85f),
+        };
+
+        private void RebuildEventBars()
+        {
+            eventBarsRoot.Clear();
+            if (calendar == null || calendar.events == null)
+                return;
+
+            int daysInMonth = DateTime.DaysInMonth(viewYear, viewMonth);
+            var eventsWithRange = GetEventsWithDayRangeForMonth(daysInMonth);
+            if (eventsWithRange.Count == 0)
+            {
+                var noBars = new Label("No events with time range in this month.");
+                noBars.style.color = new Color(0.5f, 0.5f, 0.5f);
+                eventBarsRoot.Add(noBars);
+                return;
+            }
+
+            for (int i = 0; i < eventsWithRange.Count; i++)
+            {
+                var (evt, startDay, endDay) = eventsWithRange[i];
+                Color barColor = EventBarColors[i % EventBarColors.Length];
+
+                var row = new VisualElement();
+                row.style.flexDirection = FlexDirection.Row;
+                row.style.alignItems = Align.Center;
+                row.style.height = 24;
+                row.style.marginBottom = 2;
+                row.userData = i;
+                row.tooltip = "Click to select calendar in Inspector";
+                row.RegisterCallback<MouseEnterEvent>(_ =>
+                {
+                    row.style.backgroundColor = new Color(1f, 1f, 1f, 0.15f);
+                });
+                row.RegisterCallback<MouseLeaveEvent>(_ =>
+                {
+                    row.style.backgroundColor = Color.clear;
+                });
+                row.RegisterCallback<ClickEvent>(_ =>
+                {
+                    if (calendar != null)
+                    {
+                        Selection.activeObject = calendar;
+                        EditorGUIUtility.PingObject(calendar);
+                    }
+                });
+                row.pickingMode = PickingMode.Position;
+
+                var titleLabel = new Label(evt.title ?? "(event)");
+                titleLabel.style.width = 140;
+                titleLabel.style.overflow = Overflow.Hidden;
+                titleLabel.style.textOverflow = TextOverflow.Ellipsis;
+                titleLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+                row.Add(titleLabel);
+
+                var strip = new VisualElement();
+                strip.style.flexDirection = FlexDirection.Row;
+                strip.style.flexGrow = 1f;
+                strip.style.height = 20;
+                strip.style.borderTopWidth = 1;
+                strip.style.borderBottomWidth = 1;
+                strip.style.borderLeftWidth = 1;
+                strip.style.borderRightWidth = 1;
+                strip.style.borderTopColor = new Color(0, 0, 0, 0.15f);
+                strip.style.borderBottomColor = new Color(0, 0, 0, 0.15f);
+                strip.style.borderLeftColor = new Color(0, 0, 0, 0.15f);
+                strip.style.borderRightColor = new Color(0, 0, 0, 0.15f);
+
+                for (int d = 1; d <= daysInMonth; d++)
+                {
+                    var cell = new VisualElement();
+                    cell.style.flexGrow = 1f;
+                    cell.style.borderRightWidth = d < daysInMonth ? 1 : 0;
+                    cell.style.borderRightColor = new Color(0, 0, 0, 0.1f);
+                    if (d >= startDay && d <= endDay)
+                        cell.style.backgroundColor = barColor;
+                    strip.Add(cell);
+                }
+                row.Add(strip);
+                eventBarsRoot.Add(row);
+            }
+        }
+
+        /// <summary>Events that overlap the visible month with (startDay, endDay) in 1-based day of month.</summary>
+        private List<(NarrativeCalendarEvent evt, int startDay, int endDay)> GetEventsWithDayRangeForMonth(int daysInMonth)
+        {
+            var result = new List<(NarrativeCalendarEvent, int, int)>();
+            if (calendar == null || calendar.events == null)
+                return result;
+
+            for (int i = 0; i < calendar.events.Count; i++)
+            {
+                var e = calendar.events[i];
+                if (e == null) continue;
+
+                int startDay, endDay;
+                if (e.spatiotemporalVolume.HasValue)
+                {
+                    var vol = e.spatiotemporalVolume.Value;
+                    var dtStart = NarrativeCalendarMath.SecondsToNarrativeDateTime(vol.tMin);
+                    var dtEnd = NarrativeCalendarMath.SecondsToNarrativeDateTime(vol.tMax);
+                    if (dtStart.year != viewYear || dtStart.month != viewMonth)
+                    {
+                        if (dtEnd.year != viewYear || dtEnd.month != viewMonth)
+                            continue;
+                        startDay = 1;
+                        endDay = Mathf.Clamp(dtEnd.day, 1, daysInMonth);
+                    }
+                    else if (dtEnd.year != viewYear || dtEnd.month != viewMonth)
+                    {
+                        startDay = Mathf.Clamp(dtStart.day, 1, daysInMonth);
+                        endDay = daysInMonth;
+                    }
+                    else
+                    {
+                        startDay = Mathf.Clamp(dtStart.day, 1, daysInMonth);
+                        endDay = Mathf.Clamp(dtEnd.day, 1, daysInMonth);
+                    }
+                }
+                else
+                {
+                    if (e.startDateTime.year != viewYear || e.startDateTime.month != viewMonth)
+                        continue;
+                    startDay = Mathf.Clamp(e.startDateTime.day, 1, daysInMonth);
+                    var endDt = e.startDateTime.AddSeconds(e.durationSeconds);
+                    if (endDt.year != viewYear || endDt.month != viewMonth)
+                        endDay = daysInMonth;
+                    else
+                        endDay = Mathf.Clamp(endDt.day, 1, daysInMonth);
+                }
+                if (startDay > endDay)
+                    endDay = startDay;
+                result.Add((e, startDay, endDay));
+            }
+            return result;
         }
     }
 }

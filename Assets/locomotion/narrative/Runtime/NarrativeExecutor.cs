@@ -27,8 +27,8 @@ namespace Locomotion.Narrative
 
         private void Awake()
         {
-            if (clock == null) clock = FindObjectOfType<NarrativeClock>();
-            if (bindings == null) bindings = FindObjectOfType<NarrativeBindings>();
+            if (clock == null) clock = FindAnyObjectByType<NarrativeClock>();
+            if (bindings == null) bindings = FindAnyObjectByType<NarrativeBindings>();
             
             // Use reflection to find WeatherSystem
             weatherSystemType = Type.GetType("Weather.WeatherSystem, Weather.Runtime");
@@ -36,7 +36,7 @@ namespace Locomotion.Narrative
             {
                 if (weatherSystemObject == null)
                 {
-                    MonoBehaviour[] allMonoBehaviours = FindObjectsOfType<MonoBehaviour>();
+                    MonoBehaviour[] allMonoBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
                     foreach (var mb in allMonoBehaviours)
                     {
                         if (weatherSystemType.IsAssignableFrom(mb.GetType()))

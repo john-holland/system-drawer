@@ -76,7 +76,7 @@ namespace Locomotion.Narrative
             var cardSolverType = System.Type.GetType("PhysicsCardSolver, Assembly-CSharp");
             if (cardSolverType != null)
             {
-                var cardSolver = UnityEngine.Object.FindObjectOfType(cardSolverType);
+                var cardSolver = UnityEngine.Object.FindAnyObjectByType(cardSolverType);
                 if (cardSolver != null)
                 {
                     // Create a drop card using reflection
