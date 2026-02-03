@@ -138,7 +138,7 @@ namespace Locomotion.Musculature
                 environmentCollector = GetComponentInParent<Locomotion.Audio.EnvironmentDataCollector>();
                 if (environmentCollector == null)
                 {
-                    environmentCollector = FindObjectOfType<Locomotion.Audio.EnvironmentDataCollector>();
+                    environmentCollector = FindAnyObjectByType<Locomotion.Audio.EnvironmentDataCollector>();
                 }
             }
 

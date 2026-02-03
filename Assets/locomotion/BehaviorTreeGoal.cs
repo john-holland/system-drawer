@@ -53,7 +53,9 @@ public enum GoalType
     Movement,
     Interaction,
     Cleanup,
-    Composite // Multiple sub-goals
+    Composite, // Multiple sub-goals
+    /// <summary>Throw at target: goal.target or goal.targetPosition is the throw target; no pathfinding after the throw.</summary>
+    Throw
 }
 
 /// <summary>

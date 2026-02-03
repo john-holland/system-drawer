@@ -169,7 +169,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         {
             if (EditorApplication.timeSinceStartup >= previewEndTime)
             {
-                PhysicsIKTrainedSet withMetrics = PhysicsIKTrainingRunner.RunOne(solver, currentPreviewSet, testCategory, currentPreviewSet.seed, ragdollRigidbody);
+                PhysicsIKTrainedSet withMetrics = PhysicsIKTrainingRunner.RunOne(solver, currentPreviewSet, testCategory, currentPreviewSet.seed, ragdollRigidbody, runAsset);
                 sweepResults.Add(withMetrics);
                 sweepIndex++;
                 previewing = false;
@@ -218,7 +218,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         }
         else
         {
-            PhysicsIKTrainedSet withMetrics = PhysicsIKTrainingRunner.RunOne(solver, set, testCategory, set.seed, ragdollRigidbody);
+            PhysicsIKTrainedSet withMetrics = PhysicsIKTrainingRunner.RunOne(solver, set, testCategory, set.seed, ragdollRigidbody, runAsset);
             sweepResults.Add(withMetrics);
             sweepIndex++;
         }
@@ -253,6 +253,61 @@ public class PhysicsIKTrainingWindow : EditorWindow
         GUI.enabled = true;
         if (testCategory == PhysicsIKTrainingCategory.ToolUse)
             includeFrozenAxisRuns = EditorGUILayout.Toggle("Include frozen-axis runs (tool)", includeFrozenAxisRuns);
+
+        bool isClimbSwingPickRoll = testCategory == PhysicsIKTrainingCategory.Climb || testCategory == PhysicsIKTrainingCategory.Swing
+            || testCategory == PhysicsIKTrainingCategory.Pick || testCategory == PhysicsIKTrainingCategory.Roll;
+        if (isClimbSwingPickRoll && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Card and Tool", EditorStyles.miniLabel);
+            using (var runSo = new SerializedObject(runAsset))
+            {
+                var cardProp = runSo.FindProperty("cardSlot");
+                var toolProp = runSo.FindProperty("toolSlot");
+                if (cardProp != null)
+                    EditorGUILayout.PropertyField(cardProp, new GUIContent("Card"), true);
+                if (toolProp != null)
+                    EditorGUILayout.PropertyField(toolProp, new GUIContent("Tool"), true);
+                runSo.ApplyModifiedPropertiesWithoutUndo();
+            }
+            if (GUI.changed)
+                EditorUtility.SetDirty(runAsset);
+        }
+
+        bool isThrow = testCategory == PhysicsIKTrainingCategory.Throw;
+        if ((isThrow || (runAsset != null && runAsset.needsToBeThrown)) && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Throw", EditorStyles.miniLabel);
+            runAsset.needsToBeThrown = EditorGUILayout.Toggle("Needs to be thrown", runAsset.needsToBeThrown);
+            runAsset.thrownObject = EditorGUILayout.ObjectField("Thrown Object (GameObject/Transform/bone)", runAsset.thrownObject, typeof(UnityEngine.Object), true);
+            runAsset.throwHandMode = (ThrowHandMode)EditorGUILayout.EnumPopup("Hand mode", runAsset.throwHandMode);
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Throw goal (target)", EditorStyles.miniLabel);
+            runAsset.throwTargetPosition = EditorGUILayout.Vector3Field("Throw target position", runAsset.throwTargetPosition);
+            runAsset.throwGoalTarget = (GameObject)EditorGUILayout.ObjectField("Throw goal target", runAsset.throwGoalTarget, typeof(GameObject), true);
+            if (runAsset.throwGoalTarget != null)
+                EditorGUILayout.HelpBox("Throw target will use this object's position at runtime.", MessageType.None);
+            if (isThrow && runAsset.throwAnimationTrees != null)
+            {
+                EditorGUILayout.Space(2);
+                EditorGUILayout.LabelField("Throw animation trees", EditorStyles.miniLabel);
+                SerializedObject so = new SerializedObject(runAsset);
+                SerializedProperty listProp = so.FindProperty("throwAnimationTrees");
+                if (listProp != null)
+                    EditorGUILayout.PropertyField(listProp, true);
+                EditorGUILayout.LabelField("Throw animation range (per-slot, meters)", EditorStyles.miniLabel);
+                SerializedProperty rangeMinProp = so.FindProperty("throwAnimationRangeMin");
+                SerializedProperty rangeMaxProp = so.FindProperty("throwAnimationRangeMax");
+                if (rangeMinProp != null)
+                    EditorGUILayout.PropertyField(rangeMinProp, true);
+                if (rangeMaxProp != null)
+                    EditorGUILayout.PropertyField(rangeMaxProp, true);
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
         EditorGUILayout.Space(4);
 
         EditorGUILayout.LabelField("Sweep", EditorStyles.boldLabel);

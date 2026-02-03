@@ -29,6 +29,14 @@ public class RagdollSystem : MonoBehaviour
     [Tooltip("How to blend procedural and keyframe animations")]
     public AnimationBlendMode animationBlendMode = AnimationBlendMode.FullRagdoll;
 
+    [Header("Animation Tree")]
+    [Tooltip("Animation tree (multiple roots). Ragdoll stores animations as children of animationContainer or by reference.")]
+    public AnimationBehaviorTree animationTree;
+    [Tooltip("Optional container under ragdoll for reparenting animation roots. If set, animation tree roots can be reparented here.")]
+    public Transform animationContainer;
+    [Tooltip("Max depth when querying animation nodes (0 = roots only).")]
+    public int animationNodeQueryMaxDepth = 2;
+
     [Header("Muscle Groups")]
     [Tooltip("Organized muscle groups for coordinated activation")]
     public List<MuscleGroup> muscleGroups = new List<MuscleGroup>();
@@ -274,6 +282,64 @@ public class RagdollSystem : MonoBehaviour
     {
         sectionDict.TryGetValue(sectionName, out RagdollSection section);
         return section;
+    }
+
+    /// <summary>
+    /// Get animation root nodes from the animation tree (for IK trainer and playback).
+    /// Returns empty list if no animation tree or no roots.
+    /// </summary>
+    public List<AnimationBehaviorTreeNode> GetAnimationRoots()
+    {
+        var list = new List<AnimationBehaviorTreeNode>();
+        if (animationTree == null) return list;
+        var roots = animationTree.GetRootNodes();
+        if (roots == null) return list;
+        foreach (var r in roots)
+        {
+            if (r != null) list.Add(r);
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// Get animation nodes at a given depth (0 = roots only, 1 = roots + immediate children, etc.).
+    /// Uses animationNodeQueryMaxDepth if depth is negative.
+    /// </summary>
+    public List<AnimationBehaviorTreeNode> GetAnimationNodesAtLevel(int depth)
+    {
+        var list = new List<AnimationBehaviorTreeNode>();
+        if (animationTree == null) return list;
+        int maxDepth = depth >= 0 ? depth : animationNodeQueryMaxDepth;
+        var roots = animationTree.GetRootNodes();
+        if (roots == null) return list;
+        foreach (var root in roots)
+        {
+            if (root == null) continue;
+            CollectAnimationNodesAtDepth(root, 0, maxDepth, list);
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// Get all animation nodes up to maxDepth (uses animationNodeQueryMaxDepth if maxDepth &lt; 0).
+    /// </summary>
+    public List<AnimationBehaviorTreeNode> GetAllAnimationNodes(int maxDepth = -1)
+    {
+        return GetAnimationNodesAtLevel(maxDepth);
+    }
+
+    private static void CollectAnimationNodesAtDepth(AnimationBehaviorTreeNode node, int currentDepth, int maxDepth, List<AnimationBehaviorTreeNode> list)
+    {
+        if (node == null || currentDepth > maxDepth) return;
+        list.Add(node);
+        if (currentDepth >= maxDepth) return;
+        if (node.children == null) return;
+        foreach (var child in node.children)
+        {
+            var animChild = child as AnimationBehaviorTreeNode;
+            if (animChild != null)
+                CollectAnimationNodesAtDepth(animChild, currentDepth + 1, maxDepth, list);
+        }
     }
 
     public Hand GetHand(HandType handType)

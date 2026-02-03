@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -102,7 +103,23 @@ public enum PhysicsIKTrainingCategory
     Locomotion,
     ToolUse,
     /// <summary>Goal: not falling over — most stable rigid body given physical sim / animation baked tree.</summary>
-    Idle
+    Idle,
+    Climb,
+    Swing,
+    Pick,
+    Roll,
+    /// <summary>Train for throw target then perform implied throw (thrown object + hand mode).</summary>
+    Throw
+}
+
+/// <summary>
+/// Hand(s) used for throw: left, right, or two hands.
+/// </summary>
+public enum ThrowHandMode
+{
+    Left,
+    Right,
+    TwoHands
 }
 
 /// <summary>
@@ -122,6 +139,32 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
     [Tooltip("Optional solver reference (scene context)")]
     public PhysicsCardSolver solver;
     public PhysicsIKTrainingCategory testCategory = PhysicsIKTrainingCategory.Locomotion;
+
+    [Header("Card and Tool (Climb / Swing / Pick / Roll)")]
+    [Tooltip("Card to use for this run (e.g. climb card, swing card). Used when category is Climb/Swing/Pick/Roll.")]
+    public GoodSection cardSlot;
+    [Tooltip("Tool to carry/use (e.g. ladder, batterang). Used when category is Climb/Swing/Pick/Roll.")]
+    public GameObject toolSlot;
+
+    [Header("Throw (needs to be thrown)")]
+    [Tooltip("When true (or category is Throw), trainer runs throw mode: spatial goal = throw target, then implied throw action.")]
+    public bool needsToBeThrown;
+    [Tooltip("Thrown object: GameObject, Transform, or bone. What gets thrown; trainer uses this for release/origin.")]
+    public UnityEngine.Object thrownObject;
+    [Tooltip("Hand(s) used for throw: left, right, or two hands.")]
+    public ThrowHandMode throwHandMode = ThrowHandMode.Right;
+    [Tooltip("World position used as the throw target when category is Throw.")]
+    public Vector3 throwTargetPosition;
+    [Tooltip("If set, throw target is this object's position when category is Throw (overrides throwTargetPosition at runtime).")]
+    public GameObject throwGoalTarget;
+    [Tooltip("Animation tree nodes to try for baking impulse values (same optimization strategy).")]
+    public List<AnimationBehaviorTreeNode> throwAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Tooltip("Per-slot effective range min (meters). Same count as throwAnimationTrees; used by SelectThrowAnimationByDistance.")]
+    public List<float> throwAnimationRangeMin = new List<float>();
+
+    [Tooltip("Per-slot effective range max (meters). Same count as throwAnimationTrees; used by SelectThrowAnimationByDistance.")]
+    public List<float> throwAnimationRangeMax = new List<float>();
 
     [Header("Trained Sets")]
     [Tooltip("List of coefficient sets with metrics (overwrite replaces this; append adds to it)")]

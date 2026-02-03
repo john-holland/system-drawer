@@ -65,7 +65,7 @@ namespace Locomotion.Smell
                 wind = weatherSystem.wind;
 
             if (hierarchicalPathingSolver == null)
-                hierarchicalPathingSolver = FindObjectOfType<HierarchicalPathingSolver>();
+                hierarchicalPathingSolver = FindAnyObjectByType<HierarchicalPathingSolver>();
         }
 
         private void Update()

@@ -2,6 +2,20 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
+/// Traversability mode for tool-enabled pathfinding (ladder, swing, pick, roll, throw).
+/// </summary>
+public enum TraversabilityMode
+{
+    None,
+    Climb,
+    Swing,
+    Pick,
+    Roll,
+    Throw,
+    Custom
+}
+
+/// <summary>
 /// Physics card ("good section") structure that defines a transition between physical states.
 /// Contains impulse action stacks, required/target states, limits, and connections to other sections.
 /// </summary>
@@ -42,10 +56,90 @@ public class GoodSection
     [Tooltip("Associated behavior tree (optional)")]
     public BehaviorTree behaviorTree;
 
+    [Header("Traversability (tool-use pathfinding)")]
+    [Tooltip("When true, this section can be used to traverse gaps (e.g. climb ladder, swing, pick, roll, throw).")]
+    public bool enablesTraversability;
+
+    [Tooltip("Mode of traversability. Used by ToolTraversabilityPlanner to match sections to gaps.")]
+    public TraversabilityMode traversabilityMode = TraversabilityMode.None;
+
+    [Tooltip("When TraversabilityMode is Custom, optional tag string for matching.")]
+    public string traversabilityTag;
+
+    [Tooltip("When set, section is only considered for traversability when (position, t) is inside this 4D volume.")]
+    public bool useValidInVolume;
+
+    [Tooltip("4D validity: center of spatial bounds (when useValidInVolume).")]
+    public Vector3 validInVolumeCenter;
+
+    [Tooltip("4D validity: size of spatial bounds (when useValidInVolume).")]
+    public Vector3 validInVolumeSize = Vector3.one;
+
+    [Tooltip("4D validity: time window start (when useValidInVolume).")]
+    public float validInVolumeTMin;
+
+    [Tooltip("4D validity: time window end (when useValidInVolume).")]
+    public float validInVolumeTMax = 1f;
+
+    [Tooltip("Optional tool key (e.g. inventory key) required to use this section for traversability.")]
+    public string requiredToolKey;
+
+    [Tooltip("Optional reference to the tool GameObject required (ladder, batterang, etc.).")]
+    public GameObject requiredTool;
+
+    [Header("Throw (when traversability is Throw or needsToBeThrown)")]
+    [Tooltip("When true, this section is a throw-at-target card only; do not use for traversability bridging. Use when goal is GoalType.Throw.")]
+    public bool isThrowGoalOnly;
+
+    [Tooltip("When true, this section represents a throw; pathfinding/planner uses thrown object and hand mode.")]
+    public bool needsToBeThrown;
+
+    [Tooltip("Object or transform that is thrown (GameObject, Transform, or bone reference).")]
+    public UnityEngine.Object thrownObject;
+
+    [Tooltip("Which hand(s) perform the throw.")]
+    public ThrowHandMode throwHandMode = ThrowHandMode.Right;
+
+    [Tooltip("Optional min horizontal distance for this throw card (0 = no minimum). Used with ThrowTrajectoryUtility.")]
+    public float throwMinRange;
+
+    [Tooltip("Optional max horizontal distance for this throw card (0 = no maximum). Used with ThrowTrajectoryUtility.")]
+    public float throwMaxRange;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;
     private RagdollState executionStartState;
+
+    /// <summary>
+    /// True if this section is valid for traversability at the given position and time (causality / 4D).
+    /// When useValidInVolume is false, always returns true. Otherwise checks position/time against validInVolume* fields.
+    /// </summary>
+    public bool IsTraversabilityValidAt(Vector3 position, float t)
+    {
+        if (!useValidInVolume)
+            return true;
+        Vector3 mn = validInVolumeCenter - validInVolumeSize * 0.5f;
+        Vector3 mx = validInVolumeCenter + validInVolumeSize * 0.5f;
+        return position.x >= mn.x && position.x <= mx.x && position.y >= mn.y && position.y <= mx.y
+            && position.z >= mn.z && position.z <= mx.z && t >= validInVolumeTMin && t <= validInVolumeTMax;
+    }
+
+    /// <summary>
+    /// True if this section enables traversability and is valid at (position, t).
+    /// </summary>
+    public bool EnablesTraversabilityAt(Vector3 position, float t)
+    {
+        return enablesTraversability && traversabilityMode != TraversabilityMode.None && IsTraversabilityValidAt(position, t);
+    }
+
+    /// <summary>
+    /// True if this section is throw-only (throw-at-target card, not used for traversability bridging).
+    /// </summary>
+    public bool IsThrowGoalOnly()
+    {
+        return isThrowGoalOnly || (needsToBeThrown && !enablesTraversability);
+    }
 
     /// <summary>
     /// Check if this section is feasible given the current ragdoll state.

@@ -6,11 +6,19 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
 {
     private SerializedProperty listProp;
     private SerializedProperty legacy4DProp;
+    private SerializedProperty showInGameProp;
+    private SerializedProperty outputPathProp;
+    private SerializedProperty appendProp;
+    private SerializedProperty formatProp;
 
     private void OnEnable()
     {
         listProp = serializedObject.FindProperty("spatialGenerators");
         legacy4DProp = serializedObject.FindProperty("spatialGenerator4D");
+        showInGameProp = serializedObject.FindProperty("showInGameSpatial4DEditor");
+        outputPathProp = serializedObject.FindProperty("inGameUIOutputFilePath");
+        appendProp = serializedObject.FindProperty("inGameUIAppendToFile");
+        formatProp = serializedObject.FindProperty("inGameUIOutputFormat");
     }
 
     public override void OnInspectorGUI()
@@ -120,11 +128,77 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
         {
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Generator types", EditorStyles.miniLabel);
+            bool has2D3D = false;
             for (int i = 0; i < orch.spatialGenerators.Count; i++)
             {
                 var g = orch.spatialGenerators[i];
+                if (g is SpatialGenerator) has2D3D = true;
                 string badge = g == null ? "—" : (g is SpatialGenerator4D ? "4D" : "3D");
                 EditorGUILayout.LabelField($"  Element {i}: {badge}", EditorStyles.miniLabel);
+            }
+            if (!has2D3D)
+                EditorGUILayout.HelpBox("At least one 2D/3D generator (SpatialGenerator) is recommended for the enforced structure.", MessageType.Info);
+        }
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("4D tree mirror", EditorStyles.miniLabel);
+        if (GUILayout.Button("Refresh 4D mirror", GUILayout.Height(22)))
+        {
+            SpatialGenerator4D sg4 = null;
+            if (orch.spatialGenerators != null)
+                foreach (var g in orch.spatialGenerators)
+                    if (g is SpatialGenerator4D s) { sg4 = s; break; }
+            if (sg4 == null)
+                Debug.LogWarning("[Spatial4D] Refresh 4D mirror: No SpatialGenerator4D in list. Add a 4D generator first.");
+            else
+            {
+                var entries = sg4.GetPlacedEntries();
+                Transform mirrorRoot = orch.transform.Find("4DTreeMirror");
+                if (mirrorRoot == null)
+                {
+                    var go = new GameObject("4DTreeMirror");
+                    go.transform.SetParent(orch.transform);
+                    mirrorRoot = go.transform;
+                }
+                while (mirrorRoot.childCount > 0)
+                    Object.DestroyImmediate(mirrorRoot.GetChild(0).gameObject);
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    var (volume, payload) = entries[i];
+                    var child = new GameObject("Volume_" + i + "_" + (payload != null ? payload.ToString() : ""));
+                    child.transform.SetParent(mirrorRoot);
+                    child.transform.position = volume.center;
+                    var node = child.AddComponent<Spatial4DMirrorNode>();
+                    node.SetFrom(volume, payload != null ? payload.ToString() : null);
+                }
+                EditorUtility.SetDirty(orch);
+            }
+        }
+
+        if (showInGameProp != null && showInGameProp.boolValue)
+        {
+            EditorGUILayout.Space();
+            if (orch.GetComponent<Spatial4DInGameUI>() == null && GUILayout.Button("Add In-Game UI component", GUILayout.Height(22)))
+            {
+                var ui = orch.gameObject.AddComponent<Spatial4DInGameUI>();
+                ui.orchestrator = orch;
+                serializedObject.Update();
+                EditorUtility.SetDirty(orch);
+            }
+            if (outputPathProp != null)
+            {
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Browse for output file", GUILayout.Width(160)))
+                {
+                    string dir = string.IsNullOrEmpty(orch.inGameUIOutputFilePath)
+                        ? Application.dataPath
+                        : System.IO.Path.GetDirectoryName(orch.inGameUIOutputFilePath);
+                    string path = EditorUtility.SaveFilePanel("Spatial 4D output file", dir, "Spatial4DExpressions", "json");
+                    if (!string.IsNullOrEmpty(path))
+                        outputPathProp.stringValue = path;
+                }
+                EditorGUILayout.EndHorizontal();
             }
         }
 

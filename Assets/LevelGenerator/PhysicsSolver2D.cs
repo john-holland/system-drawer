@@ -246,8 +246,7 @@ public class PhysicsSolver2D : MonoBehaviour
             Collider2D collider = room.GetComponent<Collider2D>();
             if (collider != null)
             {
-                ContactFilter2D filter = new ContactFilter2D();
-                filter.NoFilter();
+                ContactFilter2D filter = ContactFilter2D.noFilter;
                 List<Collider2D> results = new List<Collider2D>();
 
                 int count = collider.Overlap(filter, results);

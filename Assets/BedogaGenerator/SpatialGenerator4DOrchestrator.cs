@@ -2,6 +2,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using Locomotion.Narrative;
 
+/// <summary>Output format for in-game spatial 4D editor flat file.</summary>
+public enum Spatial4DOutputFormat
+{
+    Json,
+    Yaml,
+    Xml
+}
+
 /// <summary>
 /// Orchestrator: single management component for 4D placement and visualization.
 /// Toggles enable/disable the 4D layer, temporal strategy, buffer/padding, SDF, pathfinding coverage, causal overlay, and emergence viz without code changes.
@@ -48,6 +56,22 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     public bool showCausal = false;
     [Tooltip("Show layered emergence visualization.")]
     public bool showEmergence = false;
+
+    [Header("In-Game Spatial 4D Editor")]
+    [Tooltip("When true, the in-game UI is shown in Play mode for placing markers, start/stop, and saving to file.")]
+    public bool showInGameSpatial4DEditor = false;
+    [Tooltip("When true, recording (and minute bar) auto-starts when player position enters a narrative volume (causality).")]
+    public bool autoStartWithCausality = false;
+    [Tooltip("When true, record each causality trigger (entry into narrative volume) in causalityTriggersTripped.")]
+    public bool collectCausalityEvents = false;
+    [Tooltip("List of causality triggers tripped (when collectCausalityEvents is true).")]
+    public List<CausalityTriggerTrippedDto> causalityTriggersTripped = new List<CausalityTriggerTrippedDto>();
+    [Tooltip("File path to write or append to. Relative paths resolve against persistentDataPath at runtime.")]
+    public string inGameUIOutputFilePath = "Spatial4DExpressions.json";
+    [Tooltip("If true, append new entries to existing file; else overwrite.")]
+    public bool inGameUIAppendToFile = false;
+    [Tooltip("Output format for the flat file.")]
+    public Spatial4DOutputFormat inGameUIOutputFormat = Spatial4DOutputFormat.Json;
 
     private void OnValidate()
     {

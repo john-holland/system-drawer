@@ -43,32 +43,42 @@ public class RoomAsset : MonoBehaviour
     /// </summary>
     public Rect GetBounds()
     {
+        if (boundsCached)
+            return cachedBounds;
+
+        Rect bounds;
         if (useManualBounds && manualBounds.size != Vector2.zero)
         {
-            return manualBounds;
+            bounds = manualBounds;
         }
-
-        // Use collider bounds
-        Collider2D collider = GetComponent<Collider2D>();
-        if (collider != null)
+        else
         {
-            Bounds worldBounds = collider.bounds;
-            Rect bounds = new Rect(
-                worldBounds.center.x - worldBounds.extents.x,
-                worldBounds.center.y - worldBounds.extents.y,
-                worldBounds.size.x,
-                worldBounds.size.y
-            );
-            return bounds;
+            // Use collider bounds
+            Collider2D collider = GetComponent<Collider2D>();
+            if (collider != null)
+            {
+                Bounds worldBounds = collider.bounds;
+                bounds = new Rect(
+                    worldBounds.center.x - worldBounds.extents.x,
+                    worldBounds.center.y - worldBounds.extents.y,
+                    worldBounds.size.x,
+                    worldBounds.size.y
+                );
+            }
+            else
+            {
+                // Fallback: use transform bounds
+                bounds = new Rect(
+                    transform.position.x - 5f,
+                    transform.position.y - 5f,
+                    10f,
+                    10f
+                );
+            }
         }
-
-        // Fallback: use transform bounds
-        return new Rect(
-            transform.position.x - 5f,
-            transform.position.y - 5f,
-            10f,
-            10f
-        );
+        cachedBounds = bounds;
+        boundsCached = true;
+        return bounds;
     }
 
     /// <summary>

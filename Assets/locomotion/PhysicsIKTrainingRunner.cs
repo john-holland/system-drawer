@@ -40,19 +40,23 @@ public static class PhysicsIKTrainingRunner
     /// <param name="category">Locomotion, ToolUse, or Idle.</param>
     /// <param name="seed">Optional seed for reproducible synthetic metrics.</param>
     /// <param name="ragdollRb">Optional ragdoll capsule Rigidbody; when set and category is ToolUse, constraints are applied for this run.</param>
+    /// <param name="runAsset">Optional run asset; when category is Throw, used to resolve throw target (throwGoalTarget or throwTargetPosition).</param>
     /// <returns>Set with completionTime, accuracyScore, powerUsed filled.</returns>
     public static PhysicsIKTrainedSet RunOne(
         PhysicsCardSolver solver,
         PhysicsIKTrainedSet set,
         PhysicsIKTrainingCategory category,
         int seed = 0,
-        Rigidbody ragdollRb = null)
+        Rigidbody ragdollRb = null,
+        PhysicsIKTrainingRunAsset runAsset = null)
     {
         if (solver != null)
             set.ApplyTo(solver);
 
         RigidbodyConstraints savedConstraints = RigidbodyConstraints.None;
-        if (ragdollRb != null && category == PhysicsIKTrainingCategory.ToolUse && set.rigidbodyConstraints != 0)
+        bool isToolCategory = category == PhysicsIKTrainingCategory.ToolUse || category == PhysicsIKTrainingCategory.Climb
+            || category == PhysicsIKTrainingCategory.Swing || category == PhysicsIKTrainingCategory.Pick || category == PhysicsIKTrainingCategory.Roll;
+        if (ragdollRb != null && isToolCategory && set.rigidbodyConstraints != 0)
         {
             savedConstraints = ragdollRb.constraints;
             ragdollRb.constraints = (RigidbodyConstraints)set.rigidbodyConstraints;
@@ -71,6 +75,28 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.4f + r() * 0.5f + constraintBonus;
             set.powerUsed = power * (1f + r() * 0.3f);
         }
+        else if (category == PhysicsIKTrainingCategory.Climb || category == PhysicsIKTrainingCategory.Swing
+            || category == PhysicsIKTrainingCategory.Pick || category == PhysicsIKTrainingCategory.Roll)
+        {
+            // Climb/Swing/Pick/Roll: spatial goal + tool; use animation nodes to explore space (simulated metrics for now).
+            float constraintBonus = set.rigidbodyConstraints != 0 ? 0.03f + r() * 0.04f : 0f;
+            set.completionTime = 1.2f + (2f - 1f / power) * 0.5f + r() * 0.35f - constraintBonus;
+            set.accuracyScore = 0.45f + r() * 0.45f + constraintBonus;
+            set.powerUsed = power * (0.85f + r() * 0.25f);
+        }
+        else if (category == PhysicsIKTrainingCategory.Throw)
+        {
+            // Throw: train for target then implied throw. Resolve target, compute distance, choose animation by range.
+            Vector3 throwerPos = Vector3.zero;
+            Vector3 targetPos = runAsset != null ? runAsset.throwTargetPosition : Vector3.zero;
+            if (runAsset != null && runAsset.throwGoalTarget != null)
+                targetPos = runAsset.throwGoalTarget.transform.position;
+            if (runAsset != null)
+                SelectThrowAnimationByDistance(runAsset, throwerPos, targetPos, out _);
+            set.completionTime = 0.8f + (2f - 1f / power) * 0.4f + r() * 0.3f;
+            set.accuracyScore = 0.35f + r() * 0.5f; // throw accuracy toward spatial goal
+            set.powerUsed = power * (0.9f + r() * 0.3f);
+        }
         else if (category == PhysicsIKTrainingCategory.Idle)
         {
             // Idle: goal = not falling over; most stable. completionTime = time stable, accuracyScore = 1 if didn't fall.
@@ -86,7 +112,7 @@ public static class PhysicsIKTrainingRunner
             set.powerUsed = power * (0.9f + r() * 0.2f);
         }
 
-        if (ragdollRb != null && category == PhysicsIKTrainingCategory.ToolUse && set.rigidbodyConstraints != 0)
+        if (ragdollRb != null && isToolCategory && set.rigidbodyConstraints != 0)
             ragdollRb.constraints = savedConstraints;
 
         set.seed = seed;
@@ -105,6 +131,7 @@ public static class PhysicsIKTrainingRunner
     /// <param name="results">Collected sets with metrics.</param>
     /// <param name="ragdollRb">Optional ragdoll capsule Rigidbody; when provided and category is ToolUse and includeFrozenAxisRuns, sweep includes frozen-axis runs.</param>
     /// <param name="includeFrozenAxisRuns">If true and category is ToolUse and ragdollRb set, loop through DefaultFrozenAxisOptions per power step.</param>
+    /// <param name="runAsset">Optional run asset; when category is Throw, passed to RunOne to resolve throw target.</param>
     /// <returns>True if sweep completed without abort.</returns>
     public static bool RunSweep(
         PhysicsCardSolver solver,
@@ -113,7 +140,8 @@ public static class PhysicsIKTrainingRunner
         Func<bool> isAbortRequested,
         out List<PhysicsIKTrainedSet> results,
         Rigidbody ragdollRb = null,
-        bool includeFrozenAxisRuns = false)
+        bool includeFrozenAxisRuns = false,
+        PhysicsIKTrainingRunAsset runAsset = null)
     {
         results = new List<PhysicsIKTrainedSet>();
         float[] steps = powerSteps != null && powerSteps.Length > 0 ? powerSteps : DefaultPowerSteps;
@@ -140,12 +168,68 @@ public static class PhysicsIKTrainingRunner
                     ? $"{category}_p{pi}_axis{ai}"
                     : $"{category}_{runIndex}";
 
-                PhysicsIKTrainedSet withMetrics = RunOne(solver, set, category, set.seed, ragdollRb);
+                PhysicsIKTrainedSet withMetrics = RunOne(solver, set, category, set.seed, ragdollRb, runAsset);
                 results.Add(withMetrics);
                 runIndex++;
             }
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Select throw animation by distance from thrower to target. Picks first slot where rangeMin <= d <= rangeMax; if none, closest by range or first.
+    /// </summary>
+    /// <param name="runAsset">Run asset with throwAnimationTrees and throwAnimationRangeMin/Max.</param>
+    /// <param name="throwerPosition">Thrower world position.</param>
+    /// <param name="targetPosition">Target world position.</param>
+    /// <param name="chosenIndex">Index of chosen slot, or 0 if none.</param>
+    /// <returns>Chosen AnimationBehaviorTreeNode, or first in list, or null if list empty.</returns>
+    public static AnimationBehaviorTreeNode SelectThrowAnimationByDistance(
+        PhysicsIKTrainingRunAsset runAsset,
+        Vector3 throwerPosition,
+        Vector3 targetPosition,
+        out int chosenIndex)
+    {
+        chosenIndex = 0;
+        if (runAsset == null || runAsset.throwAnimationTrees == null || runAsset.throwAnimationTrees.Count == 0)
+            return null;
+
+        float d = Vector3.Distance(
+            new Vector3(throwerPosition.x, 0f, throwerPosition.z),
+            new Vector3(targetPosition.x, 0f, targetPosition.z));
+
+        var mins = runAsset.throwAnimationRangeMin;
+        var maxs = runAsset.throwAnimationRangeMax;
+
+        for (int i = 0; i < runAsset.throwAnimationTrees.Count; i++)
+        {
+            float rMin = (mins != null && i < mins.Count) ? mins[i] : 0f;
+            float rMax = (maxs != null && i < maxs.Count) ? maxs[i] : float.MaxValue;
+            if (rMax <= 0f)
+                rMax = float.MaxValue;
+            if (d >= rMin && d <= rMax)
+            {
+                chosenIndex = i;
+                return runAsset.throwAnimationTrees[i];
+            }
+        }
+
+        float bestDist = float.MaxValue;
+        for (int i = 0; i < runAsset.throwAnimationTrees.Count; i++)
+        {
+            float rMin = (mins != null && i < mins.Count) ? mins[i] : 0f;
+            float rMax = (maxs != null && i < maxs.Count) ? maxs[i] : float.MaxValue;
+            if (rMax <= 0f)
+                rMax = float.MaxValue;
+            float mid = (rMin + rMax) * 0.5f;
+            float dist = Mathf.Abs(d - mid);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                chosenIndex = i;
+            }
+        }
+        return runAsset.throwAnimationTrees[chosenIndex];
     }
 }

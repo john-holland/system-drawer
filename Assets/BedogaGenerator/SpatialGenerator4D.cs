@@ -347,6 +347,16 @@ public class SpatialGenerator4D : SpatialGeneratorBase
         return list;
     }
 
+    /// <summary>Collect all placed volumes with payloads (for 4D tree mirror).</summary>
+    public List<(Bounds4 volume, object payload)> GetPlacedEntries()
+    {
+        var list = new List<(Bounds4, object)>(entryByGo != null ? entryByGo.Count : 0);
+        if (entryByGo == null) return list;
+        foreach (var e in entryByGo.Values)
+            list.Add((e.volume, e.payload));
+        return list;
+    }
+
     /// <summary>Build 4D grid from placed volumes when buildGrid is true. Registers Sample4D on next OnEnable.</summary>
     public void BuildGrid()
     {

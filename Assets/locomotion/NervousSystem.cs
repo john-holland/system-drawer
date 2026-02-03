@@ -109,10 +109,11 @@ public class NervousSystem : MonoBehaviour
     private void Update()
     {
         // Process impulse channels
-        ProcessImpulseChannels();
+        if (impulseChannels != null)
+            ProcessImpulseChannels();
 
         // Process cleanup goals if no active goal
-        if (currentGoal == null && cleanupStack.Count > 0)
+        if (currentGoal == null && cleanupStack != null && cleanupStack.Count > 0)
         {
             ProcessCleanupGoals();
         }
@@ -306,25 +307,36 @@ public class NervousSystem : MonoBehaviour
     /// </summary>
     public void ProcessCleanupGoals()
     {
+        if (cleanupStack == null)
+            return;
         while (cleanupStack.Count > 0)
         {
             BehaviorTreeGoal cleanupGoal = cleanupStack.Pop();
+            if (cleanupGoal == null)
+                continue;
 
-            // Generate return cards from consider components
             List<GoodSection> returnCards = new List<GoodSection>();
-            
-            foreach (var consider in considerComponents)
+            if (considerComponents != null)
             {
-                if (consider != null)
+                foreach (var consider in considerComponents)
                 {
-                    var cards = consider.GenerateReturnCards(cleanupGoal.target, cleanupGoal.targetPosition);
-                    returnCards.AddRange(cards);
+                    if (consider != null)
+                    {
+                        try
+                        {
+                            var cards = consider.GenerateReturnCards(cleanupGoal.target, cleanupGoal.targetPosition);
+                            if (cards != null)
+                                returnCards.AddRange(cards);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Debug.LogWarning($"[NervousSystem] ProcessCleanupGoals Consider: {ex.Message}");
+                        }
+                    }
                 }
             }
 
-            // Execute return sequence (this would be handled by behavior tree in practice)
-            // For now, just verify tool is returned
-            if (cleanupGoal.target != null && cleanupGoal.targetPosition != null)
+            if (cleanupGoal.target != null && originalPositions != null)
             {
                 float distance = Vector3.Distance(
                     cleanupGoal.target.transform.position,
@@ -384,19 +396,25 @@ public class NervousSystem : MonoBehaviour
     {
         if (impulseChannels == null)
             return;
-        foreach (var channel in impulseChannels)
+        for (int i = 0; i < impulseChannels.Count; i++)
         {
-            if (channel != null && channel.HasImpulses())
+            var channel = impulseChannels[i];
+            if (channel == null)
+                continue;
+            try
             {
-                // Sort queue by priority
+                if (!channel.HasImpulses())
+                    continue;
                 channel.SortQueueByPriority();
-
-                // Process impulses (in practice, these would be routed to appropriate handlers)
                 ImpulseData impulse;
                 while ((impulse = channel.GetNextImpulse()) != null)
                 {
                     HandleImpulse(impulse);
                 }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[NervousSystem] ProcessImpulseChannels channel '{channel.channelName}': {ex.Message}");
             }
         }
     }
@@ -411,9 +429,8 @@ public class NervousSystem : MonoBehaviour
 
         if (impulse.impulseType == ImpulseType.Motor)
         {
-            // Route motor impulse to muscle system
             MotorData motorData = impulse.GetData<MotorData>();
-            if (motorData != null)
+            if (motorData != null && !string.IsNullOrEmpty(motorData.muscleGroup))
             {
                 RagdollSystem ragdollSystem = GetComponent<RagdollSystem>();
                 if (ragdollSystem != null)
@@ -424,17 +441,22 @@ public class NervousSystem : MonoBehaviour
         }
         else if (impulse.impulseType == ImpulseType.Sensory)
         {
-            // Route sensory impulse to brain/behavior tree system
-            // This would be handled by Brain components in practice
             SensoryData sensoryData = impulse.GetData<SensoryData>();
             if (sensoryData != null && considerComponents != null)
             {
-                // Notify consider components of sensory input
-                foreach (var consider in considerComponents)
+                for (int i = 0; i < considerComponents.Count; i++)
                 {
+                    var consider = considerComponents[i];
                     if (consider != null)
                     {
-                        consider.ProcessSensoryInput(sensoryData);
+                        try
+                        {
+                            consider.ProcessSensoryInput(sensoryData);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Debug.LogWarning($"[NervousSystem] HandleImpulse Consider: {ex.Message}");
+                        }
                     }
                 }
             }

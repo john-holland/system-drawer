@@ -338,7 +338,14 @@ namespace Locomotion.Narrative.EditorTools
 
                 var header = new VisualElement { style = { flexDirection = FlexDirection.Row } };
                 var tLabel = new Label(title) { style = { unityFontStyleAndWeight = FontStyle.Bold, flexGrow = 1f } };
+                int capturedIdx = idx;
                 var openBtn = new Button(() =>
+                {
+                    calendarSO.ApplyModifiedProperties();
+                    CalendarEventEditorWindow.ShowWindow(calendar, capturedIdx);
+                })
+                { text = "Open" };
+                var openTreeBtn = new Button(() =>
                 {
                     calendarSO.ApplyModifiedProperties();
                     if (treeProp != null && treeProp.objectReferenceValue is NarrativeTreeAsset tree)
@@ -348,9 +355,10 @@ namespace Locomotion.Narrative.EditorTools
                         EditorGUIUtility.PingObject(tree.gameObject);
                     }
                 })
-                { text = "Open" };
+                { text = "Open Tree" };
                 header.Add(tLabel);
                 header.Add(openBtn);
+                header.Add(openTreeBtn);
                 card.Add(header);
 
                 // Properties (using PropertyField so it works with nested structs)

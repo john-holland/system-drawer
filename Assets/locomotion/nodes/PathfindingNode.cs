@@ -27,6 +27,15 @@ public class PathfindingNode : BehaviorTreeNode
     [Tooltip("Return best-effort path if no complete path found")]
     public bool returnBestEffortPath = false;
 
+    [Tooltip("Use flying pathfinding (no slope blocking, Y interpolated between start and goal)")]
+    public bool useFlyingPathfinding = false;
+
+    [Tooltip("When no walk path exists, use good sections that enable traversability (climb, swing, pick, roll, throw) to bridge gaps. Uses causality (position, t) to filter sections.")]
+    public bool useToolTraversability = false;
+
+    [Tooltip("Optional: sections to consider for tool traversability. If empty, uses PhysicsCardSolver.availableCards or BehaviorTree.availableCards when building path.")]
+    public List<GoodSection> availableSectionsForTraversability;
+
     // Execution state
     private List<Vector3> currentPath = new List<Vector3>();
     private bool pathBuilt = false;
@@ -106,15 +115,42 @@ public class PathfindingNode : BehaviorTreeNode
     }
 
     /// <summary>
-    /// Build path tree by querying pathfinding solver and creating child nodes.
+    /// Build path tree by querying pathfinding solver (and optionally tool traversability planner) and creating child nodes.
     /// </summary>
     private bool BuildPathTree(BehaviorTree tree)
     {
         if (pathfindingSolver == null)
             return false;
 
-        // Query path from pathfinding solver
-        currentPath = pathfindingSolver.FindPath(origin, destination, returnBestEffortPath);
+        // Option: use tool traversability planner (gap → tool-use segments)
+        if (useToolTraversability)
+        {
+            List<GoodSection> sections = GetAvailableSectionsForTraversability(tree);
+            Vector3 queryPos = origin;
+            float queryT = 0f;
+            RagdollSystem ragdoll = tree.GetComponent<RagdollSystem>();
+            if (ragdoll != null && ragdoll.transform != null)
+                queryPos = ragdoll.transform.position;
+            ToolTraversabilityPathPlan plan = ToolTraversabilityPlanner.FindPlan(origin, destination, pathfindingSolver, sections, queryPos, queryT, tryToolBridgeWhenNoPath: true);
+            if (!plan.IsEmpty)
+            {
+                return BuildChildrenFromPlan(plan, tree);
+            }
+        }
+
+        PathingMode savedMode = pathfindingSolver.pathingMode;
+        if (useFlyingPathfinding)
+            pathfindingSolver.pathingMode = PathingMode.Fly;
+
+        try
+        {
+            currentPath = pathfindingSolver.FindPath(origin, destination, returnBestEffortPath);
+        }
+        finally
+        {
+            if (useFlyingPathfinding)
+                pathfindingSolver.pathingMode = savedMode;
+        }
         
         if (currentPath == null || currentPath.Count == 0)
         {
@@ -128,38 +164,106 @@ public class PathfindingNode : BehaviorTreeNode
             currentPath = currentPath.GetRange(0, maxPathLength);
         }
 
-        // Clear existing children
+        return BuildWalkChildrenOnly(currentPath);
+    }
+
+    private List<GoodSection> GetAvailableSectionsForTraversability(BehaviorTree tree)
+    {
+        if (availableSectionsForTraversability != null && availableSectionsForTraversability.Count > 0)
+            return availableSectionsForTraversability;
+        PhysicsCardSolver solver = tree.GetComponentInParent<PhysicsCardSolver>();
+        if (solver != null && solver.availableCards != null)
+            return solver.availableCards;
+        if (tree != null && tree.availableCards != null)
+            return tree.availableCards;
+        return new List<GoodSection>();
+    }
+
+    private bool BuildChildrenFromPlan(ToolTraversabilityPathPlan plan, BehaviorTree tree)
+    {
+        currentPath = new List<Vector3>();
         if (children == null)
-        {
             children = new List<BehaviorTreeNode>();
-        }
         else
         {
-            // Destroy existing child GameObjects
             foreach (var child in children)
             {
                 if (child != null)
-                {
                     DestroyImmediate(child.gameObject);
-                }
             }
             children.Clear();
         }
 
-        // Create MoveToWaypointNode for each waypoint
-        for (int i = 0; i < currentPath.Count; i++)
+        foreach (ToolTraversabilityPathSegment seg in plan.segments)
+        {
+            if (seg.isWalk && seg.waypoints != null)
+            {
+                for (int i = 0; i < seg.waypoints.Count; i++)
+                {
+                    currentPath.Add(seg.waypoints[i]);
+                    GameObject waypointNodeObj = new GameObject($"Waypoint_{children.Count}");
+                    waypointNodeObj.transform.SetParent(transform, worldPositionStays: false);
+                    MoveToWaypointNode waypointNode = waypointNodeObj.AddComponent<MoveToWaypointNode>();
+                    waypointNode.waypoint = seg.waypoints[i];
+                    waypointNode.reachedDistance = waypointReachedDistance;
+                    children.Add(waypointNode);
+                }
+            }
+            else if (!seg.isWalk && seg.toolUseCard != null)
+            {
+                currentPath.Add(seg.toolUseTo);
+                GameObject toolNodeObj = new GameObject($"ToolUse_{children.Count}");
+                toolNodeObj.transform.SetParent(transform, worldPositionStays: false);
+                ExecuteToolTraversabilityNode toolNode = toolNodeObj.AddComponent<ExecuteToolTraversabilityNode>();
+                toolNode.card = seg.toolUseCard;
+                toolNode.tool = seg.toolUseTool;
+                toolNode.toolUseTo = seg.toolUseTo;
+                toolNode.reachedDistance = waypointReachedDistance;
+                children.Add(toolNode);
+            }
+        }
+
+        if (maxPathLength > 0 && currentPath.Count > maxPathLength)
+        {
+            currentPath = currentPath.GetRange(0, maxPathLength);
+            while (children.Count > maxPathLength)
+            {
+                var last = children[children.Count - 1];
+                children.RemoveAt(children.Count - 1);
+                if (last != null)
+                    DestroyImmediate(last.gameObject);
+            }
+        }
+
+        Debug.Log($"PathfindingNode: Built path from plan with {children.Count} segments");
+        return children.Count > 0;
+    }
+
+    private bool BuildWalkChildrenOnly(List<Vector3> path)
+    {
+        if (children == null)
+            children = new List<BehaviorTreeNode>();
+        else
+        {
+            foreach (var child in children)
+            {
+                if (child != null)
+                    DestroyImmediate(child.gameObject);
+            }
+            children.Clear();
+        }
+
+        for (int i = 0; i < path.Count; i++)
         {
             GameObject waypointNodeObj = new GameObject($"Waypoint_{i}");
             waypointNodeObj.transform.SetParent(transform, worldPositionStays: false);
-            
             MoveToWaypointNode waypointNode = waypointNodeObj.AddComponent<MoveToWaypointNode>();
-            waypointNode.waypoint = currentPath[i];
+            waypointNode.waypoint = path[i];
             waypointNode.reachedDistance = waypointReachedDistance;
-            
             children.Add(waypointNode);
         }
 
-        Debug.Log($"PathfindingNode: Built path with {currentPath.Count} waypoints");
+        Debug.Log($"PathfindingNode: Built path with {path.Count} waypoints");
         return true;
     }
 
@@ -224,9 +328,12 @@ public class PathfindingNode : BehaviorTreeNode
                     validChildren.Add(child);
                 }
             }
+            else if (child is ExecuteToolTraversabilityNode)
+            {
+                validChildren.Add(child);
+            }
             else
             {
-                // Not a waypoint node, keep it
                 validChildren.Add(child);
             }
         }

@@ -40,13 +40,10 @@ public class ImpulseChannel
     /// </summary>
     public bool SendImpulse(ImpulseData impulse)
     {
-        // Apply filters
-        if (!ShouldAllow(impulse))
-        {
+        if (impulse == null || impulseQueue == null)
             return false;
-        }
-
-        // Add to queue if there's space
+        if (!ShouldAllow(impulse))
+            return false;
         if (impulseQueue.Count < maxQueueSize)
         {
             impulseQueue.Enqueue(impulse);
@@ -60,13 +57,17 @@ public class ImpulseChannel
     }
 
     /// <summary>
-    /// Get next impulse from queue (returns null if queue is empty).
+    /// Get next impulse from queue (returns null if queue is empty). Skips null entries.
     /// </summary>
     public ImpulseData GetNextImpulse()
     {
-        if (impulseQueue.Count > 0)
+        if (impulseQueue == null)
+            return null;
+        while (impulseQueue.Count > 0)
         {
-            return impulseQueue.Dequeue();
+            var impulse = impulseQueue.Dequeue();
+            if (impulse != null)
+                return impulse;
         }
         return null;
     }
@@ -161,16 +162,15 @@ public class ImpulseChannel
     }
 
     /// <summary>
-    /// Sort queue by priority (highest priority first).
+    /// Sort queue by priority (highest priority first). Ignores null entries.
     /// </summary>
     public void SortQueueByPriority()
     {
-        if (impulseQueue.Count <= 1)
+        if (impulseQueue == null || impulseQueue.Count <= 1)
             return;
 
-        var sorted = impulseQueue.OrderByDescending(i => i.priority).ToList();
+        var sorted = impulseQueue.Where(i => i != null).OrderByDescending(i => i.priority).ToList();
         impulseQueue.Clear();
-        
         foreach (var impulse in sorted)
         {
             impulseQueue.Enqueue(impulse);

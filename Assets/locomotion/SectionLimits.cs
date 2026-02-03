@@ -70,6 +70,10 @@ public class SectionLimits
     [Tooltip("Upper bound for radial rotation checking (Euler angles in degrees)")]
     public Vector3 upperRadialReferenceRotation = Vector3.zero;
 
+    [Header("Flying / Fuel")]
+    [Tooltip("Fuel cost to use this card (0 = no cost). Wings typically low, jet high. Limits card generation when fuel is finite.")]
+    public float fuelCost = 0f;
+
     /// <summary>
     /// Check if limits are feasible given a current state and required state.
     /// Returns true if all limits are within bounds.

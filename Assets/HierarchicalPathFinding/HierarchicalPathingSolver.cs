@@ -3,6 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
+/// Pathing mode: Walk = ground/slope/terrain; Fly = 3D movement, no slope blocking, Y interpolated along path.
+/// </summary>
+public enum PathingMode
+{
+    Walk,
+    Fly
+}
+
+/// <summary>
 /// MVP hierarchical pathing coordinator.
 /// Right now this primarily:
 /// - tracks NoPathing + OffLimitsSpace markers
@@ -14,6 +23,10 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
 {
     [Header("Discovery")]
     public bool autoFindMarkers = true;
+
+    [Header("Pathing Mode")]
+    [Tooltip("Walk = ground, slope, terrain. Fly = no slope blocking, Y interpolated between start and goal along path.")]
+    public PathingMode pathingMode = PathingMode.Walk;
 
     [Header("Grid (2D XZ)")]
     public Bounds worldBounds = new Bounds(Vector3.zero, new Vector3(50f, 10f, 50f));
@@ -155,10 +168,10 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     private void RefreshMarkers()
     {
         offLimitsSpaces.Clear();
-        offLimitsSpaces.AddRange(FindObjectsOfType<OffLimitsSpace>());
+        offLimitsSpaces.AddRange(FindObjectsByType<OffLimitsSpace>(FindObjectsSortMode.None));
 
         noPathingMarkers.Clear();
-        noPathingMarkers.AddRange(FindObjectsOfType<NoPathing>());
+        noPathingMarkers.AddRange(FindObjectsByType<NoPathing>(FindObjectsSortMode.None));
     }
 
     private void RebuildNow()
@@ -178,13 +191,14 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
 
     /// <summary>
     /// Query a path on the current grid. Returns an empty list if no grid or no path.
+    /// When pathingMode is Fly, Y is interpolated between start and goal along the path.
     /// </summary>
     public List<Vector3> FindPath(Vector3 startWorld, Vector3 goalWorld, bool returnBestEffortPathWhenNoPath = false)
     {
         EnsureGridBuiltForQuery();
 
-        float sampleY = startWorld.y;
-        return HierarchicalPathingAStar2D.FindPath(
+        float sampleY = pathingMode == PathingMode.Fly ? Mathf.Lerp(startWorld.y, goalWorld.y, 0.5f) : startWorld.y;
+        List<Vector3> path = HierarchicalPathingAStar2D.FindPath(
             grid2D,
             startWorld,
             goalWorld,
@@ -195,6 +209,45 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
                 maxExpandedNodes = maxExpandedNodes,
                 returnBestEffortPathWhenNoPath = returnBestEffortPathWhenNoPath
             });
+
+        if (path != null && path.Count > 0 && pathingMode == PathingMode.Fly)
+            ApplyFlyingYInterpolation(path, startWorld.y, goalWorld.y);
+
+        return path ?? new List<Vector3>();
+    }
+
+    /// <summary>
+    /// Interpolate Y along path from startY to goalY (Fly mode).
+    /// </summary>
+    private static void ApplyFlyingYInterpolation(List<Vector3> path, float startY, float goalY)
+    {
+        int n = path.Count;
+        if (n <= 0) return;
+        for (int i = 0; i < n; i++)
+        {
+            float t = n > 1 ? (float)i / (n - 1) : 1f;
+            Vector3 p = path[i];
+            path[i] = new Vector3(p.x, Mathf.Lerp(startY, goalY, t), p.z);
+        }
+    }
+
+    /// <summary>
+    /// Find a walkable position at approximately distanceFromGoal meters from the goal along the path from start to goal.
+    /// Uses FindPath then PathDistanceUtility. Useful for "stand here to throw" (e.g. desiredThrowDistance from target).
+    /// </summary>
+    /// <param name="startWorld">Agent/start position.</param>
+    /// <param name="goalWorld">Target position (e.g. throw target).</param>
+    /// <param name="distanceFromGoal">Desired distance from goal (meters). Position returned is at pathLength - distanceFromGoal from start.</param>
+    /// <param name="returnBestEffortPathWhenNoPath">If true, use best-effort path when no full path found.</param>
+    /// <returns>World position at that distance from goal along the path, or goal if path is empty or too short.</returns>
+    public Vector3 FindPositionAtDistanceFromGoal(Vector3 startWorld, Vector3 goalWorld, float distanceFromGoal, bool returnBestEffortPathWhenNoPath = false)
+    {
+        List<Vector3> path = FindPath(startWorld, goalWorld, returnBestEffortPathWhenNoPath);
+        if (path == null || path.Count == 0)
+            return goalWorld;
+        float totalLength = PathDistanceUtility.GetPathLength(path);
+        float distanceFromStart = Mathf.Max(0f, totalLength - distanceFromGoal);
+        return PathDistanceUtility.GetPositionAtDistanceAlongPath(path, distanceFromStart, fromStart: true);
     }
 
     /// <summary>
@@ -254,10 +307,11 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
             }
         }
 
+        bool flying = pathingMode == PathingMode.Fly;
         // Mark blocked cells based on:
         // - physics obstacles (capsule overlap) at cell height
-        // - OffLimitsSpace / NoPathing bounds
-        // - slope above maxWalkableSlope when fit-to-terrain is on
+        // - OffLimitsSpace / NoPathing bounds (unless flying: still respect no-fly zones)
+        // - slope above maxWalkableSlope when fit-to-terrain is on (Walk only; Fly skips slope)
         for (int z = 0; z < grid2D.height; z++)
         {
             for (int x = 0; x < grid2D.width; x++)
@@ -300,8 +354,8 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
                     }
                 }
 
-                // Slope check: block cell if rise to any neighbor exceeds max walkable slope
-                if (!blocked && useTerrainHeights && maxWalkableSlopeDegrees > 0f)
+                // Slope check (Walk only): block cell if rise to any neighbor exceeds max walkable slope
+                if (!blocked && !flying && useTerrainHeights && maxWalkableSlopeDegrees > 0f)
                 {
                     float myH = grid2D.GetCellHeight(x, z, defaultY);
                     float maxRise = cellSize * Mathf.Tan(maxWalkableSlopeDegrees * Mathf.Deg2Rad);

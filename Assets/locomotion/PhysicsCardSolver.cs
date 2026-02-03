@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using PhysicsCard = GoodSection;
 
 /// <summary>
 /// Physics card solver that finds applicable good sections from current state,
@@ -10,7 +11,7 @@ public class PhysicsCardSolver : MonoBehaviour
 {
     [Header("Available Cards")]
     [Tooltip("Current pool of available good sections")]
-    public List<GoodSection> availableCards = new List<GoodSection>();
+    public List<PhysicsCard> availableCards = new List<PhysicsCard>();
 
     [Header("Feasibility Weights")]
     [Tooltip("Weight for degrees difference (default 0.3)")]
@@ -45,6 +46,13 @@ public class PhysicsCardSolver : MonoBehaviour
     [Tooltip("Keywords that indicate a placement/manipulation card (case-insensitive)")]
     public List<string> placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place" };
 
+    [Header("Flying Card (Wing / Jet)")]
+    [Tooltip("Muscle group names that indicate a wing card (case-insensitive).")]
+    public List<string> wingMuscleGroupKeywords = new List<string> { "wing", "wings", "leftwing", "rightwing" };
+
+    [Tooltip("Muscle group names that indicate a jet card (case-insensitive).")]
+    public List<string> jetMuscleGroupKeywords = new List<string> { "jet", "thrust" };
+
     // References
     private NervousSystem nervousSystem;
     private RagdollSystem ragdollSystem;
@@ -66,14 +74,22 @@ public class PhysicsCardSolver : MonoBehaviour
         {
             placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place" };
         }
+        if (wingMuscleGroupKeywords == null || wingMuscleGroupKeywords.Count == 0)
+        {
+            wingMuscleGroupKeywords = new List<string> { "wing", "wings", "leftwing", "rightwing" };
+        }
+        if (jetMuscleGroupKeywords == null || jetMuscleGroupKeywords.Count == 0)
+        {
+            jetMuscleGroupKeywords = new List<string> { "jet", "thrust" };
+        }
     }
 
     /// <summary>
     /// Find applicable cards from current state for a target object.
     /// </summary>
-    public List<GoodSection> FindApplicableCards(RagdollState state, GameObject target = null)
+    public List<PhysicsCard> FindApplicableCards(RagdollState state, GameObject target = null)
     {
-        List<GoodSection> applicable = new List<GoodSection>();
+        List<PhysicsCard> applicable = new List<PhysicsCard>();
 
         // Check all available cards
         foreach (var card in availableCards)
@@ -103,10 +119,10 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Order cards by feasibility score and radial limits comfort (highest first).
     /// </summary>
-    public List<GoodSection> OrderCardsByFeasibility(List<GoodSection> cards, RagdollState state)
+    public List<PhysicsCard> OrderCardsByFeasibility(List<PhysicsCard> cards, RagdollState state)
     {
         if (cards == null || state == null)
-            return new List<GoodSection>();
+            return new List<PhysicsCard>();
 
         // Calculate combined scores (feasibility + comfort)
         var scoredCards = cards.Select(card => new
@@ -130,7 +146,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Calculate feasibility score for a card given current state.
     /// </summary>
-    public float CalculateFeasibilityScore(GoodSection card, RagdollState state)
+    public float CalculateFeasibilityScore(PhysicsCard card, RagdollState state)
     {
         if (card == null || state == null)
             return 0f;
@@ -160,22 +176,22 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Solve for a goal (find card sequence that achieves the goal).
     /// </summary>
-    public List<GoodSection> SolveForGoal(BehaviorTreeGoal goal, RagdollState state)
+    public List<PhysicsCard> SolveForGoal(BehaviorTreeGoal goal, RagdollState state)
     {
         if (goal == null || state == null)
-            return new List<GoodSection>();
+            return new List<PhysicsCard>();
 
         // Find applicable cards
-        List<GoodSection> applicable = FindApplicableCards(state, goal.target);
+        List<PhysicsCard> applicable = FindApplicableCards(state, goal.target);
 
         // Order by feasibility
-        List<GoodSection> ordered = OrderCardsByFeasibility(applicable, state);
+        List<PhysicsCard> ordered = OrderCardsByFeasibility(applicable, state);
 
         // Try to find direct path to goal
         if (temporalGraph != null && ordered.Count > 0)
         {
             // Find card that matches goal type
-            GoodSection goalCard = FindCardMatchingGoal(ordered, goal);
+            PhysicsCard goalCard = FindCardMatchingGoal(ordered, goal);
             if (goalCard != null)
             {
                 // Find path to goal card
@@ -186,19 +202,19 @@ public class PhysicsCardSolver : MonoBehaviour
         // Fallback: return most feasible card
         if (ordered.Count > 0)
         {
-            return new List<GoodSection> { ordered[0] };
+            return new List<PhysicsCard> { ordered[0] };
         }
 
-        return new List<GoodSection>();
+        return new List<PhysicsCard>();
     }
 
     /// <summary>
     /// Perform topological search (find path through graph from start to goal).
     /// </summary>
-    public List<GoodSection> TopologicalSearch(GoodSection start, GoodSection goal)
+    public List<PhysicsCard> TopologicalSearch(PhysicsCard start, PhysicsCard goal)
     {
         if (start == null || goal == null || temporalGraph == null)
-            return new List<GoodSection>();
+            return new List<PhysicsCard>();
 
         // Use temporal graph's pathfinding
         RagdollState currentState = ragdollSystem != null ? ragdollSystem.GetCurrentState() : new RagdollState();
@@ -208,7 +224,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Add cards to available pool.
     /// </summary>
-    public void AddCards(List<GoodSection> cards)
+    public void AddCards(List<PhysicsCard> cards)
     {
         if (cards == null)
             return;
@@ -225,7 +241,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Remove cards from available pool.
     /// </summary>
-    public void RemoveCards(List<GoodSection> cards)
+    public void RemoveCards(List<PhysicsCard> cards)
     {
         if (cards == null)
             return;
@@ -246,7 +262,7 @@ public class PhysicsCardSolver : MonoBehaviour
 
     // Helper methods for feasibility scoring
 
-    private float CalculateDegreesDifference(GoodSection card, RagdollState state)
+    private float CalculateDegreesDifference(PhysicsCard card, RagdollState state)
     {
         if (card.requiredState == null)
             return 0f;
@@ -254,7 +270,7 @@ public class PhysicsCardSolver : MonoBehaviour
         return card.requiredState.CalculateDistance(state) * 180f;
     }
 
-    private float CheckTorqueFeasibility(GoodSection card, RagdollState state)
+    private float CheckTorqueFeasibility(PhysicsCard card, RagdollState state)
     {
         if (card.limits == null || card.requiredState == null)
             return 1f;
@@ -262,7 +278,7 @@ public class PhysicsCardSolver : MonoBehaviour
         return card.limits.GetLimitScore(state, card.requiredState);
     }
 
-    private float CheckForceFeasibility(GoodSection card, RagdollState state)
+    private float CheckForceFeasibility(PhysicsCard card, RagdollState state)
     {
         if (card.limits == null || card.requiredState == null)
             return 1f;
@@ -271,7 +287,7 @@ public class PhysicsCardSolver : MonoBehaviour
         return card.limits.GetLimitScore(state, card.requiredState);
     }
 
-    private float EstimateVelocityChangeLikelihood(GoodSection card, RagdollState state)
+    private float EstimateVelocityChangeLikelihood(PhysicsCard card, RagdollState state)
     {
         if (card.requiredState == null)
             return 1f;
@@ -282,8 +298,20 @@ public class PhysicsCardSolver : MonoBehaviour
         return 1f - Mathf.Clamp01(velChange / maxVelChange);
     }
 
-    private GoodSection FindCardMatchingGoal(List<GoodSection> cards, BehaviorTreeGoal goal)
+    private PhysicsCard FindCardMatchingGoal(List<PhysicsCard> cards, BehaviorTreeGoal goal)
     {
+        // Throw goals: prefer throw-only cards (throw at goal.targetPosition / goal.target)
+        if (goal != null && goal.type == GoalType.Throw)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null)
+                    continue;
+                if (card.needsToBeThrown && card.IsThrowGoalOnly())
+                    return card;
+            }
+        }
+
         // Find card that matches goal type or name
         foreach (var card in cards)
         {
@@ -313,7 +341,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Check if a card is a placement/manipulation card (not a walking gate animation).
     /// </summary>
-    public bool IsPlacementCard(GoodSection card)
+    public bool IsPlacementCard(PhysicsCard card)
     {
         if (card == null)
             return false;
@@ -376,7 +404,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Check if a card only activates leg muscle groups.
     /// </summary>
-    private bool IsLegOnlyCard(GoodSection card)
+    private bool IsLegOnlyCard(PhysicsCard card)
     {
         if (card == null || card.impulseStack == null)
             return false;
@@ -434,7 +462,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Check if a card would preclude a walking gate animation.
     /// </summary>
-    public bool IsWalkingGateAnimation(GoodSection card)
+    public bool IsWalkingGateAnimation(PhysicsCard card)
     {
         if (card == null)
             return false;
@@ -483,17 +511,17 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Filter cards for walking based on "Only Allow Legs for Walking" option.
     /// </summary>
-    public List<GoodSection> FilterCardsForWalking(List<GoodSection> cards)
+    public List<PhysicsCard> FilterCardsForWalking(List<PhysicsCard> cards)
     {
         if (cards == null)
-            return new List<GoodSection>();
+            return new List<PhysicsCard>();
 
         if (!onlyAllowLegsForWalking)
         {
-            return new List<GoodSection>(cards); // Return all cards unchanged
+            return new List<PhysicsCard>(cards); // Return all cards unchanged
         }
 
-        List<GoodSection> filtered = new List<GoodSection>();
+        List<PhysicsCard> filtered = new List<PhysicsCard>();
 
         foreach (var card in cards)
         {
@@ -522,9 +550,194 @@ public class PhysicsCardSolver : MonoBehaviour
     }
 
     /// <summary>
+    /// Get cards that use wing muscle groups (for flying goal lift/direction).
+    /// </summary>
+    public List<PhysicsCard> GetWingCards(List<PhysicsCard> cards)
+    {
+        if (cards == null) return new List<PhysicsCard>();
+        List<PhysicsCard> outList = new List<PhysicsCard>();
+        foreach (var card in cards)
+        {
+            if (card != null && IsWingCard(card))
+                outList.Add(card);
+        }
+        return outList;
+    }
+
+    /// <summary>
+    /// Get cards that use jet muscle groups (directional impulse).
+    /// </summary>
+    public List<PhysicsCard> GetJetCards(List<PhysicsCard> cards)
+    {
+        if (cards == null) return new List<PhysicsCard>();
+        List<PhysicsCard> outList = new List<PhysicsCard>();
+        foreach (var card in cards)
+        {
+            if (card != null && IsJetCard(card))
+                outList.Add(card);
+        }
+        return outList;
+    }
+
+    /// <summary>
+    /// Filter to cards that are usable for flying (wing or jet).
+    /// </summary>
+    public List<PhysicsCard> FilterCardsForFlying(List<PhysicsCard> cards)
+    {
+        if (cards == null) return new List<PhysicsCard>();
+        List<PhysicsCard> outList = new List<PhysicsCard>();
+        foreach (var card in cards)
+        {
+            if (card != null && (IsWingCard(card) || IsJetCard(card)))
+                outList.Add(card);
+        }
+        return outList;
+    }
+
+    private bool IsWingCard(PhysicsCard card)
+    {
+        if (card?.impulseStack == null || wingMuscleGroupKeywords == null) return false;
+        foreach (var action in card.impulseStack)
+        {
+            if (action == null || string.IsNullOrEmpty(action.muscleGroup)) continue;
+            string lower = action.muscleGroup.ToLowerInvariant();
+            foreach (var kw in wingMuscleGroupKeywords)
+            {
+                if (!string.IsNullOrEmpty(kw) && lower.Contains(kw.ToLowerInvariant()))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    private bool IsJetCard(PhysicsCard card)
+    {
+        if (card?.impulseStack == null || jetMuscleGroupKeywords == null) return false;
+        foreach (var action in card.impulseStack)
+        {
+            if (action == null || string.IsNullOrEmpty(action.muscleGroup)) continue;
+            string lower = action.muscleGroup.ToLowerInvariant();
+            foreach (var kw in jetMuscleGroupKeywords)
+            {
+                if (!string.IsNullOrEmpty(kw) && lower.Contains(kw.ToLowerInvariant()))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Aggregate lift and direction from wing cards using config (wing AR and flap power).
+    /// Returns (lift vector magnitude and up-component, direction from wing orientation/force).
+    /// </summary>
+    public void ComputeLiftAndDirectionFromWingCards(List<PhysicsCard> wingCards, FlyingCardConfig config, out Vector3 lift, out Vector3 direction)
+    {
+        lift = Vector3.zero;
+        direction = Vector3.zero;
+        if (wingCards == null || wingCards.Count == 0 || config == null) return;
+
+        float ar = Mathf.Max(0.1f, config.wingAspectRatio);
+        float power = config.flapPower;
+
+        foreach (var card in wingCards)
+        {
+            if (card?.impulseStack == null) continue;
+            foreach (var action in card.impulseStack)
+            {
+                if (action == null) continue;
+                float mag = action.activation * power * Mathf.Sqrt(ar);
+                Vector3 forceDir = action.forceDirection.sqrMagnitude > 0.01f ? action.forceDirection.normalized : Vector3.up;
+                lift += forceDir * mag;
+                direction += forceDir;
+            }
+        }
+
+        if (direction.sqrMagnitude > 0.01f)
+            direction.Normalize();
+        else
+            direction = Vector3.up;
+    }
+
+    /// <summary>
+    /// Aggregate directional impulse from jet cards (forceDirection * activation).
+    /// </summary>
+    public Vector3 ComputeDirectionFromJetCards(List<PhysicsCard> jetCards)
+    {
+        Vector3 total = Vector3.zero;
+        if (jetCards == null) return total;
+        foreach (var card in jetCards)
+        {
+            if (card?.impulseStack == null) continue;
+            foreach (var action in card.impulseStack)
+            {
+                if (action == null) continue;
+                total += action.forceDirection * action.activation;
+            }
+        }
+        return total.sqrMagnitude > 0.01f ? total.normalized : Vector3.forward;
+    }
+
+    /// <summary>
+    /// Generate one flying card (wing or jet). Consumes fuel from fuelRemaining; returns null if not enough fuel.
+    /// </summary>
+    public PhysicsCard GenerateFlyingCard(Vector3 from, Vector3 to, RagdollState currentState, FlyingCardConfig config, bool useJetMode, ref float fuelRemaining)
+    {
+        if (config == null) return null;
+        float cost = useJetMode ? config.fuelCostPerJetCard : config.fuelCostPerWingCard;
+        if (fuelRemaining < cost) return null;
+
+        Vector3 direction = (to - from).normalized;
+        if (direction.sqrMagnitude < 0.01f) direction = Vector3.up;
+
+        PhysicsCard card = new PhysicsCard
+        {
+            sectionName = useJetMode ? "auto_jet" : "auto_wing",
+            description = $"Auto-generated {(useJetMode ? "jet" : "wing")} card from {from} to {to}",
+            impulseStack = new List<ImpulseAction>(),
+            requiredState = currentState?.CopyState(),
+            targetState = new RagdollState(),
+            limits = new SectionLimits { fuelCost = cost }
+        };
+        card.targetState.rootPosition = to;
+        card.targetState.rootVelocity = direction * (useJetMode ? config.jetImpulseStrength : config.flapPower * 2f);
+        card.targetState.rootRotation = Quaternion.LookRotation(direction);
+
+        if (useJetMode)
+        {
+            card.impulseStack.Add(new ImpulseAction
+            {
+                muscleGroup = "Jet",
+                activation = 0.8f,
+                duration = 0.2f,
+                forceDirection = direction * config.jetImpulseStrength
+            });
+        }
+        else
+        {
+            var wingGroups = (wingMuscleGroupKeywords != null && wingMuscleGroupKeywords.Count > 0)
+                ? wingMuscleGroupKeywords
+                : new List<string> { "Wings" };
+            foreach (var kw in wingGroups)
+            {
+                if (string.IsNullOrEmpty(kw)) continue;
+                card.impulseStack.Add(new ImpulseAction
+                {
+                    muscleGroup = kw,
+                    activation = config.flapPower,
+                    duration = 0.15f,
+                    forceDirection = direction * Mathf.Sqrt(config.wingAspectRatio)
+                });
+            }
+        }
+
+        fuelRemaining -= cost;
+        return card;
+    }
+
+    /// <summary>
     /// Auto-generate a kinematic walking card for movement from one position to another.
     /// </summary>
-    public GoodSection GenerateWalkingCard(Vector3 from, Vector3 to, RagdollState currentState)
+    public PhysicsCard GenerateWalkingCard(Vector3 from, Vector3 to, RagdollState currentState)
     {
         if (ragdollSystem == null)
             return null;
@@ -540,7 +753,7 @@ public class PhysicsCardSolver : MonoBehaviour
         direction.Normalize();
 
         // Create walking card
-        GoodSection walkingCard = new GoodSection
+        PhysicsCard walkingCard = new PhysicsCard
         {
             sectionName = "auto_walking",
             description = $"Auto-generated walking card from {from} to {to}",
@@ -611,7 +824,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// Calculate total limit angle for all joints involved in a card.
     /// Greater total limit angle = more comfortable/better fit.
     /// </summary>
-    public float CalculateTotalLimitAngle(GoodSection card, RagdollState state)
+    public float CalculateTotalLimitAngle(PhysicsCard card, RagdollState state)
     {
         if (card == null || card.limits == null || !card.limits.useRadialLimits)
             return 0f;
@@ -644,7 +857,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// Calculate comfort score based on radial limits (0-1).
     /// Higher score = better fit within limits.
     /// </summary>
-    public float CalculateComfortScore(GoodSection card, RagdollState state)
+    public float CalculateComfortScore(PhysicsCard card, RagdollState state)
     {
         if (card == null || card.limits == null || state == null)
             return 0f;
@@ -662,10 +875,10 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Sort cards by radial limits (total limit angle) for best fit and comfort.
     /// </summary>
-    public List<GoodSection> SortCardsByRadialLimits(List<GoodSection> cards, RagdollState state)
+    public List<PhysicsCard> SortCardsByRadialLimits(List<PhysicsCard> cards, RagdollState state)
     {
         if (cards == null || state == null)
-            return new List<GoodSection>();
+            return new List<PhysicsCard>();
 
         return cards.OrderByDescending(card => CalculateTotalLimitAngle(card, state))
                    .ThenByDescending(card => CalculateComfortScore(card, state))

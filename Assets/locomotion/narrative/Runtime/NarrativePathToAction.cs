@@ -24,6 +24,9 @@ namespace Locomotion.Narrative
         [Tooltip("Maximum pathfinding distance")]
         public float maxPathDistance = 50f;
 
+        [Tooltip("Use flying pathfinding (no slope blocking, Y interpolated between start and goal)")]
+        public bool useFlyingPathfinding = false;
+
         [NonSerialized]
         private bool pathfindingStarted = false;
 
@@ -95,15 +98,35 @@ namespace Locomotion.Narrative
                 var pathfindingSolver = UnityEngine.Object.FindAnyObjectByType(pathfindingType);
                 if (pathfindingSolver != null)
                 {
-                    // Use reflection to call pathfinding methods
-                    var findPathMethod = pathfindingType.GetMethod("FindPath");
-                    if (findPathMethod != null)
+                    object savedMode = null;
+                    var pathingModeProp = pathfindingType.GetProperty("pathingMode");
+                    if (useFlyingPathfinding && pathingModeProp != null)
                     {
-                        object path = findPathMethod.Invoke(pathfindingSolver, new object[] { agent.transform.position, target });
-                        if (path != null)
+                        savedMode = pathingModeProp.GetValue(pathfindingSolver);
+                        var pathingModeEnum = pathfindingType.Assembly.GetType("PathingMode");
+                        if (pathingModeEnum != null)
                         {
-                            return true;
+                            object flyMode = System.Enum.Parse(pathingModeEnum, "Fly");
+                            pathingModeProp.SetValue(pathfindingSolver, flyMode);
                         }
+                    }
+
+                    try
+                    {
+                        var findPathMethod = pathfindingType.GetMethod("FindPath");
+                        if (findPathMethod != null)
+                        {
+                            object path = findPathMethod.Invoke(pathfindingSolver, new object[] { agent.transform.position, target });
+                            if (path != null)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        if (savedMode != null && pathingModeProp != null)
+                            pathingModeProp.SetValue(pathfindingSolver, savedMode);
                     }
                 }
             }

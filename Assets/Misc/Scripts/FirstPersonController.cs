@@ -27,6 +27,10 @@ public class FirstPersonController : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckDistance = 0.1f;
     [SerializeField] private LayerMask groundMask = 1; // Default layer
+
+    [Header("UI Mode (hold Alt)")]
+    [Tooltip("When true, holding Alt unlocks cursor and stops mouse look + movement for UI interaction.")]
+    [SerializeField] private bool altHeldEnablesUIMode = true;
     
     private CharacterController characterController;
     private Camera playerCamera;
@@ -64,20 +68,27 @@ public class FirstPersonController : MonoBehaviour
     
     void Update()
     {
-        HandleMouseLook();
-        HandleMovement();
+        bool uiMode = altHeldEnablesUIMode && (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt));
+        if (uiMode)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            HandleMouseLook();
+            HandleMovement();
+            if (Cursor.lockState != CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
         CheckGrounded();
     }
     
     void HandleMouseLook()
     {
-        // Ensure cursor is locked
-        if (Cursor.lockState != CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-        
         // Get mouse input - try both GetAxis and GetAxisRaw
         float mouseXAxis = Input.GetAxis("Mouse X");
         float mouseYAxis = Input.GetAxis("Mouse Y");

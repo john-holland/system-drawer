@@ -38,8 +38,11 @@ public class AnimationBehaviorTree : MonoBehaviour
     [Tooltip("Reference to generated behavior tree")]
     public BehaviorTree generatedTree;
 
-    [Tooltip("Root animation node")]
+    [Tooltip("Primary root animation node (first in rootNodes; used by BehaviorTree execution)")]
     public AnimationBehaviorTreeNode rootNode;
+
+    [Tooltip("Multiple animation root nodes (one per clip or mode). Primary root is first; others used by IK trainer and ragdoll.")]
+    public List<AnimationBehaviorTreeNode> rootNodes = new List<AnimationBehaviorTreeNode>();
 
     [Header("Attenuation")]
     [Tooltip("Animation attenuation settings")]
@@ -551,13 +554,19 @@ public class AnimationBehaviorTree : MonoBehaviour
     {
         Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Starting. allFrames: {(allFrames == null ? "null" : allFrames.Count.ToString())}, rootNode: {(rootNode == null ? "null" : rootNode.name)}");
 
-        // Clear existing tree
-        if (rootNode != null)
+        // Clear existing tree (all roots)
+        if (rootNodes != null)
         {
-            Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Destroying existing root node: {rootNode.name}");
-            DestroyImmediate(rootNode.gameObject);
-            rootNode = null;
+            for (int i = rootNodes.Count - 1; i >= 0; i--)
+            {
+                if (rootNodes[i] != null && rootNodes[i].gameObject != null)
+                {
+                    DestroyImmediate(rootNodes[i].gameObject);
+                }
+            }
+            rootNodes.Clear();
         }
+        rootNode = null;
 
         if (generatedTree != null)
         {
@@ -647,8 +656,40 @@ public class AnimationBehaviorTree : MonoBehaviour
             }
         }
 
+        if (rootNodes == null)
+            rootNodes = new List<AnimationBehaviorTreeNode>();
+        rootNodes.Add(rootNode);
         generatedTree.rootNode = rootNode;
         Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Complete! Root node: {rootNode.name}, Generated tree root: {generatedTree.rootNode?.name ?? "null"}");
+    }
+
+    /// <summary>
+    /// Create a new animation root (e.g. for another clip or mode). Does not assign as primary root.
+    /// </summary>
+    public AnimationBehaviorTreeNode CreateRoot(string name)
+    {
+        if (rootNodes == null)
+            rootNodes = new List<AnimationBehaviorTreeNode>();
+        GameObject rootGO = new GameObject(name ?? "AnimationRoot");
+        rootGO.transform.SetParent(transform);
+        var node = rootGO.AddComponent<AnimationBehaviorTreeNode>();
+        node.nodeType = NodeType.Sequence;
+        node.rootBehaviorTree = this;
+        node.animationClip = animationClip;
+        rootNodes.Add(node);
+        if (rootNode == null)
+            rootNode = node;
+        return node;
+    }
+
+    /// <summary>
+    /// Get all animation root nodes (for IK trainer and ragdoll storage).
+    /// </summary>
+    public IReadOnlyList<AnimationBehaviorTreeNode> GetRootNodes()
+    {
+        if (rootNodes == null)
+            rootNodes = new List<AnimationBehaviorTreeNode>();
+        return rootNodes;
     }
 
     /// <summary>
