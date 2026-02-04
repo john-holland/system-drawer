@@ -11,6 +11,9 @@ public class RagdollServiceWizard : MonoBehaviour
     [Tooltip("Ragdoll actor or root this wizard configures.")]
     public Transform ragdollRoot;
 
+    [Tooltip("When set, also register this ragdoll with the drawer under this key (e.g. \"player\" or \"bear\") so narrative position keys resolve to the bear.")]
+    public string alsoRegisterAsPlayerKey = "player";
+
     /// <summary>Assign slot from SystemDrawerService if empty. Returns true if assigned.</summary>
     public bool TryCompleteFromService()
     {
@@ -27,13 +30,20 @@ public class RagdollServiceWizard : MonoBehaviour
 
     private void OnEnable()
     {
-        if (ragdollRoot != null && SystemDrawerService.Instance != null)
+        if (SystemDrawerService.Instance == null) return;
+        if (ragdollRoot != null)
+        {
             SystemDrawerService.Instance.Register(ServiceKey, ragdollRoot);
+            if (!string.IsNullOrWhiteSpace(alsoRegisterAsPlayerKey))
+                SystemDrawerService.Instance.Register(alsoRegisterAsPlayerKey.Trim(), ragdollRoot.gameObject);
+        }
     }
 
     private void OnDisable()
     {
-        if (SystemDrawerService.Instance != null)
-            SystemDrawerService.Instance.Unregister(ServiceKey);
+        if (SystemDrawerService.Instance == null) return;
+        SystemDrawerService.Instance.Unregister(ServiceKey);
+        if (!string.IsNullOrWhiteSpace(alsoRegisterAsPlayerKey))
+            SystemDrawerService.Instance.Unregister(alsoRegisterAsPlayerKey.Trim());
     }
 }

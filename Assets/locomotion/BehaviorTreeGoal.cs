@@ -57,6 +57,14 @@ public class BehaviorTreeGoal
 
     [Tooltip("Cleanup urgency level")]
     public CleanupUrgency cleanupUrgency = CleanupUrgency.AfterTask;
+
+    [Header("Narrative time / causality (optional)")]
+    [Tooltip("When set, goal is only valid when narrative time (seconds) is >= this value. Use float.NegativeInfinity to disable.")]
+    public float validAfterNarrativeTime = float.NegativeInfinity;
+    [Tooltip("When set, goal is only valid when narrative time (seconds) is <= this value. Use float.PositiveInfinity to disable.")]
+    public float validBeforeNarrativeTime = float.PositiveInfinity;
+    [Tooltip("When > 0, goal requires NarrativeVolumeQuery.Sample4D(agentPosition, t).causalDepth >= this at query time. 0 = no requirement.")]
+    public float requireMinCausalDepth;
 }
 
 /// <summary>
