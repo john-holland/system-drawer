@@ -63,7 +63,7 @@ namespace Weather
                 if (directionalLight == null)
                 {
                     // Try to find a directional light in the scene
-                    Light[] lights = FindObjectsOfType<Light>();
+                    Light[] lights = FindObjectsByType<Light>(FindObjectsSortMode.None);
                     foreach (var light in lights)
                     {
                         if (light.type == LightType.Directional)
@@ -109,7 +109,7 @@ namespace Weather
             // Auto-find narrative clock if not assigned
             if (narrativeClockObject == null && useNarrativeTime && narrativeClockType != null)
             {
-                MonoBehaviour[] allMonoBehaviours = FindObjectsOfType<MonoBehaviour>();
+                MonoBehaviour[] allMonoBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
                 foreach (var mb in allMonoBehaviours)
                 {
                     if (narrativeClockType.IsAssignableFrom(mb.GetType()))

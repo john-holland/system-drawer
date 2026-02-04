@@ -299,7 +299,7 @@ namespace Weather
         private void ApplyTornadoForce(WeatherEventData eventData)
         {
             // Find all rigidbodies in the scene
-            Rigidbody[] rigidbodies = FindObjectsOfType<Rigidbody>();
+            Rigidbody[] rigidbodies = FindObjectsByType<Rigidbody>(FindObjectsSortMode.None);
 
             foreach (var rb in rigidbodies)
             {

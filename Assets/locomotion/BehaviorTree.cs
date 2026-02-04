@@ -42,6 +42,10 @@ public class BehaviorTree : MonoBehaviour
     [Tooltip("Cards available from card solver")]
     public List<GoodSection> availableCards = new List<GoodSection>();
 
+    [Header("Scene Object Registry")]
+    [Tooltip("Optional. Resolve goal targets by string key or synonym (throw/hit/place/carry).")]
+    public SceneObjectRegistry sceneObjectRegistry;
+
     // References
     private PhysicsCardSolver cardSolver;
     private NervousSystem nervousSystem;
@@ -138,6 +142,14 @@ public class BehaviorTree : MonoBehaviour
         return new RagdollState();
     }
 
+    /// <summary>
+    /// Resolve a target GameObject by string key or synonym using the optional scene object registry.
+    /// </summary>
+    public GameObject ResolveTarget(string keyOrSynonym)
+    {
+        return sceneObjectRegistry != null ? sceneObjectRegistry.Resolve(keyOrSynonym) : null;
+    }
+
     public bool Contains(BehaviorTreeNode node) {
         if (rootNode == null)
             return false;
@@ -152,6 +164,29 @@ public class BehaviorTree : MonoBehaviour
                 nodesToVisit.Push(child);
         }
         return false;
+    }
+
+    /// <summary>
+    /// Find the first node in the tree that matches the predicate (depth-first).
+    /// Used e.g. by CarryObjectNode to find a pathfinding node to reach the object.
+    /// </summary>
+    public BehaviorTreeNode FindNode(System.Func<BehaviorTreeNode, bool> predicate)
+    {
+        if (rootNode == null || predicate == null) return null;
+        Stack<BehaviorTreeNode> stack = new Stack<BehaviorTreeNode>();
+        stack.Push(rootNode);
+        while (stack.Count > 0)
+        {
+            var n = stack.Pop();
+            if (n != null && predicate(n)) return n;
+            if (n?.children == null) continue;
+            for (int i = n.children.Count - 1; i >= 0; i--)
+            {
+                if (n.children[i] != null)
+                    stack.Push(n.children[i]);
+            }
+        }
+        return null;
     }
 }
 

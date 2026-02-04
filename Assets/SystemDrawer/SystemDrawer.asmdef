@@ -1,0 +1,16 @@
+{
+    "name": "SystemDrawer",
+    "rootNamespace": "",
+    "references": [
+        "BedogaGenerator"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

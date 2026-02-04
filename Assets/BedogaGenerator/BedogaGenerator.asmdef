@@ -1,0 +1,17 @@
+{
+    "name": "BedogaGenerator",
+    "rootNamespace": "",
+    "references": [
+        "Locomotion.Narrative.Runtime",
+        "HierarchicalPathFinding"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

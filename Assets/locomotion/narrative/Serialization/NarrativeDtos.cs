@@ -71,5 +71,28 @@ namespace Locomotion.Narrative.Serialization
         public string actorKey;
         public Locomotion.Narrative.BehaviorTreeGoalSpec goal;
     }
+
+    /// <summary>Calendar DTO for LSTM training; includes 4D spatiotemporal volume per event.</summary>
+    [Serializable]
+    public class NarrativeCalendarTrainingDto
+    {
+        public int schemaVersion = 1;
+        public List<NarrativeCalendarEventTrainingDto> events = new List<NarrativeCalendarEventTrainingDto>();
+    }
+
+    [Serializable]
+    public class NarrativeCalendarEventTrainingDto
+    {
+        public string id;
+        public string title;
+        public string notes;
+        public Locomotion.Narrative.NarrativeDateTime startDateTime;
+        public int durationSeconds;
+        public List<string> tags = new List<string>();
+        public string treeAssetGuid;
+        public List<NarrativeActionDto> actions = new List<NarrativeActionDto>();
+        /// <summary>4D volume for training: center (x,y,z), size (x,y,z), tMin, tMax. Omitted if event has no spatiotemporalVolume.</summary>
+        public float? centerX, centerY, centerZ, sizeX, sizeY, sizeZ, tMin, tMax;
+    }
 }
 

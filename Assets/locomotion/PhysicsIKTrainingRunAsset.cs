@@ -109,7 +109,21 @@ public enum PhysicsIKTrainingCategory
     Pick,
     Roll,
     /// <summary>Train for throw target then perform implied throw (thrown object + hand mode).</summary>
-    Throw
+    Throw,
+    /// <summary>Carry an object; optional pleaseHold to re-grasp if put down.</summary>
+    Carry,
+    /// <summary>Hold isometric pose (plank, wall sit); fitness = least movement.</summary>
+    Isometric,
+    /// <summary>Lift object into place at target position/rotation.</summary>
+    Place,
+    /// <summary>Hit target with limb(s) or tool; limb meets target using baked IK.</summary>
+    Hit,
+    /// <summary>Pick up weight/tool, activate muscle group; fitness = least radial movement.</summary>
+    Weightlift,
+    /// <summary>Intercept object with hand(s); fitness = catch success.</summary>
+    Catch,
+    /// <summary>Launch toward target (e.g. basketball shot); fitness = accuracy toward target.</summary>
+    Shoot
 }
 
 /// <summary>
@@ -165,6 +179,70 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
 
     [Tooltip("Per-slot effective range max (meters). Same count as throwAnimationTrees; used by SelectThrowAnimationByDistance.")]
     public List<float> throwAnimationRangeMax = new List<float>();
+
+    [Header("Carry")]
+    [Tooltip("Object to carry when category is Carry.")]
+    public GameObject carriedObject;
+    [Tooltip("When true, re-grasp if object is put down (do not wait for user prompt).")]
+    public bool pleaseHold;
+    [Tooltip("Optional carry animation trees.")]
+    public List<AnimationBehaviorTreeNode> carryAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Header("Isometric")]
+    [Tooltip("Pose/card that defines the hold (e.g. plank, wall sit). Used when category is Isometric.")]
+    public GoodSection isometricCard;
+    [Tooltip("Target hold duration in seconds. 0 = use default.")]
+    public float isometricHoldDuration = 5f;
+
+    [Header("Place")]
+    [Tooltip("Object to place when category is Place.")]
+    public GameObject placeObject;
+    [Tooltip("Target position for placement.")]
+    public Vector3 placeTargetPosition;
+    [Tooltip("Target rotation for placement.")]
+    public Quaternion placeTargetRotation = Quaternion.identity;
+    [Tooltip("Optional place/lift animation trees.")]
+    public List<AnimationBehaviorTreeNode> placeAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Header("Hit")]
+    [Tooltip("Target to hit when category is Hit.")]
+    public GameObject hitTarget;
+    [Tooltip("Limb bone names (e.g. RightHand). Empty = solver default.")]
+    public List<string> hitLimbNames = new List<string>();
+    [Tooltip("Use a tool for hit.")]
+    public bool hitUseTool;
+    [Tooltip("Tool to use when hitUseTool is true.")]
+    public GameObject hitTool;
+    [Tooltip("Optional hit animation trees.")]
+    public List<AnimationBehaviorTreeNode> hitAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Header("Weightlift")]
+    [Tooltip("Weight/tool to pick up when category is Weightlift.")]
+    public GameObject weightliftTool;
+    [Tooltip("Muscle group name to activate (e.g. Biceps, Back).")]
+    public string weightliftMuscleGroup = "";
+    [Tooltip("Optional weightlift animation trees.")]
+    public List<AnimationBehaviorTreeNode> weightliftAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Header("Catch")]
+    [Tooltip("Object to catch when category is Catch.")]
+    public GameObject catchObject;
+    [Tooltip("Limb bone names for catch (e.g. RightHand, LeftHand). Empty = solver default.")]
+    public List<string> catchLimbNames = new List<string>();
+    [Tooltip("Optional catch animation trees.")]
+    public List<AnimationBehaviorTreeNode> catchAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Header("Shoot")]
+    [Tooltip("Shoot target when category is Shoot (overrides shootTargetPosition at runtime when set).")]
+    public GameObject shootTarget;
+    [Tooltip("World position used as shoot target when category is Shoot and shootTarget is null.")]
+    public Vector3 shootTargetPosition;
+    [Tooltip("Object that is shot (GameObject, Transform, or bone).")]
+    public UnityEngine.Object shootLaunchedObject;
+    [Tooltip("Hand(s) used for shoot.")]
+    public ThrowHandMode shootHandMode = ThrowHandMode.Right;
+    [Tooltip("Optional shoot animation trees.")]
+    public List<AnimationBehaviorTreeNode> shootAnimationTrees = new List<AnimationBehaviorTreeNode>();
 
     [Header("Trained Sets")]
     [Tooltip("List of coefficient sets with metrics (overwrite replaces this; append adds to it)")]

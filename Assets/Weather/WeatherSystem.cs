@@ -99,22 +99,22 @@ namespace Weather
         private void FindSubsystems()
         {
             if (meteorology == null)
-                meteorology = FindObjectOfType<Meteorology>();
+                meteorology = FindFirstObjectByType<Meteorology>();
 
             if (wind == null)
-                wind = FindObjectOfType<Wind>();
+                wind = FindFirstObjectByType<Wind>();
 
             if (precipitation == null)
-                precipitation = FindObjectOfType<Precipitation>();
+                precipitation = FindFirstObjectByType<Precipitation>();
 
             if (water == null)
-                water = FindObjectOfType<Water>();
+                water = FindFirstObjectByType<Water>();
 
             if (cloud == null)
-                cloud = FindObjectOfType<Cloud>();
+                cloud = FindFirstObjectByType<Cloud>();
 
             if (weatherPhysicsManifold == null)
-                weatherPhysicsManifold = FindObjectOfType<WeatherPhysicsManifold>();
+                weatherPhysicsManifold = FindFirstObjectByType<WeatherPhysicsManifold>();
 
             if (debugLogging)
             {
@@ -134,7 +134,7 @@ namespace Weather
         public void CollectWeatherEvents()
         {
             weatherEvents.Clear();
-            weatherEvents.AddRange(FindObjectsOfType<WeatherEvent>());
+            weatherEvents.AddRange(FindObjectsByType<WeatherEvent>(FindObjectsSortMode.None));
 
             if (debugLogging)
             {

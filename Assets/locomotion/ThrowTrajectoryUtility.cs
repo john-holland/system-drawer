@@ -81,6 +81,68 @@ public static class ThrowTrajectoryUtility
     }
 
     /// <summary>
+    /// Compute throw to hit a moving target (linear prediction). Solves for launch velocity and time-of-flight
+    /// so the projectile hits the target at its predicted position.
+    /// </summary>
+    /// <param name="origin">Release point (e.g. hand position).</param>
+    /// <param name="targetPosition">Current world position of the moving target.</param>
+    /// <param name="targetVelocity">Velocity of the target (e.g. from Rigidbody.velocity).</param>
+    /// <param name="gravity">Defaults to Physics.gravity.</param>
+    /// <param name="maxLaunchSpeed">If positive, feasibility is false when required speed exceeds this.</param>
+    /// <param name="maxTime">Maximum time of flight to consider (seconds).</param>
+    /// <returns>Feasibility, initial velocity, time of flight, and horizontal distance to predicted impact.</returns>
+    public static TrajectoryResult ComputeMovingTarget(
+        Vector3 origin,
+        Vector3 targetPosition,
+        Vector3 targetVelocity,
+        Vector3? gravity = null,
+        float maxLaunchSpeed = 0f,
+        float maxTime = 10f)
+    {
+        Vector3 g = gravity ?? Physics.gravity;
+        if (maxTime <= 0f)
+            maxTime = 10f;
+
+        // Linear prediction: target at time t is targetPosition + targetVelocity * t.
+        // Require origin + v0*t + 0.5*g*t^2 = targetPosition + targetVelocity*t
+        // => v0 = (targetPosition - origin)/t + targetVelocity - 0.5*g*t
+        float bestT = -1f;
+        Vector3 bestV0 = Vector3.zero;
+        const int steps = 64;
+        float dt = maxTime / steps;
+        for (int i = 1; i <= steps; i++)
+        {
+            float t = dt * i;
+            Vector3 v0 = (targetPosition - origin) / t + targetVelocity - 0.5f * g * t;
+            float speed = v0.magnitude;
+            if (maxLaunchSpeed > 0f && speed > maxLaunchSpeed)
+                continue;
+            if (bestT < 0f || t < bestT)
+            {
+                bestT = t;
+                bestV0 = v0;
+            }
+        }
+
+        if (bestT < 0f)
+        {
+            return new TrajectoryResult { feasible = false, initialVelocity = Vector3.zero, timeOfFlight = 0f, distance = 0f };
+        }
+
+        Vector3 impactPos = targetPosition + targetVelocity * bestT;
+        float distance = Vector3.Distance(
+            new Vector3(origin.x, 0f, origin.z),
+            new Vector3(impactPos.x, 0f, impactPos.z));
+        return new TrajectoryResult
+        {
+            feasible = true,
+            initialVelocity = bestV0,
+            timeOfFlight = bestT,
+            distance = distance
+        };
+    }
+
+    /// <summary>
     /// Check if target is in range for the given card (throwMinRange / throwMaxRange) and trajectory is feasible.
     /// </summary>
     public static bool IsInRangeAndFeasible(GoodSection card, Vector3 origin, Vector3 target, Vector3? gravity = null, float maxLaunchSpeed = 0f)
@@ -88,6 +150,23 @@ public static class ThrowTrajectoryUtility
         if (card == null)
             return false;
         TrajectoryResult r = Compute(origin, target, gravity, maxLaunchSpeed);
+        if (!r.feasible)
+            return false;
+        if (card.throwMaxRange > 0f && r.distance > card.throwMaxRange)
+            return false;
+        if (card.throwMinRange > 0f && r.distance < card.throwMinRange)
+            return false;
+        return true;
+    }
+
+    /// <summary>
+    /// Check if moving target is in range and trajectory is feasible; uses ComputeMovingTarget.
+    /// </summary>
+    public static bool IsInRangeAndFeasibleMovingTarget(GoodSection card, Vector3 origin, Vector3 targetPosition, Vector3 targetVelocity, Vector3? gravity = null, float maxLaunchSpeed = 0f, float maxTime = 10f)
+    {
+        if (card == null)
+            return false;
+        TrajectoryResult r = ComputeMovingTarget(origin, targetPosition, targetVelocity, gravity, maxLaunchSpeed, maxTime);
         if (!r.feasible)
             return false;
         if (card.throwMaxRange > 0f && r.distance > card.throwMaxRange)

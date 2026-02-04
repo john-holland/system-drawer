@@ -354,6 +354,30 @@ public class RagdollSystem : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Resolve a bone transform by name (e.g. RightHand, LeftHand, Head). Used by CarriedObjectAttachment and hit/place logic.
+    /// Tries BoneMap trait id (Generic:HandRight etc.), then role+side, then name heuristics.
+    /// </summary>
+    public Transform GetBoneTransform(string boneName)
+    {
+        if (string.IsNullOrWhiteSpace(boneName)) return null;
+        var boneMap = FindBoneMap();
+        if (boneMap != null && boneMap.TryGet("Generic:" + boneName, out var t))
+            return t;
+        if (boneMap != null && boneMap.TryGet(boneName, out t))
+            return t;
+        var n = boneName.Trim();
+        if (n.Equals("RightHand", System.StringComparison.OrdinalIgnoreCase))
+            return ResolveBone("Hand", BodySide.Right);
+        if (n.Equals("LeftHand", System.StringComparison.OrdinalIgnoreCase))
+            return ResolveBone("Hand", BodySide.Left);
+        if (n.Equals("Head", System.StringComparison.OrdinalIgnoreCase))
+            return ResolveBone("Head", null);
+        if (n.Equals("Pelvis", System.StringComparison.OrdinalIgnoreCase))
+            return ResolveBone("Pelvis", null);
+        return ResolveViaNameHeuristics(n, null);
+    }
+
     public RagdollHand FindOrAddHand(BodySide side)
     {
         var t = ResolveBone("Hand", side);

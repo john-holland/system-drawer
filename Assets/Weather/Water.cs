@@ -79,12 +79,12 @@ namespace Weather
 
             if (autoFindTerrain && terrain == null)
             {
-                terrain = FindObjectOfType<Terrain>();
+                terrain = FindFirstObjectByType<Terrain>();
             }
 
             if (autoFindMeshTerrainSampler && meshTerrainSampler == null && terrain == null)
             {
-                meshTerrainSampler = FindObjectOfType<MeshTerrainSampler>();
+                meshTerrainSampler = FindFirstObjectByType<MeshTerrainSampler>();
             }
         }
 
@@ -250,13 +250,13 @@ namespace Weather
         private void FindWaterBodies()
         {
             ponds.Clear();
-            ponds.AddRange(FindObjectsOfType<Pond>());
+            ponds.AddRange(FindObjectsByType<Pond>(FindObjectsSortMode.None));
 
             rivers.Clear();
-            rivers.AddRange(FindObjectsOfType<River>());
+            rivers.AddRange(FindObjectsByType<River>(FindObjectsSortMode.None));
 
             dams.Clear();
-            dams.AddRange(FindObjectsOfType<Dam>());
+            dams.AddRange(FindObjectsByType<Dam>(FindObjectsSortMode.None));
         }
 
         private void OnDrawGizmos()

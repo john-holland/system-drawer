@@ -12,6 +12,7 @@ public enum TraversabilityMode
     Pick,
     Roll,
     Throw,
+    Place,
     Custom
 }
 
@@ -87,6 +88,27 @@ public class GoodSection
     [Tooltip("Optional reference to the tool GameObject required (ladder, batterang, etc.).")]
     public GameObject requiredTool;
 
+    [Tooltip("Multiple tools required for this section. When non-empty, used for multi-tool; when empty, requiredTool is used.")]
+    public List<GameObject> requiredTools = new List<GameObject>();
+
+    [Tooltip("Max number of tools this card uses (0 = no limit). When > 0, only first maxToolCount from effective tool list are used.")]
+    public int maxToolCount = 0;
+
+    [Tooltip("Max number of targets allowed with this section (default 1).")]
+    public int maxTargetCount = 1;
+
+    [Tooltip("Target and any additional targets for this task (redundant with target on goal when single).")]
+    public List<GameObject> targets = new List<GameObject>();
+
+    [Tooltip("When true, held tools must make contact with the list of targets per tool (planning checks all targets).")]
+    public bool requireAllTargetsToMakeContact;
+
+    [Tooltip("When true, planning only accepts this section if all required tools (up to maxToolCount) can make contact with the goal.")]
+    public bool requireAllHeldToolsToMakeContact;
+
+    [Tooltip("Optional max distance for tool-to-goal contact (meters). When > 0, overrides default in ToolContactFeasibility.")]
+    public float toolReachDistance;
+
     [Header("Throw (when traversability is Throw or needsToBeThrown)")]
     [Tooltip("When true, this section is a throw-at-target card only; do not use for traversability bridging. Use when goal is GoalType.Throw.")]
     public bool isThrowGoalOnly;
@@ -106,10 +128,91 @@ public class GoodSection
     [Tooltip("Optional max horizontal distance for this throw card (0 = no maximum). Used with ThrowTrajectoryUtility.")]
     public float throwMaxRange;
 
+    [Header("Carry")]
+    [Tooltip("When true, this section is a carry card (hold object, update transform each frame).")]
+    public bool isCarry;
+    [Tooltip("Object or transform carried. Used with CarriedObjectAttachment.")]
+    public UnityEngine.Object carriedObject;
+    [Tooltip("When true, re-grasp if object is put down; do not wait for user prompt.")]
+    public bool pleaseHold;
+    [Tooltip("Bone/attach point name for carry (e.g. RightHand). Empty = solver default.")]
+    public string carryAttachBoneName = "";
+
+    [Header("Isometric")]
+    [Tooltip("When true, this section is an isometric hold (plank, wall sit); fitness = least movement.")]
+    public bool isIsometric;
+
+    [Header("Place")]
+    [Tooltip("When true, this section is a place/lift card (lift object into place).")]
+    public bool isPlaceGoal;
+    [Tooltip("Offset from ragdoll root for final place position. Optional.")]
+    public Vector3 placeTargetOffset = Vector3.zero;
+
+    [Header("Hit")]
+    [Tooltip("When true, this section is a hit card (limb or tool meets target).")]
+    public bool isHitGoal;
+    [Tooltip("Limb/bone name for hit (e.g. RightHand). Can use hitLimbBoneNames for multiple.")]
+    public string hitLimbBoneName = "";
+    [Tooltip("Multiple limb names for hit. Used when more than one limb can strike.")]
+    public List<string> hitLimbBoneNames = new List<string>();
+    [Tooltip("Use a tool for this hit.")]
+    public bool useToolForHit;
+    [Tooltip("Tool GameObject when useToolForHit is true.")]
+    public GameObject hitTool;
+
+    [Header("Weightlift")]
+    [Tooltip("When true, this section is a weightlift card (pick tool + activate muscle group).")]
+    public bool isWeightlift;
+    [Tooltip("Weight/tool to pick up for this weightlift.")]
+    public GameObject weightliftTool;
+    [Tooltip("Muscle group name to activate (e.g. Biceps, Back).")]
+    public string weightliftMuscleGroupName = "";
+
+    [Header("Catch")]
+    [Tooltip("When true, this section is a catch card (intercept object with hand(s)).")]
+    public bool isCatchGoal;
+    [Tooltip("Primary hand/bone for catch (e.g. RightHand).")]
+    public string catchLimbBoneName = "";
+    [Tooltip("Multiple limb names for catch (e.g. RightHand, LeftHand).")]
+    public List<string> catchLimbBoneNames = new List<string>();
+
+    [Header("Shoot")]
+    [Tooltip("When true, this section is a shoot card (launch toward target).")]
+    public bool isShootGoal;
+    [Tooltip("Object or transform that is shot (GameObject, Transform, or bone).")]
+    public UnityEngine.Object shootLaunchedObject;
+    [Tooltip("Which hand(s) perform the shoot.")]
+    public ThrowHandMode shootHandMode = ThrowHandMode.Right;
+    [Tooltip("Optional min horizontal distance for this shoot card (0 = no minimum).")]
+    public float shootMinRange;
+    [Tooltip("Optional max horizontal distance for this shoot card (0 = no maximum).")]
+    public float shootMaxRange;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;
     private RagdollState executionStartState;
+
+    /// <summary>
+    /// Returns the list of tools to use for this section: from requiredTools (up to maxToolCount) or [requiredTool] when requiredTools is empty.
+    /// </summary>
+    public List<GameObject> GetRequiredToolsList()
+    {
+        if (requiredTools != null && requiredTools.Count > 0)
+        {
+            int take = maxToolCount > 0 ? Mathf.Min(maxToolCount, requiredTools.Count) : requiredTools.Count;
+            var list = new List<GameObject>(take);
+            for (int i = 0; i < take; i++)
+            {
+                if (requiredTools[i] != null)
+                    list.Add(requiredTools[i]);
+            }
+            return list;
+        }
+        if (requiredTool != null)
+            return new List<GameObject> { requiredTool };
+        return new List<GameObject>();
+    }
 
     /// <summary>
     /// True if this section is valid for traversability at the given position and time (causality / 4D).

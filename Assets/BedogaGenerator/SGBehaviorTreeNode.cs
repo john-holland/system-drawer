@@ -72,6 +72,8 @@ public class SGBehaviorTreeNode : MonoBehaviour
     public Dictionary<AlignmentPreference, Vector3> rotationByDirection = new Dictionary<AlignmentPreference, Vector3>();
     
     [Header("GameObjects")]
+    [Tooltip("Optional key for stylesheet lookup. When set, stylesheet entries match this instead of node name.")]
+    public string skinKey = "";
     public List<GameObject> gameObjectPrefabs = new List<GameObject>();
     
     [Header("Stretch Objects")]

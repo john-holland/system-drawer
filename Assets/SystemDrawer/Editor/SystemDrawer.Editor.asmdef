@@ -1,0 +1,20 @@
+{
+    "name": "SystemDrawer.Editor",
+    "rootNamespace": "",
+    "references": [
+        "SystemDrawer",
+        "Locomotion.Narrative.Runtime",
+        "Locomotion.Narrative.Inference"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

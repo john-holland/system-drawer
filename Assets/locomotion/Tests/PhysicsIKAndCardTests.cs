@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
 using NUnit.Framework;
 using UnityEngine;
+using System.Collections.Generic;
+using PhysicsCard = GoodSection;
 
 /// <summary>
 /// Tests for IK training (aggregation, range diamond) and simple cards (GoodSection, ImpulseAction, enclosure).
@@ -227,6 +229,146 @@ public class PhysicsIKAndCardTests
         var opts = PhysicsIKTrainingRunner.DefaultFrozenAxisOptions;
         Assert.Greater(opts.Length, 1);
         Assert.AreEqual(RigidbodyConstraints.None, opts[0]);
+    }
+
+    // --- Catch / Shoot goal and GoodSection ---
+
+    [Test]
+    public void GoalType_CatchAndShoot_EnumValuesExist()
+    {
+        Assert.AreEqual((int)GoalType.Catch, (int)GoalType.Catch);
+        Assert.AreEqual((int)GoalType.Shoot, (int)GoalType.Shoot);
+        Assert.AreNotEqual(GoalType.Catch, GoalType.Shoot);
+    }
+
+    [Test]
+    public void GoodSection_CatchGoal_FieldsStored()
+    {
+        var card = new GoodSection
+        {
+            sectionName = "catch_ball",
+            isCatchGoal = true,
+            catchLimbBoneName = "RightHand",
+            catchLimbBoneNames = new System.Collections.Generic.List<string> { "RightHand", "LeftHand" }
+        };
+        Assert.IsTrue(card.isCatchGoal);
+        Assert.AreEqual("RightHand", card.catchLimbBoneName);
+        Assert.IsNotNull(card.catchLimbBoneNames);
+        Assert.AreEqual(2, card.catchLimbBoneNames.Count);
+    }
+
+    [Test]
+    public void GoodSection_ShootGoal_FieldsStored()
+    {
+        var card = new GoodSection
+        {
+            sectionName = "shoot_hoop",
+            isShootGoal = true,
+            shootMinRange = 2f,
+            shootMaxRange = 10f
+        };
+        Assert.IsTrue(card.isShootGoal);
+        Assert.AreEqual(2f, card.shootMinRange, 1e-5f);
+        Assert.AreEqual(10f, card.shootMaxRange, 1e-5f);
+    }
+
+    [Test]
+    public void CatchTrajectoryUtility_GetInterceptPosition_NullObject_ReturnsHandPosAndZeroTime()
+    {
+        Vector3 handPos = new Vector3(1f, 2f, 3f);
+        CatchTrajectoryUtility.GetInterceptPosition(handPos, null, 5f, out Vector3 interceptPos, out float timeToIntercept);
+        Assert.AreEqual(handPos.x, interceptPos.x, 1e-5f);
+        Assert.AreEqual(handPos.y, interceptPos.y, 1e-5f);
+        Assert.AreEqual(handPos.z, interceptPos.z, 1e-5f);
+        Assert.AreEqual(0f, timeToIntercept, 1e-6f);
+    }
+
+    [Test]
+    public void CatchTrajectoryUtility_GetInterceptPosition_ZeroHandSpeed_LeavesInterceptAtObject()
+    {
+        var obj = new GameObject("CatchTarget");
+        obj.transform.position = new Vector3(10f, 0f, 0f);
+        Vector3 handPos = Vector3.zero;
+        CatchTrajectoryUtility.GetInterceptPosition(handPos, obj.transform, 0f, out Vector3 interceptPos, out float timeToIntercept);
+        Assert.AreEqual(10f, interceptPos.x, 1e-5f);
+        Assert.AreEqual(0f, timeToIntercept, 1e-6f);
+        Object.DestroyImmediate(obj);
+    }
+
+    [Test]
+    public void CatchTrajectoryUtility_GetInterceptPosition_StaticObject_ReturnsInterceptAtOrNearObject()
+    {
+        var obj = new GameObject("StaticCatchTarget");
+        obj.transform.position = new Vector3(5f, 0f, 0f);
+        Vector3 handPos = new Vector3(0f, 0f, 0f);
+        CatchTrajectoryUtility.GetInterceptPosition(handPos, obj.transform, 5f, out Vector3 interceptPos, out float timeToIntercept);
+        Assert.AreEqual(5f, interceptPos.x, 1e-4f);
+        Assert.GreaterOrEqual(timeToIntercept, 0f);
+        Object.DestroyImmediate(obj);
+    }
+
+    [Test]
+    public void PhysicsIKTrainingRunner_Catch_HasMetrics()
+    {
+        var set = PhysicsIKTrainedSet.Default();
+        var result = PhysicsIKTrainingRunner.RunOne(null, set, PhysicsIKTrainingCategory.Catch, 42);
+        Assert.Greater(result.completionTime, 0f);
+        Assert.GreaterOrEqual(result.accuracyScore, 0f);
+        Assert.LessOrEqual(result.accuracyScore, 1f);
+        Assert.GreaterOrEqual(result.powerUsed, 0f);
+    }
+
+    [Test]
+    public void PhysicsIKTrainingRunner_Shoot_HasMetrics()
+    {
+        var set = PhysicsIKTrainedSet.Default();
+        var result = PhysicsIKTrainingRunner.RunOne(null, set, PhysicsIKTrainingCategory.Shoot, 42);
+        Assert.Greater(result.completionTime, 0f);
+        Assert.GreaterOrEqual(result.accuracyScore, 0f);
+        Assert.LessOrEqual(result.accuracyScore, 1f);
+        Assert.GreaterOrEqual(result.powerUsed, 0f);
+    }
+
+    [Test]
+    public void PhysicsCardSolver_SolveForGoal_WithCatchGoal_PrefersCatchCard()
+    {
+        var solverGo = new GameObject("SolverCatchTest");
+        var solver = solverGo.AddComponent<PhysicsCardSolver>();
+        var catchCard = new GoodSection { sectionName = "catch", isCatchGoal = true, limits = new SectionLimits() };
+        var otherCard = new GoodSection { sectionName = "other", limits = new SectionLimits() };
+        solver.AddCards(new System.Collections.Generic.List<PhysicsCard> { otherCard, catchCard });
+        var goal = new BehaviorTreeGoal { type = GoalType.Catch };
+        var state = new RagdollState { rootPosition = Vector3.zero, rootRotation = Quaternion.identity };
+        var path = solver.SolveForGoal(goal, state);
+        Assert.IsNotNull(path);
+        bool hasCatch = false;
+        foreach (var card in path)
+        {
+            if (card != null && card.isCatchGoal) { hasCatch = true; break; }
+        }
+        Assert.IsTrue(hasCatch, "SolveForGoal(GoalType.Catch) should return a path that includes a catch card when one is available.");
+        Object.DestroyImmediate(solverGo);
+    }
+
+    [Test]
+    public void PhysicsCardSolver_SolveForGoal_WithShootGoal_PrefersShootCard()
+    {
+        var solverGo = new GameObject("SolverShootTest");
+        var solver = solverGo.AddComponent<PhysicsCardSolver>();
+        var shootCard = new GoodSection { sectionName = "shoot", isShootGoal = true, limits = new SectionLimits() };
+        var otherCard = new GoodSection { sectionName = "other", limits = new SectionLimits() };
+        solver.AddCards(new List<PhysicsCard> { otherCard, shootCard });
+        var goal = new BehaviorTreeGoal { type = GoalType.Shoot };
+        var state = new RagdollState { rootPosition = Vector3.zero, rootRotation = Quaternion.identity };
+        var path = solver.SolveForGoal(goal, state);
+        Assert.IsNotNull(path);
+        bool hasShoot = false;
+        foreach (var card in path)
+        {
+            if (card != null && card.isShootGoal) { hasShoot = true; break; }
+        }
+        Assert.IsTrue(hasShoot, "SolveForGoal(GoalType.Shoot) should return a path that includes a shoot card when one is available.");
+        Object.DestroyImmediate(solverGo);
     }
 }
 #endif

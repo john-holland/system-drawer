@@ -1,6 +1,6 @@
 # Locomotion & Weather System Project
 
-A Unity project featuring advanced ragdoll physics, behavior trees, weather systems, and narrative time management.
+A Unity project featuring advanced ragdoll physics, behavior trees, weather systems, narrative time management, and **local LSTM-based narrative tools** (prompt interpreter and calendar summarizer). The architecture is designed so you can **ship asset packs** and **partner with indies**: systems are service-wired, scriptable, and extensible without forking the core.
 
 ## Project Structure
 
@@ -11,7 +11,9 @@ This project uses a **"Light Package" mode** where third-party assets are exclud
 - **Locomotion System** (`Assets/locomotion/`) - Ragdoll physics, behavior trees, pathfinding
 - **Weather System** (`Assets/Weather/`) - Weather simulation, terrain integration, portals
 - **Narrative System** (`Assets/locomotion/narrative/`) - Time management, calendar, story execution
+- **Narrative LSTM** (`Assets/locomotion/narrative/Inference/`) - Local prompt interpreter (natural language → events + 4D) and calendar summarizer (“what’s going on”)
 - **Hierarchical Pathfinding** (`Assets/HierarchicalPathFinding/`) - Spatial pathfinding system
+- **System Drawer** (`Assets/SystemDrawer/`) - Service wizards that register and wire systems (calendar, 4D, weather, **prompt**) for asset-pack and indie workflows
 
 ## Getting Started
 
@@ -88,6 +90,7 @@ If you add a new third-party asset:
 - Behavior tree execution
 - Event scheduling
 - Time-based weather integration
+- **Narrative LSTM**: train on your project’s calendar/4D data; run a local “ChatGPT-like” prompt interpreter (natural language → narrative events + 4D spatial entries) and a summarizer (calendar → short “what’s going on” text). No cloud required; ONNX + Barracuda in-editor and at runtime.
 
 ### Pathfinding
 - Hierarchical spatial pathfinding
@@ -104,7 +107,16 @@ If you add a new third-party asset:
 ## Documentation
 
 - [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md) - Required third-party assets
+- [Scripts/README_NarrativeLSTM.md](Scripts/README_NarrativeLSTM.md) - Narrative LSTM: export → vocab → train (Python) → run in Unity (Barracuda)
 - [.cursor/plans/](.cursor/plans/) - Development plans and architecture docs
+
+## Asset packs & indie partnership
+
+The project is structured so you can:
+
+- **Ship asset packs** that plug into the same service keys (calendar, 4D, weather, narrative prompt) without replacing core code.
+- **Partner with indies** by exposing wizards and drawers: they assign references from the System Drawer or create rigs (e.g. **Narrative Prompt Service Wizard** → Create LSTM prompt rig) and wire their own content.
+- **Keep narrative and 4D local**: train LSTM on your own data, run prompt interpretation and “what’s going on” summarization entirely in-editor or at runtime with Barracuda.
 
 ## License
 

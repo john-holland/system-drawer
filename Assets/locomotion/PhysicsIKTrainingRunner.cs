@@ -104,6 +104,56 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.85f + r() * 0.15f; // stability score (didn't fall)
             set.powerUsed = power * (0.3f + r() * 0.2f); // low effort to maintain balance
         }
+        else if (category == PhysicsIKTrainingCategory.Carry)
+        {
+            // Carry: time carrying, stability with object.
+            set.completionTime = 1.5f + (2f - 1f / power) * 0.4f + r() * 0.5f;
+            set.accuracyScore = 0.5f + r() * 0.4f; // stability while carrying
+            set.powerUsed = power * (0.8f + r() * 0.25f);
+        }
+        else if (category == PhysicsIKTrainingCategory.Isometric)
+        {
+            // Isometric: least movement = accuracy; completion = hold duration.
+            float holdDuration = runAsset != null && runAsset.isometricHoldDuration > 0f ? runAsset.isometricHoldDuration : 5f;
+            set.completionTime = holdDuration;
+            set.accuracyScore = 1f - (float)rng.NextDouble() * 0.25f; // 1 - normalized movement (simulated)
+            set.powerUsed = power * (0.4f + r() * 0.2f);
+        }
+        else if (category == PhysicsIKTrainingCategory.Place)
+        {
+            // Place: completion time and accuracy (distance to target position/rotation).
+            set.completionTime = 1.2f + (2f - 1f / power) * 0.5f + r() * 0.4f;
+            set.accuracyScore = 0.45f + r() * 0.45f; // placement accuracy
+            set.powerUsed = power * (0.85f + r() * 0.3f);
+        }
+        else if (category == PhysicsIKTrainingCategory.Hit)
+        {
+            // Hit: did limb meet target at same time? time to impact.
+            set.completionTime = 0.6f + (2f - 1f / power) * 0.3f + r() * 0.25f;
+            set.accuracyScore = 0.4f + r() * 0.5f; // hit accuracy
+            set.powerUsed = power * (0.9f + r() * 0.35f);
+        }
+        else if (category == PhysicsIKTrainingCategory.Weightlift)
+        {
+            // Weightlift: least radial movement; completion = duration of lift.
+            set.completionTime = 2f + r() * 1.5f;
+            set.accuracyScore = 1f - (float)rng.NextDouble() * 0.2f; // 1 - normalized radial movement (simulated)
+            set.powerUsed = power * (0.9f + r() * 0.3f);
+        }
+        else if (category == PhysicsIKTrainingCategory.Catch)
+        {
+            // Catch: time to intercept, catch success (accuracy).
+            set.completionTime = 0.7f + (2f - 1f / power) * 0.35f + r() * 0.3f;
+            set.accuracyScore = 0.4f + r() * 0.5f; // catch success
+            set.powerUsed = power * (0.85f + r() * 0.3f);
+        }
+        else if (category == PhysicsIKTrainingCategory.Shoot)
+        {
+            // Shoot: completion time and accuracy toward target.
+            set.completionTime = 0.8f + (2f - 1f / power) * 0.4f + r() * 0.3f;
+            set.accuracyScore = 0.35f + r() * 0.55f; // shoot accuracy toward target
+            set.powerUsed = power * (0.9f + r() * 0.3f);
+        }
         else
         {
             // Locomotion: pathfinding + obstacle.

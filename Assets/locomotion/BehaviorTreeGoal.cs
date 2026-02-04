@@ -22,6 +22,21 @@ public class BehaviorTreeGoal
     [Tooltip("Target position for this goal")]
     public Vector3 targetPosition;
 
+    [Tooltip("Target rotation for placement goals")]
+    public Quaternion targetRotation = Quaternion.identity;
+
+    [Header("Carry / Hold")]
+    [Tooltip("When true (Carry goal), agent re-grasps if object is put down; do not wait for user prompt.")]
+    public bool pleaseHold;
+
+    [Header("Hit")]
+    [Tooltip("Limb/bone names to use for hit (e.g. RightHand, LeftHand). Empty = solver default.")]
+    public List<string> hitLimbNames = new List<string>();
+    [Tooltip("Use a tool for hit (weapon/implement).")]
+    public bool useToolForHit;
+    [Tooltip("Tool GameObject when useToolForHit is true.")]
+    public GameObject hitTool;
+
     [Header("Parameters")]
     [Tooltip("Goal-specific parameters")]
     public Dictionary<string, object> parameters = new Dictionary<string, object>();
@@ -55,7 +70,23 @@ public enum GoalType
     Cleanup,
     Composite, // Multiple sub-goals
     /// <summary>Throw at target: goal.target or goal.targetPosition is the throw target; no pathfinding after the throw.</summary>
-    Throw
+    Throw,
+    /// <summary>Carry an object; optional pleaseHold to re-grasp if put down.</summary>
+    Carry,
+    /// <summary>Hold an isometric pose (e.g. plank, wall sit); fitness = least movement.</summary>
+    Isometric,
+    /// <summary>Lift object into place at targetPosition/targetRotation.</summary>
+    Place,
+    /// <summary>Hit target with limb(s) or tool; track target trajectory, propel limb to meet it.</summary>
+    Hit,
+    /// <summary>Pick up weight/tool, activate muscle group; fitness = least radial movement (not fall over).</summary>
+    Weightlift,
+    /// <summary>Fly toward target (wing/jet cards); use procedural flying cards when available.</summary>
+    Flying,
+    /// <summary>Intercept object with hand(s); goal.target = object to catch.</summary>
+    Catch,
+    /// <summary>Launch toward target; goal.target or goal.targetPosition = shoot target.</summary>
+    Shoot
 }
 
 /// <summary>

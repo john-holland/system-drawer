@@ -31,7 +31,7 @@ namespace Weather
         {
             if (wind == null)
             {
-                wind = FindObjectOfType<Wind>();
+                wind = FindFirstObjectByType<Wind>();
             }
         }
 
@@ -65,7 +65,7 @@ namespace Weather
         /// </summary>
         private void ApplyToAllRigidbodies()
         {
-            Rigidbody[] allRigidbodies = FindObjectsOfType<Rigidbody>();
+            Rigidbody[] allRigidbodies = FindObjectsByType<Rigidbody>(FindObjectsSortMode.None);
             foreach (var rb in allRigidbodies)
             {
                 if (rb != null && !rb.isKinematic)

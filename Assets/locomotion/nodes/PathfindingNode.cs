@@ -30,6 +30,9 @@ public class PathfindingNode : BehaviorTreeNode
     [Tooltip("Use flying pathfinding (no slope blocking, Y interpolated between start and goal)")]
     public bool useFlyingPathfinding = false;
 
+    [Tooltip("When true and useFlyingPathfinding, build path segments as flying cards (wing/jet) via PhysicsCardSolver.GenerateFlyingCard instead of walk waypoints. Uses solver.flyingCardConfig.")]
+    public bool useFlyingCardsForFlyingPath = false;
+
     [Tooltip("When no walk path exists, use good sections that enable traversability (climb, swing, pick, roll, throw) to bridge gaps. Uses causality (position, t) to filter sections.")]
     public bool useToolTraversability = false;
 
@@ -164,7 +167,70 @@ public class PathfindingNode : BehaviorTreeNode
             currentPath = currentPath.GetRange(0, maxPathLength);
         }
 
+        // When flying pathfinding and use flying cards, build segments as flying cards (procedural) instead of walk waypoints
+        if (useFlyingPathfinding && useFlyingCardsForFlyingPath && tree != null)
+        {
+            PhysicsCardSolver cardSolver = tree.GetComponentInParent<PhysicsCardSolver>();
+            if (cardSolver != null && cardSolver.flyingCardConfig != null)
+            {
+                RagdollState state = null;
+                RagdollSystem ragdoll = tree.GetComponent<RagdollSystem>();
+                if (ragdoll != null)
+                    state = ragdoll.GetCurrentState();
+                if (BuildFlyingPathChildren(currentPath, tree, cardSolver, state))
+                    return true;
+            }
+        }
+
         return BuildWalkChildrenOnly(currentPath);
+    }
+
+    /// <summary>
+    /// Build child nodes as flying card segments (GenerateFlyingCard per segment). Uses fuel from config.
+    /// </summary>
+    private bool BuildFlyingPathChildren(List<Vector3> path, BehaviorTree tree, PhysicsCardSolver solver, RagdollState state)
+    {
+        if (path == null || path.Count < 2 || solver == null || solver.flyingCardConfig == null)
+            return false;
+
+        if (children == null)
+            children = new List<BehaviorTreeNode>();
+        else
+        {
+            foreach (var child in children)
+            {
+                if (child != null)
+                    DestroyImmediate(child.gameObject);
+            }
+            children.Clear();
+        }
+
+        float fuel = solver.flyingCardConfig.fuelCapacity;
+        Vector3 prev = path[0];
+        for (int i = 1; i < path.Count; i++)
+        {
+            Vector3 to = path[i];
+            GoodSection card = solver.GenerateFlyingCard(prev, to, state, solver.flyingCardConfig, solver.useJetModeForFlyingGoal, ref fuel);
+            if (card == null)
+                break;
+            GameObject nodeObj = new GameObject($"Flying_{children.Count}");
+            nodeObj.transform.SetParent(transform, worldPositionStays: false);
+            ExecuteToolTraversabilityNode execNode = nodeObj.AddComponent<ExecuteToolTraversabilityNode>();
+            execNode.card = card;
+            execNode.tool = null;
+            execNode.toolUseTo = to;
+            execNode.reachedDistance = waypointReachedDistance;
+            children.Add(execNode);
+            prev = to;
+            if (state != null)
+                state = state.CopyState();
+            if (state != null)
+                state.rootPosition = to;
+        }
+
+        if (children.Count == 0)
+            return false;
+        return true;
     }
 
     private List<GoodSection> GetAvailableSectionsForTraversability(BehaviorTree tree)
@@ -216,7 +282,15 @@ public class PathfindingNode : BehaviorTreeNode
                 toolNodeObj.transform.SetParent(transform, worldPositionStays: false);
                 ExecuteToolTraversabilityNode toolNode = toolNodeObj.AddComponent<ExecuteToolTraversabilityNode>();
                 toolNode.card = seg.toolUseCard;
-                toolNode.tool = seg.toolUseTool;
+                if (seg.toolUseTools != null && seg.toolUseTools.Count > 0)
+                {
+                    toolNode.tools = new List<GameObject>(seg.toolUseTools);
+                    toolNode.tool = seg.toolUseTools[0];
+                }
+                else
+                {
+                    toolNode.tool = seg.toolUseTool;
+                }
                 toolNode.toolUseTo = seg.toolUseTo;
                 toolNode.reachedDistance = waypointReachedDistance;
                 children.Add(toolNode);

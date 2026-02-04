@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Builds a sequence of flying cards along a sin-wave (FlyingGoal) trajectory.
+/// Builds a sequence of flying cards along a 3D curve (FlyingGoal) trajectory.
 /// Uses wing/jet cards from the solver and fuel limits; generates cards when needed.
 /// </summary>
 public class FlyingCardSequenceGenerator : MonoBehaviour
@@ -15,7 +15,7 @@ public class FlyingCardSequenceGenerator : MonoBehaviour
     public FlyingCardConfig flyingConfig;
 
     [Header("Flying Goal")]
-    [Tooltip("Sin-wave goal (baseY, amplitude, frequency, duration, XZ).")]
+    [Tooltip("3D curve trajectory (X, Y, Z over normalized time). Edit in inspector with the curve drawer.")]
     public FlyingGoal flyingGoal;
 
     [Header("Generation")]

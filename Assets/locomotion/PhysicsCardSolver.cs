@@ -43,8 +43,8 @@ public class PhysicsCardSolver : MonoBehaviour
     [Tooltip("Only allow leg muscle groups for walking cards (restricts arm/hand/head usage unless placement card)")]
     public bool onlyAllowLegsForWalking = true;
 
-    [Tooltip("Keywords that indicate a placement/manipulation card (case-insensitive)")]
-    public List<string> placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place" };
+    [Tooltip("Keywords that indicate a placement/manipulation card (case-insensitive). Includes lift/place for Place goals.")]
+    public List<string> placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place", "lift" };
 
     [Header("Flying Card (Wing / Jet)")]
     [Tooltip("Muscle group names that indicate a wing card (case-insensitive).")]
@@ -52,6 +52,12 @@ public class PhysicsCardSolver : MonoBehaviour
 
     [Tooltip("Muscle group names that indicate a jet card (case-insensitive).")]
     public List<string> jetMuscleGroupKeywords = new List<string> { "jet", "thrust" };
+
+    [Header("Flying (procedural)")]
+    [Tooltip("Optional. When solving for Flying goal with no matching card, generate a flying card from current position to goal.")]
+    public FlyingCardConfig flyingCardConfig;
+    [Tooltip("Use jet mode when generating flying cards for Flying goal. Otherwise wing mode.")]
+    public bool useJetModeForFlyingGoal = false;
 
     // References
     private NervousSystem nervousSystem;
@@ -72,7 +78,7 @@ public class PhysicsCardSolver : MonoBehaviour
         // Initialize default placement card keywords if empty
         if (placementCardKeywords == null || placementCardKeywords.Count == 0)
         {
-            placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place" };
+            placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place", "lift" };
         }
         if (wingMuscleGroupKeywords == null || wingMuscleGroupKeywords.Count == 0)
         {
@@ -175,6 +181,7 @@ public class PhysicsCardSolver : MonoBehaviour
 
     /// <summary>
     /// Solve for a goal (find card sequence that achieves the goal).
+    /// For Flying goals, includes wing/jet cards in the pool and can generate a flying card procedurally when no card matches.
     /// </summary>
     public List<PhysicsCard> SolveForGoal(BehaviorTreeGoal goal, RagdollState state)
     {
@@ -183,6 +190,17 @@ public class PhysicsCardSolver : MonoBehaviour
 
         // Find applicable cards
         List<PhysicsCard> applicable = FindApplicableCards(state, goal.target);
+
+        // Flying goal: ensure flying cards (wing/jet) are in the pool so they can be selected procedurally
+        if (goal.type == GoalType.Flying && availableCards != null)
+        {
+            var flyingCards = FilterCardsForFlying(availableCards);
+            foreach (var card in flyingCards)
+            {
+                if (card != null && card.IsFeasible(state) && !applicable.Contains(card))
+                    applicable.Add(card);
+            }
+        }
 
         // Order by feasibility
         List<PhysicsCard> ordered = OrderCardsByFeasibility(applicable, state);
@@ -203,6 +221,17 @@ public class PhysicsCardSolver : MonoBehaviour
         if (ordered.Count > 0)
         {
             return new List<PhysicsCard> { ordered[0] };
+        }
+
+        // Flying goal with no cards: generate one flying card procedurally when config is set
+        if (goal.type == GoalType.Flying && flyingCardConfig != null)
+        {
+            Vector3 from = state.rootPosition;
+            Vector3 to = goal.target != null ? goal.target.transform.position : goal.targetPosition;
+            float fuel = flyingCardConfig.fuelCapacity;
+            PhysicsCard generated = GenerateFlyingCard(from, to, state, flyingCardConfig, useJetModeForFlyingGoal, ref fuel);
+            if (generated != null)
+                return new List<PhysicsCard> { generated };
         }
 
         return new List<PhysicsCard>();
@@ -300,15 +329,112 @@ public class PhysicsCardSolver : MonoBehaviour
 
     private PhysicsCard FindCardMatchingGoal(List<PhysicsCard> cards, BehaviorTreeGoal goal)
     {
+        if (goal == null)
+            return cards.Count > 0 ? cards[0] : null;
+
         // Throw goals: prefer throw-only cards (throw at goal.targetPosition / goal.target)
-        if (goal != null && goal.type == GoalType.Throw)
+        if (goal.type == GoalType.Throw)
         {
             foreach (var card in cards)
             {
-                if (card == null)
-                    continue;
+                if (card == null) continue;
                 if (card.needsToBeThrown && card.IsThrowGoalOnly())
                     return card;
+            }
+        }
+
+        // Carry: prefer cards with isCarry
+        if (goal.type == GoalType.Carry)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isCarry) return card;
+            }
+        }
+
+        // Isometric: prefer cards with isIsometric
+        if (goal.type == GoalType.Isometric)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isIsometric) return card;
+            }
+        }
+
+        // Place: prefer cards with isPlaceGoal or placement keywords (lift/place)
+        if (goal.type == GoalType.Place)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isPlaceGoal) return card;
+            }
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (!string.IsNullOrEmpty(card.sectionName) && placementCardKeywords != null)
+                {
+                    string lower = card.sectionName.ToLowerInvariant();
+                    if (lower.Contains("lift") || lower.Contains("place"))
+                        return card;
+                }
+            }
+        }
+
+        // Hit: prefer cards with isHitGoal
+        if (goal.type == GoalType.Hit)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isHitGoal) return card;
+            }
+        }
+
+        // Weightlift: prefer cards with isWeightlift
+        if (goal.type == GoalType.Weightlift)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isWeightlift) return card;
+            }
+        }
+
+        // Catch: prefer cards with isCatchGoal
+        if (goal.type == GoalType.Catch)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isCatchGoal) return card;
+            }
+        }
+
+        // Shoot: prefer cards with isShootGoal
+        if (goal.type == GoalType.Shoot)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isShootGoal) return card;
+            }
+        }
+
+        // Flying: prefer wing cards then jet cards (use procedural flying where possible)
+        if (goal.type == GoalType.Flying)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (IsWingCard(card)) return card;
+            }
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (IsJetCard(card)) return card;
             }
         }
 

@@ -126,10 +126,17 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
 #pragma warning restore CS0618
     }
 
-    /// <summary>Push orchestrator toggles to referenced components.</summary>
+    /// <summary>Push orchestrator toggles to referenced components. When a SpatialGeneratorSkinController with skins is present, enabled state is driven from the active skin (editor or runtime index).</summary>
     public void Apply()
     {
         MigrateLegacyIfNeeded();
+        var skinController = GetComponent<SpatialGeneratorSkinController>();
+        if (skinController != null && skinController.skins != null && skinController.skins.Count > 0)
+        {
+            int idx = Application.isPlaying ? skinController.activeSkinIndex : skinController.editorActiveSkinIndex;
+            if (idx >= 0 && idx < skinController.skins.Count)
+                skinController.ApplySkin(idx);
+        }
         if (spatialGenerators == null)
             return;
         foreach (var gen in spatialGenerators)
@@ -137,7 +144,8 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
             if (gen == null) continue;
             if (gen is SpatialGenerator4D sg4d)
             {
-                sg4d.enabled = use4DPlacement;
+                if (skinController == null || skinController.skins == null || skinController.skins.Count == 0)
+                    sg4d.enabled = use4DPlacement;
                 sg4d.useTemporalStrategy = useTemporalStrategy;
                 sg4d.useBufferPadding = useBufferPadding;
                 sg4d.buildGrid = showSDF;
@@ -146,7 +154,8 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
             }
             else if (gen is SpatialGenerator sg3d)
             {
-                sg3d.enabled = use3DPlacement;
+                if (skinController == null || skinController.skins == null || skinController.skins.Count == 0)
+                    sg3d.enabled = use3DPlacement;
                 sg3d.showTreeVisualization = showTreeVisualization;
             }
         }

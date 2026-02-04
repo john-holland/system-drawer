@@ -68,7 +68,7 @@ namespace Weather
         {
             if (meteorology == null && isManagedByMeteorology)
             {
-                meteorology = FindObjectOfType<Meteorology>();
+                meteorology = FindFirstObjectByType<Meteorology>();
             }
         }
 

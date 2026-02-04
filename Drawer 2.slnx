@@ -2,14 +2,18 @@
   <Project Path="Locomotion.Runtime.csproj" />
   <Project Path="Weather.Runtime.csproj" />
   <Project Path="Locomotion.Editor.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="BedogaGenerator.csproj" />
+  <Project Path="SystemDrawer.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="BedogaGenerator.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Locomotion.Narrative.Runtime.csproj" />
   <Project Path="Locomotion.Audio.csproj" />
   <Project Path="Weather.Editor.csproj" />
+  <Project Path="Locomotion.Narrative.Serialization.csproj" />
   <Project Path="Locomotion.Narrative.Editor.csproj" />
   <Project Path="Locomotion.Tests.csproj" />
-  <Project Path="Locomotion.Narrative.Serialization.csproj" />
+  <Project Path="Locomotion.Narrative.Inference.csproj" />
   <Project Path="Weather.Tests.csproj" />
 </Solution>

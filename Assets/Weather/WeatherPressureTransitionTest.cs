@@ -104,16 +104,16 @@ namespace Weather
         private void FindWeatherComponents()
         {
             if (weatherSystem == null)
-                weatherSystem = FindObjectOfType<WeatherSystem>();
+                weatherSystem = FindFirstObjectByType<WeatherSystem>();
 
             if (meteorology == null)
-                meteorology = FindObjectOfType<Meteorology>();
+                meteorology = FindFirstObjectByType<Meteorology>();
 
             if (precipitation == null)
-                precipitation = FindObjectOfType<Precipitation>();
+                precipitation = FindFirstObjectByType<Precipitation>();
 
             if (cloud == null)
-                cloud = FindObjectOfType<Cloud>();
+                cloud = FindFirstObjectByType<Cloud>();
 
             if (enableDebugLog)
             {

@@ -803,7 +803,7 @@ namespace Weather
                 return;
 
             // Find all portals in scene
-            MeshTerrainPortal[] portals = FindObjectsOfType<MeshTerrainPortal>();
+            MeshTerrainPortal[] portals = FindObjectsByType<MeshTerrainPortal>(FindObjectsSortMode.None);
             if (portals == null || portals.Length == 0)
             {
                 EditorUtility.DisplayDialog(
@@ -1577,7 +1577,7 @@ namespace Weather
         private void FindExistingComponents()
         {
             // Find main weather object
-            WeatherSystem ws = FindObjectOfType<WeatherSystem>();
+            WeatherSystem ws = FindFirstObjectByType<WeatherSystem>();
             if (ws != null)
             {
                 mainWeatherObject = ws.gameObject;
@@ -1589,22 +1589,22 @@ namespace Weather
             }
 
             // Find subsystem objects
-            Cloud cloud = FindObjectOfType<Cloud>();
+            Cloud cloud = FindFirstObjectByType<Cloud>();
             if (cloud != null) cloudObject = cloud.gameObject;
 
-            Wind wind = FindObjectOfType<Wind>();
+            Wind wind = FindFirstObjectByType<Wind>();
             if (wind != null) windObject = wind.gameObject;
 
-            Terrain terrain = FindObjectOfType<Terrain>();
+            Terrain terrain = FindFirstObjectByType<Terrain>();
             if (terrain != null) terrainObject = terrain.gameObject;
 
-            Water water = FindObjectOfType<Water>();
+            Water water = FindFirstObjectByType<Water>();
             if (water != null) waterObject = water.gameObject;
 
-            MeshTerrainSampler sampler = FindObjectOfType<MeshTerrainSampler>();
+            MeshTerrainSampler sampler = FindFirstObjectByType<MeshTerrainSampler>();
             if (sampler != null) meshTerrainSampler = sampler;
 
-            Precipitation[] precipitations = FindObjectsOfType<Precipitation>();
+            Precipitation[] precipitations = FindObjectsByType<Precipitation>(FindObjectsSortMode.None);
             if (precipitations.Length > 1)
             {
                 foreach (var p in precipitations)

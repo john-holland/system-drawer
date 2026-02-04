@@ -57,6 +57,10 @@ public class SpatialGenerator : SpatialGeneratorBase
     private Bounds generationBounds;
     private Vector3 lastScale;
     private bool isInitialized = false;
+    /// <summary>Stored at first Initialize; used when applying skin tree param boundsScale.</summary>
+    private Vector3 baseGenerationSize;
+    /// <summary>Optional. When set, used to resolve prefabs per node (e.g. from stylesheet). Set by SpatialGeneratorSkinController.</summary>
+    private ISpatialGeneratorPrefabResolver prefabResolver;
     
     /// <summary>Maps each behavior tree node to all scene instances placed for that node (order = placement order), so child nodes can parent under the correct instance when placementLimit > 1.</summary>
     private Dictionary<SGBehaviorTreeNode, List<GameObject>> behaviorNodeToSceneInstance;
@@ -78,6 +82,70 @@ public class SpatialGenerator : SpatialGeneratorBase
     {
         Bounds local = isInitialized ? generationBounds : new Bounds(Vector3.zero, generationSize);
         return LocalToWorldBounds(local);
+    }
+
+    /// <summary>Set optional prefab resolver for skin/stylesheet. When null, node.gameObjectPrefabs is used.</summary>
+    public void SetPrefabResolver(ISpatialGeneratorPrefabResolver resolver)
+    {
+        prefabResolver = resolver;
+    }
+
+    /// <summary>Set prefab resolver from a stylesheet (creates StylesheetPrefabResolver internally). Use from SkinController to avoid cross-assembly type issues. When null, resolver is cleared.</summary>
+    public void SetPrefabResolverFromStylesheet(UnityEngine.Object sheet)
+    {
+        if (sheet == null)
+        {
+            prefabResolver = null;
+            return;
+        }
+        var stylesheet = sheet as SpatialGeneratorStylesheet;
+        if (stylesheet == null)
+        {
+            prefabResolver = null;
+            return;
+        }
+        prefabResolver = new StylesheetPrefabResolver(stylesheet);
+    }
+
+    /// <summary>Apply tree param overrides (e.g. from skin). Recomputes generationSize from baseGenerationSize * boundsScale and re-initializes solver with optional minCellSize, maxDepth, maxObjectsPerNode. Call before Generate when switching skin. If tree params (expand/shrink) change, the 3D generator should Clear + Generate so the new inclusion math is applied.</summary>
+    public void ApplyTreeParamOverrides(Vector3 boundsScale, float minCellSize, int maxDepth, int maxObjectsPerNode)
+    {
+        if (boundsScale.x <= 0f || boundsScale.y <= 0f || boundsScale.z <= 0f)
+            boundsScale = Vector3.one;
+        if (baseGenerationSize.sqrMagnitude < 0.001f)
+            baseGenerationSize = generationSize;
+        generationSize = Vector3.Scale(baseGenerationSize, boundsScale);
+        generationBounds = new Bounds(Vector3.zero, generationSize);
+
+        if (mode == GenerationMode.TwoDimensional)
+        {
+            var quadSolver = GetComponent<SGQuadTreeSolver>();
+            if (quadSolver != null)
+            {
+                if (minCellSize > 0f) quadSolver.minCellSize = minCellSize;
+                if (maxDepth > 0) quadSolver.maxDepth = maxDepth;
+                if (maxObjectsPerNode > 0) quadSolver.maxObjectsPerNode = maxObjectsPerNode;
+                quadSolver.Initialize(generationBounds, seed);
+            }
+        }
+        else
+        {
+            var octSolver = GetComponent<SGOctTreeSolver>();
+            if (octSolver != null)
+            {
+                if (minCellSize > 0f) octSolver.minCellSize = minCellSize;
+                if (maxDepth > 0) octSolver.maxDepth = maxDepth;
+                if (maxObjectsPerNode > 0) octSolver.maxObjectsPerNode = maxObjectsPerNode;
+                octSolver.Initialize(generationBounds, seed);
+            }
+        }
+    }
+
+    private System.Collections.Generic.List<GameObject> GetPrefabsForNode(SGBehaviorTreeNode node)
+    {
+        if (node == null) return null;
+        if (prefabResolver != null) return prefabResolver.GetPrefabsForNode(node);
+        return node.gameObjectPrefabs;
     }
     
     void Start()
@@ -112,6 +180,7 @@ public class SpatialGenerator : SpatialGeneratorBase
         rng = new System.Random(seed);
         // Use local space bounds (center at origin, size is generationSize)
         generationBounds = new Bounds(Vector3.zero, generationSize);
+        baseGenerationSize = generationSize;
         lastScale = transform.localScale;
         
         // Setup solver based on mode
@@ -282,7 +351,8 @@ public class SpatialGenerator : SpatialGeneratorBase
             var (node, depth) = bfsQueue.Dequeue();
             if (node == null || !node.isEnabled)
                 continue;
-            bool hasPrefabs = node.gameObjectPrefabs != null && node.gameObjectPrefabs.Count > 0;
+            var prefabs = GetPrefabsForNode(node);
+            bool hasPrefabs = prefabs != null && prefabs.Count > 0;
             if (hasPrefabs)
                 queue.Add((node, depth));
             else if (node.placementLimit > 0 && node.childNodes != null && node.childNodes.Count > 0)
@@ -739,15 +809,16 @@ public class SpatialGenerator : SpatialGeneratorBase
     
     private void PlaceNodeObjects(SGBehaviorTreeNode node, Bounds placementBounds, int? parentInstanceIndex = null)
     {
-        if (node.gameObjectPrefabs == null || node.gameObjectPrefabs.Count == 0)
+        var prefabList = GetPrefabsForNode(node);
+        if (prefabList == null || prefabList.Count == 0)
         {
-            Debug.LogWarning($"[SpatialGenerator] PlaceNodeObjects - Node '{node.name}' has no prefabs assigned; skipping placement. Assign at least one prefab in the Inspector.");
+            Debug.LogWarning($"[SpatialGenerator] PlaceNodeObjects - Node '{node.name}' has no prefabs assigned; skipping placement. Assign at least one prefab in the Inspector or stylesheet.");
             return;
         }
-        
+
         Bounds worldBounds = LocalToWorldBounds(placementBounds);
-        int prefabIndex = rng.Next(node.gameObjectPrefabs.Count);
-        GameObject prefab = node.gameObjectPrefabs[prefabIndex];
+        int prefabIndex = rng.Next(prefabList.Count);
+        GameObject prefab = prefabList[prefabIndex];
         if (prefab == null)
         {
             Debug.LogWarning($"[SpatialGenerator] PlaceNodeObjects - Node '{node.name}' prefab at index {prefabIndex} is null (missing reference); skipping placement.");

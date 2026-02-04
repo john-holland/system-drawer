@@ -3,7 +3,9 @@
   "rootNamespace": "Locomotion.Narrative.EditorTools",
   "references": [
     "Locomotion.Narrative.Runtime",
-    "Locomotion.Narrative.Serialization"
+    "Locomotion.Narrative.Serialization",
+    "Locomotion.Narrative.Inference",
+    "SystemDrawer"
   ],
   "includePlatforms": [
     "Editor"

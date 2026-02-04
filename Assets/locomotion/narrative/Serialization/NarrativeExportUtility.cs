@@ -57,6 +57,12 @@ namespace Locomotion.Narrative.Serialization
             AssetDatabase.Refresh();
         }
 
+        public static void ExportCalendarToTrainingJsonFile(NarrativeCalendarAsset calendar, string path)
+        {
+            System.IO.File.WriteAllText(path, ExportCalendarToTrainingJson(calendar));
+            AssetDatabase.Refresh();
+        }
+
         public static void ExportTreeToJsonFile(NarrativeTreeAsset tree, string path)
         {
             System.IO.File.WriteAllText(path, ExportTreeToJson(tree));
@@ -117,6 +123,55 @@ namespace Locomotion.Narrative.Serialization
                 dto.events.Add(ed);
             }
 
+            return dto;
+        }
+
+        /// <summary>Export calendar to JSON for LSTM training; includes 4D spatiotemporal volume per event.</summary>
+        public static string ExportCalendarToTrainingJson(NarrativeCalendarAsset calendar)
+        {
+            var dto = ToTrainingDto(calendar);
+            return JsonConvert.SerializeObject(dto, JsonSettings);
+        }
+
+        private static NarrativeCalendarTrainingDto ToTrainingDto(NarrativeCalendarAsset calendar)
+        {
+            var dto = new NarrativeCalendarTrainingDto
+            {
+                schemaVersion = calendar != null ? calendar.schemaVersion : 1
+            };
+            if (calendar == null || calendar.events == null)
+                return dto;
+            for (int i = 0; i < calendar.events.Count; i++)
+            {
+                var e = calendar.events[i];
+                if (e == null) continue;
+                var ed = new NarrativeCalendarEventTrainingDto
+                {
+                    id = e.id,
+                    title = e.title,
+                    notes = e.notes,
+                    startDateTime = e.startDateTime,
+                    durationSeconds = e.durationSeconds,
+                    tags = e.tags ?? new List<string>(),
+                    treeAssetGuid = AssetGuid(e.tree)
+                };
+                if (e.spatiotemporalVolume.HasValue)
+                {
+                    var v = e.spatiotemporalVolume.Value;
+                    ed.centerX = v.center.x; ed.centerY = v.center.y; ed.centerZ = v.center.z;
+                    ed.sizeX = v.size.x; ed.sizeY = v.size.y; ed.sizeZ = v.size.z;
+                    ed.tMin = v.tMin; ed.tMax = v.tMax;
+                }
+                if (e.actions != null)
+                {
+                    for (int a = 0; a < e.actions.Count; a++)
+                    {
+                        var ad = ToDto(e.actions[a]);
+                        if (ad != null) ed.actions.Add(ad);
+                    }
+                }
+                dto.events.Add(ed);
+            }
             return dto;
         }
 

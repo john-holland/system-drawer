@@ -13,8 +13,10 @@ public struct ToolTraversabilityPathSegment
     public List<Vector3> waypoints;
     /// <summary>When !isWalk: the good section (card) to execute.</summary>
     public GoodSection toolUseCard;
-    /// <summary>When !isWalk: optional tool GameObject (e.g. ladder, batterang).</summary>
+    /// <summary>When !isWalk: optional tool GameObject (e.g. ladder, batterang). Single-tool backward compat.</summary>
     public GameObject toolUseTool;
+    /// <summary>When !isWalk: multiple tools for this segment. When non-empty, use this; else toolUseTool.</summary>
+    public List<GameObject> toolUseTools;
     /// <summary>When !isWalk: position after executing the card (bridge end).</summary>
     public Vector3 toolUseTo;
 
@@ -32,12 +34,19 @@ public struct ToolTraversabilityPathSegment
 
     public static ToolTraversabilityPathSegment ToolUse(GoodSection card, GameObject tool, Vector3 from, Vector3 to)
     {
+        var tools = tool != null ? new List<GameObject> { tool } : new List<GameObject>();
+        return ToolUse(card, tools, from, to);
+    }
+
+    public static ToolTraversabilityPathSegment ToolUse(GoodSection card, List<GameObject> tools, Vector3 from, Vector3 to)
+    {
         return new ToolTraversabilityPathSegment
         {
             isWalk = false,
             waypoints = null,
             toolUseCard = card,
-            toolUseTool = tool,
+            toolUseTool = (tools != null && tools.Count > 0) ? tools[0] : null,
+            toolUseTools = tools != null ? new List<GameObject>(tools) : new List<GameObject>(),
             toolUseTo = to
         };
     }
@@ -74,6 +83,7 @@ public static class ToolTraversabilityPlanner
     /// <param name="tryToolBridgeWhenNoPath">If true, when no walk path is found, try to bridge start→goal with one tool-use section.</param>
     /// <param name="desiredThrowDistanceFromTarget">When using a throw section: if &gt; 0, insert a walk segment to a stand position at this distance from goal, then throw.</param>
     /// <param name="maxThrowLaunchSpeed">When using a throw section: max launch speed for trajectory feasibility (0 = no cap).</param>
+    /// <param name="goalTarget">Optional. When throw target is moving (e.g. has Rigidbody), use moving-target trajectory for feasibility.</param>
     /// <returns>Path plan with walk and/or tool-use segments.</returns>
     public static ToolTraversabilityPathPlan FindPlan(
         Vector3 start,
@@ -84,7 +94,8 @@ public static class ToolTraversabilityPlanner
         float queryT,
         bool tryToolBridgeWhenNoPath = true,
         float desiredThrowDistanceFromTarget = 0f,
-        float maxThrowLaunchSpeed = 0f)
+        float maxThrowLaunchSpeed = 0f,
+        GameObject goalTarget = null)
     {
         var plan = new ToolTraversabilityPathPlan();
 
@@ -116,7 +127,12 @@ public static class ToolTraversabilityPlanner
             Vector3 throwOrigin = start;
             if (isThrow)
             {
-                if (!ThrowTrajectoryUtility.IsInRangeAndFeasible(section, start, goal, null, maxThrowLaunchSpeed > 0f ? maxThrowLaunchSpeed : 0f))
+                Rigidbody targetRb = goalTarget != null ? goalTarget.GetComponent<Rigidbody>() : null;
+                Vector3 targetPos = goalTarget != null ? goalTarget.transform.position : goal;
+                bool feasible = targetRb != null
+                    ? ThrowTrajectoryUtility.IsInRangeAndFeasibleMovingTarget(section, start, targetPos, targetRb.linearVelocity, null, maxThrowLaunchSpeed > 0f ? maxThrowLaunchSpeed : 0f)
+                    : ThrowTrajectoryUtility.IsInRangeAndFeasible(section, start, goal, null, maxThrowLaunchSpeed > 0f ? maxThrowLaunchSpeed : 0f);
+                if (!feasible)
                     continue;
                 if (desiredThrowDistanceFromTarget > 0f)
                 {
@@ -132,7 +148,16 @@ public static class ToolTraversabilityPlanner
                     }
                 }
             }
-            plan.segments.Add(ToolTraversabilityPathSegment.ToolUse(section, section.requiredTool, throwOrigin, goal));
+            List<GameObject> toolList = section.GetRequiredToolsList();
+            if (section.requireAllHeldToolsToMakeContact && !ToolContactFeasibility.CanAllRequiredToolsMakeContact(section, start, goal, goalTarget))
+                continue;
+            if (toolList != null && toolList.Count > 0)
+                plan.segments.Add(ToolTraversabilityPathSegment.ToolUse(section, toolList, throwOrigin, goal));
+            else
+            {
+                var single = section.requiredTool != null ? new List<GameObject> { section.requiredTool } : new List<GameObject>();
+                plan.segments.Add(ToolTraversabilityPathSegment.ToolUse(section, single, throwOrigin, goal));
+            }
             return plan;
         }
 
@@ -152,8 +177,9 @@ public static class ToolTraversabilityPlanner
         float queryT,
         bool tryToolBridgeWhenNoPath = true,
         float desiredThrowDistanceFromTarget = 0f,
-        float maxThrowLaunchSpeed = 0f)
+        float maxThrowLaunchSpeed = 0f,
+        GameObject goalTarget = null)
     {
-        return FindPlan(start, goal, solver, availableSections, queryPosition, queryT, tryToolBridgeWhenNoPath, desiredThrowDistanceFromTarget, maxThrowLaunchSpeed);
+        return FindPlan(start, goal, solver, availableSections, queryPosition, queryT, tryToolBridgeWhenNoPath, desiredThrowDistanceFromTarget, maxThrowLaunchSpeed, goalTarget);
     }
 }

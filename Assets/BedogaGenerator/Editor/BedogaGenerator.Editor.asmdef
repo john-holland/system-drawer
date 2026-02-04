@@ -1,0 +1,21 @@
+{
+    "name": "BedogaGenerator.Editor",
+    "rootNamespace": "",
+    "references": [
+        "BedogaGenerator",
+        "SystemDrawer",
+        "Locomotion.Narrative.Runtime",
+        "Locomotion.Narrative.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -36,6 +36,33 @@ namespace Locomotion.Musculature
 
         public Transform PrimaryBoneTransform => boneTransform != null ? boneTransform : transform;
 
+        /// <summary>
+        /// Rigidbody on the primary bone or this GameObject. Used for limb speed (e.g. hit intercept).
+        /// </summary>
+        protected Rigidbody GetRigidbody()
+        {
+            var t = PrimaryBoneTransform;
+            if (t != null)
+            {
+                var rb = t.GetComponent<Rigidbody>();
+                if (rb != null) return rb;
+            }
+            return GetComponent<Rigidbody>();
+        }
+
+        /// <summary>
+        /// Current speed of this body part in m/s (from Rigidbody linear velocity magnitude).
+        /// Use for hit trajectory estimates (e.g. arm strike speed) when available.
+        /// </summary>
+        public float Speed
+        {
+            get
+            {
+                var rb = GetRigidbody();
+                return rb != null ? rb.linearVelocity.magnitude : 0f;
+            }
+        }
+
         public IEnumerable<Transform> EnumerateBoneTransforms()
         {
             yield return PrimaryBoneTransform;

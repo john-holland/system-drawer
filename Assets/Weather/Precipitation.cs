@@ -280,7 +280,7 @@ namespace Weather
 
             PortalRainParticleSystem portalRain = portalRainObj.AddComponent<PortalRainParticleSystem>();
             portalRain.portal = portal;
-            portalRain.terrain = FindObjectOfType<Terrain>();
+            portalRain.terrain = FindFirstObjectByType<Terrain>();
 
             portalParticleSystems.Add(portalRain);
         }
@@ -308,7 +308,7 @@ namespace Weather
         /// </summary>
         public void AutoDetectPortals()
         {
-            MeshTerrainPortal[] portals = FindObjectsOfType<MeshTerrainPortal>();
+            MeshTerrainPortal[] portals = FindObjectsByType<MeshTerrainPortal>(FindObjectsSortMode.None);
             foreach (var portal in portals)
             {
                 RegisterPortalForRain(portal);

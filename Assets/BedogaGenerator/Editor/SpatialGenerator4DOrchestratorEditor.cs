@@ -175,6 +175,16 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
             }
         }
 
+        var skinController = orch.GetComponent<SpatialGeneratorSkinController>();
+        if (skinController != null)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Skins", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("SpatialGeneratorSkinController is present. Use it to switch editor/runtime skin and apply stylesheets.", MessageType.None);
+            if (GUILayout.Button("Select Skin Controller", GUILayout.Height(20)))
+                Selection.activeGameObject = skinController.gameObject;
+        }
+
         if (showInGameProp != null && showInGameProp.boolValue)
         {
             EditorGUILayout.Space();

@@ -308,6 +308,119 @@ public class PhysicsIKTrainingWindow : EditorWindow
             if (GUI.changed) EditorUtility.SetDirty(runAsset);
         }
 
+        if (testCategory == PhysicsIKTrainingCategory.Carry && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Carry", EditorStyles.miniLabel);
+            runAsset.carriedObject = (GameObject)EditorGUILayout.ObjectField("Carried object", runAsset.carriedObject, typeof(GameObject), true);
+            runAsset.pleaseHold = EditorGUILayout.Toggle("Please hold (re-grasp if put down)", runAsset.pleaseHold);
+            SerializedObject soCarry = new SerializedObject(runAsset);
+            SerializedProperty carryTrees = soCarry.FindProperty("carryAnimationTrees");
+            if (carryTrees != null)
+                EditorGUILayout.PropertyField(carryTrees, new GUIContent("Carry animation trees"), true);
+            soCarry.ApplyModifiedPropertiesWithoutUndo();
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
+        if (testCategory == PhysicsIKTrainingCategory.Isometric && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Isometric", EditorStyles.miniLabel);
+            SerializedObject soIsometric = new SerializedObject(runAsset);
+            SerializedProperty isometricCardProp = soIsometric.FindProperty("isometricCard");
+            SerializedProperty isometricHoldProp = soIsometric.FindProperty("isometricHoldDuration");
+            if (isometricCardProp != null)
+                EditorGUILayout.PropertyField(isometricCardProp, new GUIContent("Isometric pose/card"), true);
+            if (isometricHoldProp != null)
+                EditorGUILayout.PropertyField(isometricHoldProp, new GUIContent("Hold duration (s)"));
+            soIsometric.ApplyModifiedPropertiesWithoutUndo();
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
+        if (testCategory == PhysicsIKTrainingCategory.Place && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Place", EditorStyles.miniLabel);
+            runAsset.placeObject = (GameObject)EditorGUILayout.ObjectField("Object to place", runAsset.placeObject, typeof(GameObject), true);
+            runAsset.placeTargetPosition = EditorGUILayout.Vector3Field("Target position", runAsset.placeTargetPosition);
+            runAsset.placeTargetRotation = Quaternion.Euler(EditorGUILayout.Vector3Field("Target rotation (euler)", runAsset.placeTargetRotation.eulerAngles));
+            SerializedObject soPlace = new SerializedObject(runAsset);
+            SerializedProperty placeTrees = soPlace.FindProperty("placeAnimationTrees");
+            if (placeTrees != null)
+                EditorGUILayout.PropertyField(placeTrees, new GUIContent("Place animation trees"), true);
+            soPlace.ApplyModifiedPropertiesWithoutUndo();
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
+        if (testCategory == PhysicsIKTrainingCategory.Hit && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Hit", EditorStyles.miniLabel);
+            runAsset.hitTarget = (GameObject)EditorGUILayout.ObjectField("Hit target", runAsset.hitTarget, typeof(GameObject), true);
+            SerializedObject soHit = new SerializedObject(runAsset);
+            SerializedProperty hitLimbNames = soHit.FindProperty("hitLimbNames");
+            if (hitLimbNames != null)
+                EditorGUILayout.PropertyField(hitLimbNames, new GUIContent("Hit limb names"), true);
+            soHit.ApplyModifiedPropertiesWithoutUndo();
+            runAsset.hitUseTool = EditorGUILayout.Toggle("Use tool", runAsset.hitUseTool);
+            if (runAsset.hitUseTool)
+                runAsset.hitTool = (GameObject)EditorGUILayout.ObjectField("Hit tool", runAsset.hitTool, typeof(GameObject), true);
+            SerializedObject soHit2 = new SerializedObject(runAsset);
+            SerializedProperty hitTrees = soHit2.FindProperty("hitAnimationTrees");
+            if (hitTrees != null)
+                EditorGUILayout.PropertyField(hitTrees, new GUIContent("Hit animation trees"), true);
+            soHit2.ApplyModifiedPropertiesWithoutUndo();
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
+        if (testCategory == PhysicsIKTrainingCategory.Weightlift && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Weightlift", EditorStyles.miniLabel);
+            runAsset.weightliftTool = (GameObject)EditorGUILayout.ObjectField("Weight/tool", runAsset.weightliftTool, typeof(GameObject), true);
+            runAsset.weightliftMuscleGroup = EditorGUILayout.TextField("Muscle group", runAsset.weightliftMuscleGroup);
+            SerializedObject soWl = new SerializedObject(runAsset);
+            SerializedProperty wlTrees = soWl.FindProperty("weightliftAnimationTrees");
+            if (wlTrees != null)
+                EditorGUILayout.PropertyField(wlTrees, new GUIContent("Weightlift animation trees"), true);
+            soWl.ApplyModifiedPropertiesWithoutUndo();
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
+        if (testCategory == PhysicsIKTrainingCategory.Catch && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Catch", EditorStyles.miniLabel);
+            runAsset.catchObject = (GameObject)EditorGUILayout.ObjectField("Object to catch", runAsset.catchObject, typeof(GameObject), true);
+            SerializedObject soCatch = new SerializedObject(runAsset);
+            SerializedProperty catchLimbNames = soCatch.FindProperty("catchLimbNames");
+            if (catchLimbNames != null)
+                EditorGUILayout.PropertyField(catchLimbNames, new GUIContent("Catch limb names"), true);
+            SerializedProperty catchTrees = soCatch.FindProperty("catchAnimationTrees");
+            if (catchTrees != null)
+                EditorGUILayout.PropertyField(catchTrees, new GUIContent("Catch animation trees"), true);
+            soCatch.ApplyModifiedPropertiesWithoutUndo();
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
+        if (testCategory == PhysicsIKTrainingCategory.Shoot && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Shoot", EditorStyles.miniLabel);
+            runAsset.shootTarget = (GameObject)EditorGUILayout.ObjectField("Shoot target", runAsset.shootTarget, typeof(GameObject), true);
+            runAsset.shootTargetPosition = EditorGUILayout.Vector3Field("Shoot target position", runAsset.shootTargetPosition);
+            if (runAsset.shootTarget != null)
+                EditorGUILayout.HelpBox("Shoot target will use this object's position at runtime when set.", MessageType.None);
+            runAsset.shootLaunchedObject = EditorGUILayout.ObjectField("Launched object", runAsset.shootLaunchedObject, typeof(UnityEngine.Object), true);
+            runAsset.shootHandMode = (ThrowHandMode)EditorGUILayout.EnumPopup("Hand mode", runAsset.shootHandMode);
+            SerializedObject soShoot = new SerializedObject(runAsset);
+            SerializedProperty shootTrees = soShoot.FindProperty("shootAnimationTrees");
+            if (shootTrees != null)
+                EditorGUILayout.PropertyField(shootTrees, new GUIContent("Shoot animation trees"), true);
+            soShoot.ApplyModifiedPropertiesWithoutUndo();
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
         EditorGUILayout.Space(4);
 
         EditorGUILayout.LabelField("Sweep", EditorStyles.boldLabel);

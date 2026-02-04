@@ -145,7 +145,7 @@ namespace Weather
             // Auto-find terrain
             if (terrain == null)
             {
-                terrain = FindObjectOfType<Terrain>();
+                terrain = FindFirstObjectByType<Terrain>();
             }
         }
 
