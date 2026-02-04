@@ -1,0 +1,14 @@
+# Optional config for video_storage_tool. CLI args override these values.
+
+audio:
+  format: aac
+  max_mb: 5.0
+
+script:
+  backend: whisper
+  model: base   # whisper model size: tiny, base, small, medium, large
+
+t2v:
+  backend: stub
+  model_path: null
+  duration_sec: 5.0   # stub placeholder video length

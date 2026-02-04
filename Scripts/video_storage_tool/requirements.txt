@@ -1,0 +1,9 @@
+# Core (config, no hard deps for ffmpeg – must be on PATH)
+PyYAML>=6.0
+
+# Optional: ASR for video-to-script (pip install openai-whisper separately if needed)
+# openai-whisper
+
+# Optional T2V backends (install when using --t2v-backend cogvideo etc.)
+# torch
+# requirements-t2v.txt or extra for full T2V deps
