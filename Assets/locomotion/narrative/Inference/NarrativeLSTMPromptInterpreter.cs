@@ -144,8 +144,16 @@ namespace Locomotion.Narrative
                 Debug.LogWarning($"[NarrativeLSTMPromptInterpreter] Inference failed: {e.Message}");
             }
 #endif
+#if UNITY_EDITOR
+            InterpretCompleted?.Invoke(this);
+#endif
             return lastInterpretedEvents;
         }
+
+#if UNITY_EDITOR
+        /// <summary>Fired after Interpret() completes. Used by PromptInterpreterDiffWindow to refresh.</summary>
+        public static System.Action<NarrativeLSTMPromptInterpreter> InterpretCompleted;
+#endif
 
         private void DecodeOutput(float[] outData)
         {
