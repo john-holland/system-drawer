@@ -4,7 +4,8 @@
   "references": [
     "Locomotion.Runtime",
     "Locomotion.Audio",
-    "HierarchicalPathFinding"
+    "HierarchicalPathFinding",
+    "Generated.Runtime"
   ],
   "includePlatforms": [
     "Editor"

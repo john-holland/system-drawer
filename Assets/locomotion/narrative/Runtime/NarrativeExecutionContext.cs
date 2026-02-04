@@ -37,6 +37,16 @@ namespace Locomotion.Narrative
             return false;
         }
 
+        public bool TryResolveAnimationClip(string key, out AnimationClip clip)
+        {
+            clip = null;
+            var resolver = bindings?.GetClipResolver();
+            if (resolver == null || string.IsNullOrWhiteSpace(key))
+                return false;
+            clip = resolver.ResolveClip(key.Trim());
+            return clip != null;
+        }
+
         public NarrativeDateTime Now => clock != null ? clock.Now : default;
     }
 }

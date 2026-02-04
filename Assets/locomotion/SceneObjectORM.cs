@@ -97,6 +97,30 @@ public class SceneObjectRegistry : MonoBehaviour
     }
 
     /// <summary>
+    /// Resolve key or synonym to the canonical registry key. Returns null if not found. Use for ORM fill and preprocessor vocabulary.
+    /// </summary>
+    public string ResolveKey(string keyOrSynonym)
+    {
+        if (string.IsNullOrWhiteSpace(keyOrSynonym)) return null;
+        BuildLookups();
+        var key = keyOrSynonym.Trim();
+        return _synonymToKey != null && _synonymToKey.TryGetValue(key, out var resolvedKey) ? resolvedKey : null;
+    }
+
+    /// <summary>
+    /// Get all keys and synonyms for preprocessor allowed vocabulary. Returns a new list each time.
+    /// </summary>
+    public List<string> GetAllKeysAndSynonyms()
+    {
+        BuildLookups();
+        var list = new List<string>();
+        if (_synonymToKey == null) return list;
+        foreach (var k in _synonymToKey.Keys)
+            if (!string.IsNullOrEmpty(k)) list.Add(k);
+        return list;
+    }
+
+    /// <summary>
     /// Resolve by identity key or synonym. Returns the GameObject reference (from either cloneable or references).
     /// Does not instantiate; use GetCloneable + Instantiate for cloneable entries.
     /// </summary>

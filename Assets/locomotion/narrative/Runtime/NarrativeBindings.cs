@@ -19,6 +19,9 @@ namespace Locomotion.Narrative
 
         public List<BindingEntry> bindings = new List<BindingEntry>();
 
+        [Tooltip("Optional: resolve animation clip by key (e.g. generator key + '_clip'). Assign an AssetLoader or other IAnimationClipResolver.")]
+        public MonoBehaviour clipResolver;
+
         private readonly Dictionary<string, UnityEngine.Object> index = new Dictionary<string, UnityEngine.Object>(StringComparer.Ordinal);
 
         private void OnEnable()
@@ -72,6 +75,11 @@ namespace Locomotion.Narrative
 
             go = null;
             return false;
+        }
+
+        public IAnimationClipResolver GetClipResolver()
+        {
+            return clipResolver != null ? clipResolver as IAnimationClipResolver : null;
         }
     }
 }

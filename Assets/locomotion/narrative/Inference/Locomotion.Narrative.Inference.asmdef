@@ -4,6 +4,7 @@
   "references": [
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
+    "Locomotion.Runtime",
     "com.unity.barracuda"
   ],
   "includePlatforms": [],

@@ -24,6 +24,10 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private bool usePreviewSceneActor;
     /// <summary>When solver not set, optional prefab/root to instantiate in preview.</summary>
     private GameObject actorPrefabOrRoot;
+    /// <summary>Optional: resolve actor prefab by key via AssetLoader (e.g. generated 3D key). When set, overrides actorPrefabOrRoot when loader resolves.</summary>
+    [SerializeField] private string actorKey = "";
+    /// <summary>Optional: resolve animation clip by key via AssetLoader (e.g. generator key + '_clip'). For display/reference; training uses Animation Tree.</summary>
+    [SerializeField] private string clipKey = "";
 
     private const string PreviewSceneName = "IKTrainingPreview_Scene";
     private const int PreviewSize = 300;
@@ -196,6 +200,15 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private GameObject GetActorRootForPreview()
     {
         if (solver != null) return solver.gameObject;
+        if (!string.IsNullOrWhiteSpace(actorKey))
+        {
+            var loader = FindAnyObjectByType<AssetLoader>();
+            if (loader != null)
+            {
+                var prefab = loader.ResolvePrefab(actorKey.Trim());
+                if (prefab != null) return prefab;
+            }
+        }
         return actorPrefabOrRoot;
     }
 
@@ -537,7 +550,9 @@ public class PhysicsIKTrainingWindow : EditorWindow
         runAsset = (PhysicsIKTrainingRunAsset)EditorGUILayout.ObjectField("Run Asset (save target)", runAsset, typeof(PhysicsIKTrainingRunAsset), false);
         testCategory = (PhysicsIKTrainingCategory)EditorGUILayout.EnumPopup("Test Category", testCategory);
         ragdollRigidbody = (Rigidbody)EditorGUILayout.ObjectField("Ragdoll Capsule Rigidbody", ragdollRigidbody, typeof(Rigidbody), true);
-        actorPrefabOrRoot = (GameObject)EditorGUILayout.ObjectField("Actor prefab/root (if no solver)", actorPrefabOrRoot, typeof(GameObject), true);
+        actorKey = EditorGUILayout.TextField("Actor key (from AssetLoader)", actorKey);
+        actorPrefabOrRoot = (GameObject)EditorGUILayout.ObjectField("Actor prefab/root (if no solver/key)", actorPrefabOrRoot, typeof(GameObject), true);
+        clipKey = EditorGUILayout.TextField("Clip key (from AssetLoader, optional)", clipKey);
         GUI.enabled = GetEffectiveRagdollRigidbody() != null;
         if (GUILayout.Button("Reset IK constraints"))
         {

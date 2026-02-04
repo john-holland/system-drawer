@@ -41,11 +41,24 @@ namespace Locomotion.Narrative
         [Header("Optional targets")]
         [Tooltip("If set, ApplyToCalendar will add interpreted events here.")]
         public NarrativeCalendarAsset calendar;
+        [Tooltip("Optional. Resolve entity/action phrases to keys for ORM fill and positionKeys when applying to calendar.")]
+        public SceneObjectRegistry sceneObjectRegistry;
+        [Tooltip("Optional. When set and preprocessBeforeInterpret is true, runs Preprocess(asset) before Interpret(asset) if procedural is empty.")]
+        public MonoBehaviour promptPreprocessorComponent;
+        [Tooltip("When true and promptPreprocessorComponent (IPromptPreprocessor) is set, Interpret(asset) runs Preprocess first when asset has no procedural text.")]
+        public bool preprocessBeforeInterpret;
 
         [Header("Output")]
         [Tooltip("Last interpreted events (read-only).")]
         public List<InterpretedEvent> lastInterpretedEvents = new List<InterpretedEvent>();
+        [Tooltip("Last prompt asset interpreted (when using Interpret(asset)).")]
+        public NarrativePromptAsset lastPromptAsset;
+        [Tooltip("Bindings from last run: phrase -> resolved key or status (read-only).")]
+        public List<InterpretedEventBinding> lastBindings = new List<InterpretedEventBinding>();
+        [Tooltip("(GENERATE) requests parsed from last prompt (read-only).")]
+        public List<GenerationRequest> lastGenerationRequests = new List<GenerationRequest>();
 
+        private readonly Dictionary<int, InterpretationResult> _resultByAsset = new Dictionary<int, InterpretationResult>();
         private const int PromptMaxLen = 128;
         private const int EventParams = 11;
         private const int MaxEvents = 3;
@@ -118,10 +131,39 @@ namespace Locomotion.Narrative
 #endif
         }
 
-        /// <summary>Run interpreter on prompt; returns list of decoded events and sets lastInterpretedEvents.</summary>
+        /// <summary>Run interpreter on prompt asset; reads active text, parses (GENERATE), runs LSTM and ORM fill, stores result keyed by asset.</summary>
+        public List<InterpretedEvent> Interpret(NarrativePromptAsset asset)
+        {
+            if (asset == null) return lastInterpretedEvents;
+            if (preprocessBeforeInterpret && promptPreprocessorComponent != null && !asset.HasProcedural && promptPreprocessorComponent is IPromptPreprocessor preproc)
+                preproc.Preprocess(asset, sceneObjectRegistry);
+            string activeText = asset.GetActivePromptText();
+            asset.generationRequests = GenerationRequestParser.Parse(activeText);
+            string textForLstm = GenerationRequestParser.StripForLSTM(activeText);
+            Interpret(textForLstm);
+            var bindings = new List<InterpretedEventBinding>();
+            OrmFillService.FillFromRegistry(lastInterpretedEvents, sceneObjectRegistry, null, bindings);
+            lastPromptAsset = asset;
+            lastBindings.Clear();
+            lastBindings.AddRange(bindings);
+            lastGenerationRequests.Clear();
+            if (asset.generationRequests != null)
+                lastGenerationRequests.AddRange(asset.generationRequests);
+            var result = new InterpretationResult();
+            result.events.AddRange(lastInterpretedEvents);
+            result.bindings.AddRange(bindings);
+            result.generationRequests.AddRange(lastGenerationRequests);
+            _resultByAsset[asset.GetInstanceID()] = result;
+            return lastInterpretedEvents;
+        }
+
+        /// <summary>Run interpreter on raw prompt string (creates transient asset and calls Interpret(asset)). Returns list of decoded events.</summary>
         public List<InterpretedEvent> Interpret(string prompt)
         {
             lastInterpretedEvents.Clear();
+            lastBindings.Clear();
+            lastGenerationRequests.Clear();
+            lastPromptAsset = null;
             if (_tokenizer == null || !_modelLoaded)
                 return lastInterpretedEvents;
             int[] ids = _tokenizer.Encode(prompt ?? "", false, PromptMaxLen);
@@ -144,10 +186,21 @@ namespace Locomotion.Narrative
                 Debug.LogWarning($"[NarrativeLSTMPromptInterpreter] Inference failed: {e.Message}");
             }
 #endif
+            if (sceneObjectRegistry != null)
+            {
+                OrmFillService.FillFromRegistry(lastInterpretedEvents, sceneObjectRegistry, null, lastBindings);
+            }
 #if UNITY_EDITOR
             InterpretCompleted?.Invoke(this);
 #endif
             return lastInterpretedEvents;
+        }
+
+        /// <summary>Get stored result for a prompt asset (from last Interpret(asset) for that asset).</summary>
+        public InterpretationResult GetResultForAsset(NarrativePromptAsset asset)
+        {
+            if (asset == null) return null;
+            return _resultByAsset != null && _resultByAsset.TryGetValue(asset.GetInstanceID(), out var r) ? r : null;
         }
 
 #if UNITY_EDITOR
@@ -188,13 +241,14 @@ namespace Locomotion.Narrative
             }
         }
 
-        /// <summary>Add lastInterpretedEvents to the assigned calendar (or to the one passed in).</summary>
+        /// <summary>Add lastInterpretedEvents to the assigned calendar (or to the one passed in). Uses lastBindings to set positionKeys when status is OrmMatched.</summary>
         public void ApplyToCalendar(NarrativeCalendarAsset targetCalendar = null)
         {
             var cal = targetCalendar != null ? targetCalendar : calendar;
             if (cal == null || cal.events == null) return;
-            foreach (var ev in lastInterpretedEvents)
+            for (int i = 0; i < lastInterpretedEvents.Count; i++)
             {
+                var ev = lastInterpretedEvents[i];
                 var ne = new NarrativeCalendarEvent
                 {
                     title = ev.title,
@@ -202,6 +256,8 @@ namespace Locomotion.Narrative
                     durationSeconds = Mathf.RoundToInt(ev.durationSeconds),
                     spatiotemporalVolume = new Bounds4(ev.center, ev.size, ev.tMin, ev.tMax)
                 };
+                if (lastBindings != null && i < lastBindings.Count && lastBindings[i].status == BindingStatus.OrmMatched && !string.IsNullOrEmpty(lastBindings[i].resolvedOrmKey))
+                    ne.positionKeys = new List<string> { lastBindings[i].resolvedOrmKey };
                 cal.events.Add(ne);
             }
         }

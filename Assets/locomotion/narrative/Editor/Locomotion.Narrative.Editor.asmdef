@@ -5,6 +5,7 @@
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
     "Locomotion.Narrative.Inference",
+    "Locomotion.Runtime",
     "SystemDrawer"
   ],
   "includePlatforms": [

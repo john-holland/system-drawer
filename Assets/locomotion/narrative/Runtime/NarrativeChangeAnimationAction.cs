@@ -32,6 +32,11 @@ namespace Locomotion.Narrative
         [Tooltip("Crossfade duration (0 = instant)")]
         public float crossfadeDuration = 0.25f;
 
+        [Tooltip("When true, resolve parameterName (or clipKey) as a clip key via IAnimationClipResolver and play that clip.")]
+        public bool useClipKey = false;
+        [Tooltip("Clip key (e.g. generator key + '_clip'). Used when useClipKey is true; falls back to parameterName if empty.")]
+        public string clipKey = "";
+
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
             if (!contingency.Evaluate(ctx))
@@ -48,6 +53,16 @@ namespace Locomotion.Narrative
             {
                 Debug.LogWarning("[NarrativeChangeAnimationAction] GameObject does not have Animator component");
                 return BehaviorTreeStatus.Failure;
+            }
+
+            if (useClipKey)
+            {
+                string key = string.IsNullOrWhiteSpace(clipKey) ? parameterName : clipKey;
+                if (!string.IsNullOrWhiteSpace(key) && ctx.TryResolveAnimationClip(key, out var resolvedClip) && resolvedClip != null)
+                {
+                    PlayClipOnAnimator(animator, resolvedClip);
+                    return BehaviorTreeStatus.Success;
+                }
             }
 
             // Determine parameter name
@@ -104,6 +119,25 @@ namespace Locomotion.Narrative
             }
 
             return BehaviorTreeStatus.Success;
+        }
+
+        private void PlayClipOnAnimator(Animator animator, AnimationClip clip)
+        {
+            if (animator == null || clip == null) return;
+            var runtimeController = animator.runtimeAnimatorController;
+            if (runtimeController == null)
+            {
+                animator.Play(0, 0, 0f);
+                return;
+            }
+            var overrideController = new AnimatorOverrideController(runtimeController);
+            var clips = overrideController.animationClips;
+            if (clips != null && clips.Length > 0)
+            {
+                overrideController[clips[0]] = clip;
+                animator.runtimeAnimatorController = overrideController;
+            }
+            animator.Play(0, 0, 0f);
         }
 
         private bool HasParameter(Animator animator, string paramName, AnimatorControllerParameterType type)
