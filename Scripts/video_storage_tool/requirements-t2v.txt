@@ -1,0 +1,8 @@
+# Optional T2V (CogVideoX) dependencies. Install when using t2v.backend: cogvideox.
+torch
+diffusers
+transformers
+accelerate
+sentencepiece   # CogVideoX tokenizer (spiece.model)
+protobuf        # required by sentencepiece for tokenizer
+six             # required by torchvision/diffusers on some Python versions

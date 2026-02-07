@@ -1,5 +1,8 @@
 # Optional config for video_storage_tool. CLI args override these values.
 
+# Device for T2V and visual description: auto (use GPU if available) | cuda | cpu
+device: auto
+
 audio:
   format: aac
   max_mb: 5.0
@@ -7,8 +10,24 @@ audio:
 script:
   backend: whisper
   model: base   # whisper model size: tiny, base, small, medium, large
+  # Exhaustive visual description (frame-by-frame captions). Set visual_backend to blip or blip2.
+  visual_backend: none   # blip | blip2 | none (set blip for exhaustive frame descriptions)
+  visual_interval_sec: 1.0   # sample one frame per N seconds
+  visual_max_frames: 60     # cap number of frames to describe
+  visual_model: "Salesforce/blip-image-captioning-base"   # or Salesforce/blip2-opt-2.7b for blip2
+  visual_grid: 2   # 1=whole only, 2=2x2 chunks, 3=3x3 chunks (exhaustive: whole + per-region with prepositions)
+  style_preface: true   # add a [Preface] style-opinion line at top of script (when visual_backend is set)
+  style_prompt: "The visual style of this scene is"   # BLIP conditional prompt for preface; empty = skip
 
 t2v:
   backend: stub
-  model_path: null
+  device: auto   # auto | cuda | cpu (T2V and BLIP use this when in t2v/config)
+  # 2b = smaller (~14GB download); 5b = larger, higher quality
+  model_id: "THUDM/CogVideoX-2b"   # or THUDM/CogVideoX-5b
+  model_path: null                 # optional; local path override
   duration_sec: 5.0   # stub placeholder video length
+
+diff:
+  enabled: true
+  codec: libtheora
+  quality: 6   # Theora quality 0-10

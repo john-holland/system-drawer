@@ -2,8 +2,45 @@
 Extract and compress audio from a video file to a target size (few MB) using ffmpeg.
 """
 
+import shutil
 import subprocess
+import sys
 from pathlib import Path
+
+FFMPEG_NOT_FOUND = (
+    "ffmpeg not found. Install ffmpeg and add it to your PATH "
+    "(https://ffmpeg.org/download.html). On Windows, add the folder containing ffmpeg.exe to PATH."
+)
+
+
+def _find_ffmpeg(ffmpeg_path: str | Path | None = None) -> str:
+    """Return path to ffmpeg executable. Raises FileNotFoundError if not found."""
+    if ffmpeg_path:
+        p = Path(ffmpeg_path)
+        if p.is_file():
+            return str(p)
+        if p.is_dir():
+            exe = p / ("ffmpeg.exe" if sys.platform == "win32" else "ffmpeg")
+            if exe.is_file():
+                return str(exe)
+    exe = shutil.which("ffmpeg")
+    if not exe:
+        raise FileNotFoundError(FFMPEG_NOT_FOUND)
+    return exe
+
+
+def _find_ffprobe(ffprobe_path: str | Path | None = None) -> str:
+    """Return path to ffprobe executable. Falls back to ffprobe on PATH."""
+    if ffprobe_path:
+        p = Path(ffprobe_path)
+        if p.is_file():
+            return str(p)
+        if p.is_dir():
+            exe = p / ("ffprobe.exe" if sys.platform == "win32" else "ffprobe")
+            if exe.is_file():
+                return str(exe)
+    exe = shutil.which("ffprobe")
+    return exe or "ffprobe"
 
 
 def get_video_duration_seconds(video_path: Path) -> float:
@@ -33,11 +70,13 @@ def extract_and_compress_audio(
     *,
     format: str = "aac",
     max_mb: float = 5.0,
+    ffmpeg_path: str | Path | None = None,
 ) -> Path:
     """
     Extract audio from video and encode to stay under max_mb.
     Uses a bitrate derived from duration and max_mb; falls back to 128k if duration unknown.
     """
+    ffmpeg_exe = _find_ffmpeg(ffmpeg_path)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     duration = get_video_duration_seconds(video_path)
@@ -58,7 +97,7 @@ def extract_and_compress_audio(
         codec = "libmp3lame"
         bitrate_arg = ["-b:a", f"{bitrate_k}k"]
     cmd = [
-        "ffmpeg", "-y", "-i", str(video_path),
+        ffmpeg_exe, "-y", "-i", str(video_path),
         "-vn", "-acodec", codec,
         *bitrate_arg,
         "-ar", "44100",

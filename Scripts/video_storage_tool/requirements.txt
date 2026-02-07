@@ -1,9 +1,12 @@
 # Core (config, no hard deps for ffmpeg – must be on PATH)
 PyYAML>=6.0
 
+# Server (optional: pip install -e ".[server]" or install Flask)
+Flask>=3.0
+
 # Optional: ASR for video-to-script (pip install openai-whisper separately if needed)
 # openai-whisper
 
-# Optional T2V backends (install when using --t2v-backend cogvideo etc.)
-# torch
-# requirements-t2v.txt or extra for full T2V deps
+# Optional: CogVideoX backend (pip install -r requirements-t2v.txt or below)
+# For cogvideox: torch diffusers transformers accelerate
+# requirements-t2v.txt lists these so the base tool stays lightweight; fallback to stub if missing.

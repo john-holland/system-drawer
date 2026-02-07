@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Store & Reconstitute</title>
+  <style>
+    :root {
+      --bg: #1a1b1e;
+      --surface: #25262b;
+      --border: #373a40;
+      --text: #e8e8e8;
+      --muted: #909296;
+      --accent: #4dabf7;
+      --accent-hover: #74c0fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1.5rem;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.5rem; margin-top: 0; }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    section h2 { font-size: 1rem; margin: 0 0 0.75rem; color: var(--muted); }
+    input[type="file"] { margin-bottom: 0.75rem; }
+    button, .btn {
+      background: var(--accent);
+      color: #111;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button:hover, .btn:hover { background: var(--accent-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .btn-outline:hover { background: rgba(77, 171, 247, 0.15); }
+    #status { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+    #status.error { color: #ff6b6b; }
+    #status.ready { color: #51cf66; }
+    ul.stored-list { list-style: none; padding: 0; margin: 0; }
+    ul.stored-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    ul.stored-list li:last-child { border-bottom: none; }
+    .stored-id { font-family: ui-monospace, monospace; font-size: 0.85rem; color: var(--muted); }
+    .player-wrap {
+      margin-top: 1rem;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .player-wrap video {
+      width: 100%;
+      max-height: 70vh;
+      display: block;
+    }
+    .player-wrap:empty { display: none; }
+    .hidden { display: none; }
+    .progress-wrap {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .progress-wrap progress {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      accent-color: var(--accent);
+    }
+    .progress-wrap progress:indeterminate { opacity: 0.8; }
+    .settings-form label { display: block; margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--muted); font-size: 0.85rem; }
+    .settings-form input[type="text"], .settings-form select { width: 100%; max-width: 24rem; padding: 0.4rem; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); }
+    .settings-form .hint { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+  </style>
+</head>
+<body>
+  <h1>Video Store & Reconstitute</h1>
+  <p style="color: var(--muted); font-size: 0.9rem;">Dehydrate a video (audio + script + resultant + diff), then reconstitute and stream with seeking.</p>
+
+  <section>
+    <h2>Upload & Store</h2>
+    <form id="uploadForm">
+      <input type="file" id="videoFile" name="video" accept=".mp4,.mov,.avi,.mkv,.webm" />
+      <button type="submit" id="uploadBtn">Store video</button>
+    </form>
+    <div id="status"></div>
+    <div class="progress-wrap hidden" id="progressWrap">
+      <progress id="progressBar" value="0" max="1"></progress>
+      <span id="progressMessage"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Settings</h2>
+    <form id="settingsForm" class="settings-form">
+      <label for="deviceSelect">Device (T2V / BLIP)</label>
+      <select id="deviceSelect" name="device">
+        <option value="auto">auto (GPU if available)</option>
+        <option value="cuda">cuda (GPU)</option>
+        <option value="cpu">cpu</option>
+      </select>
+      <p class="hint">Use cuda to force GPU; auto uses GPU when PyTorch+CUDA is installed.</p>
+      <label for="t2vBackend">T2V backend</label>
+      <select id="t2vBackend" name="t2v.backend">
+        <option value="stub">stub</option>
+        <option value="cogvideox">cogvideox</option>
+      </select>
+      <label for="t2vModelId">T2V model ID</label>
+      <input type="text" id="t2vModelId" name="t2v.model_id" placeholder="e.g. THUDM/CogVideoX-2b" />
+      <p class="hint">Hub model id. <strong>CogVideoX-2b</strong> is the smaller option (~14GB download); <strong>CogVideoX-5b</strong> is larger and higher quality. Save then "Download model now" to fetch. On CPU, T2V can take ~3+ hours per video.</p>
+      <label for="t2vModelPath">T2V model path (optional)</label>
+      <input type="text" id="t2vModelPath" name="t2v.model_path" placeholder="Local path override" />
+      <label for="scriptModel">Script model (Whisper size)</label>
+      <select id="scriptModel" name="script.model">
+        <option value="tiny">tiny</option>
+        <option value="base">base</option>
+        <option value="small">small</option>
+        <option value="medium">medium</option>
+        <option value="large">large</option>
+      </select>
+      <label for="scriptVisualBackend">Visual description</label>
+      <select id="scriptVisualBackend" name="script.visual_backend">
+        <option value="none">none</option>
+        <option value="blip">blip</option>
+        <option value="blip2">blip2</option>
+      </select>
+      <label for="scriptVisualIntervalSec">Frame hop (seconds)</label>
+      <input type="number" id="scriptVisualIntervalSec" name="script.visual_interval_sec" min="0.25" max="60" step="0.25" placeholder="1.0" />
+      <p class="hint">Sample one frame every N seconds (e.g. 1 = one frame/sec, 0.5 = two frames/sec).</p>
+      <label for="scriptVisualMaxFrames">Max frames</label>
+      <input type="number" id="scriptVisualMaxFrames" name="script.visual_max_frames" min="1" max="500" step="1" placeholder="60" />
+      <p class="hint">Cap number of frames described per video (keeps runtime bounded).</p>
+      <label for="scriptVisualGrid">Grid size (frame split)</label>
+      <select id="scriptVisualGrid" name="script.visual_grid">
+        <option value="1">1 — whole frame only</option>
+        <option value="2">2 — 2×2 grid</option>
+        <option value="3">3 — 3×3 grid</option>
+      </select>
+      <p class="hint">How to split each frame for description: whole image only, or 2×2 / 3×3 regions with prepositions (e.g. top-left, center).</p>
+      <p class="hint">Describe video frames (BLIP/BLIP2) in addition to transcript. Requires: pip install transformers torch</p>
+      <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="submit" id="settingsSave">Save</button>
+        <button type="button" id="t2vDownloadBtn" class="btn-outline">Download model now</button>
+        <span id="settingsStatus" style="font-size: 0.9rem; color: var(--muted);"></span>
+      </div>
+      <div class="progress-wrap hidden" id="t2vDownloadProgressWrap" style="margin-top: 0.5rem;">
+        <progress id="t2vDownloadProgressBar" value="0" max="1" style="width: 100%;"></progress>
+        <span id="t2vDownloadMessage"></span>
+      </div>
+    </form>
+  </section>
+
+  <section>
+    <h2>Stored items</h2>
+    <ul class="stored-list" id="storedList"></ul>
+    <p id="emptyList" class="muted" style="color: var(--muted); font-size: 0.9rem;">No stored items yet. Upload a video above.</p>
+  </section>
+
+  <section>
+    <h2>Stream (reconstituted)</h2>
+    <div class="player-wrap" id="playerWrap">
+      <video id="videoPlayer" controls preload="metadata" playsinline>
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <div class="progress-wrap hidden" id="streamProgressWrap">
+      <progress id="streamProgressBar" value="0" max="1"></progress>
+      <span id="streamProgressMessage">Loading stream…</span>
+    </div>
+  </section>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const storedListEl = document.getElementById('storedList');
+    const emptyListEl = document.getElementById('emptyList');
+    const videoPlayer = document.getElementById('videoPlayer');
+    const playerWrap = document.getElementById('playerWrap');
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const videoFile = document.getElementById('videoFile');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const progressMessage = document.getElementById('progressMessage');
+    const streamProgressWrap = document.getElementById('streamProgressWrap');
+    const streamProgressBar = document.getElementById('streamProgressBar');
+    const streamProgressMessage = document.getElementById('streamProgressMessage');
+
+    function setStatus(msg, type = '') {
+      statusEl.textContent = msg;
+      statusEl.className = type;
+    }
+
+    function loadStored() {
+      fetch('/api/stored')
+        .then(r => r.json())
+        .then(data => {
+          const items = data.items || (data.ids || []).map(id => ({ id, status: 'ready' }));
+          emptyListEl.classList.toggle('hidden', items.length > 0);
+          storedListEl.innerHTML = items.map(({ id, status }) => {
+            const shortId = id.slice(0, 8);
+            if (status === 'incomplete') {
+              return `<li>
+                <span class="stored-id">${shortId}…</span>
+                <span class="muted" style="font-size: 0.9rem;">(incomplete)</span>
+                <button type="button" class="btn btn-outline" data-id="${id}" data-retry="1">Retry (skip cached)</button>
+              </li>`;
+            }
+            return `<li>
+              <span class="stored-id">${shortId}…</span>
+              <span>
+                <button type="button" class="btn btn-outline" data-id="${id}" data-original="0">Stream (resultant)</button>
+                <button type="button" class="btn btn-outline" data-id="${id}" data-original="1">Stream (original)</button>
+                <button type="button" class="btn btn-outline" data-id="${id}" data-force-script="1">Regenerate script</button>
+              </span>
+            </li>`;
+          }).join('');
+          storedListEl.querySelectorAll('button[data-id]').forEach(btn => {
+            if (btn.dataset.retry === '1') {
+              btn.addEventListener('click', () => retryJob(btn.dataset.id));
+            } else if (btn.dataset.forceScript === '1') {
+              btn.addEventListener('click', () => retryJob(btn.dataset.id, true));
+            } else {
+              btn.addEventListener('click', () => playReconstitute(btn.dataset.id, btn.dataset.original === '1'));
+            }
+          });
+        })
+        .catch(() => { storedListEl.innerHTML = ''; emptyListEl.classList.remove('hidden'); });
+    }
+
+    function retryJob(id, forceScript) {
+      setStatus(forceScript ? 'Regenerating script and resultant…' : 'Retrying… (skipping cached steps)');
+      fetch(`/api/stored/${id}/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(forceScript ? { force_script: true } : {}),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) {
+            setStatus(data.error, 'error');
+            return;
+          }
+          progressWrap.classList.remove('hidden');
+          progressBar.removeAttribute('value');
+          progressMessage.textContent = 'Resuming pipeline…';
+          const poll = () => {
+            fetch(`/api/stored/${id}/status`)
+              .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status)))
+              .then(s => {
+                if (s.status === 'ready') {
+                  progressWrap.classList.add('hidden');
+                  setStatus('Ready.');
+                  loadStored();
+                  return;
+                }
+                progressMessage.textContent = s.message || s.phase || 'Processing…';
+                if (s.progress != null) progressBar.value = s.progress;
+                setTimeout(poll, 2000);
+              })
+              .catch(() => setTimeout(poll, 2000));
+          };
+          poll();
+        })
+        .catch(() => setStatus('Retry failed', 'error'));
+    }
+
+    function playReconstitute(storedId, original) {
+      setStatus('Reconstituting…');
+      fetch('/api/reconstitute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stored_id: storedId, original: original })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) {
+            setStatus(data.error, 'error');
+            return;
+          }
+          const url = data.stream_url || `/stream/${storedId}?original=${original ? 1 : 0}`;
+          playerWrap.classList.remove('hidden');
+          setStatus('Loading stream…');
+
+          fetch(`/api/stream/${storedId}/info?original=${original ? 1 : 0}`)
+            .then(r => r.ok ? r.json() : Promise.resolve({}))
+            .then(info => {
+              const sizeMB = info.content_length ? (info.content_length / (1024 * 1024)).toFixed(1) : '';
+              streamProgressMessage.textContent = sizeMB ? `Loading stream (${sizeMB} MB)…` : 'Loading stream…';
+              streamProgressBar.value = 0;
+              streamProgressBar.max = 1;
+              streamProgressWrap.classList.remove('hidden');
+            })
+            .catch(() => {
+              streamProgressMessage.textContent = 'Loading stream…';
+              streamProgressWrap.classList.remove('hidden');
+            });
+
+          function onProgress() {
+            const v = videoPlayer;
+            if (v.duration && !isNaN(v.duration) && v.buffered.length > 0) {
+              const end = v.buffered.end(v.buffered.length - 1);
+              const pct = Math.min(1, end / v.duration);
+              streamProgressBar.value = pct;
+            }
+          }
+          function onCanPlay() {
+            streamProgressBar.value = 1;
+            streamProgressMessage.textContent = 'Ready';
+            setTimeout(() => streamProgressWrap.classList.add('hidden'), 400);
+            videoPlayer.removeEventListener('progress', onProgress);
+            videoPlayer.removeEventListener('canplay', onCanPlay);
+          }
+          videoPlayer.addEventListener('progress', onProgress);
+          videoPlayer.addEventListener('canplay', onCanPlay);
+          videoPlayer.src = url;
+          setStatus('Playing. Use the seek bar to jump to any time.');
+        })
+        .catch(() => setStatus('Request failed', 'error'));
+    }
+
+    uploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!videoFile.files.length) {
+        setStatus('Choose a file first', 'error');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('video', videoFile.files[0]);
+      uploadBtn.disabled = true;
+      setStatus('Uploading…');
+      fetch('/api/store', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) {
+            setStatus(data.error, 'error');
+            uploadBtn.disabled = false;
+            return;
+          }
+          const id = data.id;
+          setStatus(`Stored job ${id.slice(0, 8)}… Processing in background.`);
+          progressWrap.classList.remove('hidden');
+          uploadBtn.disabled = false;
+          videoFile.value = '';
+          const poll = () => {
+            fetch(`/api/stored/${id}/status`)
+              .then(r => {
+                if (!r.ok) {
+                  if (r.status === 404) {
+                    progressWrap.classList.add('hidden');
+                    setStatus('Job not found (session may have restarted).', 'error');
+                    return;
+                  }
+                  throw new Error(r.statusText);
+                }
+                return r.json();
+              })
+              .then(s => {
+                if (!s) return;
+                if (s.status === 'ready') {
+                  progressWrap.classList.add('hidden');
+                  setStatus('Ready.', 'ready');
+                  loadStored();
+                  return;
+                }
+                if (s.status === 'processing') {
+                  if (s.progress != null) {
+                    progressBar.value = s.progress;
+                  } else {
+                    progressBar.removeAttribute('value');
+                  }
+                  progressMessage.textContent = s.message || 'Processing…';
+                }
+                setTimeout(poll, 2000);
+              })
+              .catch(() => setTimeout(poll, 2000));
+          };
+          poll();
+        })
+        .catch(() => {
+          setStatus('Upload failed', 'error');
+          uploadBtn.disabled = false;
+        });
+    });
+
+    function loadSettings() {
+      fetch('/api/settings')
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('deviceSelect').value = data.device || 'auto';
+          const t2v = data.t2v || {};
+          document.getElementById('t2vBackend').value = t2v.backend || 'stub';
+          document.getElementById('t2vModelId').value = t2v.model_id || '';
+          document.getElementById('t2vModelPath').value = t2v.model_path || '';
+          const script = data.script || {};
+          document.getElementById('scriptModel').value = script.model || 'base';
+          document.getElementById('scriptVisualBackend').value = script.visual_backend || 'none';
+          document.getElementById('scriptVisualIntervalSec').value = script.visual_interval_sec ?? 1;
+          document.getElementById('scriptVisualMaxFrames').value = script.visual_max_frames ?? 60;
+          document.getElementById('scriptVisualGrid').value = String(script.visual_grid ?? 2);
+        })
+        .catch(() => {});
+    }
+
+    document.getElementById('settingsForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const payload = {
+        device: document.getElementById('deviceSelect').value,
+        t2v: {
+          backend: document.getElementById('t2vBackend').value,
+          model_id: document.getElementById('t2vModelId').value.trim() || null,
+          model_path: document.getElementById('t2vModelPath').value.trim() || null,
+        },
+        script: {
+          model: document.getElementById('scriptModel').value,
+          visual_backend: document.getElementById('scriptVisualBackend').value,
+          visual_interval_sec: parseFloat(document.getElementById('scriptVisualIntervalSec').value) || 1,
+          visual_max_frames: parseInt(document.getElementById('scriptVisualMaxFrames').value, 10) || 60,
+          visual_grid: parseInt(document.getElementById('scriptVisualGrid').value, 10) || 2,
+        },
+      };
+      const statusEl = document.getElementById('settingsStatus');
+      statusEl.textContent = 'Saving…';
+      fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then(r => r.json())
+        .then(data => {
+          statusEl.textContent = data.error ? data.error : 'Saved.';
+        })
+        .catch(() => { statusEl.textContent = 'Failed'; });
+    });
+
+    const t2vDownloadBtn = document.getElementById('t2vDownloadBtn');
+    const t2vDownloadProgressWrap = document.getElementById('t2vDownloadProgressWrap');
+    const t2vDownloadProgressBar = document.getElementById('t2vDownloadProgressBar');
+    const t2vDownloadMessage = document.getElementById('t2vDownloadMessage');
+    t2vDownloadBtn.addEventListener('click', () => {
+      t2vDownloadBtn.disabled = true;
+      t2vDownloadProgressWrap.classList.remove('hidden');
+      t2vDownloadProgressBar.removeAttribute('value');
+      t2vDownloadMessage.textContent = 'Starting download…';
+      fetch('/api/t2v/download', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) {
+            t2vDownloadMessage.textContent = data.error;
+            t2vDownloadBtn.disabled = false;
+            return;
+          }
+          t2vDownloadMessage.textContent = data.message || 'Downloading… (may take several minutes for ~3GB)';
+          const poll = () => {
+            fetch('/api/t2v/download/status')
+              .then(r => r.json())
+              .then(s => {
+                t2vDownloadMessage.textContent = s.message || s.status;
+                if (s.status === 'done') {
+                  t2vDownloadProgressBar.value = 1;
+                  t2vDownloadMessage.textContent = 'Model downloaded.';
+                  t2vDownloadBtn.disabled = false;
+                  setTimeout(() => t2vDownloadProgressWrap.classList.add('hidden'), 3000);
+                  return;
+                }
+                if (s.status === 'error') {
+                  t2vDownloadMessage.textContent = 'Error: ' + (s.message || '');
+                  t2vDownloadBtn.disabled = false;
+                  return;
+                }
+                setTimeout(poll, 2000);
+              })
+              .catch(() => setTimeout(poll, 2000));
+          };
+          poll();
+        })
+        .catch(() => {
+          t2vDownloadMessage.textContent = 'Request failed';
+          t2vDownloadBtn.disabled = false;
+        });
+    });
+
+    loadStored();
+    loadSettings();
+  </script>
+</body>
+</html>
