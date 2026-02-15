@@ -79,3 +79,7 @@ Assets/unity-chan!/
 Assets/UrsaAnimation/
 Assets/WhiteCity/
 Assets/LargeBitmaskSystem/
+
+# Python
+__pycache__/
+*.py[cod]

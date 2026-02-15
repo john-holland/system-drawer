@@ -1,0 +1,18 @@
+{
+  "t2v": {
+    "backend": "cogvideox",
+    "model_id": "THUDM/CogVideoX-2b",
+    "model_path": null
+  },
+  "script": {
+    "model": "base",
+    "visual_backend": "blip",
+    "visual_interval_sec": 1,
+    "visual_max_frames": 60,
+    "visual_grid": 3
+  },
+  "audio": {
+    "ffmpeg_path": "D:\\Aleph\\ffmpeg-master-latest-win64-gpl-shared\\bin"
+  },
+  "device": "cpu"
+}

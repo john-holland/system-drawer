@@ -598,78 +598,45 @@ namespace Locomotion.EditorTools
 
             hand.fingers = fingers;
 
-            // Auto-fill digits for each finger
+            // Auto-fill digits for each finger (recursively collect all RagdollDigit in hierarchy, proximal→distal)
             foreach (var finger in fingers)
             {
                 if (finger == null) continue;
 
                 Undo.RecordObject(finger, "Auto-Fill Digits");
                 
-                // Get or create digits for all direct child transforms
                 var digits = new List<RagdollDigit>();
+                CollectDigitsRecursive(finger.transform, digits);
                 
-                // Process all direct children of the finger
-                for (int i = 0; i < finger.transform.childCount; i++)
-                {
-                    Transform childTransform = finger.transform.GetChild(i);
-                    
-                    // Check if child already has a RagdollDigit component
-                    RagdollDigit digit = childTransform.GetComponent<RagdollDigit>();
-                    
-                    if (digit == null)
-                    {
-                        // Create RagdollDigit component if it doesn't exist
-                        Undo.AddComponent<RagdollDigit>(childTransform.gameObject);
-                        digit = childTransform.GetComponent<RagdollDigit>();
-                    }
-                    
-                    if (digit != null)
-                    {
-                        // Auto-assign digit number based on sibling index
-                        digit.indexInFinger = i;
-                        digits.Add(digit);
-                    }
-                }
-
-                // Sort digits by sibling index to ensure correct order
-                digits.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
-                
-                // Re-assign indexInFinger based on final order
+                // Re-assign indexInFinger and caboose flag based on final order
                 for (int i = 0; i < digits.Count; i++)
                 {
                     if (digits[i] != null)
                     {
                         digits[i].indexInFinger = i;
+                        digits[i].isCabooseDigit = (i == digits.Count - 1);
                         Undo.RecordObject(digits[i], "Set Digit Index");
                     }
                 }
 
                 finger.digits = digits;
 
-                // Mark last digit as caboose and add nailbed if applicable
+                // Add nailbed to caboose digit if applicable
                 if (digits.Count > 0)
                 {
                     var lastDigit = digits[digits.Count - 1];
-                    if (lastDigit != null)
+                    if (lastDigit != null && lastDigit.nailbed == null)
                     {
-                        Undo.RecordObject(lastDigit, "Set Caboose Digit");
-                        lastDigit.isCabooseDigit = true;
-                        
-                        // Add nailbed component if it doesn't exist
-                        if (lastDigit.nailbed == null)
+                        RagdollNailbed nailbed = lastDigit.GetComponent<RagdollNailbed>();
+                        if (nailbed == null)
                         {
-                            RagdollNailbed nailbed = lastDigit.GetComponent<RagdollNailbed>();
-                            if (nailbed == null)
-                            {
-                                Undo.AddComponent<RagdollNailbed>(lastDigit.gameObject);
-                                nailbed = lastDigit.GetComponent<RagdollNailbed>();
-                            }
-                            
-                            if (nailbed != null)
-                            {
-                                lastDigit.nailbed = nailbed;
-                                Undo.RecordObject(lastDigit, "Assign Nailbed");
-                            }
+                            Undo.AddComponent<RagdollNailbed>(lastDigit.gameObject);
+                            nailbed = lastDigit.GetComponent<RagdollNailbed>();
+                        }
+                        if (nailbed != null)
+                        {
+                            lastDigit.nailbed = nailbed;
+                            Undo.RecordObject(lastDigit, "Assign Nailbed");
                         }
                     }
                 }
@@ -868,6 +835,28 @@ namespace Locomotion.EditorTools
                     && ragdollSystem.torsoComponent != null && ragdollSystem.pelvisComponent != null;
                 validation.hasArmBodyParts = (ragdollSystem.leftHandComponent != null || ragdollSystem.rightHandComponent != null);
                 validation.hasLegBodyParts = (ragdollSystem.leftFootComponent != null || ragdollSystem.rightFootComponent != null);
+            }
+        }
+
+        /// <summary>
+        /// Recursively collects all RagdollDigit components under root in depth-first order (proximal→distal). Adds RagdollDigit if missing.
+        /// </summary>
+        private static void CollectDigitsRecursive(Transform root, List<RagdollDigit> list)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                RagdollDigit digit = child.GetComponent<RagdollDigit>();
+                if (digit == null)
+                {
+                    Undo.AddComponent<RagdollDigit>(child.gameObject);
+                    digit = child.GetComponent<RagdollDigit>();
+                }
+                if (digit != null)
+                {
+                    list.Add(digit);
+                    CollectDigitsRecursive(child, list);
+                }
             }
         }
 

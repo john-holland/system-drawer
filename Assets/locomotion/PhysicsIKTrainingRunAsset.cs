@@ -137,6 +137,25 @@ public enum ThrowHandMode
 }
 
 /// <summary>
+/// Optional initial pose applied to the ragdoll when starting IK training.
+/// </summary>
+public enum IKTrainingInitialPoseMode
+{
+    /// <summary>Use whatever pose the ragdoll is in when Start Training is clicked.</summary>
+    Current,
+    /// <summary>First frame of the current animation tree's clip.</summary>
+    FirstFrame,
+    /// <summary>First frame of the optional idle clip.</summary>
+    IdleFirstFrame,
+    /// <summary>T-pose from optional T-pose clip.</summary>
+    TPose,
+    /// <summary>H-pose (hands in the air) from optional H-pose clip.</summary>
+    HPose,
+    /// <summary>F-pose (zombie arms out, palms down) from optional F-pose clip.</summary>
+    FPose
+}
+
+/// <summary>
 /// Asset that holds trained coefficient sets from IK animation training runs.
 /// References AnimationBehaviorTree (and optionally PhysicsCardSolver); supports overwrite and append.
 /// </summary>
@@ -153,6 +172,18 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
     [Tooltip("Optional solver reference (scene context)")]
     public PhysicsCardSolver solver;
     public PhysicsIKTrainingCategory testCategory = PhysicsIKTrainingCategory.Locomotion;
+
+    [Header("Initial Pose (IK Training Start)")]
+    [Tooltip("Optional pose to apply when Start Training is clicked. Current = use existing pose; others sample a clip at time 0 and zero velocities.")]
+    public IKTrainingInitialPoseMode initialPoseMode = IKTrainingInitialPoseMode.Current;
+    [Tooltip("Used when Initial Pose Mode is Idle First Frame. Sampled at time 0.")]
+    public AnimationClip idleClip;
+    [Tooltip("Used when Initial Pose Mode is T-pose. Sampled at time 0.")]
+    public AnimationClip tPoseClip;
+    [Tooltip("Used when Initial Pose Mode is H-pose (hands in air). Sampled at time 0.")]
+    public AnimationClip hPoseClip;
+    [Tooltip("Used when Initial Pose Mode is F-pose (zombie arms out, palms down). Sampled at time 0.")]
+    public AnimationClip fPoseClip;
 
     [Header("Card and Tool (Climb / Swing / Pick / Roll)")]
     [Tooltip("Card to use for this run (e.g. climb card, swing card). Used when category is Climb/Swing/Pick/Roll.")]

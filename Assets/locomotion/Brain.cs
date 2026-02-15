@@ -42,15 +42,23 @@ public class Brain : MonoBehaviour
     // Internal state
     private Queue<ImpulseData> impulseQueue = new Queue<ImpulseData>();
     private Queue<ThoughtData> thoughtQueue = new Queue<ThoughtData>();
+    private RagdollAnimationSetManager animationSetManager;
+
+    private void Awake()
+    {
+        animationSetManager = GetComponentInParent<RagdollAnimationSetManager>();
+    }
 
     private void Update()
     {
         // Process impulses
         ProcessImpulses();
 
-        // Execute behavior tree
+        // Execute behavior tree (skip when RagdollAnimationSetManager has playback paused or stopped)
         if (behaviorTree != null)
         {
+            if (animationSetManager != null && (animationSetManager.IsPaused || animationSetManager.IsStopped))
+                return;
             behaviorTree.Execute();
         }
 

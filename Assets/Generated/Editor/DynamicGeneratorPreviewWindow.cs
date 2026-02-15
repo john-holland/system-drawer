@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.SceneManagement;
+using UnityEditor.SceneManagement;
 
 /// <summary>
 /// Editor window for dynamic generators: isolated preview (3D/audio/texture) and history list
@@ -25,7 +26,6 @@ public class DynamicGeneratorPreviewWindow : EditorWindow
     private AudioSource previewAudioSource;
     private const int PreviewSize = 256;
     private const string PreviewSceneName = "DynamicGeneratorPreview_Scene";
-    private bool previewSceneDirty;
 
     [MenuItem("Window/Generated/Dynamic Generator Preview")]
     public static DynamicGeneratorPreviewWindow ShowWindow()
@@ -53,7 +53,8 @@ public class DynamicGeneratorPreviewWindow : EditorWindow
     private void EnsurePreviewScene()
     {
         if (previewScene.IsValid() && previewScene.isLoaded) return;
-        previewScene = SceneManager.CreateScene(PreviewSceneName);
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+        previewScene = SceneManager.GetActiveScene();
         var camGo = new GameObject("PreviewCamera");
         camGo.AddComponent<Camera>();
         previewCamera = camGo.GetComponent<Camera>();
@@ -76,7 +77,6 @@ public class DynamicGeneratorPreviewWindow : EditorWindow
         }
         previewCamera.targetTexture = previewRenderTexture;
         previewCamera.enabled = true;
-        previewSceneDirty = true;
     }
 
     private void CleanupPreviewScene()
@@ -85,7 +85,7 @@ public class DynamicGeneratorPreviewWindow : EditorWindow
             previewRenderTexture.Release();
         previewRenderTexture = null;
         if (previewScene.IsValid() && previewScene.isLoaded)
-            SceneManager.UnloadSceneAsync(previewScene);
+            EditorSceneManager.CloseScene(previewScene, true);
         previewScene = default;
         previewCamera = null;
         previewContainer = null;

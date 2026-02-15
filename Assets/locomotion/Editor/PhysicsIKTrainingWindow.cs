@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEditor.SceneManagement;
 
 /// <summary>
 /// Editor window for IK animation training: sweep power/weights, run scenarios,
@@ -12,18 +13,18 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class PhysicsIKTrainingWindow : EditorWindow
 {
-    private AnimationBehaviorTree animationTree;
-    private PhysicsCardSolver solver;
-    private PhysicsIKTrainingRunAsset runAsset;
-    private PhysicsIKTrainingCategory testCategory = PhysicsIKTrainingCategory.Locomotion;
+    [SerializeField] private AnimationBehaviorTree animationTree;
+    [SerializeField] private PhysicsCardSolver solver;
+    [SerializeField] private PhysicsIKTrainingRunAsset runAsset;
+    [SerializeField] private PhysicsIKTrainingCategory testCategory = PhysicsIKTrainingCategory.Locomotion;
 
-    private Rigidbody ragdollRigidbody;
-    private bool includeFrozenAxisRuns = true;
+    [SerializeField] private Rigidbody ragdollRigidbody;
+    [SerializeField] private bool includeFrozenAxisRuns = true;
 
     /// <summary>When true, actor is loaded into preview scene (light + plane) and used for baking; when false, use active actor from main scene.</summary>
-    private bool usePreviewSceneActor;
+    [SerializeField] private bool usePreviewSceneActor;
     /// <summary>When solver not set, optional prefab/root to instantiate in preview.</summary>
-    private GameObject actorPrefabOrRoot;
+    [SerializeField] private GameObject actorPrefabOrRoot;
     /// <summary>Optional: resolve actor prefab by key via AssetLoader (e.g. generated 3D key). When set, overrides actorPrefabOrRoot when loader resolves.</summary>
     [SerializeField] private string actorKey = "";
     /// <summary>Optional: resolve animation clip by key via AssetLoader (e.g. generator key + '_clip'). For display/reference; training uses Animation Tree.</summary>
@@ -45,16 +46,16 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private Rigidbody previewInstanceRagdollRigidbody;
 
     /// <summary>Number of power steps (0.5..2). Higher = more runs and finer coefficient granularity.</summary>
-    private int powerStepCount = 4;
+    [SerializeField] private int powerStepCount = 4;
     private const int PowerStepCountMin = 2;
     private const int PowerStepCountMax = 32;
 
     [Tooltip("When on, apply each run to solver/ragdoll and wait Preview duration so you can watch the animation (requires Play Mode).")]
-    private bool playAnimationDuringTraining;
+    [SerializeField] private bool playAnimationDuringTraining;
     [Tooltip("Seconds to show each run when Play animation during training is on.")]
-    private float previewDurationSeconds = 2f;
+    [SerializeField] private float previewDurationSeconds = 2f;
     [Tooltip("When on, set all ragdoll rigidbodies to non-kinematic at run start so joints can move (physics/IK); restore at end.")]
-    private bool ensureRagdollNonKinematicDuringTraining = true;
+    [SerializeField] private bool ensureRagdollNonKinematicDuringTraining = true;
 
     private bool abortRequested;
     private bool running;
@@ -77,8 +78,8 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private List<bool> storedRagdollKinematic;
     private List<PhysicsIKTrainedSet> sweepResults = new List<PhysicsIKTrainedSet>();
     private Vector2 scroll;
-    private int topCount = 10;
-    private float compositeThreshold = 0f;
+    [SerializeField] private int topCount = 10;
+    [SerializeField] private float compositeThreshold = 0f;
 
     [MenuItem("Window/Locomotion/IK Animation Training")]
     public static void ShowWindow()
@@ -91,18 +92,57 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private void OnEnable()
     {
         EditorApplication.update -= OnTrainingUpdate;
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         if (running)
             EditorApplication.update += OnTrainingUpdate;
         EnsurePreviewScene();
+        TryResolveSceneReferences();
     }
 
     private void OnDisable()
     {
         EditorApplication.update -= OnTrainingUpdate;
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         if (running)
             ResetRagdollStateAfterRun();
         running = false;
         CleanupPreviewScene();
+    }
+
+    private void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.EnteredPlayMode)
+        {
+            TryResolveSceneReferences();
+            Repaint();
+        }
+    }
+
+    /// <summary>Restore solver and ragdollRigidbody when they are null after domain reload or Play Mode enter.</summary>
+    private void TryResolveSceneReferences()
+    {
+        if (solver == null)
+        {
+            string expectedName = null;
+            if (runAsset != null && runAsset.solver != null)
+                expectedName = runAsset.solver.gameObject.name;
+            if (!string.IsNullOrEmpty(expectedName))
+            {
+                var all = UnityEngine.Object.FindObjectsByType<PhysicsCardSolver>(FindObjectsSortMode.None);
+                foreach (var s in all)
+                {
+                    if (s != null && s.gameObject != null && s.gameObject.name == expectedName)
+                    {
+                        solver = s;
+                        break;
+                    }
+                }
+            }
+            if (solver == null)
+                solver = UnityEngine.Object.FindFirstObjectByType<PhysicsCardSolver>();
+        }
+        if (ragdollRigidbody == null && solver != null)
+            ragdollRigidbody = FindRagdollCapsuleRigidbody(solver);
     }
 
     private void OnDestroy()
@@ -127,7 +167,8 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private void EnsurePreviewScene()
     {
         if (previewScene.IsValid() && previewScene.isLoaded) return;
-        previewScene = SceneManager.CreateScene(PreviewSceneName);
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+        previewScene = SceneManager.GetActiveScene();
         var camGo = new GameObject("PreviewCamera");
         camGo.AddComponent<Camera>();
         previewCamera = camGo.GetComponent<Camera>();
@@ -177,7 +218,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
             previewRenderTexture.Release();
         previewRenderTexture = null;
         if (previewScene.IsValid() && previewScene.isLoaded)
-            SceneManager.UnloadSceneAsync(previewScene);
+            EditorSceneManager.CloseScene(previewScene, true);
         previewScene = default;
         previewCamera = null;
         previewContainer = null;
@@ -309,54 +350,96 @@ public class PhysicsIKTrainingWindow : EditorWindow
     {
         const float height = 300f;
         EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Height(height + 8));
-        GUILayout.Space(4);
-        Rect previewRect = GUILayoutUtility.GetRect(PreviewSize, height);
-        if (previewRect.width > 0 && previewRect.height > 0)
+        try
         {
-            EnsurePreviewScene();
-            if (usePreviewSceneActor)
-                EnsurePreviewInstance();
-            else
-                EnsureDisplayCloneForActiveActor();
+            GUILayout.Space(4);
+            Rect previewRect = GUILayoutUtility.GetRect(PreviewSize, height);
+            if (previewRect.width > 0 && previewRect.height > 0)
+            {
+                EnsurePreviewScene();
+                if (usePreviewSceneActor)
+                    EnsurePreviewInstance();
+                else
+                    EnsureDisplayCloneForActiveActor();
 
-            if (previewRenderTexture != null && previewRenderTexture.IsCreated() && previewCamera != null)
-            {
-                UpdatePreviewCameraTransform();
-                if (Event.current.type == EventType.Repaint)
-                    previewCamera.Render();
-                EditorGUI.DrawPreviewTexture(previewRect, previewRenderTexture, null, ScaleMode.ScaleToFit);
-            }
-            else
-            {
-                EditorGUI.DrawRect(previewRect, new Color(0.2f, 0.2f, 0.22f));
-                GUI.Label(previewRect, "No preview (assign Physics Card Solver or Actor prefab)", EditorStyles.centeredGreyMiniLabel);
-            }
-
-            if (Event.current.rawType == EventType.MouseUp && Event.current.button == 0)
-                previewDragActive = false;
-            if (previewRect.Contains(Event.current.mousePosition))
-            {
-                if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
-                    previewDragActive = true;
-                if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
-                    previewDragActive = false;
-                if (previewDragActive && Event.current.type == EventType.MouseDrag)
+                if (previewRenderTexture != null && previewRenderTexture.IsCreated() && previewCamera != null)
                 {
-                    cameraOrbitYaw += Event.current.delta.x * 0.5f;
-                    cameraOrbitPitch -= Event.current.delta.y * 0.5f;
-                    cameraOrbitPitch = Mathf.Clamp(cameraOrbitPitch, -89f, 89f);
-                    Event.current.Use();
-                    Repaint();
+                    UpdatePreviewCameraTransform();
+                    if (Event.current.type == EventType.Repaint)
+                        previewCamera.Render();
+                    EditorGUI.DrawPreviewTexture(previewRect, previewRenderTexture, null, ScaleMode.ScaleToFit);
                 }
-                if (Event.current.type == EventType.ScrollWheel)
+                else
                 {
-                    cameraDistance = Mathf.Clamp(cameraDistance + Event.current.delta.y * 0.2f, 1f, 20f);
-                    Event.current.Use();
-                    Repaint();
+                    EditorGUI.DrawRect(previewRect, new Color(0.2f, 0.2f, 0.22f));
+                    GUI.Label(previewRect, "No preview (assign Physics Card Solver or Actor prefab)", EditorStyles.centeredGreyMiniLabel);
+                }
+
+                if (Event.current.rawType == EventType.MouseUp && Event.current.button == 0)
+                    previewDragActive = false;
+                if (previewRect.Contains(Event.current.mousePosition))
+                {
+                    if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+                        previewDragActive = true;
+                    if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
+                        previewDragActive = false;
+                    if (previewDragActive && Event.current.type == EventType.MouseDrag)
+                    {
+                        cameraOrbitYaw += Event.current.delta.x * 0.5f;
+                        cameraOrbitPitch -= Event.current.delta.y * 0.5f;
+                        cameraOrbitPitch = Mathf.Clamp(cameraOrbitPitch, -89f, 89f);
+                        Event.current.Use();
+                        Repaint();
+                    }
+                    if (Event.current.type == EventType.ScrollWheel)
+                    {
+                        cameraDistance = Mathf.Clamp(cameraDistance + Event.current.delta.y * 0.2f, 1f, 20f);
+                        Event.current.Use();
+                        Repaint();
+                    }
                 }
             }
         }
-        EditorGUILayout.EndVertical();
+        finally
+        {
+            EditorGUILayout.EndVertical();
+        }
+    }
+
+    /// <summary>Resolve the clip for the current initial pose mode from run asset (or solver's animation tree for FirstFrame). Returns null if Current or clip not set.</summary>
+    private AnimationClip GetInitialPoseClip()
+    {
+        if (runAsset == null) return null;
+        switch (runAsset.initialPoseMode)
+        {
+            case IKTrainingInitialPoseMode.Current: return null;
+            case IKTrainingInitialPoseMode.FirstFrame:
+                var tree = runAsset.animationTree;
+                if (tree == null)
+                {
+                    var rs = GetEffectiveSolver()?.GetComponent<RagdollSystem>();
+                    tree = rs?.animationTree;
+                }
+                return tree?.animationClip;
+            case IKTrainingInitialPoseMode.IdleFirstFrame: return runAsset.idleClip;
+            case IKTrainingInitialPoseMode.TPose: return runAsset.tPoseClip;
+            case IKTrainingInitialPoseMode.HPose: return runAsset.hPoseClip;
+            case IKTrainingInitialPoseMode.FPose: return runAsset.fPoseClip;
+            default: return null;
+        }
+    }
+
+    /// <summary>If run asset has an initial pose mode other than Current and a clip is available, sample it at time 0 onto the ragdoll and zero velocities.</summary>
+    private void ApplyOptionalInitialPose()
+    {
+        if (runAsset == null || runAsset.initialPoseMode == IKTrainingInitialPoseMode.Current) return;
+        AnimationClip clip = GetInitialPoseClip();
+        if (clip == null) return;
+        var effSolver = GetEffectiveSolver();
+        if (effSolver == null) return;
+        var ragdollSystem = effSolver.GetComponent<RagdollSystem>();
+        if (ragdollSystem == null || ragdollSystem.ragdollRoot == null) return;
+        RagdollPoseUtility.ApplyPoseFromClipAndZeroVelocities(ragdollSystem, clip);
     }
 
     /// <summary>Restore ragdoll rigidbody transform, velocity, constraints, and kinematic state captured at run start.</summary>
@@ -549,6 +632,24 @@ public class PhysicsIKTrainingWindow : EditorWindow
             EnsurePreviewInstance();
         runAsset = (PhysicsIKTrainingRunAsset)EditorGUILayout.ObjectField("Run Asset (save target)", runAsset, typeof(PhysicsIKTrainingRunAsset), false);
         testCategory = (PhysicsIKTrainingCategory)EditorGUILayout.EnumPopup("Test Category", testCategory);
+        if (runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Initial Pose (at Start Training)", EditorStyles.miniLabel);
+            runAsset.initialPoseMode = (IKTrainingInitialPoseMode)EditorGUILayout.EnumPopup("Initial pose", runAsset.initialPoseMode);
+            if (runAsset.initialPoseMode == IKTrainingInitialPoseMode.IdleFirstFrame)
+                runAsset.idleClip = (AnimationClip)EditorGUILayout.ObjectField("Idle clip", runAsset.idleClip, typeof(AnimationClip), false);
+            else if (runAsset.initialPoseMode == IKTrainingInitialPoseMode.TPose)
+                runAsset.tPoseClip = (AnimationClip)EditorGUILayout.ObjectField("T-pose clip", runAsset.tPoseClip, typeof(AnimationClip), false);
+            else if (runAsset.initialPoseMode == IKTrainingInitialPoseMode.HPose)
+                runAsset.hPoseClip = (AnimationClip)EditorGUILayout.ObjectField("H-pose clip", runAsset.hPoseClip, typeof(AnimationClip), false);
+            else if (runAsset.initialPoseMode == IKTrainingInitialPoseMode.FPose)
+                runAsset.fPoseClip = (AnimationClip)EditorGUILayout.ObjectField("F-pose clip", runAsset.fPoseClip, typeof(AnimationClip), false);
+            if (runAsset.initialPoseMode != IKTrainingInitialPoseMode.Current && GetInitialPoseClip() == null && runAsset.initialPoseMode != IKTrainingInitialPoseMode.FirstFrame)
+                EditorGUILayout.HelpBox("Assign the clip for this pose mode, or switch to First frame / Current.", MessageType.None);
+            if (GUI.changed)
+                EditorUtility.SetDirty(runAsset);
+        }
         ragdollRigidbody = (Rigidbody)EditorGUILayout.ObjectField("Ragdoll Capsule Rigidbody", ragdollRigidbody, typeof(Rigidbody), true);
         actorKey = EditorGUILayout.TextField("Actor key (from AssetLoader)", actorKey);
         actorPrefabOrRoot = (GameObject)EditorGUILayout.ObjectField("Actor prefab/root (if no solver/key)", actorPrefabOrRoot, typeof(GameObject), true);
@@ -775,6 +876,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         if (GUILayout.Button("Start Training", GUILayout.Height(24)))
         {
             RestoreRagdollKinematicState();
+            ApplyOptionalInitialPose();
             var rb = GetEffectiveRagdollRigidbody();
             if (rb != null)
             {

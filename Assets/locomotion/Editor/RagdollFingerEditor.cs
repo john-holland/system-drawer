@@ -31,6 +31,26 @@ public class RagdollFingerEditor : Editor
         );
     }
 
+    /// <summary>
+    /// Recursively collects all RagdollDigit components in the hierarchy under root, in depth-first order (proximal -> distal).
+    /// Adds RagdollDigit to a transform if missing.
+    /// </summary>
+    private static void CollectDigitsRecursive(Transform root, System.Collections.Generic.List<RagdollDigit> list)
+    {
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            RagdollDigit digit = child.GetComponent<RagdollDigit>();
+            if (digit == null)
+                digit = Undo.AddComponent<RagdollDigit>(child.gameObject);
+            if (digit != null)
+            {
+                list.Add(digit);
+                CollectDigitsRecursive(child, list);
+            }
+        }
+    }
+
     private void AutoFillDigitList(RagdollFinger finger)
     {
         if (finger == null)
@@ -40,84 +60,33 @@ public class RagdollFingerEditor : Editor
         if (finger.digits == null)
             finger.digits = new System.Collections.Generic.List<RagdollDigit>();
 
-        // Find or create direct child RagdollDigit components
+        // Recursively find or create RagdollDigit components in all descendants (proximal -> distal order)
         System.Collections.Generic.List<RagdollDigit> directChildDigits = new System.Collections.Generic.List<RagdollDigit>();
-        
-        for (int i = 0; i < finger.transform.childCount; i++)
-        {
-            Transform child = finger.transform.GetChild(i);
-            RagdollDigit digit = child.GetComponent<RagdollDigit>();
-            
-            // Create RagdollDigit component if it doesn't exist
-            if (digit == null)
-            {
-                digit = Undo.AddComponent<RagdollDigit>(child.gameObject);
-            }
-            
-            if (digit != null)
-            {
-                // Auto-assign digit number based on sibling index
-                digit.indexInFinger = i;
-                directChildDigits.Add(digit);
-            }
-        }
+        CollectDigitsRecursive(finger.transform, directChildDigits);
 
         if (directChildDigits.Count == 0)
         {
             EditorUtility.DisplayDialog("Auto Fill Complete",
-                "No child GameObjects found to create RagdollDigit components on.",
+                "No GameObjects with RagdollDigit found in finger hierarchy (including nested children).",
                 "OK");
             return;
         }
 
-        // Sort by sibling index to maintain order
-        directChildDigits.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
-
         int addedCount = 0;
-        int existingCount = finger.digits.Count;
 
-        // Check for partial completions and fill gaps
+        // Build digits list from collected order (proximal -> distal)
+        finger.digits.Clear();
         foreach (var digit in directChildDigits)
         {
             if (digit == null)
                 continue;
-
-            // Check if this digit is already in the list
             if (!finger.digits.Contains(digit))
             {
-                // Find the appropriate position based on sibling index
-                int targetIndex = digit.transform.GetSiblingIndex();
-                
-                // Ensure list is large enough
-                while (finger.digits.Count <= targetIndex)
-                {
-                    finger.digits.Add(null);
-                }
-
-                // Insert at the target position (or append if beyond current size)
-                if (targetIndex < finger.digits.Count)
-                {
-                    finger.digits[targetIndex] = digit;
-                }
-                else
-                {
-                    finger.digits.Add(digit);
-                }
-
-                digit.indexInFinger = targetIndex;
+                finger.digits.Add(digit);
                 addedCount++;
-            }
-            else
-            {
-                // Update indexInFinger to match sibling index
-                int targetIndex = digit.transform.GetSiblingIndex();
-                digit.indexInFinger = targetIndex;
             }
         }
 
-        // Remove null entries and re-index
-        finger.digits.RemoveAll(d => d == null);
-        
         // Re-index all digits based on their position in the list
         for (int i = 0; i < finger.digits.Count; i++)
         {
@@ -162,11 +131,9 @@ public class RagdollFingerEditor : Editor
                 EditorUtility.SetDirty(digit);
         }
 
-        string message = $"Found {directChildDigits.Count} direct child digit(s).\n";
+        string message = $"Found {directChildDigits.Count} digit(s) in hierarchy (proximal→distal).\n";
         if (addedCount > 0)
             message += $"Added {addedCount} new digit(s) to the list.\n";
-        if (existingCount > 0)
-            message += $"Preserved {existingCount - (directChildDigits.Count - addedCount)} existing digit(s).\n";
         message += $"\nTotal digits in list: {finger.digits.Count}";
 
         EditorUtility.DisplayDialog("Auto Fill Complete", message, "OK");

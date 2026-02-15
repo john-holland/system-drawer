@@ -1,0 +1,236 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99a41b42bd41ab842a4f8b604b092526, type: 3}
+  m_Name: KikiPhysicsIKTrainingRun
+  m_EditorClassIdentifier: Locomotion.Runtime::PhysicsIKTrainingRunAsset
+  displayName: IK Training Run
+  creationTime: 
+  animationTree: {fileID: 0}
+  solver: {fileID: 0}
+  testCategory: 0
+  initialPoseMode: 0
+  idleClip: {fileID: 0}
+  tPoseClip: {fileID: 0}
+  hPoseClip: {fileID: 0}
+  fPoseClip: {fileID: 0}
+  cardSlot:
+    sectionName: 
+    description: 
+    impulseStack: []
+    requiredState:
+      rootPosition: {x: 0, y: 0, z: 0}
+      rootRotation: {x: 0, y: 0, z: 0, w: 0}
+      rootVelocity: {x: 0, y: 0, z: 0}
+      rootAngularVelocity: {x: 0, y: 0, z: 0}
+    targetState:
+      rootPosition: {x: 0, y: 0, z: 0}
+      rootRotation: {x: 0, y: 0, z: 0, w: 0}
+      rootVelocity: {x: 0, y: 0, z: 0}
+      rootAngularVelocity: {x: 0, y: 0, z: 0}
+    limits:
+      maxDegreesDifference: 180
+      maxTorque: 1000
+      maxForce: 2000
+      maxVelocityChange: 10
+      maxAngularVelocityChange: 10
+      useRadialLimits: 0
+      maxRadialDistance: 0
+      maxRadialRotation: 0
+      radialReferencePosition: {x: 0, y: 0, z: 0}
+      lowerRadialReferenceRotation: {x: 0, y: 0, z: 0}
+      upperRadialReferenceRotation: {x: 0, y: 0, z: 0}
+      fuelCost: 0
+    connectedSectionNames: []
+    behaviorTree: {fileID: 0}
+    enablesTraversability: 0
+    traversabilityMode: 0
+    traversabilityTag: 
+    useValidInVolume: 0
+    validInVolumeCenter: {x: 0, y: 0, z: 0}
+    validInVolumeSize: {x: 1, y: 1, z: 1}
+    validInVolumeTMin: 0
+    validInVolumeTMax: 1
+    requiredToolKey: 
+    requiredTool: {fileID: 0}
+    requiredTools: []
+    maxToolCount: 0
+    maxTargetCount: 1
+    targets: []
+    requireAllTargetsToMakeContact: 0
+    requireAllHeldToolsToMakeContact: 0
+    toolReachDistance: 0
+    isThrowGoalOnly: 0
+    needsToBeThrown: 0
+    thrownObject: {fileID: 0}
+    throwHandMode: 1
+    throwMinRange: 0
+    throwMaxRange: 0
+    isCarry: 0
+    carriedObject: {fileID: 0}
+    pleaseHold: 0
+    carryAttachBoneName: 
+    isIsometric: 0
+    isPlaceGoal: 0
+    placeTargetOffset: {x: 0, y: 0, z: 0}
+    isHitGoal: 0
+    hitLimbBoneName: 
+    hitLimbBoneNames: []
+    useToolForHit: 0
+    hitTool: {fileID: 0}
+    isWeightlift: 0
+    weightliftTool: {fileID: 0}
+    weightliftMuscleGroupName: 
+    isCatchGoal: 0
+    catchLimbBoneName: 
+    catchLimbBoneNames: []
+    isShootGoal: 0
+    shootLaunchedObject: {fileID: 0}
+    shootHandMode: 1
+    shootMinRange: 0
+    shootMaxRange: 0
+  toolSlot: {fileID: 0}
+  needsToBeThrown: 0
+  thrownObject: {fileID: 0}
+  throwHandMode: 1
+  throwTargetPosition: {x: 0, y: 0, z: 0}
+  throwGoalTarget: {fileID: 0}
+  throwAnimationTrees: []
+  throwAnimationRangeMin: []
+  throwAnimationRangeMax: []
+  carriedObject: {fileID: 0}
+  pleaseHold: 0
+  carryAnimationTrees: []
+  isometricCard:
+    sectionName: 
+    description: 
+    impulseStack: []
+    requiredState:
+      rootPosition: {x: 0, y: 0, z: 0}
+      rootRotation: {x: 0, y: 0, z: 0, w: 0}
+      rootVelocity: {x: 0, y: 0, z: 0}
+      rootAngularVelocity: {x: 0, y: 0, z: 0}
+    targetState:
+      rootPosition: {x: 0, y: 0, z: 0}
+      rootRotation: {x: 0, y: 0, z: 0, w: 0}
+      rootVelocity: {x: 0, y: 0, z: 0}
+      rootAngularVelocity: {x: 0, y: 0, z: 0}
+    limits:
+      maxDegreesDifference: 180
+      maxTorque: 1000
+      maxForce: 2000
+      maxVelocityChange: 10
+      maxAngularVelocityChange: 10
+      useRadialLimits: 0
+      maxRadialDistance: 0
+      maxRadialRotation: 0
+      radialReferencePosition: {x: 0, y: 0, z: 0}
+      lowerRadialReferenceRotation: {x: 0, y: 0, z: 0}
+      upperRadialReferenceRotation: {x: 0, y: 0, z: 0}
+      fuelCost: 0
+    connectedSectionNames: []
+    behaviorTree: {fileID: 0}
+    enablesTraversability: 0
+    traversabilityMode: 0
+    traversabilityTag: 
+    useValidInVolume: 0
+    validInVolumeCenter: {x: 0, y: 0, z: 0}
+    validInVolumeSize: {x: 1, y: 1, z: 1}
+    validInVolumeTMin: 0
+    validInVolumeTMax: 1
+    requiredToolKey: 
+    requiredTool: {fileID: 0}
+    requiredTools: []
+    maxToolCount: 0
+    maxTargetCount: 1
+    targets: []
+    requireAllTargetsToMakeContact: 0
+    requireAllHeldToolsToMakeContact: 0
+    toolReachDistance: 0
+    isThrowGoalOnly: 0
+    needsToBeThrown: 0
+    thrownObject: {fileID: 0}
+    throwHandMode: 1
+    throwMinRange: 0
+    throwMaxRange: 0
+    isCarry: 0
+    carriedObject: {fileID: 0}
+    pleaseHold: 0
+    carryAttachBoneName: 
+    isIsometric: 0
+    isPlaceGoal: 0
+    placeTargetOffset: {x: 0, y: 0, z: 0}
+    isHitGoal: 0
+    hitLimbBoneName: 
+    hitLimbBoneNames: []
+    useToolForHit: 0
+    hitTool: {fileID: 0}
+    isWeightlift: 0
+    weightliftTool: {fileID: 0}
+    weightliftMuscleGroupName: 
+    isCatchGoal: 0
+    catchLimbBoneName: 
+    catchLimbBoneNames: []
+    isShootGoal: 0
+    shootLaunchedObject: {fileID: 0}
+    shootHandMode: 1
+    shootMinRange: 0
+    shootMaxRange: 0
+  isometricHoldDuration: 5
+  placeObject: {fileID: 0}
+  placeTargetPosition: {x: 0, y: 0, z: 0}
+  placeTargetRotation: {x: 0, y: 0, z: 0, w: 1}
+  placeAnimationTrees: []
+  hitTarget: {fileID: 0}
+  hitLimbNames: []
+  hitUseTool: 0
+  hitTool: {fileID: 0}
+  hitAnimationTrees: []
+  weightliftTool: {fileID: 0}
+  weightliftMuscleGroup: 
+  weightliftAnimationTrees: []
+  catchObject: {fileID: 0}
+  catchLimbNames: []
+  catchAnimationTrees: []
+  shootTarget: {fileID: 0}
+  shootTargetPosition: {x: 0, y: 0, z: 0}
+  shootLaunchedObject: {fileID: 0}
+  shootHandMode: 1
+  shootAnimationTrees: []
+  trainedSets: []
+  rangeDiamondMin:
+    degreesWeight: 0
+    torqueWeight: 0
+    forceWeight: 0
+    velocityWeight: 0
+    comfortWeight: 0
+    feasibilityWeight: 0
+    powerScale: 0
+    completionTime: 0
+    accuracyScore: 0
+    powerUsed: 0
+    seed: 0
+    tag: 
+    rigidbodyConstraints: 0
+  rangeDiamondMax:
+    degreesWeight: 0
+    torqueWeight: 0
+    forceWeight: 0
+    velocityWeight: 0
+    comfortWeight: 0
+    feasibilityWeight: 0
+    powerScale: 0
+    completionTime: 0
+    accuracyScore: 0
+    powerUsed: 0
+    seed: 0
+    tag: 
+    rigidbodyConstraints: 0

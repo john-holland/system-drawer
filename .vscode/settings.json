@@ -1,4 +1,7 @@
 {
+    "terminal.integrated.env.windows": {
+        "Path": "C:\\Users\\John\\AppData\\Local\\Python\\bin;${env:Path}"
+    },
     "files.exclude": {
         "**/.DS_Store": true,
         "**/.git": true,

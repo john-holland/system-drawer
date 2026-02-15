@@ -3,6 +3,19 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
+/// Record of a processed impulse for editor visualization.
+/// </summary>
+public struct ImpulseEventRecord
+{
+    public string channelName;
+    public ImpulseType impulseType;
+    public string source;
+    public string target;
+    public float timestamp;
+    public string detail;
+}
+
+/// <summary>
 /// Core nervous system component that routes impulses bidirectionally (up/down),
 /// maintains temporal graph of good sections, coordinates tool usage discovery,
 /// and manages goal queues and cleanup tasks.
@@ -38,6 +51,10 @@ public class NervousSystem : MonoBehaviour
     private Dictionary<GameObject, Vector3> originalPositions = new Dictionary<GameObject, Vector3>();
     private TemporalGraph temporalGraph;
     private BehaviorTreeGoal currentGoal;
+
+    // Impulse history for editor viewer (ring buffer)
+    private const int MaxRecentImpulses = 150;
+    private readonly List<ImpulseEventRecord> recentImpulses = new List<ImpulseEventRecord>(MaxRecentImpulses);
 
     private void Awake()
     {
@@ -409,7 +426,7 @@ public class NervousSystem : MonoBehaviour
                 ImpulseData impulse;
                 while ((impulse = channel.GetNextImpulse()) != null)
                 {
-                    HandleImpulse(impulse);
+                    HandleImpulse(channel.channelName, impulse);
                 }
             }
             catch (System.Exception ex)
@@ -422,16 +439,18 @@ public class NervousSystem : MonoBehaviour
     /// <summary>
     /// Handle an impulse (route to appropriate handler).
     /// </summary>
-    private void HandleImpulse(ImpulseData impulse)
+    private void HandleImpulse(string channelName, ImpulseData impulse)
     {
         if (impulse == null)
             return;
 
+        string detail = null;
         if (impulse.impulseType == ImpulseType.Motor)
         {
             MotorData motorData = impulse.GetData<MotorData>();
             if (motorData != null && !string.IsNullOrEmpty(motorData.muscleGroup))
             {
+                detail = motorData.muscleGroup;
                 RagdollSystem ragdollSystem = GetComponent<RagdollSystem>();
                 if (ragdollSystem != null)
                 {
@@ -442,25 +461,74 @@ public class NervousSystem : MonoBehaviour
         else if (impulse.impulseType == ImpulseType.Sensory)
         {
             SensoryData sensoryData = impulse.GetData<SensoryData>();
-            if (sensoryData != null && considerComponents != null)
+            if (sensoryData != null)
             {
-                for (int i = 0; i < considerComponents.Count; i++)
+                detail = sensoryData.sensorType;
+                if (considerComponents != null)
                 {
-                    var consider = considerComponents[i];
-                    if (consider != null)
+                    for (int i = 0; i < considerComponents.Count; i++)
                     {
-                        try
+                        var consider = considerComponents[i];
+                        if (consider != null)
                         {
-                            consider.ProcessSensoryInput(sensoryData);
-                        }
-                        catch (System.Exception ex)
-                        {
-                            Debug.LogWarning($"[NervousSystem] HandleImpulse Consider: {ex.Message}");
+                            try
+                            {
+                                consider.ProcessSensoryInput(sensoryData);
+                            }
+                            catch (System.Exception ex)
+                            {
+                                Debug.LogWarning($"[NervousSystem] HandleImpulse Consider: {ex.Message}");
+                            }
                         }
                     }
                 }
             }
         }
+
+        RecordImpulse(channelName, impulse, detail);
+    }
+
+    private void RecordImpulse(string channelName, ImpulseData impulse, string detail)
+    {
+        if (recentImpulses == null)
+            return;
+        var record = new ImpulseEventRecord
+        {
+            channelName = channelName,
+            impulseType = impulse.impulseType,
+            source = impulse.source ?? "",
+            target = impulse.target ?? "",
+            timestamp = impulse.timestamp,
+            detail = detail ?? ""
+        };
+        recentImpulses.Add(record);
+        if (recentImpulses.Count > MaxRecentImpulses)
+            recentImpulses.RemoveAt(0);
+    }
+
+    /// <summary>
+    /// Get recent processed impulse events for editor visualization (copy of last maxCount).
+    /// </summary>
+    public System.Collections.Generic.List<ImpulseEventRecord> GetRecentImpulseEvents(int maxCount = 50)
+    {
+        var list = new System.Collections.Generic.List<ImpulseEventRecord>();
+        if (recentImpulses == null || recentImpulses.Count == 0)
+            return list;
+        int start = Mathf.Max(0, recentImpulses.Count - maxCount);
+        for (int i = start; i < recentImpulses.Count; i++)
+            list.Add(recentImpulses[i]);
+        return list;
+    }
+
+    /// <summary>
+    /// Clear the queue of an impulse channel by name.
+    /// </summary>
+    public void ClearChannelQueue(string channelName)
+    {
+        if (string.IsNullOrEmpty(channelName))
+            return;
+        if (channelDict.TryGetValue(channelName, out ImpulseChannel channel))
+            channel.ClearQueue();
     }
 
     /// <summary>

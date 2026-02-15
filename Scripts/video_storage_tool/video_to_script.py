@@ -2,6 +2,8 @@
 Video (or extracted audio) to text script: Whisper ASR + optional visual description.
 Whisper uses ffmpeg to decode audio; if ffmpeg is not on PATH, set config audio.ffmpeg_path.
 Visual description samples frames and captions them with BLIP/BLIP2 (optional).
+
+python region_massager.py --path "C:\Users\John\Downloads\joshi-luck-3-360p-v2x_stored\diff.ogv" --force
 """
 
 import logging
