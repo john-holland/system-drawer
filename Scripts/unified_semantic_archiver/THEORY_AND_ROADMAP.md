@@ -13,7 +13,7 @@ The archiver is built on a single pipeline that repeats across media types:
 1. **Describe** — Turn raw media into a semantic representation (script, transcript, schema, exemplars). For video: Whisper + visual description → script. For data: schema + statistics + exemplars.
 2. **Generate proximal** — From that description, produce a “proximal” artifact that approximates the original (e.g. script → resultant video via T2V, or schema → sample dataset).
 3. **Diff** — Compare original and proximal to get a residual (visual diff, edit distance, or statistical gap).
-4. **Minimize** — Use the residual to identify what *resists* compression: high-residual regions become candidates for “unique chunks” or **unique kernels**. The goal is to iteratively refine the descriptor or the generator so the residual shrinks, while explicitly tracking what does not shrink.
+4. **Minimize** — Use the residual to identify unique compression: high-residual regions become candidates for “unique chunks” or **unique kernels**. The goal is to iteratively refine the descriptor or the generator so the residual shrinks, while explicitly tracking what does not shrink.
 5. **Store** — Persist descriptors, diff blobs, and kernel metadata in the **continuum DB** so the system has one durable record of what was compressed, how, and what remains hard.
 
 So compression here is **lossy semantic compression**: we keep a description and a residual, not bit-for-bit fidelity. The “loss” is structured: it is the diff and the set of unique kernels that feed back into research and model improvement.

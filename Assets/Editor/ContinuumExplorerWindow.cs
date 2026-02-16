@@ -20,7 +20,7 @@ public class ContinuumExplorerWindow : EditorWindow
     [SerializeField] private Vector2 scroll;
     [SerializeField] private Vector2 tableScroll;
     private List<Dictionary<string, object>> tableData = new List<Dictionary<string, object>>();
-    private string[] tableNames = { "spatial_4d", "document_blobs", "semantic_chunks", "unique_kernels", "compression_runs", "research_suggestions", "continuum_meta" };
+    private string[] tableNames = { "spatial_4d", "document_blobs", "semantic_chunks", "unique_kernels", "compression_runs", "research_suggestions", "continuum_meta", "library_documents" };
     private static readonly string PythonHint = "Set path to continuum.db (e.g. Scripts/unified_semantic_archiver/continuum.db). Uses Python to query.";
 
     [MenuItem("Window/Continuum/Continuum Explorer")]

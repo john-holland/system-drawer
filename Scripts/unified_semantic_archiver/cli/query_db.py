@@ -1,6 +1,7 @@
 """
 CLI to query continuum DB and output JSON for Unity explorer.
 Usage: python -m unified_semantic_archiver.cli.query_db --db path/to/continuum.db --table spatial_4d
+       python -m unified_semantic_archiver.cli.query_db --db path --table library_documents --lat 40.7 --lon -74 --distance_mi 10
        python -m unified_semantic_archiver.cli.query_db --db path --sql-file /tmp/query.sql
 """
 
@@ -20,13 +21,31 @@ if str(_repo_root) not in sys.path:
 from unified_semantic_archiver.db import ContinuumDb
 
 
+def _row_to_json_serializable(r: dict) -> dict:
+    out = {}
+    for k, v in r.items():
+        if hasattr(v, "isoformat"):
+            out[k] = v.isoformat() if v else None
+        else:
+            out[k] = v
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", required=True, help="Path to continuum.db")
-    ap.add_argument("--table", help="Table name: spatial_4d, document_blobs, semantic_chunks, unique_kernels, compression_runs, research_suggestions, continuum_meta")
+    ap.add_argument(
+        "--table",
+        help="Table name: spatial_4d, document_blobs, semantic_chunks, unique_kernels, compression_runs, research_suggestions, continuum_meta, library_documents",
+    )
     ap.add_argument("--sql", help="Raw SELECT (read-only)")
     ap.add_argument("--sql-file", help="Path to file containing SELECT query")
     ap.add_argument("--limit", type=int, default=100)
+    ap.add_argument("--lat", type=float, help="Latitude for library_documents search")
+    ap.add_argument("--lon", type=float, help="Longitude for library_documents search")
+    ap.add_argument("--distance_mi", help="Miles for location filter: 0=same bucket, number, or 'infinite'")
+    ap.add_argument("--document_type", help="Filter library_documents by type (video, document, audio, image, program, data)")
+    ap.add_argument("-q", "--query", dest="q", help="Text search in library_documents (type_metadata, url)")
     args = ap.parse_args()
 
     db = ContinuumDb(args.db)
@@ -53,6 +72,18 @@ def main() -> int:
             rows = db.research_suggestion_list(limit=args.limit)
         elif table == "continuum_meta":
             rows = db.execute_read("SELECT * FROM continuum_meta LIMIT ?", (args.limit,))
+        elif table == "library_documents":
+            distance_mi = args.distance_mi
+            if distance_mi is None and (args.lat is not None or args.lon is not None):
+                distance_mi = "infinite"
+            rows = db.library_document_search(
+                document_type=args.document_type,
+                q=args.q,
+                lat=args.lat,
+                lon=args.lon,
+                distance_mi=distance_mi,
+                limit=args.limit,
+            )
         else:
             print(json.dumps({"error": f"Unknown table: {args.table}"}))
             return 1
@@ -60,16 +91,7 @@ def main() -> int:
         print(json.dumps({"error": "Provide --table, --sql, or --sql-file"}))
         return 1
 
-    # Convert rows for JSON (SQLite Row keys are column names; some values may not be JSON-serializable)
-    out = []
-    for r in rows:
-        row_dict = {}
-        for k, v in r.items():
-            if hasattr(v, "isoformat"):
-                row_dict[k] = v.isoformat() if v else None
-            else:
-                row_dict[k] = v
-        out.append(row_dict)
+    out = [_row_to_json_serializable(r) for r in rows]
     print(json.dumps(out, indent=2))
     return 0
 

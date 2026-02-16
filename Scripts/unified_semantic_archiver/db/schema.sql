@@ -70,6 +70,26 @@ CREATE TABLE IF NOT EXISTS research_suggestions (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Library documents (upload/download, search by location and type)
+CREATE TABLE IF NOT EXISTS library_documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_type TEXT NOT NULL CHECK (document_type IN ('video','document','audio','image','program','data')),
+    blob_ref TEXT,
+    url TEXT,
+    type_metadata TEXT,
+    owner_id TEXT,
+    lat REAL,
+    lon REAL,
+    altitude_m REAL,
+    geohash TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_library_documents_type ON library_documents(document_type);
+CREATE INDEX IF NOT EXISTS idx_library_documents_geohash ON library_documents(geohash);
+CREATE INDEX IF NOT EXISTS idx_library_documents_owner ON library_documents(owner_id);
+
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_spatial_4d_payload ON spatial_4d(payload_type, payload_id);
 CREATE INDEX IF NOT EXISTS idx_semantic_chunks_media ON semantic_chunks(media_type);

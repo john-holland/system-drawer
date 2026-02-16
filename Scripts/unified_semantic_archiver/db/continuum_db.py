@@ -6,11 +6,58 @@ Lightweight CRUD over SQLite; no heavy migrations.
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 from pathlib import Path
 from typing import Any
 
 _SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
+
+# Geohash base32 alphabet (standard)
+_GEOHASH_ALPHABET = "0123456789bcdefghjkmnopqrstuvwxyz"
+
+# Earth radius in miles for Haversine
+_EARTH_RADIUS_MI = 3958.8
+
+
+def _geohash_encode(lat: float, lon: float, precision: int = 7) -> str:
+    """Encode lat/lon to base32 geohash (precision = character count)."""
+    lat_lo, lat_hi = -90.0, 90.0
+    lon_lo, lon_hi = -180.0, 180.0
+    bits = 0
+    bit = 0
+    result = []
+    while len(result) < precision:
+        if bit % 2 == 0:
+            mid = (lon_lo + lon_hi) / 2
+            if lon >= mid:
+                lon_lo = mid
+                bits = (bits << 1) + 1
+            else:
+                lon_hi = mid
+                bits <<= 1
+        else:
+            mid = (lat_lo + lat_hi) / 2
+            if lat >= mid:
+                lat_lo = mid
+                bits = (bits << 1) + 1
+            else:
+                lat_hi = mid
+                bits <<= 1
+        bit += 1
+        if bit == 5:
+            result.append(_GEOHASH_ALPHABET[bits])
+            bits = 0
+            bit = 0
+    return "".join(result)
+
+
+def _haversine_mi(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Distance in miles between two WGS84 points."""
+    a = math.radians(lat2 - lat1)
+    b = math.radians(lon2 - lon1)
+    x = math.sin(a / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(b / 2) ** 2
+    return 2 * _EARTH_RADIUS_MI * math.asin(math.sqrt(min(1.0, x)))
 
 
 def get_connection(db_path: str | Path) -> sqlite3.Connection:
@@ -198,6 +245,93 @@ class ContinuumDb:
         with self._conn() as c:
             rows = c.execute("SELECT * FROM research_suggestions ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
             return [dict(r) for r in rows]
+
+    # --- library_documents ---
+    def library_document_insert(
+        self,
+        document_type: str,
+        blob_ref: str | None = None,
+        url: str | None = None,
+        type_metadata: str | dict | None = None,
+        owner_id: str | None = None,
+        lat: float | None = None,
+        lon: float | None = None,
+        altitude_m: float | None = None,
+    ) -> int:
+        geohash = None
+        if lat is not None and lon is not None:
+            geohash = _geohash_encode(lat, lon, 7)
+        meta_str = json.dumps(type_metadata) if isinstance(type_metadata, dict) else type_metadata
+        with self._conn() as c:
+            cur = c.execute(
+                """INSERT INTO library_documents
+                   (document_type, blob_ref, url, type_metadata, owner_id, lat, lon, altitude_m, geohash, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))""",
+                (document_type, blob_ref, url, meta_str, owner_id, lat, lon, altitude_m, geohash),
+            )
+            c.commit()
+            return cur.lastrowid
+
+    def library_document_get(self, doc_id: int) -> dict[str, Any] | None:
+        with self._conn() as c:
+            row = c.execute("SELECT * FROM library_documents WHERE id = ?", (doc_id,)).fetchone()
+            return dict(row) if row else None
+
+    def library_document_list(
+        self,
+        document_type: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        with self._conn() as c:
+            if document_type:
+                rows = c.execute(
+                    "SELECT * FROM library_documents WHERE document_type = ? ORDER BY id DESC LIMIT ?",
+                    (document_type, limit),
+                ).fetchall()
+            else:
+                rows = c.execute("SELECT * FROM library_documents ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+            return [dict(r) for r in rows]
+
+    def library_document_search(
+        self,
+        document_type: str | None = None,
+        q: str | None = None,
+        lat: float | None = None,
+        lon: float | None = None,
+        distance_mi: float | str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        with self._conn() as c:
+            sql = "SELECT * FROM library_documents WHERE 1=1"
+            params: list[Any] = []
+            if document_type:
+                sql += " AND document_type = ?"
+                params.append(document_type)
+            if q:
+                sql += " AND (type_metadata LIKE ? OR url LIKE ?)"
+                params.extend([f"%{q}%", f"%{q}%"])
+            sql += " ORDER BY id DESC"
+            rows = c.execute(sql, params).fetchall()
+            rows = [dict(r) for r in rows]
+
+        # Location filter in Python (Haversine / same bucket)
+        if lat is not None and lon is not None and distance_mi is not None and distance_mi != "infinite":
+            try:
+                dist = float(distance_mi)
+            except (TypeError, ValueError):
+                dist = None
+            if dist is not None:
+                if dist == 0:
+                    bucket = _geohash_encode(lat, lon, 7)
+                    rows = [r for r in rows if r.get("geohash") == bucket]
+                else:
+                    rows = [
+                        r for r in rows
+                        if r.get("lat") is not None and r.get("lon") is not None
+                        and _haversine_mi(lat, lon, float(r["lat"]), float(r["lon"])) <= dist
+                    ]
+
+        return rows[:limit]
 
     # --- raw SQL for explorer window ---
     def execute_read(self, sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
