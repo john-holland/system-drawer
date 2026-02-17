@@ -14,6 +14,8 @@ using UnityEngine;
 public class ContinuumExplorerWindow : EditorWindow
 {
     [SerializeField] private string dbPath = "";
+    [SerializeField] private string pythonPath = ""; // optional: path to python.exe; empty = use PATH
+    [SerializeField] private string tenantId = ""; // empty = use Scripts/continuum_tenant.txt or "default"
     [SerializeField] private string selectedTable = "spatial_4d";
     [SerializeField] private string customSql = "SELECT * FROM spatial_4d LIMIT 50";
     [SerializeField] private string lastError = "";
@@ -21,7 +23,7 @@ public class ContinuumExplorerWindow : EditorWindow
     [SerializeField] private Vector2 tableScroll;
     private List<Dictionary<string, object>> tableData = new List<Dictionary<string, object>>();
     private string[] tableNames = { "spatial_4d", "document_blobs", "semantic_chunks", "unique_kernels", "compression_runs", "research_suggestions", "continuum_meta", "library_documents" };
-    private static readonly string PythonHint = "Set path to continuum.db (e.g. Scripts/unified_semantic_archiver/continuum.db). Uses Python to query.";
+    private static readonly string PythonHint = "Set path to continuum.db (e.g. from continuum repo or any path). Requires Python on PATH with unified_semantic_archiver (USC) installed (pip install -e /path/to/unified-semantic-compressor). Uses Python CLI to query.";
 
     [MenuItem("Window/Continuum/Continuum Explorer")]
     public static void ShowWindow()
@@ -47,6 +49,16 @@ public class ContinuumExplorerWindow : EditorWindow
             if (!string.IsNullOrEmpty(p)) dbPath = p;
         }
         EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Python path (optional)", GUILayout.Width(120));
+        pythonPath = EditorGUILayout.TextField(pythonPath);
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Tenant", GUILayout.Width(60));
+        tenantId = EditorGUILayout.TextField(tenantId);
+        EditorGUILayout.EndHorizontal();
+        if (selectedTable == "library_documents" && string.IsNullOrWhiteSpace(tenantId))
+            EditorGUILayout.LabelField("Effective tenant for library_documents: " + ContinuumSettings.GetTenant(), EditorStyles.miniLabel);
 
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Browse Table", EditorStyles.boldLabel);
@@ -89,14 +101,17 @@ public class ContinuumExplorerWindow : EditorWindow
             return;
         }
         lastError = "";
-        string py = FindPython();
+        string py = !string.IsNullOrWhiteSpace(pythonPath) ? pythonPath.Trim() : FindPython();
         if (string.IsNullOrEmpty(py))
         {
-            lastError = "Python not found on PATH.";
+            lastError = "Python not found. Set Python path or ensure python/python3 is on PATH (with USC installed).";
             return;
         }
         string scriptDir = Path.Combine(Application.dataPath, "..", "Scripts");
+        string tenant = string.IsNullOrWhiteSpace(tenantId) ? ContinuumSettings.GetTenant() : tenantId.Trim();
         string args = $"-m unified_semantic_archiver.cli.query_db --db \"{dbPath}\" --table {table}";
+        if (table == "library_documents")
+            args += $" --tenant \"{tenant.Replace("\"", "\\\"")}\"";
         RunQuery(py, args, scriptDir);
     }
 
@@ -113,10 +128,10 @@ public class ContinuumExplorerWindow : EditorWindow
             return;
         }
         lastError = "";
-        string py = FindPython();
+        string py = !string.IsNullOrWhiteSpace(pythonPath) ? pythonPath.Trim() : FindPython();
         if (string.IsNullOrEmpty(py))
         {
-            lastError = "Python not found on PATH.";
+            lastError = "Python not found. Set Python path or ensure python/python3 is on PATH (with USC installed).";
             return;
         }
         string scriptDir = Path.Combine(Application.dataPath, "..", "Scripts");

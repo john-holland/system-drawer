@@ -1,2 +1,0 @@
-# Unified Semantic Archiver
-luigi>=3.7.0

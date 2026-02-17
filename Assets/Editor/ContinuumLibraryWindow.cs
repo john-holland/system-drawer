@@ -15,6 +15,8 @@ public class ContinuumLibraryWindow : EditorWindow
 {
     [SerializeField] private string caveBaseUrl = "http://localhost:3000";
     [SerializeField] private string dbPath = "";
+    [SerializeField] private string pythonPath = ""; // optional: for CLI fallback; empty = use PATH
+    [SerializeField] private string tenantId = ""; // empty = use Scripts/continuum_tenant.txt or "default"
     [SerializeField] private string searchLat = "";
     [SerializeField] private string searchLon = "";
     [SerializeField] private string searchAddress = "";
@@ -53,13 +55,21 @@ public class ContinuumLibraryWindow : EditorWindow
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
         EditorGUILayout.LabelField("Continuum Library", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("Search by location (lat/lon or address) and distance. Uses Cave server when Base URL is set.", MessageType.Info);
+        EditorGUILayout.HelpBox("Search by location (lat/lon or address) and distance. Set Base URL to Continuum Library server (e.g. http://localhost:5050) or leave empty to use Python CLI with DB path.", MessageType.Info);
         EditorGUILayout.Space(4);
 
         EditorGUILayout.LabelField("Backend", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Cave Base URL", GUILayout.Width(100));
+        EditorGUILayout.LabelField("Base URL", GUILayout.Width(100));
         caveBaseUrl = EditorGUILayout.TextField(caveBaseUrl);
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Tenant", GUILayout.Width(100));
+        tenantId = EditorGUILayout.TextField(tenantId);
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Python path (optional)", GUILayout.Width(100));
+        pythonPath = EditorGUILayout.TextField(pythonPath);
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("DB Path (fallback)", GUILayout.Width(100));
@@ -70,6 +80,10 @@ public class ContinuumLibraryWindow : EditorWindow
             if (!string.IsNullOrEmpty(p)) dbPath = p;
         }
         EditorGUILayout.EndHorizontal();
+
+        string effectiveTenant = string.IsNullOrWhiteSpace(tenantId) ? ContinuumSettings.GetTenant() : tenantId.Trim();
+        if (string.IsNullOrEmpty(tenantId))
+            EditorGUILayout.LabelField("Effective tenant: " + effectiveTenant + " (from file or default)", EditorStyles.miniLabel);
 
         EditorGUILayout.Space(8);
         EditorGUILayout.LabelField("Location search", EditorStyles.boldLabel);
@@ -145,6 +159,11 @@ public class ContinuumLibraryWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
+    private string GetEffectiveTenant()
+    {
+        return string.IsNullOrWhiteSpace(tenantId) ? ContinuumSettings.GetTenant() : tenantId.Trim();
+    }
+
     private void GeocodeAddress()
     {
         if (string.IsNullOrWhiteSpace(searchAddress)) { lastError = "Enter an address."; return; }
@@ -155,6 +174,7 @@ public class ContinuumLibraryWindow : EditorWindow
             var uri = new Uri(new Uri(caveBaseUrl.TrimEnd('/')), "/api/geocode?address=" + Uri.EscapeDataString(searchAddress.Trim()));
             using (var client = new HttpClient())
             {
+                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Tenant-ID", GetEffectiveTenant());
                 var resp = client.GetAsync(uri).GetAwaiter().GetResult();
                 var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 if (!resp.IsSuccessStatusCode) { lastError = json; return; }
@@ -196,6 +216,7 @@ public class ContinuumLibraryWindow : EditorWindow
             var uri = new Uri(new Uri(caveBaseUrl.TrimEnd('/')), "/api/library/search?" + string.Join("&", q));
             using (var client = new HttpClient())
             {
+                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Tenant-ID", GetEffectiveTenant());
                 var resp = client.GetAsync(uri).GetAwaiter().GetResult();
                 var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 if (!resp.IsSuccessStatusCode) { lastError = json; results.Clear(); return; }
@@ -211,11 +232,12 @@ public class ContinuumLibraryWindow : EditorWindow
 
     private void SearchViaPython()
     {
-        string py = FindPython();
-        if (string.IsNullOrEmpty(py)) { lastError = "Python not found."; return; }
+        string py = !string.IsNullOrWhiteSpace(pythonPath) ? pythonPath.Trim() : FindPython();
+        if (string.IsNullOrEmpty(py)) { lastError = "Python not found. Set Python path or ensure python is on PATH (with USC installed)."; return; }
         string scriptDir = Path.Combine(Application.dataPath, "..", "Scripts");
         var sb = new StringBuilder();
-        sb.Append("-m unified_semantic_archiver.cli.query_db --db \"").Append(dbPath.Replace("\"", "\\\"")).Append("\" --table library_documents");
+        string tenant = GetEffectiveTenant();
+        sb.Append("-m unified_semantic_archiver.cli.query_db --db \"").Append(dbPath.Replace("\"", "\\\"")).Append("\" --table library_documents --tenant \"").Append(tenant.Replace("\"", "\\\"")).Append("\"");
         if (!string.IsNullOrWhiteSpace(searchQuery)) sb.Append(" -q \"").Append(searchQuery.Replace("\"", "\\\"")).Append("\"");
         if (documentTypeIndex > 0) sb.Append(" --document_type ").Append(DocumentTypes[documentTypeIndex]);
         if (!string.IsNullOrWhiteSpace(searchLat)) sb.Append(" --lat ").Append(searchLat);
@@ -299,7 +321,8 @@ public class ContinuumLibraryWindow : EditorWindow
             return;
         }
         if (string.IsNullOrWhiteSpace(caveBaseUrl)) { lastError = "Set Cave Base URL to download."; return; }
-        var url = caveBaseUrl.TrimEnd('/') + "/api/library/documents/" + doc.id + "/download";
+        var tenant = Uri.EscapeDataString(GetEffectiveTenant());
+        var url = caveBaseUrl.TrimEnd('/') + "/api/library/documents/" + doc.id + "/download?tenant=" + tenant;
         Application.OpenURL(url);
     }
 
