@@ -92,3 +92,6 @@ Assets/LargeBitmaskSystem/
 # Python
 __pycache__/
 *.py[cod]
+
+# Test fixtures (generated/downloaded)
+Scripts/video_storage_tool/tests/fixtures/random_test_image.jpg

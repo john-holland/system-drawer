@@ -1,0 +1,9 @@
+# Test dependencies for video_storage_tool integration tests
+pytest>=7.0
+
+# Optional: for description-based verification tests (Whisper, BLIP)
+# Uncomment to run full AI verification tests:
+# openai-whisper
+# transformers
+# torch
+# sentence-transformers

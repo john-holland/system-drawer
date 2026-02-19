@@ -75,12 +75,14 @@ def compute_diff(
     *,
     enabled: bool = True,
     quality: int = 6,
+    lossless: bool = False,
     ffmpeg_path: str | Path | None = None,
 ) -> Path | None:
     """
-    Compute diff = original - resultant (per-frame, 8-bit wrap), encode as Ogg Theora.
+    Compute diff = original - resultant (per-frame, 8-bit wrap).
+    When lossless: encode as FFV1 (diff.mkv). Otherwise: Ogg Theora (diff.ogv).
     Aligns resolution (scale resultant to original), fps, and duration (min of both).
-    Returns path to diff.ogv or None if skipped/failed (does not raise).
+    Returns path to diff file or None if skipped/failed (does not raise).
     """
     if not enabled:
         return None
@@ -100,7 +102,10 @@ def compute_diff(
     duration_sec = min(info_orig["duration_sec"], info_res["duration_sec"])
     if duration_sec <= 0 or fps <= 0:
         return None
-    out_path = out_dir / "diff.ogv"
+    if lossless:
+        out_path = out_dir / "diff.mkv"
+    else:
+        out_path = out_dir / "diff.ogv"
     out_dir.mkdir(parents=True, exist_ok=True)
     # Filter: [0]=original, [1]=resultant. Trim both to duration_sec, set same fps, scale resultant to w:h, then blend subtract (original - resultant).
     filter_parts = [
@@ -109,18 +114,21 @@ def compute_diff(
         "[orig][res]blend=all_mode=subtract[out]",
     ]
     filter_complex = ";".join(filter_parts)
+    if lossless:
+        codec_args = ["-c:v", "ffv1", "-level", "3"]
+    else:
+        codec_args = ["-c:v", "libtheora", "-q:v", str(min(10, max(0, quality)))]
     cmd = [
         ffmpeg_exe, "-y",
         "-i", str(original_path),
         "-i", str(resultant_path),
         "-filter_complex", filter_complex,
         "-map", "[out]",
-        "-c:v", "libtheora",
-        "-q:v", str(min(10, max(0, quality))),
+        *codec_args,
         str(out_path),
     ]
     try:
-        log.info("Computing diff (original - resultant), duration=%.1fs, %dx%d @ %.1ffps", duration_sec, w, h, fps)
+        log.info("Computing diff (original - resultant), duration=%.1fs, %dx%d @ %.1ffps, lossless=%s", duration_sec, w, h, fps, lossless)
         subprocess.run(cmd, check=True, capture_output=True, timeout=600)
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         log.warning("compute_diff failed: %s", e)
@@ -168,6 +176,7 @@ def apply_diff_ffmpeg(
     out_path: Path,
     *,
     target_duration_sec: float,
+    lossless_output: bool = False,
     ffmpeg_exe: str = "ffmpeg",
     ffprobe_exe: str = "ffprobe",
 ) -> None:
@@ -175,12 +184,21 @@ def apply_diff_ffmpeg(
     Produce output = resultant + diff (additive), then mux with audio.
     Assumes diff was computed from same alignment (same duration/fps as resultant segment).
     Output duration = target_duration_sec (audio length); if resultant+diff is shorter, loop video.
+    When lossless_output: use libx264 -qp 0. When audio is FLAC: use -c:a copy.
     """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     video_dur = _get_duration(resultant_path, ffprobe_exe=ffprobe_exe)
     t = target_duration_sec
     filter_trim = f"trim=duration={t},setpts=PTS-STARTPTS"
+
+    if lossless_output:
+        video_codec = ["-c:v", "libx264", "-qp", "0", "-preset", "ultrafast"]
+    else:
+        video_codec = ["-c:v", "libx264"]
+    audio_is_flac = str(audio_path).lower().endswith(".flac")
+    audio_codec = ["-c:a", "copy"] if audio_is_flac else ["-c:a", "aac"]
+
     # Blend: [0]=resultant, [1]=diff. addition mode: A+B. Trim to target duration.
     if video_dur <= 0 or video_dur >= t:
         filter_complex = f"[0:v]{filter_trim}[res];[1:v]{filter_trim}[diff];[res][diff]blend=all_mode=addition[vid]"
@@ -192,7 +210,7 @@ def apply_diff_ffmpeg(
             "-filter_complex", filter_complex,
             "-map", "[vid]", "-map", "2:a",
             "-t", str(t),
-            "-c:v", "libx264", "-c:a", "aac",
+            *video_codec, *audio_codec,
             str(out_path),
         ]
     else:
@@ -206,7 +224,7 @@ def apply_diff_ffmpeg(
             "-filter_complex", filter_complex,
             "-map", "[vid]", "-map", "2:a",
             "-t", str(t),
-            "-c:v", "libx264", "-c:a", "aac",
+            *video_codec, *audio_codec,
             str(out_path),
         ]
     subprocess.run(cmd, check=True, capture_output=True, timeout=600)

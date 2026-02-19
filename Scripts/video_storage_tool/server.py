@@ -21,13 +21,14 @@ from flask import Flask, Response, abort, jsonify, request, send_file
 
 # Import pipeline from same package
 from . import __main__ as cli
+from .media_utils import get_image_format, is_image_input
 from .reconstitute import reconstitute
 
 # Storage root (relative to server module dir)
 STORAGE_ROOT = Path(__file__).resolve().parent / "storage"
 CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
 SETTINGS_PATH = Path(__file__).resolve().parent / "settings.json"
-ALLOWED_EXTENSIONS = {"mp4", "mov", "avi", "mkv", "webm"}
+ALLOWED_EXTENSIONS = {"mp4", "mov", "avi", "mkv", "webm", "png", "jpg", "jpeg", "webp"}
 
 # Progress for store jobs: job_id -> { "phase", "progress", "message" }
 store_progress: dict[str, dict] = {}
@@ -74,7 +75,15 @@ def _config() -> dict:
     return cfg
 
 
-def _run_store(input_path: Path, out_dir: Path, job_id: str, *, force_script: bool = False) -> None:
+def _run_store(
+    input_path: Path,
+    out_dir: Path,
+    job_id: str,
+    *,
+    force_script: bool = False,
+    input_image_format: str | None = None,
+    source_image: Path | None = None,
+) -> None:
     short_id = job_id[:8] if len(job_id) >= 8 else job_id
 
     def progress_cb(phase: str, progress: float, message: str) -> None:
@@ -100,6 +109,8 @@ def _run_store(input_path: Path, out_dir: Path, job_id: str, *, force_script: bo
             script_backend=script_backend,
             progress_callback=progress_cb,
             force_script=force_script,
+            input_image_format=input_image_format,
+            source_image=source_image,
         )
         log.info("[store %s] Done.", short_id)
     except Exception as e:
@@ -127,9 +138,34 @@ def api_store():
     st = _storage_dir(job_id)
     st.mkdir(parents=True, exist_ok=True)
     input_path = st / "input.mp4"
-    f.save(str(input_path))
+    source_image_path = None
+    input_image_format = None
+
+    if is_image_input(Path(f.filename)):
+        input_image_format = get_image_format(Path(f.filename))
+        out_ext = "jpg" if input_image_format == "jpeg" else input_image_format
+        source_image_path = st / f"source_image.{out_ext}"
+        f.save(str(source_image_path))
+        try:
+            ffmpeg_path = _config().get("audio", {}).get("ffmpeg_path")
+            cli._image_to_video(source_image_path, input_path, ffmpeg_path)
+        except Exception as e:
+            log.exception("[store %s] Image to video conversion failed: %s", job_id[:8], e)
+            return jsonify({"error": f"Image conversion failed: {e}"}), 500
+    else:
+        f.save(str(input_path))
+
+    def _run():
+        _run_store(
+            input_path,
+            st,
+            job_id,
+            input_image_format=input_image_format,
+            source_image=source_image_path,
+        )
+
     log.info("[store %s] Upload saved, starting pipeline: %s", job_id[:8], f.filename)
-    threading.Thread(target=_run_store, args=(input_path, st, job_id), daemon=True).start()
+    threading.Thread(target=_run, daemon=True).start()
     return jsonify({"id": job_id, "status": "processing"}), 202
 
 
@@ -241,6 +277,29 @@ def api_stored_list():
     return jsonify({"items": items, "ids": [x["id"] for x in items if x["status"] == "ready"]})
 
 
+def _get_image_origin_from_storage(st: Path) -> tuple[str | None, Path | None]:
+    """If this job originated from an image, return (input_image_format, source_image_path)."""
+    for p in st.glob("source_image.*"):
+        if p.is_file():
+            fmt = get_image_format(p)
+            if fmt:
+                return (fmt, p)
+    manifest_path = st / "manifest.json"
+    if manifest_path.exists():
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                m = json.load(f)
+            fmt = m.get("input_image_format")
+            src = m.get("source_image")
+            if fmt and src:
+                p = Path(src)
+                if p.exists():
+                    return (fmt, p)
+        except Exception:
+            pass
+    return (None, None)
+
+
 @app.route("/api/stored/<job_id>/retry", methods=["POST"])
 def api_stored_retry(job_id):
     """Re-run the store pipeline for this job. Skips steps whose outputs already exist (e.g. after a crash).
@@ -251,11 +310,17 @@ def api_stored_retry(job_id):
         return jsonify({"error": "Job not found or input.mp4 missing"}), 404
     if store_progress.get(job_id):
         return jsonify({"error": "Job already in progress", "id": job_id}), 409
+    input_image_format, source_image = _get_image_origin_from_storage(st)
     data = request.get_json(silent=True) or {}
     force_script = data.get("force_script") or request.args.get("force_script", "").lower() in ("1", "true", "yes")
     short_id = job_id[:8] if len(job_id) >= 8 else job_id
     log.info("[store %s] Retry requested (force_script=%s)", short_id, force_script)
-    threading.Thread(target=_run_store, args=(input_path, st, job_id), kwargs={"force_script": force_script}, daemon=True).start()
+    threading.Thread(
+        target=_run_store,
+        args=(input_path, st, job_id),
+        kwargs={"force_script": force_script, "input_image_format": input_image_format, "source_image": source_image},
+        daemon=True,
+    ).start()
     msg = "Regenerating script and resultant." if force_script else "Retry started; cached steps will be skipped."
     return jsonify({"id": job_id, "status": "processing", "message": msg}), 202
 

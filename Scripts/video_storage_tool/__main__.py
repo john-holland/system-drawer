@@ -1,18 +1,22 @@
 """
 CLI entrypoint for video_storage_tool.
-Store: --input video.mp4 --out dir/ → audio + script + resultant video.
+Store: --input video.mp4 or image --out dir/ -> audio + script + resultant video.
 Reconstitute: --reconstitute --input stored_dir/ [--out reconstituted.mp4]
 """
 
 import argparse
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Callable
 
 from . import __version__
-from .audio import extract_and_compress_audio
+from .audio import extract_and_compress_audio, _find_ffmpeg
 from .diff import compute_diff
-from .reconstitute import reconstitute
+from .media_utils import get_image_format, is_image_input
+from .reconstitute import extract_first_frame, reconstitute
 from .script_to_video import script_to_video
 from .video_to_script import video_to_script
 
@@ -39,6 +43,27 @@ def _noop_progress(_phase: str, _progress: float, _message: str) -> None:
     pass
 
 
+def _image_to_video(image_path: Path, out_path: Path, ffmpeg_path: str | None = None) -> Path:
+    """Convert an image to a short video (1 frame, silent) for pipeline processing."""
+    ffmpeg = _find_ffmpeg(ffmpeg_path)
+    subprocess.run(
+        [
+            ffmpeg,
+            "-y",
+            "-loop", "1",
+            "-i", str(image_path),
+            "-c:v", "libx264",
+            "-t", "1",
+            "-pix_fmt", "yuv420p",
+            "-an",
+            str(out_path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    return out_path
+
+
 def run_store(
     input_video: Path,
     out_dir: Path,
@@ -52,6 +77,8 @@ def run_store(
     config: dict,
     progress_callback: Callable[[str, float, str], None] | None = None,
     force_script: bool = False,
+    input_image_format: str | None = None,
+    source_image: Path | None = None,
 ) -> None:
     """Run the store pipeline: extract audio, video→script, script→resultant video.
     Each step writes its output to out_dir immediately. If a step's output already
@@ -68,10 +95,14 @@ def run_store(
             script_path.unlink()
         if resultant_path.is_file():
             resultant_path.unlink()
+    store_cfg = config.get("store", {})
+    loss_coef = float(store_cfg.get("loss_coefficient", 0.0))
     audio_cfg = config.get("audio", {})
     audio_fmt = audio_cfg.get("format", audio_format)
-    # Step 1: extract and compress audio (skip if already present)
-    audio_path = out_dir / f"audio.{'aac' if audio_fmt == 'aac' else 'mp3'}"
+    if loss_coef == 0 and audio_fmt not in ("flac",):
+        audio_fmt = "flac"
+    ext = "flac" if audio_fmt == "flac" else ("aac" if audio_fmt == "aac" else "mp3")
+    audio_path = out_dir / f"audio.{ext}"
     if not audio_path.is_file():
         cb("extracting_audio", 0.1, "Extracting audio…")
         audio_path = extract_and_compress_audio(
@@ -87,12 +118,15 @@ def run_store(
     # Step 2: video (or audio) to script (skip if script.txt exists)
     if not script_path.is_file():
         cb("transcribing", 0.25, "Transcribing…")
+        script_cfg = config.copy()
+        if input_image_format is not None:
+            script_cfg["input_image_format"] = input_image_format
         script_path = video_to_script(
             input_video,
             audio_path,
             out_dir,
             backend=config.get("script", {}).get("backend", script_backend),
-            config=config,
+            config=script_cfg,
             progress_callback=progress_callback,
         )
         cb("transcribing", 0.4, "Script done.")
@@ -115,15 +149,26 @@ def run_store(
         cb("cogvideox", 1.0, "Resultant cached, skipping.")
     # Step 4: optional diff (original - resultant); run if resultant exists (idempotent)
     diff_config = config.get("diff", {})
+    diff_lossless = diff_config.get("lossless", loss_coef == 0)
     diff_path = compute_diff(
         input_video,
         resultant_path,
         out_dir,
         enabled=diff_config.get("enabled", True),
         quality=diff_config.get("quality", 6),
+        lossless=diff_lossless,
         ffmpeg_path=config.get("audio", {}).get("ffmpeg_path"),
     )
-    _write_manifest(out_dir, input_video, audio_path, script_path, diff_path)
+    _write_manifest(
+        out_dir,
+        input_video,
+        audio_path,
+        script_path,
+        diff_path,
+        loss_coefficient=loss_coef,
+        input_image_format=input_image_format,
+        source_image=source_image,
+    )
 
 
 def _check_cache(config: dict) -> None:
@@ -186,6 +231,10 @@ def _write_manifest(
     audio_path: Path,
     script_path: Path,
     diff_path: Path | None = None,
+    *,
+    loss_coefficient: float = 0.0,
+    input_image_format: str | None = None,
+    source_image: Path | None = None,
 ) -> None:
     import json
     resultant = out_dir / "resultant.mp4"
@@ -195,7 +244,12 @@ def _write_manifest(
         "script": str(script_path),
         "resultant_video": str(resultant) if resultant.exists() else None,
         "diff_video": str(diff_path) if diff_path and diff_path.exists() else None,
+        "loss_coefficient": loss_coefficient,
     }
+    if input_image_format is not None:
+        manifest["input_image_format"] = input_image_format
+    if source_image is not None and source_image.exists():
+        manifest["source_image"] = str(source_image)
     with open(out_dir / "manifest.json", "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
@@ -207,7 +261,7 @@ def main() -> int:
     parser.add_argument("--input", "-i", type=Path, default=None, help="Input video file or (if reconstitute) stored directory")
     parser.add_argument("--out", "-o", type=Path, default=None, help="Output directory (store) or output file (reconstitute). Default reconstitute: stored_dir/reconstituted.mp4")
     parser.add_argument("--reconstitute", action="store_true", help="Reconstitute: merge stored resultant video + audio into one file")
-    parser.add_argument("--audio-format", choices=("aac", "mp3"), default="aac", help="Audio codec for stored audio")
+    parser.add_argument("--audio-format", choices=("aac", "mp3", "flac"), default="aac", help="Audio codec for stored audio")
     parser.add_argument("--audio-max-mb", type=float, default=5.0, help="Target max size for extracted audio (MB)")
     parser.add_argument("--t2v-backend", default="stub", help="T2V backend: stub, cogvideo, or other (see config)")
     parser.add_argument("--t2v-model-path", type=str, default=None, help="Path to T2V model (overrides config)")
@@ -215,6 +269,7 @@ def main() -> int:
     parser.add_argument("--script-backend", default="whisper", help="Script backend: whisper, stub")
     parser.add_argument("--config", type=Path, default=None, help="Optional config.yaml path")
     parser.add_argument("--original", action="store_true", help="Reconstitute with diff to recover original-quality video (if diff.ogv present)")
+    parser.add_argument("--extract-frame", action="store_true", help="Extract first frame as image (use with --reconstitute). Output format matches input_image_format from manifest or png")
     parser.add_argument("--check-cache", action="store_true", help="Print Hugging Face / T2V cache locations and whether configured model is present; then exit")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     args = parser.parse_args()
@@ -244,13 +299,23 @@ def main() -> int:
         if not args.input:
             parser.error("--input required (stored directory)")
         stored_dir = args.input
-        out_file = args.out or (stored_dir / "reconstituted.mp4")
-        reconstitute(
-            stored_dir,
-            out_file,
-            use_diff=args.original,
-            ffmpeg_path=config.get("audio", {}).get("ffmpeg_path"),
-        )
+        if args.extract_frame:
+            out_file = args.out or (stored_dir / "reconstituted.png")
+            extract_first_frame(
+                stored_dir,
+                out_file,
+                ffmpeg_path=config.get("audio", {}).get("ffmpeg_path"),
+            )
+            print(f"Extracted first frame: {out_file}")
+        else:
+            out_file = args.out or (stored_dir / "reconstituted.mp4")
+            reconstitute(
+                stored_dir,
+                out_file,
+                use_diff=args.original,
+                ffmpeg_path=config.get("audio", {}).get("ffmpeg_path"),
+            )
+            print(f"Reconstituted: {out_file}")
         return 0
 
     # Store mode
@@ -262,18 +327,47 @@ def main() -> int:
     out_dir = args.out
     if out_dir is None:
         out_dir = args.input.parent / (args.input.stem + "_stored")
+    _ensure_dir(out_dir)
+
+    input_image_format = None
+    source_image_path = None
+    input_video = args.input
+    temp_video = None
+
+    if is_image_input(args.input):
+        input_image_format = get_image_format(args.input)
+        ext = "jpg" if input_image_format == "jpeg" else input_image_format
+        source_image_path = out_dir / f"source_image.{ext}"
+        shutil.copy2(args.input, source_image_path)
+        ffmpeg_path = config.get("audio", {}).get("ffmpeg_path")
+        temp_video = Path(tempfile.mktemp(suffix=".mp4"))
+        try:
+            input_video = _image_to_video(args.input, temp_video, ffmpeg_path)
+        except Exception as e:
+            if temp_video.exists():
+                temp_video.unlink(missing_ok=True)
+            print(f"Error converting image to video: {e}", file=sys.stderr)
+            return 1
+
     t2v_cfg = config.get("t2v", {})
-    run_store(
-        args.input,
-        out_dir,
-        audio_format=args.audio_format,
-        audio_max_mb=args.audio_max_mb,
-        t2v_backend=args.t2v_backend,
-        t2v_model_path=args.t2v_model_path,
-        t2v_model_id=args.t2v_model_id or t2v_cfg.get("model_id"),
-        script_backend=args.script_backend,
-        config=config,
-    )
+    try:
+        run_store(
+            input_video,
+            out_dir,
+            audio_format=args.audio_format,
+            audio_max_mb=args.audio_max_mb,
+            t2v_backend=args.t2v_backend,
+            t2v_model_path=args.t2v_model_path,
+            t2v_model_id=args.t2v_model_id or t2v_cfg.get("model_id"),
+            script_backend=args.script_backend,
+            config=config,
+            input_image_format=input_image_format,
+            source_image=source_image_path,
+        )
+    finally:
+        if temp_video is not None and temp_video.exists():
+            temp_video.unlink(missing_ok=True)
+
     print(f"Stored artifacts in: {out_dir}")
     return 0
 

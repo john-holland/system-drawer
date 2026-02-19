@@ -3,6 +3,10 @@
 # Device for T2V and visual description: auto (use GPU if available) | cuda | cpu
 device: auto
 
+# Loss coefficient: 0 = bit-exact (FLAC, FFV1, lossless); >0 = lossy (AAC, Theora) for dynamic assets
+store:
+  loss_coefficient: 0.0
+
 audio:
   format: aac
   max_mb: 5.0
@@ -10,6 +14,7 @@ audio:
 script:
   backend: whisper
   model: base   # whisper model size: tiny, base, small, medium, large
+  visual_frame_format: png   # png (default) | match_input | jpg | webp | etc.
   # Exhaustive visual description (frame-by-frame captions). Set visual_backend to blip or blip2.
   visual_backend: none   # blip | blip2 | none (set blip for exhaustive frame descriptions)
   visual_interval_sec: 1.0   # sample one frame per N seconds
@@ -31,3 +36,4 @@ diff:
   enabled: true
   codec: libtheora
   quality: 6   # Theora quality 0-10
+  lossless: false   # When true (or store.loss_coefficient=0): use FFV1, output diff.mkv

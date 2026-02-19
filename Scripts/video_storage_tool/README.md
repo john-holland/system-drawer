@@ -134,3 +134,26 @@ API:
 - `GET /api/stored/<id>/status` – `{ "status": "ready"|"processing", "manifest": ... }`.
 - `POST /api/reconstitute` – JSON `{ "stored_id": "<id>", "original": false }`, returns `{ "stream_url": "/stream/..." }`.
 - `GET /stream/<id>?original=0|1` – serve reconstituted MP4 with Range support (seekable).
+
+## Integration tests
+
+Integration tests verify the store → reconstitute round-trip and use **description algorithms** (Whisper) to assert that original and reconstituted content are semantically equivalent.
+
+Install test deps and run:
+
+```bash
+cd Scripts
+pip install -r video_storage_tool/requirements-test.txt
+python -m pytest video_storage_tool/tests -v
+```
+
+Exclude slow tests (Whisper-based description verification):
+
+```bash
+python -m pytest video_storage_tool/tests -v -m "not slow"
+```
+
+- **Round-trip reconstitute**: Store (stub script/T2V) → reconstitute; assert output exists and duration is valid.
+- **Description parity** (`@pytest.mark.slow`): Store → reconstitute, then describe both with Whisper; assert transcript similarity ≥ 0.85 (or both indicate silence). Requires `openai-whisper`.
+
+Fixture video is auto-generated on first run (ffmpeg); see `tests/fixtures/README.md` to generate manually.

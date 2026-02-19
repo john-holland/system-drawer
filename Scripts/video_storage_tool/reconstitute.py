@@ -2,6 +2,7 @@
 Reconstitute: merge stored resultant video + audio into one output file (ffmpeg).
 Handles duration mismatch by extending/looping the resultant video to match audio length.
 Optional: apply diff for original-quality output (resultant + diff + audio).
+Optional: --extract-frame to output the first frame as an image in the input format.
 """
 
 import json
@@ -26,22 +27,25 @@ def find_artifacts(stored_dir: Path) -> tuple[Path | None, Path | None, Path | N
             data = json.load(f)
         audio = data.get("audio")
         resultant = data.get("resultant_video")
-        diff_path = data.get("diff_video")
+        diff_str = data.get("diff_video")
         if audio and resultant:
             ap, rp = Path(audio), Path(resultant)
             if ap.exists() and rp.exists():
-                dp = Path(diff_path) if diff_path and Path(diff_path).exists() else (stored_dir / "diff.ogv" if (stored_dir / "diff.ogv").exists() else None)
+                if diff_str and Path(diff_str).exists():
+                    dp = Path(diff_str)
+                else:
+                    dp = stored_dir / "diff.mkv" if (stored_dir / "diff.mkv").exists() else (stored_dir / "diff.ogv" if (stored_dir / "diff.ogv").exists() else None)
                 return ap, rp, dp
     # Discover by name
     audio_path = None
     for f in stored_dir.iterdir():
-        if f.suffix.lower() in (".aac", ".mp3") and f.name.lower().startswith("audio"):
+        if f.suffix.lower() in (".aac", ".mp3", ".flac") and f.name.lower().startswith("audio"):
             audio_path = f
             break
     resultant_path = stored_dir / "resultant.mp4"
     if not resultant_path.exists():
         resultant_path = None
-    diff_path = stored_dir / "diff.ogv"
+    diff_path = stored_dir / "diff.mkv" if (stored_dir / "diff.mkv").exists() else stored_dir / "diff.ogv"
     if not diff_path.exists():
         diff_path = None
     return audio_path, resultant_path, diff_path
@@ -98,13 +102,24 @@ def reconstitute(
     if audio_dur <= 0:
         raise ValueError(f"Could not get audio duration for {audio_path}")
     if use_diff and diff_path and diff_path.exists():
-        log.info("Muxing resultant + diff + audio (original quality), duration=%.1fs", audio_dur)
+        loss_coef = 0.0
+        manifest_path = stored_dir / "manifest.json"
+        if manifest_path.exists():
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as f:
+                    m = json.load(f)
+                loss_coef = float(m.get("loss_coefficient", 0.0))
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                pass
+        lossless_out = loss_coef == 0
+        log.info("Muxing resultant + diff + audio (original quality), duration=%.1fs, lossless=%s", audio_dur, lossless_out)
         apply_diff_ffmpeg(
             resultant_path,
             diff_path,
             audio_path,
             out_path,
             target_duration_sec=audio_dur,
+            lossless_output=lossless_out,
             ffmpeg_exe=ffmpeg_exe,
             ffprobe_exe=ffprobe_exe,
         )
@@ -124,6 +139,53 @@ def reconstitute(
         ffmpeg_exe=ffmpeg_exe,
     )
     log.info("Reconstituted: %s", out_path)
+
+
+def extract_first_frame(
+    stored_dir: Path,
+    out_path: Path,
+    *,
+    image_format: str | None = None,
+    ffmpeg_path: str | Path | None = None,
+) -> None:
+    """
+    Extract the first frame from the resultant video and save as an image.
+    If image_format is None, read from manifest input_image_format, else default to png.
+    """
+    stored_dir = Path(stored_dir)
+    out_path = Path(out_path)
+    ffmpeg_exe = _find_ffmpeg(ffmpeg_path)
+    _, resultant_path, _ = find_artifacts(stored_dir)
+    if not resultant_path or not resultant_path.exists():
+        raise FileNotFoundError(f"Could not find resultant video in {stored_dir}")
+
+    fmt = image_format
+    if fmt is None:
+        manifest = stored_dir / "manifest.json"
+        if manifest.exists():
+            with open(manifest, "r", encoding="utf-8") as f:
+                m = json.load(f)
+            fmt = m.get("input_image_format", "png")
+        else:
+            fmt = "png"
+
+    ext = "jpg" if fmt == "jpeg" else fmt
+    if out_path.suffix.lower() not in (f".{ext}", f".{fmt}"):
+        out_path = out_path.with_suffix(f".{ext}")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        ffmpeg_exe, "-y",
+        "-i", str(resultant_path),
+        "-vframes", "1",
+        "-f", "image2",
+        str(out_path),
+    ]
+    if fmt in ("jpg", "jpeg"):
+        cmd.insert(-1, "-q:v")
+        cmd.insert(-1, "2")
+    subprocess.run(cmd, check=True, capture_output=True, timeout=60)
+    log.info("Extracted first frame: %s", out_path)
 
 
 def _merge_ffmpeg(

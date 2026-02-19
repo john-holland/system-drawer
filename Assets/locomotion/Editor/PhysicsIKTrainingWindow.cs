@@ -81,6 +81,11 @@ public class PhysicsIKTrainingWindow : EditorWindow
     [SerializeField] private int topCount = 10;
     [SerializeField] private float compositeThreshold = 0f;
 
+    /// <summary>When true, we are running Train All: one sweep per selected animation.</summary>
+    private bool trainAllMode;
+    private int trainAllAnimationIndex;
+    private List<RagdollAnimationSet> trainAllSelectedSets = new List<RagdollAnimationSet>();
+
     [MenuItem("Window/Locomotion/IK Animation Training")]
     public static void ShowWindow()
     {
@@ -162,6 +167,55 @@ public class PhysicsIKTrainingWindow : EditorWindow
     {
         if (usePreviewSceneActor && previewInstanceRagdollRigidbody != null) return previewInstanceRagdollRigidbody;
         return ragdollRigidbody;
+    }
+
+    /// <summary>Start a training run (single or first segment of Train all). Optionally pass the animation tree to set; otherwise uses runAsset.animationTree.</summary>
+    private void StartTrainingRun(AnimationBehaviorTree treeToUse)
+    {
+        RestoreRagdollKinematicState();
+        ApplyOptionalInitialPose();
+        var rb = GetEffectiveRagdollRigidbody();
+        if (rb != null)
+        {
+            hasStoredRagdollState = true;
+            storedRagdollPosition = rb.transform.position;
+            storedRagdollRotation = rb.transform.rotation;
+            storedRagdollVelocity = rb.linearVelocity;
+            storedRagdollAngularVelocity = rb.angularVelocity;
+            storedRagdollConstraints = rb.constraints;
+        }
+        else
+            hasStoredRagdollState = false;
+        SetRagdollNonKinematicForTraining();
+        sweepResults = new List<PhysicsIKTrainedSet>();
+        sweepIndex = 0;
+        int steps = Mathf.Clamp(powerStepCount, PowerStepCountMin, PowerStepCountMax);
+        powerSteps = new float[steps];
+        float t0 = 0.5f;
+        float t1 = 2f;
+        for (int i = 0; i < steps; i++)
+            powerSteps[i] = Mathf.Lerp(t0, t1, steps > 1 ? (float)i / (steps - 1) : 0.5f);
+        int axisCount = (testCategory == PhysicsIKTrainingCategory.ToolUse && includeFrozenAxisRuns && GetEffectiveRagdollRigidbody() != null)
+            ? PhysicsIKTrainingRunner.DefaultFrozenAxisOptions.Length
+            : 1;
+        totalRuns = powerSteps.Length * axisCount;
+        abortRequested = false;
+        running = true;
+        if (treeToUse != null && runAsset != null)
+            runAsset.animationTree = treeToUse;
+        EditorApplication.update += OnTrainingUpdate;
+    }
+
+    /// <summary>Resolve RagdollIKAnimationManager from the effective solver (RagdollSystem on solver, then manager on that GO or children).</summary>
+    private RagdollIKAnimationManager GetIKAnimationManager()
+    {
+        var effSolver = GetEffectiveSolver();
+        if (effSolver == null) return null;
+        var rs = effSolver.GetComponent<RagdollSystem>();
+        if (rs == null) return null;
+        var manager = rs.GetComponent<RagdollIKAnimationManager>();
+        if (manager != null) return manager;
+        return rs.GetComponentInChildren<RagdollIKAnimationManager>();
     }
 
     private void EnsurePreviewScene()
@@ -251,6 +305,29 @@ public class PhysicsIKTrainingWindow : EditorWindow
             }
         }
         return actorPrefabOrRoot;
+    }
+
+    /// <summary>Get a project prefab for discovery (must have AssetDatabase path). Used by Discover from actor.</summary>
+    private GameObject GetActorPrefabForDiscovery()
+    {
+        if (actorPrefabOrRoot != null && !string.IsNullOrEmpty(AssetDatabase.GetAssetPath(actorPrefabOrRoot)))
+            return actorPrefabOrRoot;
+        if (!string.IsNullOrWhiteSpace(actorKey))
+        {
+            var loader = FindAnyObjectByType<AssetLoader>();
+            if (loader != null)
+            {
+                var prefab = loader.ResolvePrefab(actorKey.Trim());
+                if (prefab != null && !string.IsNullOrEmpty(AssetDatabase.GetAssetPath(prefab)))
+                    return prefab;
+            }
+        }
+        if (solver != null)
+        {
+            var asset = PrefabUtility.GetCorrespondingObjectFromSource(solver.gameObject);
+            if (asset != null) return asset;
+        }
+        return null;
     }
 
     private static Bounds GetHierarchyBounds(GameObject root)
@@ -547,11 +624,33 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
         if (sweepIndex >= totalRuns)
         {
-            EditorApplication.update -= OnTrainingUpdate;
-            running = false;
-            ResetRagdollStateAfterRun();
-            Repaint();
-            return;
+            if (trainAllMode && trainAllSelectedSets != null && trainAllAnimationIndex + 1 < trainAllSelectedSets.Count)
+            {
+                trainAllAnimationIndex++;
+                var nextSet = trainAllSelectedSets[trainAllAnimationIndex];
+                if (nextSet != null && nextSet.animationTree != null && runAsset != null)
+                {
+                    runAsset.animationTree = nextSet.animationTree;
+                    var effS = GetEffectiveSolver();
+                    if (effS != null)
+                    {
+                        var rs = effS.GetComponent<RagdollSystem>();
+                        if (rs != null)
+                            rs.animationTree = nextSet.animationTree;
+                    }
+                }
+                sweepIndex = 0;
+            }
+            else
+            {
+                trainAllMode = false;
+                trainAllSelectedSets?.Clear();
+                EditorApplication.update -= OnTrainingUpdate;
+                running = false;
+                ResetRagdollStateAfterRun();
+                Repaint();
+                return;
+            }
         }
 
         var effSolver = GetEffectiveSolver();
@@ -587,7 +686,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         }
         else
         {
-            PhysicsIKTrainedSet withMetrics = PhysicsIKTrainingRunner.RunOne(solver, set, testCategory, set.seed, ragdollRigidbody, runAsset);
+            PhysicsIKTrainedSet withMetrics = PhysicsIKTrainingRunner.RunOne(GetEffectiveSolver(), set, testCategory, set.seed, GetEffectiveRagdollRigidbody(), runAsset);
             sweepResults.Add(withMetrics);
             sweepIndex++;
         }
@@ -625,7 +724,90 @@ public class PhysicsIKTrainingWindow : EditorWindow
         if (!usePreviewSceneActor && GetActorRootForPreview() == null)
             DestroyPreviewInstance();
 
-        animationTree = (AnimationBehaviorTree)EditorGUILayout.ObjectField("Animation Tree", animationTree, typeof(AnimationBehaviorTree), true);
+        RagdollIKAnimationManager ikManager = GetIKAnimationManager();
+        if (ikManager != null)
+        {
+            EditorGUILayout.LabelField("Animations to train", EditorStyles.boldLabel);
+            var available = ikManager.GetAvailableAnimations();
+            var selected = ikManager.GetSelectedIndices();
+            const int gridColumns = 3;
+            int count = available != null ? available.Count : 0;
+            if (count > 0)
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Select all", GUILayout.Width(80)))
+                {
+                    var all = new List<int>();
+                    for (int i = 0; i < count; i++) all.Add(i);
+                    ikManager.SetSelectedIndices(all);
+                    ikManager.SyncSelectionToSetManagerAndHierarchy();
+                    if (ikManager is UnityEngine.Object obj)
+                        EditorUtility.SetDirty(obj);
+                }
+                if (GUILayout.Button("Deselect all", GUILayout.Width(80)))
+                {
+                    ikManager.SetSelectedIndices(new List<int>());
+                    ikManager.SyncSelectionToSetManagerAndHierarchy();
+                    if (ikManager is UnityEngine.Object obj)
+                        EditorUtility.SetDirty(obj);
+                }
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                int column = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    if (column == 0)
+                        EditorGUILayout.BeginHorizontal();
+                    string label = available[i] != null && !string.IsNullOrEmpty(available[i].displayName)
+                        ? available[i].displayName
+                        : (available[i]?.animationTree != null ? available[i].animationTree.name : $"Animation {i}");
+                    bool checkedState = selected != null && selected.Contains(i);
+                    bool newState = EditorGUILayout.ToggleLeft(label, checkedState, GUILayout.MinWidth(120));
+                    if (newState != checkedState)
+                    {
+                        var next = selected != null ? new List<int>(selected) : new List<int>();
+                        if (newState)
+                            next.Add(i);
+                        else
+                            next.Remove(i);
+                        ikManager.SetSelectedIndices(next);
+                        ikManager.SyncSelectionToSetManagerAndHierarchy();
+                        if (ikManager is UnityEngine.Object obj)
+                            EditorUtility.SetDirty(obj);
+                    }
+                    column++;
+                    if (column >= gridColumns || i == count - 1)
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        column = 0;
+                    }
+                }
+                EditorGUILayout.EndVertical();
+            }
+            else
+                EditorGUILayout.HelpBox("Add entries to Ragdoll IK Animation Manager's Available Animations list. Use Discover (below) or assign in RagdollIKAnimationManager.", MessageType.Info);
+            var actorPrefab = GetActorPrefabForDiscovery();
+            EditorGUILayout.BeginHorizontal();
+            GUI.enabled = actorPrefab != null;
+            if (GUILayout.Button("Discover from actor prefab directory", GUILayout.Width(220)))
+            {
+                RagdollIKAnimationManagerEditor.DiscoverFromPrefab(ikManager, actorPrefab);
+                if (ikManager is UnityEngine.Object obj)
+                    EditorUtility.SetDirty(obj);
+            }
+            GUI.enabled = true;
+            if (actorPrefab == null)
+                EditorGUILayout.LabelField("(Assign Actor prefab or Actor key)", EditorStyles.miniLabel);
+            EditorGUILayout.EndHorizontal();
+            animationTree = (count > 0 && selected != null && selected.Count > 0 && selected[0] < count && available[selected[0]] != null)
+                ? available[selected[0]].animationTree
+                : animationTree;
+        }
+        else
+        {
+            animationTree = (AnimationBehaviorTree)EditorGUILayout.ObjectField("Animation Tree", animationTree, typeof(AnimationBehaviorTree), true);
+            EditorGUILayout.HelpBox("Add RagdollIKAnimationManager to the ragdoll (same GameObject as RagdollSystem) to use the animation checkbox grid.", MessageType.None);
+        }
         EditorGUI.BeginChangeCheck();
         solver = (PhysicsCardSolver)EditorGUILayout.ObjectField("Physics Card Solver", solver, typeof(PhysicsCardSolver), true);
         if (EditorGUI.EndChangeCheck() && usePreviewSceneActor)
@@ -875,36 +1057,37 @@ public class PhysicsIKTrainingWindow : EditorWindow
         GUI.enabled = !running;
         if (GUILayout.Button("Start Training", GUILayout.Height(24)))
         {
-            RestoreRagdollKinematicState();
-            ApplyOptionalInitialPose();
-            var rb = GetEffectiveRagdollRigidbody();
-            if (rb != null)
+            trainAllMode = false;
+            trainAllSelectedSets?.Clear();
+            StartTrainingRun(null);
+        }
+        var managerForTrainAll = GetIKAnimationManager();
+        List<RagdollAnimationSet> selectedForTrainAll = managerForTrainAll != null ? managerForTrainAll.GetSelectedAnimationSets() : null;
+        bool hasSelection = selectedForTrainAll != null && selectedForTrainAll.Count > 0;
+        GUI.enabled = !running && (hasSelection || runAsset != null);
+        if (GUILayout.Button("Train all", GUILayout.Height(24)))
+        {
+            if (hasSelection)
             {
-                hasStoredRagdollState = true;
-                storedRagdollPosition = rb.transform.position;
-                storedRagdollRotation = rb.transform.rotation;
-                storedRagdollVelocity = rb.linearVelocity;
-                storedRagdollAngularVelocity = rb.angularVelocity;
-                storedRagdollConstraints = rb.constraints;
+                trainAllSelectedSets = new List<RagdollAnimationSet>(selectedForTrainAll);
+                trainAllAnimationIndex = 0;
+                trainAllMode = true;
+                if (runAsset != null && trainAllSelectedSets[0] != null && trainAllSelectedSets[0].animationTree != null)
+                    runAsset.animationTree = trainAllSelectedSets[0].animationTree;
+                var effS = GetEffectiveSolver();
+                if (effS != null)
+                {
+                    var rs = effS.GetComponent<RagdollSystem>();
+                    if (rs != null && trainAllSelectedSets[0] != null && trainAllSelectedSets[0].animationTree != null)
+                        rs.animationTree = trainAllSelectedSets[0].animationTree;
+                }
+                StartTrainingRun(null);
             }
-            else
-                hasStoredRagdollState = false;
-            SetRagdollNonKinematicForTraining();
-            sweepResults = new List<PhysicsIKTrainedSet>();
-            sweepIndex = 0;
-            int steps = Mathf.Clamp(powerStepCount, PowerStepCountMin, PowerStepCountMax);
-            powerSteps = new float[steps];
-            float t0 = 0.5f;
-            float t1 = 2f;
-            for (int i = 0; i < steps; i++)
-                powerSteps[i] = Mathf.Lerp(t0, t1, steps > 1 ? (float)i / (steps - 1) : 0.5f);
-            int axisCount = (testCategory == PhysicsIKTrainingCategory.ToolUse && includeFrozenAxisRuns && GetEffectiveRagdollRigidbody() != null)
-                ? PhysicsIKTrainingRunner.DefaultFrozenAxisOptions.Length
-                : 1;
-            totalRuns = powerSteps.Length * axisCount;
-            abortRequested = false;
-            running = true;
-            EditorApplication.update += OnTrainingUpdate;
+            else if (runAsset != null)
+            {
+                trainAllMode = false;
+                StartTrainingRun(null);
+            }
         }
         GUI.enabled = true;
         GUI.enabled = running;
@@ -915,9 +1098,12 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
         if (running)
         {
+            string animPart = trainAllMode && trainAllSelectedSets != null && trainAllSelectedSets.Count > 0
+                ? $" Animation {trainAllAnimationIndex + 1}/{trainAllSelectedSets.Count}."
+                : "";
             string msg = previewing
-                ? $"Previewing run {sweepIndex + 1} / {totalRuns} — watch the ragdoll (Abort to stop)"
-                : $"Running... {sweepResults?.Count ?? 0} / {totalRuns} (click Abort Run to stop)";
+                ? $"Previewing run {sweepIndex + 1} / {totalRuns} — watch the ragdoll (Abort to stop){animPart}"
+                : $"Running... {sweepResults?.Count ?? 0} / {totalRuns} (click Abort Run to stop).{animPart}";
             EditorGUILayout.HelpBox(msg, MessageType.Info);
         }
         else if (sweepResults != null && sweepResults.Count > 0)

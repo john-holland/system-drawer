@@ -3,7 +3,7 @@ Video (or extracted audio) to text script: Whisper ASR + optional visual descrip
 Whisper uses ffmpeg to decode audio; if ffmpeg is not on PATH, set config audio.ffmpeg_path.
 Visual description samples frames and captions them with BLIP/BLIP2 (optional).
 
-python region_massager.py --path "C:\Users\John\Downloads\joshi-luck-3-360p-v2x_stored\diff.ogv" --force
+python region_massager.py --path "C:/Users/John/Downloads/joshi-luck-3-360p-v2x_stored/diff.ogv" --force
 """
 
 import logging
@@ -172,27 +172,57 @@ def _describe_video_frames(
         log.warning("Could not get video duration for visual description: %s", e)
         duration_sec = 0
 
+    # Frame format: png (default), match_input (use input_image_format), or explicit (jpg, webp, etc.)
+    frame_fmt = (script_cfg.get("visual_frame_format") or "png").lower()
+    if frame_fmt == "match_input":
+        frame_fmt = (config.get("input_image_format") or "png").lower()
+    ext = frame_fmt if frame_fmt in ("png", "jpg", "jpeg", "webp", "bmp", "gif", "tiff", "tif") else "png"
+    if ext == "jpeg":
+        ext = "jpg"
+
     with tempfile.TemporaryDirectory(prefix="video_storage_visual_") as tmpdir:
         tmp = Path(tmpdir)
-        # Extract frames: fps = 1/interval_sec, cap count with -frames:v
+        frame_pattern = tmp / f"frame_%04d.{ext}"
         fps = 1.0 / interval_sec if interval_sec > 0 else 1.0
+        ffmpeg_cmd = [
+            ffmpeg_exe, "-y", "-i", str(video_path),
+            "-vf", f"fps={fps}", "-vsync", "0",
+            "-frames:v", str(max_frames),
+        ]
+        if ext in ("jpg", "jpeg"):
+            ffmpeg_cmd.extend(["-q:v", "2"])
+        elif ext == "webp":
+            ffmpeg_cmd.extend(["-c:v", "libwebp", "-quality", "90"])
+        ffmpeg_cmd.append(str(frame_pattern))
         try:
-            subprocess.run(
-                [
-                    ffmpeg_exe, "-y", "-i", str(video_path),
-                    "-vf", f"fps={fps}", "-vsync", "0",
-                    "-frames:v", str(max_frames),
-                    str(tmp / "frame_%04d.png"),
-                ],
-                capture_output=True,
-                check=True,
-                timeout=600,
-            )
+            subprocess.run(ffmpeg_cmd, capture_output=True, check=True, timeout=600)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            log.warning("Frame extraction failed for visual description (input video %s): %s", video_path.name, e)
-            return "", "", ""
+            # Fallback: extract as PNG, then convert if needed
+            if ext != "png":
+                try:
+                    subprocess.run(
+                        [
+                            ffmpeg_exe, "-y", "-i", str(video_path),
+                            "-vf", f"fps={fps}", "-vsync", "0",
+                            "-frames:v", str(max_frames),
+                            str(tmp / "frame_%04d.png"),
+                        ],
+                        capture_output=True,
+                        check=True,
+                        timeout=600,
+                    )
+                    from .media_utils import convert_image_format
+                    for png in sorted(tmp.glob("frame_*.png")):
+                        out = tmp / png.name.replace(".png", f".{ext}")
+                        convert_image_format(png, out, ffmpeg_path=ffmpeg_path)
+                except Exception as e2:
+                    log.warning("Frame extraction failed (input %s): %s", video_path.name, e2)
+                    return "", "", ""
+            else:
+                log.warning("Frame extraction failed for visual description (input video %s): %s", video_path.name, e)
+                return "", "", ""
 
-        frames = sorted(tmp.glob("frame_*.png"))
+        frames = sorted(tmp.glob(f"frame_*.{ext}"))
         if not frames:
             log.warning("No frames extracted from input video for visual description.")
             return "", "", ""
