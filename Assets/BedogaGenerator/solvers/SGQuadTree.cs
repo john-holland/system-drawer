@@ -20,11 +20,17 @@ public class SGQuadTree
         public List<object> objectBehaviorTreeProperties = new List<object>();
         public QuadTreeNode[] children;
         public bool isLeaf = true;
-        
-        public QuadTreeNode(Bounds bounds)
+        /// <summary>Stable causality leaf ID (path-based, e.g. "R.2.1"). Only meaningful when isLeaf. Used for export/import compatibility.</summary>
+        public string pathId = "R";
+
+        public QuadTreeNode(Bounds bounds) : this(bounds, "R") { }
+        public QuadTreeNode(Bounds bounds, string pathId)
         {
             this.bounds = bounds;
+            this.pathId = pathId ?? "R";
         }
+        /// <summary>Returns stable leaf ID for causality recording. Format: "Q" + quadrant path (e.g. "Q2.1.3").</summary>
+        public string LeafId => isLeaf ? ("Q" + (pathId.StartsWith("R.") ? pathId.Substring(2) : (pathId == "R" ? "0" : pathId))) : null;
     }
     
     private QuadTreeNode root;
@@ -91,23 +97,20 @@ public class SGQuadTree
             
             Vector3 center = node.bounds.center;
             Vector3 size = node.bounds.size * 0.5f;
-            
-            // Create 4 children
+            string parentPath = node.pathId ?? "R";
+            // Create 4 children with path-based causality leaf IDs
             node.children[(int)Quadrant.UpperRight] = new QuadTreeNode(new Bounds(
                 new Vector3(center.x + size.x * 0.5f, center.y + size.y * 0.5f, center.z),
-                new Vector3(size.x, size.y, node.bounds.size.z)));
-            
+                new Vector3(size.x, size.y, node.bounds.size.z)), parentPath + ".0");
             node.children[(int)Quadrant.TopLeft] = new QuadTreeNode(new Bounds(
                 new Vector3(center.x - size.x * 0.5f, center.y + size.y * 0.5f, center.z),
-                new Vector3(size.x, size.y, node.bounds.size.z)));
-            
+                new Vector3(size.x, size.y, node.bounds.size.z)), parentPath + ".1");
             node.children[(int)Quadrant.BottomLeft] = new QuadTreeNode(new Bounds(
                 new Vector3(center.x - size.x * 0.5f, center.y - size.y * 0.5f, center.z),
-                new Vector3(size.x, size.y, node.bounds.size.z)));
-            
+                new Vector3(size.x, size.y, node.bounds.size.z)), parentPath + ".2");
             node.children[(int)Quadrant.LowerRight] = new QuadTreeNode(new Bounds(
                 new Vector3(center.x + size.x * 0.5f, center.y - size.y * 0.5f, center.z),
-                new Vector3(size.x, size.y, node.bounds.size.z)));
+                new Vector3(size.x, size.y, node.bounds.size.z)), parentPath + ".3");
             
             // Redistribute objects
             List<GameObject> objectsToRedistribute = new List<GameObject>(node.objects);
@@ -127,11 +130,20 @@ public class SGQuadTree
     public List<GameObject> Search(Bounds searchBounds)
     {
         List<GameObject> results = new List<GameObject>();
-        SearchRecursive(root, searchBounds, results);
+        SearchRecursive(root, searchBounds, results, null);
         return results;
     }
-    
-    private void SearchRecursive(QuadTreeNode node, Bounds searchBounds, List<GameObject> results)
+
+    /// <summary>Search and optionally collect stable causality leaf IDs for each result. leafIds can be null to skip.</summary>
+    public void SearchWithLeafIds(Bounds searchBounds, List<GameObject> results, List<string> leafIds)
+    {
+        results?.Clear();
+        leafIds?.Clear();
+        if (results == null) return;
+        SearchRecursive(root, searchBounds, results, leafIds);
+    }
+
+    private void SearchRecursive(QuadTreeNode node, Bounds searchBounds, List<GameObject> results, List<string> leafIds)
     {
         if (!node.bounds.Intersects(searchBounds))
         {
@@ -140,12 +152,14 @@ public class SGQuadTree
         
         if (node.isLeaf)
         {
+            string lid = node.LeafId;
             foreach (GameObject obj in node.objects)
             {
                 Bounds objBounds = GetGameObjectBounds(obj);
                 if (objBounds.Intersects(searchBounds))
                 {
                     results.Add(obj);
+                    leafIds?.Add(lid);
                 }
             }
         }
@@ -153,7 +167,7 @@ public class SGQuadTree
         {
             for (int i = 0; i < node.children.Length; i++)
             {
-                SearchRecursive(node.children[i], searchBounds, results);
+                SearchRecursive(node.children[i], searchBounds, results, leafIds);
             }
         }
     }

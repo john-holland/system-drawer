@@ -12,7 +12,9 @@ public class CausalityTriggerTrippedDto
 {
     public float gameTime;       // narrative seconds
     public float px, py, pz;     // position when tripped
-    public string spatialNodeId; // marker name or instance id
+    public string spatialNodeId; // marker name or instance id (legacy fallback)
+    /// <summary>Stable causality leaf ID (e.g. S3.O2.1.7) for export/import compatibility. Prefer over spatialNodeId when available.</summary>
+    public string causalityLeafId;
     public string treeNodeId;    // optional narrative tree node id
     public string sequenceId;    // optional sequence index or id
     public string payloadLabel;  // optional payload from 4D volume (e.g. "Start", "Stop")

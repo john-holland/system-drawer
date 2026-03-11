@@ -219,6 +219,26 @@ public class SpatialGenerator4D : SpatialGeneratorBase
         return slices[idx].Search(region);
     }
 
+    /// <summary>Search and collect stable causality leaf IDs (format: S{slice}.{octPath}, e.g. S3.O2.1.7). Use for export/import and causality recording.</summary>
+    public void SearchWithLeafIds(Bounds region, float t, List<GameObject> markers, List<string> causalityLeafIds)
+    {
+        markers?.Clear();
+        causalityLeafIds?.Clear();
+        if (markers == null) return;
+        EnsureInitialized();
+        if (slices.Count == 0) return;
+
+        int idx = TimeToSliceIndex(t);
+        var leafIds = causalityLeafIds != null ? new List<string>() : null;
+        slices[idx].SearchWithLeafIds(region, markers, leafIds);
+        if (causalityLeafIds != null && leafIds != null)
+        {
+            string prefix = "S" + idx + ".";
+            foreach (string lid in leafIds)
+                causalityLeafIds.Add(prefix + (lid ?? ""));
+        }
+    }
+
     /// <summary>Get the payload (and volume) for a marker GameObject returned by Search.</summary>
     public bool TryGetEntry(GameObject marker, out Bounds4 volume, out object payload)
     {
@@ -354,6 +374,27 @@ public class SpatialGenerator4D : SpatialGeneratorBase
         if (entryByGo == null) return list;
         foreach (var e in entryByGo.Values)
             list.Add((e.volume, e.payload));
+        return list;
+    }
+
+    /// <summary>Get placed entries with representative causality leaf ID (sampled at volume center + centerT). For export.</summary>
+    public List<(Bounds4 volume, object payload, string causalityLeafId)> GetPlacedEntriesWithLeafIds()
+    {
+        var list = new List<(Bounds4, object, string)>();
+        if (entryByGo == null) return list;
+        foreach (var kv in entryByGo)
+        {
+            var marker = kv.Key;
+            var e = kv.Value;
+            var region = new Bounds(e.volume.center, Vector3.one * 0.01f);
+            float t = e.volume.centerT;
+            var markers = new List<GameObject>();
+            var leafIds = new List<string>();
+            SearchWithLeafIds(region, t, markers, leafIds);
+            int idx = markers.IndexOf(marker);
+            string lid = (leafIds != null && idx >= 0 && idx < leafIds.Count) ? leafIds[idx] : null;
+            list.Add((e.volume, e.payload, lid));
+        }
         return list;
     }
 

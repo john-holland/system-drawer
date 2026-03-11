@@ -26,11 +26,17 @@ public class SGOctTree
         public List<object> objectBehaviorTreeProperties = new List<object>();
         public OctTreeNode[] children;
         public bool isLeaf = true;
-        
-        public OctTreeNode(Bounds bounds)
+        /// <summary>Stable causality leaf ID (path-based, e.g. "R.2.1.7"). Only meaningful when isLeaf. Used for export/import compatibility.</summary>
+        public string pathId = "R";
+
+        public OctTreeNode(Bounds bounds) : this(bounds, "R") { }
+        public OctTreeNode(Bounds bounds, string pathId)
         {
             this.bounds = bounds;
+            this.pathId = pathId ?? "R";
         }
+        /// <summary>Returns stable leaf ID for causality recording. Format: "O" + octant path (e.g. "O2.1.7").</summary>
+        public string LeafId => isLeaf ? ("O" + (pathId.StartsWith("R.") ? pathId.Substring(2) : (pathId == "R" ? "0" : pathId))) : null;
     }
     
     private OctTreeNode root;
@@ -100,38 +106,32 @@ public class SGOctTree
             Vector3 size = node.bounds.size * 0.5f;
             Vector3 quarterSize = size * 0.5f;
             
-            // Create 8 children (octants)
+            string parentPath = node.pathId ?? "R";
+            // Create 8 children (octants) with path-based causality leaf IDs
             node.children[(int)Octant.FrontBottomLeft] = new OctTreeNode(new Bounds(
                 new Vector3(center.x - quarterSize.x, center.y - quarterSize.y, center.z - quarterSize.z),
-                size));
-            
+                size), parentPath + ".0");
             node.children[(int)Octant.FrontLowerRight] = new OctTreeNode(new Bounds(
                 new Vector3(center.x + quarterSize.x, center.y - quarterSize.y, center.z - quarterSize.z),
-                size));
-            
+                size), parentPath + ".1");
             node.children[(int)Octant.FrontUpperRight] = new OctTreeNode(new Bounds(
                 new Vector3(center.x + quarterSize.x, center.y + quarterSize.y, center.z - quarterSize.z),
-                size));
-            
+                size), parentPath + ".2");
             node.children[(int)Octant.FrontTopLeft] = new OctTreeNode(new Bounds(
                 new Vector3(center.x - quarterSize.x, center.y + quarterSize.y, center.z - quarterSize.z),
-                size));
-            
+                size), parentPath + ".3");
             node.children[(int)Octant.BackBottomLeft] = new OctTreeNode(new Bounds(
                 new Vector3(center.x - quarterSize.x, center.y - quarterSize.y, center.z + quarterSize.z),
-                size));
-            
+                size), parentPath + ".4");
             node.children[(int)Octant.BackLowerRight] = new OctTreeNode(new Bounds(
                 new Vector3(center.x + quarterSize.x, center.y - quarterSize.y, center.z + quarterSize.z),
-                size));
-            
+                size), parentPath + ".5");
             node.children[(int)Octant.BackUpperRight] = new OctTreeNode(new Bounds(
                 new Vector3(center.x + quarterSize.x, center.y + quarterSize.y, center.z + quarterSize.z),
-                size));
-            
+                size), parentPath + ".6");
             node.children[(int)Octant.BackTopLeft] = new OctTreeNode(new Bounds(
                 new Vector3(center.x - quarterSize.x, center.y + quarterSize.y, center.z + quarterSize.z),
-                size));
+                size), parentPath + ".7");
             
             // Redistribute objects using stored bounds (same coordinate space as Insert/Search)
             List<GameObject> objectsToRedistribute = new List<GameObject>(node.objects);
@@ -152,11 +152,20 @@ public class SGOctTree
     public List<GameObject> Search(Bounds searchBounds)
     {
         List<GameObject> results = new List<GameObject>();
-        SearchRecursive(root, searchBounds, results);
+        SearchRecursive(root, searchBounds, results, null);
         return results;
     }
-    
-    private void SearchRecursive(OctTreeNode node, Bounds searchBounds, List<GameObject> results)
+
+    /// <summary>Search and optionally collect stable causality leaf IDs for each result. leafIds can be null to skip.</summary>
+    public void SearchWithLeafIds(Bounds searchBounds, List<GameObject> results, List<string> leafIds)
+    {
+        results?.Clear();
+        leafIds?.Clear();
+        if (results == null) return;
+        SearchRecursive(root, searchBounds, results, leafIds);
+    }
+
+    private void SearchRecursive(OctTreeNode node, Bounds searchBounds, List<GameObject> results, List<string> leafIds)
     {
         if (!node.bounds.Intersects(searchBounds))
         {
@@ -165,11 +174,13 @@ public class SGOctTree
         
         if (node.isLeaf)
         {
+            string lid = node.LeafId;
             for (int i = 0; i < node.objects.Count; i++)
             {
                 if (node.objectBounds[i].Intersects(searchBounds))
                 {
                     results.Add(node.objects[i]);
+                    leafIds?.Add(lid);
                 }
             }
         }
@@ -177,7 +188,7 @@ public class SGOctTree
         {
             for (int i = 0; i < node.children.Length; i++)
             {
-                SearchRecursive(node.children[i], searchBounds, results);
+                SearchRecursive(node.children[i], searchBounds, results, leafIds);
             }
         }
     }

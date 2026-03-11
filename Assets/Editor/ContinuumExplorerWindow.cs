@@ -22,7 +22,7 @@ public class ContinuumExplorerWindow : EditorWindow
     [SerializeField] private Vector2 scroll;
     [SerializeField] private Vector2 tableScroll;
     private List<Dictionary<string, object>> tableData = new List<Dictionary<string, object>>();
-    private string[] tableNames = { "spatial_4d", "document_blobs", "semantic_chunks", "unique_kernels", "compression_runs", "research_suggestions", "continuum_meta", "library_documents" };
+    private string[] tableNames = { "spatial_4d", "document_blobs", "semantic_chunks", "unique_kernels", "compression_runs", "research_suggestions", "continuum_meta", "library_documents", "episodes", "episode_assets", "narrative_type_detections", "causality_structure", "work_orders" };
     private static readonly string PythonHint = "Set path to continuum.db (e.g. from continuum repo or any path). Requires Python on PATH with unified_semantic_archiver (USC) installed (pip install -e /path/to/unified-semantic-compressor). Uses Python CLI to query.";
 
     [MenuItem("Window/Continuum/Continuum Explorer")]
@@ -30,6 +30,19 @@ public class ContinuumExplorerWindow : EditorWindow
     {
         var w = GetWindow<ContinuumExplorerWindow>("Continuum Explorer");
         w.minSize = new Vector2(480, 400);
+    }
+
+    /// <summary>Open Explorer and run the given query. Used by Episodes and Work Orders windows.</summary>
+    public static void ShowAndRunQuery(string db, string py, string tenant, string sql)
+    {
+        var w = GetWindow<ContinuumExplorerWindow>("Continuum Explorer");
+        w.minSize = new Vector2(480, 400);
+        w.dbPath = db ?? "";
+        w.pythonPath = py ?? "";
+        w.tenantId = tenant ?? "";
+        w.customSql = sql ?? "";
+        w.QuerySql(sql);
+        w.Focus();
     }
 
     private void OnGUI()

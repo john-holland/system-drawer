@@ -480,17 +480,22 @@ public class Spatial4DInGameUI : MonoBehaviour
         var sg4 = GetFirst4DGenerator();
         if (sg4 == null) return;
         var bounds = new Bounds(position, Vector3.one * 1f);
-        var markers = sg4.Search(bounds, t);
+        var markers = new List<GameObject>();
+        var leafIds = new List<string>();
+        sg4.SearchWithLeafIds(bounds, t, markers, leafIds);
         if (markers == null) return;
-        foreach (var marker in markers)
+        for (int i = 0; i < markers.Count; i++)
         {
+            var marker = markers[i];
             if (marker == null) continue;
             sg4.TryGetEntry(marker, out Bounds4 volume, out object payload);
+            string leafId = i < leafIds.Count ? leafIds[i] : null;
             var dto = new CausalityTriggerTrippedDto
             {
                 gameTime = t,
                 px = position.x, py = position.y, pz = position.z,
                 spatialNodeId = marker.name + "(" + marker.GetInstanceID() + ")",
+                causalityLeafId = leafId,
                 payloadLabel = payload != null ? payload.ToString() : null
             };
             orchestrator.causalityTriggersTripped.Add(dto);
