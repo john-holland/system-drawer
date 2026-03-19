@@ -16,6 +16,7 @@ public class ContinuumWorkOrdersWindow : EditorWindow
     [SerializeField] private string lastError = "";
     [SerializeField] private Vector2 scroll;
     [SerializeField] private string statusFilter = "pending";
+    [SerializeField] private string sourceFilter = "all";
 
     [MenuItem("Window/Continuum/Continuum Work Orders")]
     public static void ShowWindow()
@@ -28,7 +29,7 @@ public class ContinuumWorkOrdersWindow : EditorWindow
     {
         scroll = EditorGUILayout.BeginScrollView(scroll);
         EditorGUILayout.LabelField("Continuum Work Orders", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("Browse fungible work orders derived from causality tree. Linear chains have depends_on; hub-and-spoke can be parallelized. Export to JSON/CSV for dev studio.", MessageType.Info);
+        EditorGUILayout.HelpBox("Browse work orders from causality tree or from screenplay (dialogue/SFX). Filter by source; prompt_description shows quote or SFX text for screenplay-derived orders. Use POST /api/episodes/<id>/extract-screenplay-work-orders to extract from script_speech_audio and script_sound_effects.", MessageType.Info);
         EditorGUILayout.Space(4);
 
         EditorGUILayout.BeginHorizontal();
@@ -59,6 +60,15 @@ public class ContinuumWorkOrdersWindow : EditorWindow
             string status = string.IsNullOrWhiteSpace(statusFilter) ? "pending" : statusFilter.Trim();
             OpenExplorerWithQuery($"SELECT * FROM work_orders WHERE status = '{status.Replace("'", "''")}' LIMIT 100");
         }
+        EditorGUILayout.LabelField("By source (screenplay)", EditorStyles.miniLabel);
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Causality"))
+            OpenExplorerWithQuery("SELECT id, episode_id, work_order_source, causality_leaf_id, prompt_description, status FROM work_orders WHERE work_order_source = 'causality' LIMIT 100");
+        if (GUILayout.Button("Dialogue"))
+            OpenExplorerWithQuery("SELECT id, episode_id, work_order_source, speech_audio_id, episode_script_id, prompt_description, status FROM work_orders WHERE work_order_source = 'dialogue' LIMIT 100");
+        if (GUILayout.Button("SFX"))
+            OpenExplorerWithQuery("SELECT id, episode_id, work_order_source, sound_effect_id, episode_script_id, prompt_description, status FROM work_orders WHERE work_order_source = 'sfx' LIMIT 100");
+        EditorGUILayout.EndHorizontal();
         if (GUILayout.Button("Browse Narrative Type Detections"))
             OpenExplorerWithQuery("SELECT * FROM narrative_type_detections LIMIT 100");
 

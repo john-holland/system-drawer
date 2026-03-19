@@ -68,3 +68,38 @@ CREATE TABLE IF NOT EXISTS work_orders (
 
 CREATE INDEX IF NOT EXISTS idx_wo_episode ON work_orders(episode_id);
 CREATE INDEX IF NOT EXISTS idx_wo_status ON work_orders(status);
+
+-- Episode script: one script record per episode (script_ref or script_text, language)
+CREATE TABLE IF NOT EXISTS episode_script (
+    id TEXT PRIMARY KEY,
+    episode_id TEXT NOT NULL REFERENCES episodes(id),
+    script_ref TEXT,  -- FK to document_blobs or semantic_chunks
+    script_text TEXT,  -- inline text if not using ref
+    language TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_episode_script_episode ON episode_script(episode_id);
+
+-- Vocabulary render masks: one row per vocabulary asset synonym (render mask)
+-- episode_id links mask to episode when built in episode context
+CREATE TABLE IF NOT EXISTS vocabulary_render_masks (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'default',
+    asset_synonym TEXT NOT NULL,
+    episode_id TEXT REFERENCES episodes(id),  -- nullable; set when mask built for episode
+    UNIQUE(tenant_id, asset_synonym)
+);
+CREATE INDEX IF NOT EXISTS idx_vrm_tenant_synonym ON vocabulary_render_masks(tenant_id, asset_synonym);
+CREATE INDEX IF NOT EXISTS idx_vrm_episode ON vocabulary_render_masks(episode_id);
+
+CREATE TABLE IF NOT EXISTS vocabulary_render_mask_buckets (
+    id TEXT PRIMARY KEY,
+    mask_id TEXT NOT NULL REFERENCES vocabulary_render_masks(id) ON DELETE CASCADE,
+    bucket_id TEXT NOT NULL,
+    UNIQUE(mask_id, bucket_id)
+);
+CREATE INDEX IF NOT EXISTS idx_vrmb_mask ON vocabulary_render_mask_buckets(mask_id);
+
+-- For existing DBs that already have vocabulary_render_masks without episode_id, run:
+-- ALTER TABLE vocabulary_render_masks ADD COLUMN episode_id TEXT REFERENCES episodes(id);
+-- CREATE INDEX IF NOT EXISTS idx_vrm_episode ON vocabulary_render_masks(episode_id);

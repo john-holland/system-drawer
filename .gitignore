@@ -62,8 +62,8 @@ crashlytics-build.properties
 [Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Third-party assets (excluded from light package mode)
-# These are free assets from Unity Asset Store that developers must import separately
-# See THIRD_PARTY_ASSETS.md for import instructions
+# These are free assets from Unity Asset Store / 3rd parties; developers import separately.
+# See THIRD_PARTY_ASSETS.md for import instructions.
 Assets/AnimeGirlIdleAnimations_free/
 Assets/AnimeGirlIdleAnimations_free.meta
 Assets/Blink/
@@ -88,6 +88,26 @@ Assets/unity-chan!/
 Assets/UrsaAnimation/
 Assets/WhiteCity/
 Assets/LargeBitmaskSystem/
+# Additional 3rd party / asset store packs
+Assets/3DForge/
+Assets/3DForge.meta
+Assets/AssetPacks/
+Assets/AssetPacks.meta
+Assets/BackRock-NeonCity/
+Assets/BackRock-NeonCity.meta
+Assets/CartoonLowPolyCityLite/
+Assets/CartoonLowPolyCityLite.meta
+Assets/Hill Rock Mountain Terrain/
+Assets/Hill Rock Mountain Terrain.meta
+Assets/JaneArtWork/
+Assets/JaneArtWork.meta
+Assets/Layer Lab/
+Assets/Layer Lab.meta
+Assets/Planet Earth Free/
+Assets/Planet Earth Free.meta
+Assets/russian_buildings/
+Assets/russian_buildings.meta
+Assets/Scenes/Acronym Studio - Wooden Houses Free/
 
 # Python
 __pycache__/
