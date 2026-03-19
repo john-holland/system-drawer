@@ -64,6 +64,10 @@ This project excludes third-party assets from git to:
 - Third-party asset packages (see `THIRD_PARTY_ASSETS.md`)
 - Library and build artifacts (see `.gitignore`)
 
+### Testing
+
+- **Python (Scripts):** From repo root: `cd Scripts && python -m pytest video_storage_tool/tests -v -m "not slow"`. Some tests are skipped without optional fixtures; three reconstitute roundtrip tests require **ffmpeg** on PATH (e.g. `brew install ffmpeg`). Fix or skip when ffmpeg is missing for a green run.
+
 ### Adding New Third-Party Assets
 
 If you add a new third-party asset:
