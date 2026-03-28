@@ -133,6 +133,13 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.4f + r() * 0.5f; // hit accuracy
             set.powerUsed = power * (0.9f + r() * 0.35f);
         }
+        else if (category == PhysicsIKTrainingCategory.PulledHit)
+        {
+            // Pulled hit: impact plus pull-through; longer window, slightly higher power use than static Hit.
+            set.completionTime = 0.75f + (2f - 1f / power) * 0.38f + r() * 0.3f;
+            set.accuracyScore = 0.38f + r() * 0.48f;
+            set.powerUsed = power * (0.95f + r() * 0.35f);
+        }
         else if (category == PhysicsIKTrainingCategory.Weightlift)
         {
             // Weightlift: least radial movement; completion = duration of lift.

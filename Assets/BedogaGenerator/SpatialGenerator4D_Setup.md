@@ -107,6 +107,12 @@ Calendar events with **spatiotemporalVolume** are placed in **SpatialGenerator4D
 
 ---
 
+## Related docs
+
+- **[PROMPT_GENERATOR_FLOW.md](../Documentation/PROMPT_GENERATOR_FLOW.md)** — End-to-end flow from natural-language prompt through LSTM interpretation, ORM resolution, 4D placement, and spatial generation. Includes the Prompt Tree Inspector for inspection and asset completeness.
+
+---
+
 ## Quick reference
 
 - **tMin / tMax**: Narrative seconds since 2025-01-01 00:00 UTC. Use `NarrativeCalendarMath.DateTimeToSeconds(dt)` to convert a NarrativeDateTime to seconds, and `NarrativeCalendarMath.SecondsToNarrativeDateTime(t)` to convert back.  

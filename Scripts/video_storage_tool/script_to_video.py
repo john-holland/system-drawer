@@ -86,21 +86,40 @@ def _generate_stub(
     Stub: create a short placeholder video (e.g. black frame + optional text overlay)
     so the pipeline runs without a real T2V model. Uses ffmpeg to produce a short clip.
     """
+    import os
     import subprocess
+
     ffmpeg_exe = _find_ffmpeg(ffmpeg_path)
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     duration = float(config.get("duration_sec", 5.0))
     log.info("Generating stub (black placeholder) video, %.1fs — resultant will be black; diff will be ~100%% of original", duration)
-    # Generate a short silent black video (or with a simple "Generated from script" frame)
     cmd = [
         ffmpeg_exe, "-y",
         "-f", "lavfi", "-i", f"color=c=black:s=1280x720:d={duration}",
-        "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo",
+        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
         "-t", str(duration),
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
         "-c:a", "aac",
         str(out_path),
     ]
-    subprocess.run(cmd, check=True, capture_output=True, timeout=60)
+    env = os.environ.copy()
+    ffmpeg_dir = str(Path(ffmpeg_exe).resolve().parent)
+    if ffmpeg_dir and ffmpeg_dir not in env.get("PATH", "").split(os.pathsep):
+        env["PATH"] = ffmpeg_dir + os.pathsep + env.get("PATH", "")
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=env,
+        cwd=str(out_path.parent),
+    )
+    if result.returncode != 0:
+        stderr = (result.stderr or "").strip()[:500]
+        raise RuntimeError(
+            f"Stub ffmpeg failed (exit {result.returncode}): {stderr}"
+        )
 
 
 def _report(progress_callback: ProgressCallback | None, phase: str, progress: float, message: str) -> None:
@@ -176,8 +195,10 @@ def _generate_cogvideo(
         num_frames = config.get("num_frames")  # default from pipeline
         fps = int(config.get("fps", 8))
         _report(progress_callback, "generating", 0.85, "Generating video…")
+        # CogVideoX text encoder max ~226 tokens; truncate to stay under limit
+        prompt = script_text[:500] if len(script_text) > 500 else script_text
         out = pipe(
-            prompt=script_text[:2000],
+            prompt=prompt,
             guidance_scale=float(config.get("guidance_scale", 6)),
             num_inference_steps=num_steps,
             num_frames=num_frames,

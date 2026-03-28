@@ -23,6 +23,7 @@ from flask import Flask, Response, abort, jsonify, request, send_file
 from . import __main__ as cli
 from .media_utils import get_image_format, is_image_input
 from .reconstitute import reconstitute
+from .stream_cache import StreamCache
 
 # Storage root (relative to server module dir)
 STORAGE_ROOT = Path(__file__).resolve().parent / "storage"
@@ -39,6 +40,9 @@ t2v_download_status: dict[str, str | float] = {"status": "idle", "message": "", 
 # Optional overrides from CLI (set by main())
 _script_backend_override: str | None = None
 _device_override: str | None = None
+
+# Stream cache (lazy init when stream_cache.enabled)
+_stream_cache: StreamCache | None = None
 
 log = logging.getLogger("video_storage_tool.server")
 
@@ -73,6 +77,59 @@ def _config() -> dict:
     if cfg.get("device"):
         cfg.setdefault("t2v", {})["device"] = cfg.get("device")
     return cfg
+
+
+def _get_stream_cache() -> StreamCache | None:
+    """Return StreamCache if stream_cache.enabled, else None."""
+    global _stream_cache
+    cfg = _config()
+    sc = cfg.get("stream_cache") or {}
+    if not sc.get("enabled"):
+        return None
+    if _stream_cache is None:
+        cache_dir = Path(__file__).resolve().parent / str(sc.get("directory", "stream_cache"))
+        budget_gb = float(sc.get("budget_gb", 10.0))
+        budget_bytes = int(budget_gb * (1024**3))
+        _stream_cache = StreamCache(cache_dir, budget_bytes)
+        log.info("Stream cache enabled: %s, budget %.1f GB", cache_dir, budget_gb)
+    return _stream_cache
+
+
+def _get_stream_path(job_id: str, use_original: bool) -> Path | None:
+    """
+    Return path to reconstituted file for streaming.
+    Cache enabled: get from cache or run reconstitute under per-key lock, put in cache, return.
+    Cache disabled: return job dir path if file exists, else None.
+    """
+    st = _storage_dir(job_id)
+    if not st.is_dir() or not (st / "manifest.json").exists():
+        return None
+    out_name = "reconstituted_original.mp4" if use_original else "reconstituted.mp4"
+    job_path = st / out_name
+
+    cache = _get_stream_cache()
+    if cache is not None:
+        def do():
+            p = cache.get(job_id, use_original)
+            if p is not None:
+                return p
+            reconstitute(
+                st,
+                job_path,
+                use_diff=use_original,
+                ffmpeg_path=_config().get("audio", {}).get("ffmpeg_path"),
+            )
+            return cache.put(job_id, use_original, job_path)
+
+        try:
+            return cache.with_key_lock(job_id, use_original, do)
+        except Exception as e:
+            log.exception("Stream cache reconstitute failed for %s: %s", job_id[:8], e)
+            return None
+
+    if job_path.is_file():
+        return job_path
+    return None
 
 
 def _run_store(
@@ -173,6 +230,7 @@ def api_store():
 def api_settings_get():
     """Return effective editable settings (from merged config)."""
     cfg = _config()
+    sc = cfg.get("stream_cache") or {}
     return jsonify({
         "device": cfg.get("device") or cfg.get("t2v", {}).get("device") or "auto",
         "t2v": {
@@ -189,6 +247,11 @@ def api_settings_get():
         },
         "audio": {
             "ffmpeg_path": cfg.get("audio", {}).get("ffmpeg_path") or "",
+        },
+        "stream_cache": {
+            "enabled": bool(sc.get("enabled", False)),
+            "budget_gb": float(sc.get("budget_gb", 10.0)),
+            "directory": str(sc.get("directory", "stream_cache")),
         },
     })
 
@@ -355,8 +418,17 @@ def api_reconstitute():
     if not st.is_dir() or not (st / "manifest.json").exists():
         return jsonify({"error": "Stored job not found or not ready"}), 404
     out_name = "reconstituted_original.mp4" if use_original else "reconstituted.mp4"
-    out_path = st / out_name
     short_id = job_id[:8] if len(job_id) >= 8 else job_id
+
+    cache = _get_stream_cache()
+    if cache is not None:
+        path = _get_stream_path(job_id, use_original)
+        if path is None:
+            return jsonify({"error": "Reconstitute failed or job not ready"}), 500
+        stream_url = f"/stream/{job_id}?original={1 if use_original else 0}"
+        return jsonify({"stream_url": stream_url, "out_path": out_name})
+
+    out_path = st / out_name
     log.info("[reconstitute %s] Starting (original=%s) -> %s", short_id, use_original, out_name)
     try:
         reconstitute(
@@ -436,13 +508,10 @@ def _stream_file_with_progress(
 def stream_info(job_id):
     """Return content length and filename for the stream so the client can show a download progress bar."""
     use_original = request.args.get("original", "0") == "1"
-    st = _storage_dir(job_id)
-    if not st.is_dir():
+    file_path = _get_stream_path(job_id, use_original)
+    if file_path is None or not file_path.is_file():
         return jsonify({"error": "Not found"}), 404
     out_name = "reconstituted_original.mp4" if use_original else "reconstituted.mp4"
-    file_path = st / out_name
-    if not file_path.is_file():
-        return jsonify({"error": "Not found"}), 404
     size = file_path.stat().st_size
     return jsonify({
         "content_length": size,
@@ -454,12 +523,8 @@ def stream_info(job_id):
 @app.route("/stream/<job_id>", methods=["GET"])
 def stream(job_id):
     use_original = request.args.get("original", "0") == "1"
-    st = _storage_dir(job_id)
-    if not st.is_dir():
-        abort(404)
-    out_name = "reconstituted_original.mp4" if use_original else "reconstituted.mp4"
-    file_path = st / out_name
-    if not file_path.is_file():
+    file_path = _get_stream_path(job_id, use_original)
+    if file_path is None or not file_path.is_file():
         abort(404)
     size = file_path.stat().st_size
     range_header = request.headers.get("Range")

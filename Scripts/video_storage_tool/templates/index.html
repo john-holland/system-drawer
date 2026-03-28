@@ -162,6 +162,14 @@
       </select>
       <p class="hint">How to split each frame for description: whole image only, or 2×2 / 3×3 regions with prepositions (e.g. top-left, center).</p>
       <p class="hint">Describe video frames (BLIP/BLIP2) in addition to transcript. Requires: pip install transformers torch</p>
+      <label for="streamCacheEnabled" style="margin-top: 1rem;">Stream cache</label>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="streamCacheEnabled" name="stream_cache.enabled" />
+        <span>Enable cached streaming (first request runs reconstitute, then streams from cache; LRU eviction by budget)</span>
+      </div>
+      <label for="streamCacheBudgetGb">Cache budget (GB)</label>
+      <input type="number" id="streamCacheBudgetGb" name="stream_cache.budget_gb" min="0.1" max="1000" step="0.5" placeholder="10" style="max-width: 8rem;" />
+      <p class="hint">Max cache size in GB. Oldest entries evicted when over budget. Restart server after changing for cache to reinitialize.</p>
       <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
         <button type="submit" id="settingsSave">Save</button>
         <button type="button" id="t2vDownloadBtn" class="btn-outline">Download model now</button>
@@ -421,6 +429,9 @@
           document.getElementById('scriptVisualIntervalSec').value = script.visual_interval_sec ?? 1;
           document.getElementById('scriptVisualMaxFrames').value = script.visual_max_frames ?? 60;
           document.getElementById('scriptVisualGrid').value = String(script.visual_grid ?? 2);
+          const streamCache = data.stream_cache || {};
+          document.getElementById('streamCacheEnabled').checked = !!streamCache.enabled;
+          document.getElementById('streamCacheBudgetGb').value = streamCache.budget_gb ?? 10;
         })
         .catch(() => {});
     }
@@ -440,6 +451,11 @@
           visual_interval_sec: parseFloat(document.getElementById('scriptVisualIntervalSec').value) || 1,
           visual_max_frames: parseInt(document.getElementById('scriptVisualMaxFrames').value, 10) || 60,
           visual_grid: parseInt(document.getElementById('scriptVisualGrid').value, 10) || 2,
+        },
+        stream_cache: {
+          enabled: document.getElementById('streamCacheEnabled').checked,
+          budget_gb: parseFloat(document.getElementById('streamCacheBudgetGb').value) || 10,
+          directory: 'stream_cache',
         },
       };
       const statusEl = document.getElementById('settingsStatus');

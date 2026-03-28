@@ -276,6 +276,48 @@ namespace Locomotion.Narrative.Serialization
                 };
             }
 
+            if (action is NarrativeCalendarLightingAction lighting)
+            {
+                return new NarrativeActionDto
+                {
+                    type = nameof(NarrativeCalendarLightingAction),
+                    contingency = lighting.contingency,
+                    lightingContextKey = lighting.lightingContextKey,
+                    fallbackFindAny = lighting.fallbackFindAny,
+                    requireValidity = lighting.requireValidity,
+                    minValidityScore = lighting.minValidityScore,
+                    preferInferredDirection = lighting.preferInferredDirection,
+                    applyDirectionalLight = lighting.applyDirectionalLight,
+                    sunAzimuthDeg = lighting.sunAzimuthDeg,
+                    sunElevationDeg = lighting.sunElevationDeg,
+                    sunVisible = lighting.sunVisible,
+                    sunDirectionConfidence = lighting.sunDirectionConfidence,
+                    sunDirectionSource = lighting.sunDirectionSource,
+                    moonAzimuthDeg = lighting.moonAzimuthDeg,
+                    moonElevationDeg = lighting.moonElevationDeg,
+                    moonDirectionVectorWorld = NarrativeCalendarLightingAction_AzimuthToDirection(lighting.moonAzimuthDeg, lighting.moonElevationDeg),
+                    moonDirectionConfidence = lighting.moonDirectionConfidence,
+                    moonDirectionSource = lighting.moonDirectionSource,
+                    moonIlluminationFraction = lighting.moonIlluminationFraction,
+                    moonVisible = lighting.moonVisible,
+                    inferredSunDirectionVector = lighting.inferredSunDirectionVector,
+                    inferredSunDirectionConfidence = lighting.inferredSunDirectionConfidence,
+                    lightingValidityScore = lighting.lightingValidityScore,
+                    lightingValidationFlags = lighting.lightingValidationFlags,
+                    weatherProvider = lighting.weatherProvider,
+                    cloudCoverPct = lighting.cloudCoverPct,
+                    visibilityM = lighting.visibilityM,
+                    precipitationMm = lighting.precipitationMm,
+                    windSpeedMps = lighting.windSpeedMps,
+                    year = lighting.year,
+                    month = lighting.month,
+                    day = lighting.day,
+                    hour = lighting.hour,
+                    minute = lighting.minute,
+                    second = lighting.second
+                };
+            }
+
             // Unknown action type (future-proof): write only its type name.
             return new NarrativeActionDto
             {
@@ -330,6 +372,18 @@ namespace Locomotion.Narrative.Serialization
 #else
             return null;
 #endif
+        }
+
+        private static Vector3 NarrativeCalendarLightingAction_AzimuthToDirection(float azimuthDeg, float elevationDeg)
+        {
+            float az = azimuthDeg * Mathf.Deg2Rad;
+            float el = elevationDeg * Mathf.Deg2Rad;
+            var dir = new Vector3(
+                Mathf.Sin(az) * Mathf.Cos(el),
+                Mathf.Sin(el),
+                Mathf.Cos(az) * Mathf.Cos(el)
+            );
+            return dir.sqrMagnitude > 0.000001f ? dir.normalized : Vector3.up;
         }
     }
 }

@@ -8,6 +8,7 @@ python region_massager.py --path "C:/Users/John/Downloads/joshi-luck-3-360p-v2x_
 
 import logging
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -17,6 +18,7 @@ log = logging.getLogger(__name__)
 
 SCRIPT_SECTION_PREFACE = "[Preface]"
 SCRIPT_SECTION_TRANSCRIPT = "[Transcript]"
+SCRIPT_SECTION_AUDIO_EFFECTS = "[Audio effects]"
 SCRIPT_SECTION_VISUAL = "[Visual description]"
 SCRIPT_SECTION_COLOR_GRADIENT = "[Color gradient]"
 
@@ -40,15 +42,29 @@ def video_to_script(
     script_path = out_dir / "script.txt"
     cb = progress_callback or (lambda _p, _v, _m: None)
 
+    transcript_policy = (config.get("transcript") or {}).get("policy", "whisper_preferred")
     if backend == "whisper":
         transcript = _transcribe_whisper(audio_path, config)
     else:
         transcript = _stub_script(video_path, config)
 
+    if transcript_policy == "whisper_required":
+        lower = transcript.lower()
+        if "[whisper failed" in lower or "script placeholder" in lower:
+            raise RuntimeError("transcript.policy=whisper_required but Whisper transcript was not available")
+
     script_cfg = config.get("script") or {}
     parts: list[str] = [f"{SCRIPT_SECTION_TRANSCRIPT}\n{transcript}"]
 
-    visual_backend = script_cfg.get("visual_backend", "none")
+    audio_captioning = config.get("audio_captioning") or {}
+    ac_enabled = bool(audio_captioning.get("enabled", False))
+    ac_mode = str(audio_captioning.get("mode", "speech_gap_only"))
+    if ac_enabled and ac_mode in ("always", "speech_gap_only", "non_speech_only"):
+        sfx_text = _caption_audio_effects(audio_path, config, transcript)
+        if sfx_text:
+            parts.append(f"{SCRIPT_SECTION_AUDIO_EFFECTS}\n{sfx_text}")
+
+    visual_backend = script_cfg.get("visual_backend", "blip")
     if visual_backend and visual_backend != "none":
         cb("visual", 0.35, "Describing frames…")
         visual, gradient, style_comment = _describe_video_frames(video_path, config, progress_callback=cb)
@@ -58,6 +74,8 @@ def video_to_script(
             parts.append(f"{SCRIPT_SECTION_VISUAL}\n{visual}")
         if gradient:
             parts.append(f"{SCRIPT_SECTION_COLOR_GRADIENT}\n{gradient}")
+        if bool(script_cfg.get("assert_color_gradient_per_frame", True)):
+            _assert_color_gradient_coverage(visual, gradient)
         cb("visual", 0.4, "Visual description done.")
 
     content = "\n\n".join(parts)
@@ -98,8 +116,25 @@ def _transcribe_whisper(audio_path: Path, config: dict) -> str:
                 log.warning("Could not add ffmpeg to PATH for Whisper: %s", e)
 
         import whisper
-        model_name = (config.get("script") or {}).get("model", "base")
-        model = whisper.load_model(model_name)
+        script_cfg = config.get("script") or {}
+        model_name = script_cfg.get("model", "base")
+        model_path_raw = script_cfg.get("model_path")
+        if model_path_raw:
+            mp = Path(str(model_path_raw))
+            if mp.exists():
+                if mp.suffix == ".pt":
+                    load_path = str(mp)
+                else:
+                    checkpoint = mp / f"{model_name}.pt"
+                    load_path = str(checkpoint) if checkpoint.exists() else None
+                if load_path:
+                    model = whisper.load_model(load_path)
+                else:
+                    model = whisper.load_model(model_name)
+            else:
+                model = whisper.load_model(model_name)
+        else:
+            model = whisper.load_model(model_name)
         result = model.transcribe(str(audio_path), fp16=False)
         return (result.get("text") or "").strip() or "(no speech detected)"
     except ImportError:
@@ -115,6 +150,127 @@ def _transcribe_whisper(audio_path: Path, config: dict) -> str:
 def _stub_script(media_path: Path, config: dict) -> str:
     """Placeholder script when no ASR/captioning is available."""
     return f"[Script placeholder for: {media_path.name}. Install openai-whisper and use --script-backend whisper for transcription.]"
+
+
+def _caption_audio_effects(audio_path: Path, config: dict, transcript: str) -> str:
+    """
+    Optional non-speech audio captioning path.
+    Uses an audio caption model when available; otherwise emits lightweight fallback descriptors.
+    """
+    cfg = config.get("audio_captioning") or {}
+    mode = str(cfg.get("mode", "speech_gap_only"))
+    if mode == "speech_gap_only" and transcript and "no speech detected" not in transcript.lower():
+        return ""
+    if mode == "non_speech_only" and transcript and "no speech detected" not in transcript.lower():
+        return ""
+
+    model_id = str(cfg.get("model_id", "openai/whisper-base"))
+    model_path_raw = cfg.get("model_path")
+    max_tokens = int(cfg.get("max_tokens", 64))
+    model_arg = None
+    if model_path_raw:
+        mp = Path(str(model_path_raw))
+        if mp.exists():
+            model_arg = str(mp)
+    if model_arg is None:
+        model_arg = model_id
+    try:
+        from transformers import pipeline
+
+        audio_pipe = pipeline("automatic-speech-recognition", model=model_arg)
+        text = audio_pipe(str(audio_path), return_timestamps=True)
+        raw = text.get("text", "") if isinstance(text, dict) else str(text)
+        raw = (raw or "").strip()
+        if raw:
+            return f"{audio_path.name}: {raw[: max_tokens * 8]}"
+    except Exception as e:
+        log.debug("Audio caption model unavailable: %s", e)
+
+    # Fallback descriptor path based on ffmpeg stats; keeps section available for adapters.
+    try:
+        out = subprocess.run(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-i",
+                str(audio_path),
+                "-af",
+                "volumedetect",
+                "-f",
+                "null",
+                "-",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        blob = (out.stderr or "") + "\n" + (out.stdout or "")
+        return f"{audio_path.name}: non-speech profile available (volumedetect), mode={mode}"
+    except Exception:
+        return ""
+
+
+def _detect_change_points(
+    timestamps: list[float],
+    captions: list[str],
+    *,
+    threshold: float = 0.0,
+) -> list[int]:
+    """
+    Return indices i where caption[i] differs from caption[i+1].
+    When threshold=0: exact string match. When threshold>0: use sequence similarity
+    (ratio), treat as change when similarity < threshold.
+    """
+    if len(captions) < 2:
+        return []
+    indices = []
+    for i in range(len(captions) - 1):
+        a, b = captions[i], captions[i + 1]
+        if threshold <= 0:
+            if a != b:
+                indices.append(i)
+        else:
+            try:
+                from difflib import SequenceMatcher
+                ratio = SequenceMatcher(None, a, b).ratio()
+                if ratio < threshold:
+                    indices.append(i)
+            except Exception:
+                if a != b:
+                    indices.append(i)
+    return indices
+
+
+def _extract_frame_at(
+    video_path: Path,
+    t_sec: float,
+    tmpdir: Path,
+    ffmpeg_exe: str,
+    *,
+    ext: str = "png",
+) -> Path | None:
+    """
+    Extract a single frame from video at the given timestamp.
+    Returns path to the extracted frame image, or None on failure.
+    """
+    out_path = tmpdir / f"frame_t{t_sec:.3f}.{ext}"
+    cmd = [
+        ffmpeg_exe, "-y",
+        "-ss", str(t_sec),
+        "-i", str(video_path),
+        "-frames:v", "1",
+    ]
+    if ext in ("jpg", "jpeg"):
+        cmd.extend(["-q:v", "2"])
+    elif ext == "webp":
+        cmd.extend(["-c:v", "libwebp", "-quality", "90"])
+    cmd.append(str(out_path))
+    try:
+        subprocess.run(cmd, capture_output=True, check=True, timeout=60)
+        return out_path if out_path.exists() else None
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
 
 
 def _describe_video_frames(
@@ -135,7 +291,11 @@ def _describe_video_frames(
         return "", "", ""
 
     script_cfg = config.get("script") or {}
-    interval_sec = float(script_cfg.get("visual_interval_sec", 1.0))
+    sampling = str(script_cfg.get("visual_sampling", "fixed")).lower()
+    base_interval = float(script_cfg.get("visual_base_interval_sec", 1.0))
+    granularity_sec = float(script_cfg.get("visual_refine_granularity_sec", 0.2))
+    change_threshold = float(script_cfg.get("visual_change_threshold", 0.0))
+    interval_sec = base_interval if sampling == "change_point" else float(script_cfg.get("visual_interval_sec", 1.0))
     max_frames = int(script_cfg.get("visual_max_frames", 60))
     model_id = script_cfg.get("visual_model") or (
         "Salesforce/blip2-opt-2.7b" if script_cfg.get("visual_backend") == "blip2"
@@ -260,26 +420,104 @@ def _describe_video_frames(
         n = len(frames)
         lines = []
         gradient_lines = []
-        for i, f in enumerate(frames):
-            t_sec = i * interval_sec
-            if t_sec > duration_sec and duration_sec > 0:
-                break
-            if progress_callback:
-                progress_callback("visual", 0.35 + 0.05 * (i / max(n, 1)), f"Frame {i + 1}/{n}…")
-            try:
-                img = Image.open(f).convert("RGB")
-                caption = _exhaustive_frame_description(
-                    processor, model, img, device,
-                    grid_size=grid_size,
-                )
-                if caption:
-                    lines.append(f"{t_sec:.1f}s: {caption}")
-                grad = _compute_color_gradient(img)
+
+        if sampling == "change_point":
+            # Coarse pass: build keyframes
+            keyframes: list[tuple[float, str, str]] = []
+            for i, f in enumerate(frames):
+                t_sec = i * interval_sec
+                if t_sec > duration_sec and duration_sec > 0:
+                    break
+                if progress_callback:
+                    progress_callback("visual", 0.35 + 0.04 * (i / max(n, 1)), f"Frame {i + 1}/{n}…")
+                try:
+                    img = Image.open(f).convert("RGB")
+                    caption = _exhaustive_frame_description(
+                        processor, model, img, device,
+                        grid_size=grid_size,
+                    )
+                    grad = _compute_color_gradient(img) or ""
+                    if caption:
+                        keyframes.append((t_sec, caption, grad))
+                except Exception as e:
+                    log.debug("Frame %s caption failed: %s", f.name, e)
+
+            # Detect change points and refine
+            if keyframes:
+                ts = [k[0] for k in keyframes]
+                caps = [k[1] for k in keyframes]
+                change_indices = _detect_change_points(ts, caps, threshold=change_threshold)
+                extra: list[tuple[float, str, str]] = []
+
+                def _refine(t_lo: float, t_hi: float, cap_lo: str, cap_hi: str) -> None:
+                    if t_hi - t_lo <= granularity_sec:
+                        return
+                    t_mid = (t_lo + t_hi) / 2.0
+                    frame_path = _extract_frame_at(video_path, t_mid, tmp, ffmpeg_exe, ext=ext)
+                    if not frame_path:
+                        return
+                    try:
+                        img = Image.open(frame_path).convert("RGB")
+                        cap_mid = _exhaustive_frame_description(
+                            processor, model, img, device,
+                            grid_size=grid_size,
+                        )
+                        grad_mid = _compute_color_gradient(img) or ""
+                        if cap_mid:
+                            extra.append((t_mid, cap_mid, grad_mid))
+                            if cap_mid != cap_lo and t_mid - t_lo > granularity_sec:
+                                _refine(t_lo, t_mid, cap_lo, cap_mid)
+                            if cap_mid != cap_hi and t_hi - t_mid > granularity_sec:
+                                _refine(t_mid, t_hi, cap_mid, cap_hi)
+                    except Exception as e:
+                        log.debug("Refine frame at %.2fs failed: %s", t_mid, e)
+
+                for idx in change_indices:
+                    if idx + 1 < len(keyframes):
+                        _refine(
+                            keyframes[idx][0], keyframes[idx + 1][0],
+                            keyframes[idx][1], keyframes[idx + 1][1],
+                        )
+
+                keyframes = sorted(keyframes + extra, key=lambda x: x[0])
+                # Dedupe by timestamp (within 0.02s)
+                deduped: list[tuple[float, str, str]] = []
+                for kf in keyframes:
+                    if not deduped or abs(kf[0] - deduped[-1][0]) >= 0.02:
+                        deduped.append(kf)
+                keyframes = deduped
+
+            for t_sec, caption, grad in keyframes:
+                lines.append(f"{t_sec:.1f}s: {caption}")
                 if grad:
                     gradient_lines.append(f"{t_sec:.1f}s: {grad}")
-            except Exception as e:
-                log.debug("Frame %s caption failed: %s", f.name, e)
+        else:
+            # Fixed-interval mode (original behavior)
+            for i, f in enumerate(frames):
+                t_sec = i * interval_sec
+                if t_sec > duration_sec and duration_sec > 0:
+                    break
+                if progress_callback:
+                    progress_callback("visual", 0.35 + 0.05 * (i / max(n, 1)), f"Frame {i + 1}/{n}…")
+                try:
+                    img = Image.open(f).convert("RGB")
+                    caption = _exhaustive_frame_description(
+                        processor, model, img, device,
+                        grid_size=grid_size,
+                    )
+                    if caption:
+                        lines.append(f"{t_sec:.1f}s: {caption}")
+                    grad = _compute_color_gradient(img)
+                    if grad:
+                        gradient_lines.append(f"{t_sec:.1f}s: {grad}")
+                except Exception as e:
+                    log.debug("Frame %s caption failed: %s", f.name, e)
+
         visual_text = "\n".join(lines) if lines else ""
+        if gradient_lines:
+            avg = _average_gradient_line(gradient_lines)
+            if avg:
+                gradient_lines.append(avg)
         gradient_text = "\n".join(gradient_lines) if gradient_lines else ""
         return visual_text, gradient_text, style_comment
 
@@ -341,6 +579,41 @@ def _compute_color_gradient(pil_image) -> str:
     return " ".join(parts) if parts else ""
 
 
+def _parse_gradient_triplet(line: str) -> dict[str, tuple[int, int, int]]:
+    out: dict[str, tuple[int, int, int]] = {}
+    for key, value in re.findall(r"(top|mid|bottom)=#([0-9a-fA-F]{6})", line):
+        out[key] = (int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16))
+    return out
+
+
+def _average_gradient_line(lines: list[str]) -> str:
+    samples = [_parse_gradient_triplet(line) for line in lines if line.strip()]
+    samples = [s for s in samples if {"top", "mid", "bottom"}.issubset(set(s.keys()))]
+    if not samples:
+        return ""
+    parts = []
+    for key in ("top", "mid", "bottom"):
+        r = int(round(sum(s[key][0] for s in samples) / len(samples)))
+        g = int(round(sum(s[key][1] for s in samples) / len(samples)))
+        b = int(round(sum(s[key][2] for s in samples) / len(samples)))
+        parts.append(f"{key}=#{r:02x}{g:02x}{b:02x}")
+    return "avg: " + " ".join(parts)
+
+
+def _assert_color_gradient_coverage(visual_text: str, gradient_text: str) -> None:
+    visual_lines = [line for line in (visual_text or "").splitlines() if line.strip()]
+    gradient_lines = [line for line in (gradient_text or "").splitlines() if line.strip()]
+    avg_lines = [line for line in gradient_lines if line.lower().startswith("avg:")]
+    frame_gradients = [line for line in gradient_lines if not line.lower().startswith("avg:")]
+    if visual_lines and len(frame_gradients) < len(visual_lines):
+        raise AssertionError(
+            f"Color gradient assertion failed: {len(frame_gradients)} gradient lines for "
+            f"{len(visual_lines)} visual frame lines."
+        )
+    if visual_lines and not avg_lines:
+        raise AssertionError("Color gradient assertion failed: missing avg gradient production line.")
+
+
 def _chunk_image(pil_image, grid_rows: int, grid_cols: int) -> list[tuple[Any, tuple[int, int, int, int]]]:
     """Crop image into grid cells. Returns list of (PIL.Image crop, (left, top, right, bottom))."""
     w, h = pil_image.size
@@ -390,12 +663,26 @@ def _load_visual_caption_model(model_id: str, visual_backend: str | None):
     if visual_backend == "blip2":
         try:
             from transformers import Blip2Processor, Blip2ForConditionalGeneration
-            processor = Blip2Processor.from_pretrained(model_id)
-            model = Blip2ForConditionalGeneration.from_pretrained(model_id)
-            # float16 only when using CUDA (caller moves to device)
-            return processor, model
+            candidates = [model_id]
+            hub_default = "Salesforce/blip2-opt-2.7b"
+            if model_id != hub_default:
+                candidates.append(hub_default)
+            last_exc: Exception | None = None
+            for idx, candidate in enumerate(candidates):
+                try:
+                    if idx > 0:
+                        log.info("Retrying BLIP2 load with fallback model id: %s", candidate)
+                    processor = Blip2Processor.from_pretrained(candidate)
+                    model = Blip2ForConditionalGeneration.from_pretrained(candidate)
+                    # float16 only when using CUDA (caller moves to device)
+                    return processor, model
+                except Exception as e:
+                    last_exc = e
+                    continue
+            log.warning("Could not load BLIP2 model %s: %s", model_id, last_exc)
+            return None, None
         except Exception as e:
-            log.warning("Could not load BLIP2 model %s: %s", model_id, e)
+            log.warning("Could not initialize BLIP2 loader %s: %s", model_id, e)
             return None, None
 
     try:

@@ -1,39 +1,58 @@
-# Optional config for video_storage_tool. CLI args override these values.
+# User overrides for video_storage_tool. Merged over default_config.yaml.
+# Omit keys to use defaults. Set to null to disable (e.g. model_path: null).
 
-# Device for T2V and visual description: auto (use GPU if available) | cuda | cpu
-device: auto
+# device: auto
 
-# Loss coefficient: 0 = bit-exact (FLAC, FFV1, lossless); >0 = lossy (AAC, Theora) for dynamic assets
-store:
-  loss_coefficient: 0.0
+# store:
+#   loss_coefficient: 0.0
 
-audio:
-  format: aac
-  max_mb: 5.0
+# audio:
+#   format: aac
+#   max_mb: 5.0
 
 script:
   backend: whisper
   model: base   # whisper model size: tiny, base, small, medium, large
-  visual_frame_format: png   # png (default) | match_input | jpg | webp | etc.
+  # model_path comes from default_config.yaml (Downloads/whisper-base); set null to use cache
   # Exhaustive visual description (frame-by-frame captions). Set visual_backend to blip or blip2.
-  visual_backend: none   # blip | blip2 | none (set blip for exhaustive frame descriptions)
-  visual_interval_sec: 1.0   # sample one frame per N seconds
-  visual_max_frames: 60     # cap number of frames to describe
-  visual_model: "Salesforce/blip-image-captioning-base"   # or Salesforce/blip2-opt-2.7b for blip2
+  visual_backend: blip   # blip | blip2 | none; for blip2 use visual_model: "C:/Users/John/Downloads/blip2-opt-2.7b"
+  visual_interval_sec: 1.0
+  visual_max_frames: 60
+  # visual_model from default_config (blip path); omit to use local, or set for blip2/HF override
   visual_grid: 2   # 1=whole only, 2=2x2 chunks, 3=3x3 chunks (exhaustive: whole + per-region with prepositions)
   style_preface: true   # add a [Preface] style-opinion line at top of script (when visual_backend is set)
   style_prompt: "The visual style of this scene is"   # BLIP conditional prompt for preface; empty = skip
+  assert_color_gradient_per_frame: true   # assert per-frame gradient lines and avg summary for diff-oriented scripts
+
+transcript:
+  policy: whisper_preferred   # whisper_required | whisper_preferred | stub_allowed
+
+audio_captioning:
+  enabled: true
+  mode: speech_gap_only   # always | speech_gap_only | non_speech_only
+  model_id: "openai/whisper-base"
+  # model_path from default_config.yaml (Downloads/openai-whisper-base); set null to use HF
+  max_tokens: 64
 
 t2v:
   backend: stub
-  device: auto   # auto | cuda | cpu (T2V and BLIP use this when in t2v/config)
-  # 2b = smaller (~14GB download); 5b = larger, higher quality
-  model_id: "THUDM/CogVideoX-2b"   # or THUDM/CogVideoX-5b
-  model_path: null                 # optional; local path override
-  duration_sec: 5.0   # stub placeholder video length
+  device: auto
+  model_id: "THUDM/CogVideoX-2b"
+  # model_path from default_config.yaml (Downloads/CogVideoX-2b); set null to use model_id
+  duration_sec: 5.0
 
 diff:
   enabled: true
   codec: libtheora
   quality: 6   # Theora quality 0-10
   lossless: false   # When true (or store.loss_coefficient=0): use FFV1, output diff.mkv
+
+reconstitute:
+  loop_strategy: loop   # loop | hold
+  trim_audio: false     # true = output duration follows available video duration
+
+# Cached streaming mode: first request runs reconstitute and stores in cache; subsequent requests stream from cache.
+stream_cache:
+  enabled: false      # true = cached streaming mode
+  budget_gb: 10.0     # max cache size in GB
+  directory: stream_cache  # relative to server root

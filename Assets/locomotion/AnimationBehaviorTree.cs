@@ -1,9 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Locomotion.Rig;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 /// <summary>
 /// Root component that manages animation-to-behavior-tree conversion.
@@ -12,27 +17,38 @@ using Locomotion.Rig;
 [AddComponentMenu("Locomotion/Animation Behavior Tree")]
 public class AnimationBehaviorTree : MonoBehaviour
 {
-    [Header("Animation Source")]
-    [Tooltip("Source animation clip")]
-    public AnimationClip animationClip;
+    [Header("Clip Configurations")]
+    [Tooltip("List of clip configurations (each holds one clip + its settings)")]
+    public List<ABTClipConfig> clipConfigurations = new List<ABTClipConfig>();
+
+    [Tooltip("Which config is used for generation and as primary. Default 0.")]
+    public int activeClipIndex = 0;
+
+    [Header("Animation Source (Legacy - migrated to clipConfigurations)")]
+    [FormerlySerializedAs("animationClip")]
+    [SerializeField]
+    [Tooltip("Source animation clip. Kept for backward compatibility; migrated to clipConfigurations on first use.")]
+    private AnimationClip _legacyAnimationClip;
 
     [Tooltip("Alternative source from animator")]
     public RuntimeAnimatorController animatorController;
 
-    [Header("Frame Sampling")]
+    [Header("Discovery (Editor)")]
+    [Tooltip("Animations directory to scan for clips (assign folder from Project). Used by Auto Fill Clips.")]
+    public Object animationsDirectory;
+
+    [Header("Defaults for new clip configs")]
     [Tooltip("Sample every Nth frame (default: 1 = every frame)")]
     public int frameSamplingRate = 1;
 
     [Tooltip("Use only keyframes if true")]
     public bool useKeyframesOnly = false;
 
-    [Header("Interpolation")]
     [Tooltip("Interpolation mode")]
     public InterpolationMode interpolationMode = InterpolationMode.Linear;
 
-    [Header("Breakout Curves")]
-    [Tooltip("Manual frame mapping overrides")]
-    public List<BreakoutCurve> breakoutCurves = new List<BreakoutCurve>();
+    [Tooltip("Automatically detect tool usage requirements from animation")]
+    public bool autoDetectToolUsage = false;
 
     [Header("Generated Tree")]
     [Tooltip("Reference to generated behavior tree")]
@@ -44,46 +60,180 @@ public class AnimationBehaviorTree : MonoBehaviour
     [Tooltip("Multiple animation root nodes (one per clip or mode). Primary root is first; others used by IK trainer and ragdoll.")]
     public List<AnimationBehaviorTreeNode> rootNodes = new List<AnimationBehaviorTreeNode>();
 
-    [Header("Attenuation")]
-    [Tooltip("Animation attenuation settings")]
-    public AttenuationProperties attenuationProperties = new AttenuationProperties();
-
-    [Header("Tool Usage")]
-    [Tooltip("Goals for tool usage (shortcuts for animations requiring tools)")]
-    public List<BehaviorTreeGoal> toolUsageGoals = new List<BehaviorTreeGoal>();
-
-    [Tooltip("Automatically detect tool usage requirements from animation")]
-    public bool autoDetectToolUsage = false;
-
-    [Header("Dropped Frames")]
-    [Tooltip("Frames that were dropped/trimmed (for recovery)")]
-    public List<AnimationFrame> droppedFrames = new List<AnimationFrame>();
-
     // Internal state
     private List<AnimationFrame> allFrames = new List<AnimationFrame>();
     private bool isGenerating = false;
+
+    /// <summary>
+    /// Get the active clip configuration, or null if none.
+    /// </summary>
+    public ABTClipConfig GetActiveConfiguration()
+    {
+        if (clipConfigurations == null || clipConfigurations.Count == 0)
+            return null;
+        int idx = Mathf.Clamp(activeClipIndex, 0, clipConfigurations.Count - 1);
+        return clipConfigurations[idx];
+    }
+
+    /// <summary>
+    /// Ensure at least one clip config exists; migrate from legacy animationClip if needed.
+    /// Returns the active config.
+    /// </summary>
+    public ABTClipConfig GetOrCreateDefaultConfiguration()
+    {
+        if (clipConfigurations == null)
+            clipConfigurations = new List<ABTClipConfig>();
+
+        if (clipConfigurations.Count == 0)
+        {
+            // Migrate from legacy animationClip
+            AnimationClip clip = _legacyAnimationClip;
+            if (clip == null)
+                clip = GetClipFromAnimator();
+            if (clip != null)
+            {
+                var config = ABTClipConfig.FromClip(clip);
+                config.frameSamplingRate = frameSamplingRate;
+                config.useKeyframesOnly = useKeyframesOnly;
+                config.interpolationMode = interpolationMode;
+                clipConfigurations.Add(config);
+            }
+        }
+
+        return GetActiveConfiguration();
+    }
+
+    /// <summary>
+    /// Populate clipConfigurations from animatorController or _legacyAnimationClip when empty.
+    /// Returns true if any configs were added.
+    /// </summary>
+    public bool AutoFillClipConfigurations()
+    {
+        if (clipConfigurations != null && clipConfigurations.Count > 0)
+            return false;
+
+        if (clipConfigurations == null)
+            clipConfigurations = new List<ABTClipConfig>();
+
+        var clipsToAdd = new List<AnimationClip>();
+        var seen = new HashSet<AnimationClip>();
+
+        // 1. animatorController
+        if (animatorController != null && animatorController.animationClips != null)
+        {
+            foreach (var clip in animatorController.animationClips)
+            {
+                if (clip != null && !seen.Contains(clip))
+                {
+                    seen.Add(clip);
+                    clipsToAdd.Add(clip);
+                }
+            }
+        }
+
+        // 2. _legacyAnimationClip (fallback if no clips from animator)
+        if (clipsToAdd.Count == 0 && _legacyAnimationClip != null && !seen.Contains(_legacyAnimationClip))
+        {
+            seen.Add(_legacyAnimationClip);
+            clipsToAdd.Add(_legacyAnimationClip);
+        }
+
+#if UNITY_EDITOR
+        // 3. animationsDirectory (when animator and legacy yield nothing)
+        if (clipsToAdd.Count == 0 && animationsDirectory != null)
+        {
+            var folderPath = GetFolderPathForDiscovery(animationsDirectory);
+            if (!string.IsNullOrEmpty(folderPath))
+            {
+                var guids = AssetDatabase.FindAssets("t:AnimationClip", new[] { folderPath });
+                if (guids != null)
+                {
+                    foreach (var guid in guids)
+                    {
+                        var path = AssetDatabase.GUIDToAssetPath(guid);
+                        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                        if (clip != null && !seen.Contains(clip))
+                        {
+                            seen.Add(clip);
+                            clipsToAdd.Add(clip);
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+        if (clipsToAdd.Count == 0)
+            return false;
+
+        foreach (var clip in clipsToAdd)
+        {
+            var config = ABTClipConfig.FromClip(clip);
+            config.frameSamplingRate = frameSamplingRate;
+            config.useKeyframesOnly = useKeyframesOnly;
+            config.interpolationMode = interpolationMode;
+            clipConfigurations.Add(config);
+        }
+
+        activeClipIndex = 0;
+        return true;
+    }
+
+#if UNITY_EDITOR
+    private static string GetFolderPathForDiscovery(Object folderAsset)
+    {
+        if (folderAsset == null) return null;
+        var path = AssetDatabase.GetAssetPath(folderAsset);
+        if (string.IsNullOrEmpty(path)) return null;
+        if (!AssetDatabase.IsValidFolder(path) && !Directory.Exists(path))
+        {
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir)) path = dir.Replace("\\", "/");
+        }
+        return path;
+    }
+#endif
+
+    /// <summary>
+    /// Primary animation clip (from active config). Backward compatibility.
+    /// </summary>
+    public AnimationClip GetAnimationClip()
+    {
+        var config = GetOrCreateDefaultConfiguration();
+        return config?.clip ?? _legacyAnimationClip ?? GetClipFromAnimator();
+    }
+
+    /// <summary>
+    /// Primary animation clip (from active config). Backward compatibility for code that reads/writes animationTree.animationClip.
+    /// </summary>
+    public AnimationClip animationClip
+    {
+        get => GetAnimationClip();
+        set
+        {
+            _legacyAnimationClip = value;
+            var config = GetOrCreateDefaultConfiguration();
+            if (config != null)
+                config.clip = value;
+        }
+    }
 
     /// <summary>
     /// Convert animation to frames using IEnumerable.
     /// </summary>
     public IEnumerable<AnimationFrame> ConvertAnimationToFrames()
     {
-        AnimationClip clip = animationClip;
-        if (clip == null)
-        {
-            // Try to get from animator controller if provided
-            clip = GetClipFromAnimator();
-        }
-        
+        var config = GetOrCreateDefaultConfiguration();
+        AnimationClip clip = config?.clip ?? _legacyAnimationClip ?? GetClipFromAnimator();
         if (clip == null)
         {
             Debug.LogError("[AnimationBehaviorTree.ConvertAnimationToFrames] No animation clip found! " +
-                "Please assign an AnimationClip to the 'Animation Clip' field in the inspector. " +
-                "If you're using an AnimatorController, assign it to 'Animator Controller' field instead.");
+                "Please assign an AnimationClip or add a clip configuration.");
             yield break;
         }
 
-        Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Processing clip: {clip.name}, length: {clip.length}s, frameRate: {clip.frameRate}, samplingRate: {frameSamplingRate}");
+        int samplingRate = config?.frameSamplingRate ?? frameSamplingRate;
+        Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Processing clip: {clip.name}, length: {clip.length}s, frameRate: {clip.frameRate}, samplingRate: {samplingRate}");
 
         // Check if animation has any bindings/curves
         #if UNITY_EDITOR
@@ -117,7 +267,7 @@ public class AnimationBehaviorTree : MonoBehaviour
         Debug.Log($"[AnimationBehaviorTree.ConvertAnimationToFrames] Total frames: {totalFrames}, frameTime: {frameTime}s");
 
         int frameCount = 0;
-        for (int i = 0; i < totalFrames; i += frameSamplingRate)
+        for (int i = 0; i < totalFrames; i += samplingRate)
         {
             float time = i * frameTime;
             AnimationFrame frame = ExtractFrame(clip, time, i);
@@ -200,30 +350,28 @@ public class AnimationBehaviorTree : MonoBehaviour
         
         try
         {
-            var animationClipField = typeof(AnimationBehaviorTree).GetField("animationClip", BindingFlags.Public | BindingFlags.Instance);
-            var animationClipValue = animationClipField?.GetValue(this) as AnimationClip;
-            animationClipName = SafeGetObjectName(animationClipValue, "null");
-        }
-        catch (UnityEngine.UnassignedReferenceException)
-        {
-            animationClipName = "unassigned";
+            var clipVal = GetAnimationClip();
+            animationClipName = SafeGetObjectName(clipVal, "null");
         }
         catch (System.Exception)
         {
-            // Fallback: try direct access
-            try
-            {
-                animationClipName = SafeGetObjectName(animationClip, "null");
-            }
-            catch
-            {
-                animationClipName = "unassigned";
-            }
+            animationClipName = "unassigned";
         }
-        
+
         Debug.Log($"[AnimationBehaviorTree] Starting generation. AnimationClip: {animationClipName}, AnimatorController: {animatorControllerName}");
 
+        // Auto-fill clip configs from animator or legacy clip if empty
+        AutoFillClipConfigurations();
+
         isGenerating = true;
+
+        var config = GetOrCreateDefaultConfiguration();
+        if (config == null)
+        {
+            Debug.LogError("[AnimationBehaviorTree] No clip configuration. Add a clip to clipConfigurations or assign animationClip.");
+            isGenerating = false;
+            return;
+        }
 
         try
         {
@@ -238,14 +386,21 @@ public class AnimationBehaviorTree : MonoBehaviour
             }
 
             // Apply breakout curves
-            if (breakoutCurves != null && breakoutCurves.Count > 0)
+            var curves = config.breakoutCurves;
+            if (curves != null && curves.Count > 0)
             {
-                Debug.Log($"[AnimationBehaviorTree] Applying {breakoutCurves.Count} breakout curves...");
-                ApplyBreakoutCurves(allFrames);
+                Debug.Log($"[AnimationBehaviorTree] Applying {curves.Count} breakout curves...");
+                ApplyBreakoutCurves(allFrames, curves);
             }
 
-            // Remove dropped frames from active list
-            int droppedCount = allFrames.Count(f => f != null && f.isDropped);
+            // Remove dropped frames from active list and add to config.droppedFrames
+            int droppedCount = 0;
+            foreach (var f in allFrames.Where(f => f != null && f.isDropped).ToList())
+            {
+                if (!config.droppedFrames.Contains(f))
+                    config.droppedFrames.Add(f);
+                droppedCount++;
+            }
             allFrames.RemoveAll(f => f != null && f.isDropped);
             if (droppedCount > 0)
             {
@@ -256,7 +411,7 @@ public class AnimationBehaviorTree : MonoBehaviour
             if (autoDetectToolUsage)
             {
                 Debug.Log("[AnimationBehaviorTree] Detecting tool usage requirements...");
-                DetectToolUsageRequirements();
+                DetectToolUsageRequirements(config);
             }
 
             // Create behavior tree structure
@@ -282,20 +437,28 @@ public class AnimationBehaviorTree : MonoBehaviour
     /// <summary>
     /// Apply breakout curves to frames.
     /// </summary>
-    public void ApplyBreakoutCurves(List<AnimationFrame> frames)
+    public void ApplyBreakoutCurves(List<AnimationFrame> frames, List<BreakoutCurve> curves = null)
     {
-        if (frames == null || breakoutCurves == null)
+        if (frames == null)
+            return;
+        if (curves == null)
+            curves = GetActiveConfiguration()?.breakoutCurves;
+        if (curves == null || curves.Count == 0)
             return;
 
-        AnimationFrameInterpolator.ApplyBreakoutCurves(frames, breakoutCurves);
+        AnimationFrameInterpolator.ApplyBreakoutCurves(frames, curves);
     }
 
     /// <summary>
     /// Detect tool usage requirements from animation.
     /// </summary>
-    public void DetectToolUsageRequirements()
+    public void DetectToolUsageRequirements(ABTClipConfig config = null)
     {
         if (allFrames == null || allFrames.Count == 0)
+            return;
+
+        config ??= GetActiveConfiguration();
+        if (config?.toolUsageGoals == null)
             return;
 
         RagdollSystem ragdoll = GetComponent<RagdollSystem>();
@@ -305,16 +468,13 @@ public class AnimationBehaviorTree : MonoBehaviour
         if (ragdoll == null)
             return;
 
-        List<BehaviorTreeGoal> detectedGoals = AnimationToolUsageDetector.DetectToolUsage(
-            animationClip, allFrames, ragdoll);
+        AnimationClip clip = config.clip ?? GetAnimationClip();
+        List<BehaviorTreeGoal> detectedGoals = AnimationToolUsageDetector.DetectToolUsage(clip, allFrames, ragdoll);
 
-        // Merge with existing goals
         foreach (var goal in detectedGoals)
         {
-            if (goal != null && !toolUsageGoals.Contains(goal))
-            {
-                toolUsageGoals.Add(goal);
-            }
+            if (goal != null && !config.toolUsageGoals.Contains(goal))
+                config.toolUsageGoals.Add(goal);
         }
     }
 
@@ -329,30 +489,30 @@ public class AnimationBehaviorTree : MonoBehaviour
         goal.target = tool;
         goal.type = GoalType.ToolUsage;
 
-        if (!toolUsageGoals.Contains(goal))
-        {
-            toolUsageGoals.Add(goal);
-        }
+        var config = GetActiveConfiguration();
+        if (config?.toolUsageGoals != null && !config.toolUsageGoals.Contains(goal))
+            config.toolUsageGoals.Add(goal);
     }
 
     /// <summary>
-    /// Drop a frame (adds to droppedFrames list).
+    /// Drop a frame (adds to active config's droppedFrames list).
     /// </summary>
     public void DropFrame(AnimationFrame frame)
     {
         if (frame == null || frame.isDropped)
             return;
 
+        var config = GetOrCreateDefaultConfiguration();
+        if (config == null)
+            return;
+
         frame.isDropped = true;
-        if (!droppedFrames.Contains(frame))
-        {
-            droppedFrames.Add(frame);
-        }
+        if (config.droppedFrames == null)
+            config.droppedFrames = new List<AnimationFrame>();
+        if (!config.droppedFrames.Contains(frame))
+            config.droppedFrames.Add(frame);
 
-        // Remove from active frames
         allFrames.Remove(frame);
-
-        // Rebuild behavior tree structure
         CreateBehaviorTreeStructure();
     }
 
@@ -364,22 +524,20 @@ public class AnimationBehaviorTree : MonoBehaviour
         if (frame == null || !frame.isDropped)
             return;
 
-        if (droppedFrames.Contains(frame))
+        var config = GetActiveConfiguration();
+        if (config?.droppedFrames == null || !config.droppedFrames.Contains(frame))
+            return;
+
+        frame.isDropped = false;
+        config.droppedFrames.Remove(frame);
+
+        if (!allFrames.Contains(frame))
         {
-            frame.isDropped = false;
-            droppedFrames.Remove(frame);
-
-            // Re-insert into active frames at original position
-            // For simplicity, add to end - could be improved to maintain original order
-            if (!allFrames.Contains(frame))
-            {
-                allFrames.Add(frame);
-                allFrames = allFrames.OrderBy(f => f.frameIndex).ToList();
-            }
-
-            // Rebuild behavior tree structure
-            CreateBehaviorTreeStructure();
+            allFrames.Add(frame);
+            allFrames = allFrames.OrderBy(f => f.frameIndex).ToList();
         }
+
+        CreateBehaviorTreeStructure();
     }
 
     /// <summary>
@@ -588,7 +746,7 @@ public class AnimationBehaviorTree : MonoBehaviour
         rootNode = rootGO.AddComponent<AnimationBehaviorTreeNode>();
         rootNode.nodeType = NodeType.Sequence;
         rootNode.rootBehaviorTree = this;
-        rootNode.animationClip = animationClip;
+        rootNode.animationClip = GetAnimationClip();
         Debug.Log($"[AnimationBehaviorTree.CreateBehaviorTreeStructure] Created root node: {rootNode.name}");
 
         // Create child nodes for each frame
@@ -609,7 +767,7 @@ public class AnimationBehaviorTree : MonoBehaviour
             AnimationBehaviorTreeNode frameNode = frameGO.AddComponent<AnimationBehaviorTreeNode>();
             frameNode.frameIndex = frame.frameIndex;
             frameNode.frameTime = frame.time;
-            frameNode.animationClip = animationClip;
+            frameNode.animationClip = GetAnimationClip();
             frameNode.rootBehaviorTree = this;
             frameNode.boneTransforms = new Dictionary<string, TransformData>(frame.boneTransforms);
 
@@ -675,7 +833,7 @@ public class AnimationBehaviorTree : MonoBehaviour
         var node = rootGO.AddComponent<AnimationBehaviorTreeNode>();
         node.nodeType = NodeType.Sequence;
         node.rootBehaviorTree = this;
-        node.animationClip = animationClip;
+        node.animationClip = GetAnimationClip();
         rootNodes.Add(node);
         if (rootNode == null)
             rootNode = node;

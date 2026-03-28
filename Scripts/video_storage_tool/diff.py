@@ -107,11 +107,12 @@ def compute_diff(
     else:
         out_path = out_dir / "diff.ogv"
     out_dir.mkdir(parents=True, exist_ok=True)
-    # Filter: [0]=original, [1]=resultant. Trim both to duration_sec, set same fps, scale resultant to w:h, then blend subtract (original - resultant).
+    # Filter: [0]=original, [1]=resultant. Blend in high-precision RGB to reduce chroma artifacts,
+    # then convert to a delivery format for codec compatibility.
     filter_parts = [
-        f"[0:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2[orig]",
-        f"[1:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2[res]",
-        "[orig][res]blend=all_mode=subtract[out]",
+        f"[0:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,format=gbrp16le[o16]",
+        f"[1:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,format=gbrp16le[r16]",
+        "[o16][r16]blend=all_mode=subtract,format=yuv420p[out]",
     ]
     filter_complex = ";".join(filter_parts)
     if lossless:
@@ -176,6 +177,8 @@ def apply_diff_ffmpeg(
     out_path: Path,
     *,
     target_duration_sec: float,
+    loop_strategy: str = "loop",
+    trim_audio: bool = False,
     lossless_output: bool = False,
     ffmpeg_exe: str = "ffmpeg",
     ffprobe_exe: str = "ffprobe",
@@ -183,14 +186,40 @@ def apply_diff_ffmpeg(
     """
     Produce output = resultant + diff (additive), then mux with audio.
     Assumes diff was computed from same alignment (same duration/fps as resultant segment).
-    Output duration = target_duration_sec (audio length); if resultant+diff is shorter, loop video.
+    Output duration = target_duration_sec by default. If trim_audio=True, output is trimmed to
+    the shortest available video duration. If resultant+diff is shorter, behavior is controlled by
+    loop_strategy ("loop" or "hold").
     When lossless_output: use libx264 -qp 0. When audio is FLAC: use -c:a copy.
     """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    video_dur = _get_duration(resultant_path, ffprobe_exe=ffprobe_exe)
-    t = target_duration_sec
+    loop_mode = str(loop_strategy or "loop").strip().lower()
+    if loop_mode not in {"loop", "hold"}:
+        raise ValueError(f"Unsupported loop_strategy={loop_strategy!r}; expected 'loop' or 'hold'.")
+
+    res_dur = _get_duration(resultant_path, ffprobe_exe=ffprobe_exe)
+    diff_dur = _get_duration(diff_path, ffprobe_exe=ffprobe_exe)
+    base_video_dur = min(d for d in (res_dur, diff_dur) if d > 0) if (res_dur > 0 or diff_dur > 0) else 0.0
+    t = min(target_duration_sec, base_video_dur) if (trim_audio and base_video_dur > 0) else target_duration_sec
     filter_trim = f"trim=duration={t},setpts=PTS-STARTPTS"
+
+    # Reconstruct in diff geometry to match how the residual was authored.
+    info_diff = _probe_video(diff_path)
+    if info_diff:
+        w = int(info_diff["width"])
+        h = int(info_diff["height"])
+        fps = float(info_diff["fps"])
+        prep_res = (
+            f"{filter_trim},fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,"
+            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black"
+        )
+        prep_diff = (
+            f"{filter_trim},fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,"
+            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black"
+        )
+    else:
+        prep_res = filter_trim
+        prep_diff = filter_trim
 
     if lossless_output:
         video_codec = ["-c:v", "libx264", "-qp", "0", "-preset", "ultrafast"]
@@ -199,9 +228,10 @@ def apply_diff_ffmpeg(
     audio_is_flac = str(audio_path).lower().endswith(".flac")
     audio_codec = ["-c:a", "copy"] if audio_is_flac else ["-c:a", "aac"]
 
-    # Blend: [0]=resultant, [1]=diff. addition mode: A+B. Trim to target duration.
-    if video_dur <= 0 or video_dur >= t:
-        filter_complex = f"[0:v]{filter_trim}[res];[1:v]{filter_trim}[diff];[res][diff]blend=all_mode=addition[vid]"
+    # Blend: [0]=resultant, [1]=diff. Use high-precision RGB intermediate to reduce chroma edge artifacts.
+    blend_filter = "[res]format=gbrp16le[r16];[diff]format=gbrp16le[d16];[r16][d16]blend=all_mode=addition,format=yuv420p[vid]"
+    if base_video_dur <= 0 or base_video_dur >= t:
+        filter_complex = f"[0:v]{prep_res}[res];[1:v]{prep_diff}[diff];{blend_filter}"
         cmd = [
             ffmpeg_exe, "-y",
             "-i", str(resultant_path),
@@ -214,19 +244,38 @@ def apply_diff_ffmpeg(
             str(out_path),
         ]
     else:
-        loop_count = int(t / video_dur) + 1
-        filter_complex = f"[0:v]{filter_trim}[res];[1:v]{filter_trim}[diff];[res][diff]blend=all_mode=addition[vid]"
-        cmd = [
-            ffmpeg_exe, "-y",
-            "-stream_loop", str(loop_count), "-i", str(resultant_path),
-            "-stream_loop", str(loop_count), "-i", str(diff_path),
-            "-i", str(audio_path),
-            "-filter_complex", filter_complex,
-            "-map", "[vid]", "-map", "2:a",
-            "-t", str(t),
-            *video_codec, *audio_codec,
-            str(out_path),
-        ]
+        if loop_mode == "hold":
+            hold_seconds = max(0.0, t - base_video_dur)
+            filter_complex = (
+                f"[0:v]{prep_res},tpad=stop_mode=clone:stop_duration={hold_seconds}[res];"
+                f"[1:v]{prep_diff},tpad=stop_mode=clone:stop_duration={hold_seconds}[diff];"
+                f"{blend_filter}"
+            )
+            cmd = [
+                ffmpeg_exe, "-y",
+                "-i", str(resultant_path),
+                "-i", str(diff_path),
+                "-i", str(audio_path),
+                "-filter_complex", filter_complex,
+                "-map", "[vid]", "-map", "2:a",
+                "-t", str(t),
+                *video_codec, *audio_codec,
+                str(out_path),
+            ]
+        else:
+            loop_count = int(t / base_video_dur) + 1
+            filter_complex = f"[0:v]{prep_res}[res];[1:v]{prep_diff}[diff];{blend_filter}"
+            cmd = [
+                ffmpeg_exe, "-y",
+                "-stream_loop", str(loop_count), "-i", str(resultant_path),
+                "-stream_loop", str(loop_count), "-i", str(diff_path),
+                "-i", str(audio_path),
+                "-filter_complex", filter_complex,
+                "-map", "[vid]", "-map", "2:a",
+                "-t", str(t),
+                *video_codec, *audio_codec,
+                str(out_path),
+            ]
     subprocess.run(cmd, check=True, capture_output=True, timeout=600)
 
 

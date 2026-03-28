@@ -116,11 +116,33 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
     private void OnPlayModeStateChanged(PlayModeStateChange state)
     {
-        if (state == PlayModeStateChange.EnteredPlayMode)
+        if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.ExitingPlayMode)
         {
-            TryResolveSceneReferences();
-            Repaint();
+            // Scene object refs (solver, ragdoll, previewCamera, etc.) become invalid when transitioning.
+            // Invalidate preview so EnsurePreviewScene will rebuild with valid refs.
+            InvalidatePreviewForPlayModeTransition();
         }
+        if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+        {
+            // Delay resolution until scene is fully loaded (one frame after transition).
+            EditorApplication.delayCall += () =>
+            {
+                TryResolveSceneReferences();
+                Repaint();
+            };
+        }
+    }
+
+    /// <summary>Invalidate preview scene and instance refs so they are rebuilt. Call when entering/exiting play mode because scene objects are destroyed.</summary>
+    private void InvalidatePreviewForPlayModeTransition()
+    {
+        previewInstance = null;
+        previewInstanceSolver = null;
+        previewInstanceRagdollRigidbody = null;
+        previewCamera = null;
+        previewContainer = null;
+        previewScene = default;
+        // Don't close/destroy the scene here—let EnsurePreviewScene handle rebuild. RenderTexture persists.
     }
 
     /// <summary>Restore solver and ragdollRigidbody when they are null after domain reload or Play Mode enter.</summary>
@@ -220,9 +242,28 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
     private void EnsurePreviewScene()
     {
-        if (previewScene.IsValid() && previewScene.isLoaded) return;
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-        previewScene = SceneManager.GetActiveScene();
+        // Rebuild if scene invalid, or if camera/container are null (e.g. after play mode transition when refs were destroyed).
+        bool sceneIntact = previewScene.IsValid() && previewScene.isLoaded
+            && previewCamera != null && !previewCamera.Equals(null)
+            && previewContainer != null && !previewContainer.Equals(null);
+        if (sceneIntact) return;
+
+        if (previewScene.IsValid() && previewScene.isLoaded)
+        {
+            if (Application.isPlaying)
+                SceneManager.UnloadSceneAsync(previewScene);
+            else
+                EditorSceneManager.CloseScene(previewScene, true);
+        }
+        previewScene = default;
+
+        if (Application.isPlaying)
+            previewScene = SceneManager.CreateScene(PreviewSceneName);
+        else
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            previewScene = SceneManager.GetActiveScene();
+        }
         var camGo = new GameObject("PreviewCamera");
         camGo.AddComponent<Camera>();
         previewCamera = camGo.GetComponent<Camera>();
@@ -272,7 +313,12 @@ public class PhysicsIKTrainingWindow : EditorWindow
             previewRenderTexture.Release();
         previewRenderTexture = null;
         if (previewScene.IsValid() && previewScene.isLoaded)
-            EditorSceneManager.CloseScene(previewScene, true);
+        {
+            if (Application.isPlaying)
+                SceneManager.UnloadSceneAsync(previewScene);
+            else
+                EditorSceneManager.CloseScene(previewScene, true);
+        }
         previewScene = default;
         previewCamera = null;
         previewContainer = null;
@@ -950,10 +996,13 @@ public class PhysicsIKTrainingWindow : EditorWindow
             if (GUI.changed) EditorUtility.SetDirty(runAsset);
         }
 
-        if (testCategory == PhysicsIKTrainingCategory.Hit && runAsset != null)
+        bool isHitOrPulledHit = testCategory == PhysicsIKTrainingCategory.Hit || testCategory == PhysicsIKTrainingCategory.PulledHit;
+        if (isHitOrPulledHit && runAsset != null)
         {
             EditorGUILayout.Space(2);
-            EditorGUILayout.LabelField("Hit", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(
+                testCategory == PhysicsIKTrainingCategory.PulledHit ? "Pulled hit" : "Hit",
+                EditorStyles.miniLabel);
             runAsset.hitTarget = (GameObject)EditorGUILayout.ObjectField("Hit target", runAsset.hitTarget, typeof(GameObject), true);
             SerializedObject soHit = new SerializedObject(runAsset);
             SerializedProperty hitLimbNames = soHit.FindProperty("hitLimbNames");

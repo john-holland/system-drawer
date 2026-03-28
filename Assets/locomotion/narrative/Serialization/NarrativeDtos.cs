@@ -70,6 +70,41 @@ namespace Locomotion.Narrative.Serialization
         // BT goal
         public string actorKey;
         public Locomotion.Narrative.BehaviorTreeGoalSpec goal;
+
+        // Lighting action
+        public string lightingContextKey;
+        public bool fallbackFindAny;
+        public bool requireValidity;
+        public float minValidityScore;
+        public bool preferInferredDirection;
+        public bool applyDirectionalLight;
+        public float sunAzimuthDeg;
+        public float sunElevationDeg;
+        public bool sunVisible;
+        public float sunDirectionConfidence;
+        public string sunDirectionSource;
+        public float moonAzimuthDeg;
+        public float moonElevationDeg;
+        public UnityEngine.Vector3 moonDirectionVectorWorld;
+        public float moonDirectionConfidence;
+        public string moonDirectionSource;
+        public float moonIlluminationFraction;
+        public bool moonVisible;
+        public UnityEngine.Vector3 inferredSunDirectionVector;
+        public float inferredSunDirectionConfidence;
+        public float lightingValidityScore;
+        public string lightingValidationFlags;
+        public string weatherProvider;
+        public float cloudCoverPct;
+        public float visibilityM;
+        public float precipitationMm;
+        public float windSpeedMps;
+        public int year;
+        public int month;
+        public int day;
+        public int hour;
+        public int minute;
+        public int second;
     }
 
     /// <summary>Calendar DTO for LSTM training; includes 4D spatiotemporal volume per event.</summary>

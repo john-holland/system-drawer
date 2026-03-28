@@ -82,6 +82,14 @@ public class SpatialGenerator4D : SpatialGeneratorBase
     [Tooltip("Color tint for emergence layers (alpha is overridden per layer).")]
     public Color emergenceColor = new Color(0.3f, 0.7f, 1f, 0.5f);
 
+    [Header("Prompt Tree Inspector")]
+    [Tooltip("Optional. When set, Open Prompt Tree Inspector uses this interpreter.")]
+    public NarrativeLSTMPromptInterpreter promptTreeInspectorInterpreter;
+    [Tooltip("Optional. When set, inspector uses this for ORM lookup. Falls back to interpreter.sceneObjectRegistry if null.")]
+    public SceneObjectRegistry promptTreeInspectorRegistry;
+    [Tooltip("Optional. Last prompt asset inspected; used for quick re-open.")]
+    public NarrativePromptAsset lastInspectedPrompt;
+
     private List<SGOctTree> slices = new List<SGOctTree>();
     private Dictionary<GameObject, SpatiotemporalEntry> entryByGo = new Dictionary<GameObject, SpatiotemporalEntry>();
     private Transform markerParent;

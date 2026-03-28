@@ -21,18 +21,40 @@ from .script_to_video import script_to_video
 from .video_to_script import video_to_script
 
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge override into base. Override values take precedence."""
+    out = dict(base)
+    for key, val in override.items():
+        if isinstance(val, dict) and isinstance(out.get(key), dict):
+            out[key] = _deep_merge(out[key], val)
+        else:
+            out[key] = val
+    return out
+
+
 def _load_config(config_path: Path | None) -> dict:
-    """Load optional YAML config. Returns empty dict if no config or PyYAML missing."""
-    if config_path is None or not config_path.exists():
-        return {}
+    """Load YAML config. Merges default_config.yaml with user config. Returns empty dict if PyYAML missing."""
     try:
         import yaml
-        with open(config_path, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
     except ImportError:
         return {}
+    _package_dir = Path(__file__).resolve().parent
+    default_path = _package_dir / "default_config.yaml"
+    base: dict = {}
+    if default_path.is_file():
+        try:
+            with open(default_path, "r", encoding="utf-8") as f:
+                base = yaml.safe_load(f) or {}
+        except Exception:
+            base = {}
+    if config_path is None or not config_path.exists():
+        return base
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            override = yaml.safe_load(f) or {}
+        return _deep_merge(base, override)
     except Exception:
-        return {}
+        return base
 
 
 def _ensure_dir(path: Path) -> None:
@@ -268,7 +290,18 @@ def main() -> int:
     parser.add_argument("--t2v-model-id", type=str, default=None, help="Hub model id for T2V (e.g. THUDM/CogVideoX-2b, overrides config)")
     parser.add_argument("--script-backend", default="whisper", help="Script backend: whisper, stub")
     parser.add_argument("--config", type=Path, default=None, help="Optional config.yaml path")
-    parser.add_argument("--original", action="store_true", help="Reconstitute with diff to recover original-quality video (if diff.ogv present)")
+    parser.add_argument("--original", action="store_true", help="Reconstitute with diff to recover original-quality video (if diff artifact is present)")
+    parser.add_argument(
+        "--loop-strategy",
+        choices=("loop", "hold"),
+        default=None,
+        help="Reconstitution behavior when video is shorter than audio: loop or hold last frame (default from config: reconstitute.loop_strategy or loop).",
+    )
+    parser.add_argument(
+        "--trim-audio",
+        action="store_true",
+        help="Trim output duration to available video duration instead of extending video to audio duration.",
+    )
     parser.add_argument("--extract-frame", action="store_true", help="Extract first frame as image (use with --reconstitute). Output format matches input_image_format from manifest or png")
     parser.add_argument("--check-cache", action="store_true", help="Print Hugging Face / T2V cache locations and whether configured model is present; then exit")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -309,10 +342,15 @@ def main() -> int:
             print(f"Extracted first frame: {out_file}")
         else:
             out_file = args.out or (stored_dir / "reconstituted.mp4")
+            recon_cfg = config.get("reconstitute", {}) if isinstance(config, dict) else {}
+            loop_strategy = args.loop_strategy or recon_cfg.get("loop_strategy", "loop")
+            trim_audio = bool(args.trim_audio or recon_cfg.get("trim_audio", False))
             reconstitute(
                 stored_dir,
                 out_file,
                 use_diff=args.original,
+                loop_strategy=loop_strategy,
+                trim_audio=trim_audio,
                 ffmpeg_path=config.get("audio", {}).get("ffmpeg_path"),
             )
             print(f"Reconstituted: {out_file}")

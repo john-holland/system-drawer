@@ -7,6 +7,16 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+def _subprocess_kwargs() -> dict:
+    """Kwargs for subprocess.run to avoid WinError 50 in some environments (e.g. Cursor)."""
+    kwargs: dict = {}
+    if sys.platform == "win32":
+        # CREATE_NO_WINDOW avoids handle inheritance issues that cause OSError 50
+        if hasattr(subprocess, "CREATE_NO_WINDOW"):
+            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+    return kwargs
+
 FFMPEG_NOT_FOUND = (
     "ffmpeg not found. Install ffmpeg and add it to your PATH "
     "(https://ffmpeg.org/download.html). On Windows, add the folder containing ffmpeg.exe to PATH."
@@ -43,12 +53,16 @@ def _find_ffprobe(ffprobe_path: str | Path | None = None) -> str:
     return exe or "ffprobe"
 
 
-def get_video_duration_seconds(video_path: Path) -> float:
+def get_video_duration_seconds(
+    video_path: Path,
+    ffprobe_path: str | Path | None = None,
+) -> float:
     """Probe duration with ffprobe. Returns 0.0 on failure."""
+    ffprobe_exe = _find_ffprobe(ffprobe_path)
     try:
         out = subprocess.run(
             [
-                "ffprobe",
+                ffprobe_exe,
                 "-v", "error",
                 "-show_entries", "format=duration",
                 "-of", "default=noprint_wrappers=1:nokey=1",
@@ -58,9 +72,10 @@ def get_video_duration_seconds(video_path: Path) -> float:
             text=True,
             check=True,
             timeout=60,
+            **_subprocess_kwargs(),
         )
         return float(out.stdout.strip() or 0)
-    except (subprocess.CalledProcessError, ValueError, FileNotFoundError):
+    except (subprocess.CalledProcessError, ValueError, FileNotFoundError, OSError):
         return 0.0
 
 
@@ -89,7 +104,7 @@ def extract_and_compress_audio(
             str(out_path),
         ]
     else:
-        duration = get_video_duration_seconds(video_path)
+        duration = get_video_duration_seconds(video_path, ffprobe_path=ffmpeg_path)
         if duration > 0:
             target_bits = max_mb * 1e6 * 8
             bitrate_k = int(target_bits / duration / 1000)
@@ -112,5 +127,5 @@ def extract_and_compress_audio(
             "-ac", "2",
             str(out_path),
         ]
-    subprocess.run(cmd, check=True, capture_output=True, timeout=600)
+    subprocess.run(cmd, check=True, capture_output=True, timeout=600, **_subprocess_kwargs())
     return out_path

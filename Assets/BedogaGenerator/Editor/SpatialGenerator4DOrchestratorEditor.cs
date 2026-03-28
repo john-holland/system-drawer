@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using Locomotion.Narrative.EditorTools;
 
 [CustomEditor(typeof(SpatialGenerator4DOrchestrator))]
 public class SpatialGenerator4DOrchestratorEditor : Editor
@@ -142,6 +143,7 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("4D tree mirror", EditorStyles.miniLabel);
+        EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Refresh 4D mirror", GUILayout.Height(22)))
         {
             SpatialGenerator4D sg4 = null;
@@ -174,6 +176,13 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
                 EditorUtility.SetDirty(orch);
             }
         }
+        SpatialGenerator4D sg4ForInspector = null;
+        if (orch.spatialGenerators != null)
+            foreach (var g in orch.spatialGenerators)
+                if (g is SpatialGenerator4D s4) { sg4ForInspector = s4; break; }
+        if (sg4ForInspector != null && GUILayout.Button("Open Prompt Tree Inspector", GUILayout.Height(22)))
+            PromptTreeInspectorWindow.ShowWindow(sg4ForInspector);
+        EditorGUILayout.EndHorizontal();
 
         var skinController = orch.GetComponent<SpatialGeneratorSkinController>();
         if (skinController != null)

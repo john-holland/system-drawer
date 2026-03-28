@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: KikiPhysicsIKTrainingRun
   m_EditorClassIdentifier: Locomotion.Runtime::PhysicsIKTrainingRunAsset
   displayName: IK Training Run
-  creationTime: 
+  creationTime: 2026-02-18T16:05:22.3429778Z
   animationTree: {fileID: 0}
   solver: {fileID: 0}
   testCategory: 0

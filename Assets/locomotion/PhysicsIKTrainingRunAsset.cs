@@ -123,7 +123,9 @@ public enum PhysicsIKTrainingCategory
     /// <summary>Intercept object with hand(s); fitness = catch success.</summary>
     Catch,
     /// <summary>Launch toward target (e.g. basketball shot); fitness = accuracy toward target.</summary>
-    Shoot
+    Shoot,
+    /// <summary>Hit with pull-through (contact + follow-through drag). Uses same run asset fields as Hit.</summary>
+    PulledHit
 }
 
 /// <summary>
@@ -235,8 +237,8 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
     [Tooltip("Optional place/lift animation trees.")]
     public List<AnimationBehaviorTreeNode> placeAnimationTrees = new List<AnimationBehaviorTreeNode>();
 
-    [Header("Hit")]
-    [Tooltip("Target to hit when category is Hit.")]
+    [Header("Hit / Pulled hit")]
+    [Tooltip("Target to hit when category is Hit or PulledHit.")]
     public GameObject hitTarget;
     [Tooltip("Limb bone names (e.g. RightHand). Empty = solver default.")]
     public List<string> hitLimbNames = new List<string>();

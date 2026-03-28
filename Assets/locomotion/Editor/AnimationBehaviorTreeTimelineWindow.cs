@@ -37,7 +37,7 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
     private void OnEditorUpdate()
     {
         // Update timeline when playing
-        if (isPlaying && targetTree != null && targetTree.animationClip != null)
+        if (isPlaying && targetTree != null && targetTree.GetAnimationClip() != null)
         {
             double currentRealTime = EditorApplication.timeSinceStartup;
             if (lastUpdateTime > 0f)
@@ -46,7 +46,7 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
                 if (deltaTime > 0f)
                 {
                     currentTime += (float)deltaTime;
-                    if (currentTime > targetTree.animationClip.length)
+                    if (currentTime > targetTree.GetAnimationClip().length)
                     {
                         currentTime = 0f;
                         Debug.Log("[AnimationBehaviorTreeTimelineWindow] Timeline looped back to start");
@@ -114,9 +114,10 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
     {
         EditorGUILayout.LabelField("Timeline", EditorStyles.boldLabel);
 
-        if (targetTree.animationClip != null)
+        var clip = targetTree.GetAnimationClip();
+        if (clip != null)
         {
-            float clipLength = targetTree.animationClip.length;
+            float clipLength = clip.length;
             EditorGUILayout.LabelField($"Clip Length: {clipLength:F2}s");
 
             // Time scrubber
@@ -161,18 +162,20 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
     {
         EditorGUILayout.LabelField("Tool Usage Goals", EditorStyles.boldLabel);
 
-        if (targetTree.toolUsageGoals != null && targetTree.toolUsageGoals.Count > 0)
+        var config = targetTree.GetActiveConfiguration();
+        var toolUsageGoals = config?.toolUsageGoals;
+        if (toolUsageGoals != null && toolUsageGoals.Count > 0)
         {
-            for (int i = 0; i < targetTree.toolUsageGoals.Count; i++)
+            for (int i = 0; i < toolUsageGoals.Count; i++)
             {
                 EditorGUILayout.BeginHorizontal();
-                BehaviorTreeGoal goal = targetTree.toolUsageGoals[i];
+                BehaviorTreeGoal goal = toolUsageGoals[i];
                 EditorGUILayout.LabelField($"Goal {i + 1}: {goal.goalName} ({goal.type})", GUILayout.ExpandWidth(true));
                 if (GUILayout.Button("Remove", GUILayout.Width(60)))
                 {
-                    var removedGoal = targetTree.toolUsageGoals[i];
+                    var removedGoal = toolUsageGoals[i];
                     Debug.Log($"[AnimationBehaviorTreeTimelineWindow] Removed tool usage goal: {removedGoal.goalName} ({removedGoal.type})");
-                    targetTree.toolUsageGoals.RemoveAt(i);
+                    toolUsageGoals.RemoveAt(i);
                     i--;
                 }
                 EditorGUILayout.EndHorizontal();
@@ -188,15 +191,16 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
     {
         EditorGUILayout.LabelField("Dropped Frames", EditorStyles.boldLabel);
 
-        if (targetTree.droppedFrames != null && targetTree.droppedFrames.Count > 0)
+        var droppedFrames = targetTree.GetActiveConfiguration()?.droppedFrames;
+        if (droppedFrames != null && droppedFrames.Count > 0)
         {
-            EditorGUILayout.LabelField($"Count: {targetTree.droppedFrames.Count}");
+            EditorGUILayout.LabelField($"Count: {droppedFrames.Count}");
 
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(200));
 
-            for (int i = 0; i < targetTree.droppedFrames.Count; i++)
+            for (int i = 0; i < droppedFrames.Count; i++)
             {
-                var frame = targetTree.droppedFrames[i];
+                var frame = droppedFrames[i];
                 if (frame == null)
                     continue;
 
@@ -215,7 +219,7 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Restore All"))
             {
-                var framesToRestore = new List<AnimationFrame>(targetTree.droppedFrames);
+                var framesToRestore = new List<AnimationFrame>(droppedFrames);
                 Debug.Log($"[AnimationBehaviorTreeTimelineWindow] Restoring all {framesToRestore.Count} dropped frames");
                 foreach (var frame in framesToRestore)
                 {
@@ -224,9 +228,9 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
             }
             if (GUILayout.Button("Clear"))
             {
-                int clearedCount = targetTree.droppedFrames.Count;
+                int clearedCount = droppedFrames.Count;
                 Debug.Log($"[AnimationBehaviorTreeTimelineWindow] Clearing {clearedCount} dropped frames");
-                targetTree.droppedFrames.Clear();
+                droppedFrames.Clear();
             }
             EditorGUILayout.EndHorizontal();
         }

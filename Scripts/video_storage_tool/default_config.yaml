@@ -1,0 +1,69 @@
+# Default config for video_storage_tool. User config.yaml overrides these values.
+# Model paths assume C:\Users\John\Downloads on Windows; adjust for your setup.
+#
+# All model paths (for benchmark / local loading):
+#   audio.ffmpeg_path          - ffmpeg bin dir
+#   script.model_path          - openai-whisper checkpoint (e.g. whisper-base/base.pt)
+#   script.visual_model        - BLIP or BLIP2 dir (use blip2-opt-2.7b path when visual_backend: blip2)
+#   audio_captioning.model_path - HuggingFace-format model for non-speech captioning
+#   t2v.model_path             - CogVideoX model dir
+
+device: auto
+
+store:
+  loss_coefficient: 0.0
+
+audio:
+  format: aac
+  max_mb: 5.0
+  ffmpeg_path: "C:/Users/John/Downloads/ffmpeg-master-latest-win64-gpl-shared/bin"
+
+script:
+  backend: whisper
+  model: base
+  model_path: "C:/Users/John/Downloads/whisper-base"
+  visual_frame_format: png
+  visual_backend: blip
+  visual_interval_sec: 1.0
+  visual_sampling: fixed           # or "change_point" for adaptive keyframes
+  visual_base_interval_sec: 1.0    # coarse interval for change_point mode
+  visual_refine_granularity_sec: 0.2  # min spacing when refining near change points
+  visual_change_threshold: 0.0     # 0 = exact match; >0 = similarity threshold
+  visual_max_frames: 60
+  visual_model: "C:/Users/John/Downloads/blip-image-captioning-base"
+  visual_grid: 2
+  style_preface: true
+  style_prompt: "The visual style of this scene is"
+  assert_color_gradient_per_frame: true
+
+transcript:
+  policy: whisper_preferred
+
+audio_captioning:
+  enabled: true
+  mode: speech_gap_only
+  model_id: "openai/whisper-base"
+  model_path: "C:/Users/John/Downloads/openai-whisper-base"
+  max_tokens: 64
+
+t2v:
+  backend: stub
+  device: auto
+  model_id: "THUDM/CogVideoX-2b"
+  model_path: "C:/Users/John/Downloads/CogVideoX-2b"
+  duration_sec: 5.0
+
+diff:
+  enabled: true
+  codec: libtheora
+  quality: 6
+  lossless: false
+
+reconstitute:
+  loop_strategy: loop   # loop | hold
+  trim_audio: false     # true = output duration follows available video duration
+
+stream_cache:
+  enabled: false
+  budget_gb: 10.0
+  directory: stream_cache

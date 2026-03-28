@@ -46,6 +46,16 @@ namespace Locomotion.Narrative.EditorTools
             _interpreter = (NarrativeLSTMPromptInterpreter)EditorGUILayout.ObjectField("Interpreter", _interpreter, typeof(NarrativeLSTMPromptInterpreter), true);
             if (EditorGUI.EndChangeCheck())
                 Repaint();
+            var sg4 = UnityEngine.Object.FindAnyObjectByType<SpatialGenerator4D>();
+            if (sg4 != null && GUILayout.Button("Open in Prompt Tree Inspector", GUILayout.Width(180)))
+            {
+                Undo.RecordObject(sg4, "Set Prompt Tree Inspector refs");
+                if (sg4.promptTreeInspectorInterpreter == null) sg4.promptTreeInspectorInterpreter = _interpreter;
+                if (sg4.promptTreeInspectorRegistry == null && _interpreter != null) sg4.promptTreeInspectorRegistry = _interpreter.sceneObjectRegistry;
+                if (_selectedAsset != null) sg4.lastInspectedPrompt = _selectedAsset;
+                EditorUtility.SetDirty(sg4);
+                PromptTreeInspectorWindow.ShowWindow(sg4);
+            }
             EditorGUILayout.EndHorizontal();
         }
 

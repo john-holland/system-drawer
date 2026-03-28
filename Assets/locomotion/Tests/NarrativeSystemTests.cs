@@ -64,6 +64,69 @@ public class NarrativeSystemTests
         
         UnityEngine.Object.DestroyImmediate(go2);
     }
+
+    [Test]
+    public void NarrativeCalendarLightingAction_JsonRoundTrip_PreservesFields()
+    {
+        var go = new GameObject("LightingCalendar");
+        var cal = go.AddComponent<NarrativeCalendarAsset>();
+        cal.events.Add(new NarrativeCalendarEvent
+        {
+            title = "lighting update",
+            startDateTime = new NarrativeDateTime(2026, 2, 21, 10, 15, 0),
+            actions =
+            {
+                new NarrativeCalendarLightingAction
+                {
+                    lightingContextKey = "lightingContext",
+                    sunAzimuthDeg = 120.5f,
+                    sunElevationDeg = 35.25f,
+                    sunVisible = true,
+                    moonAzimuthDeg = 302.5f,
+                    moonElevationDeg = 11.25f,
+                    moonDirectionConfidence = 0.67f,
+                    moonDirectionSource = "calculated",
+                    moonIlluminationFraction = 0.41f,
+                    moonVisible = true,
+                    inferredSunDirectionVector = new Vector3(0.2f, 0.9f, 0.3f),
+                    inferredSunDirectionConfidence = 0.78f,
+                    lightingValidityScore = 0.88f,
+                    weatherProvider = "open-meteo",
+                    cloudCoverPct = 42f,
+                    requireValidity = true,
+                    minValidityScore = 0.6f,
+                    year = 2026,
+                    month = 2,
+                    day = 21,
+                    hour = 10
+                }
+            }
+        });
+
+        string json = NarrativeExportUtility.ExportCalendarToJson(cal);
+        var dto = NarrativeImportUtility.ImportCalendarFromJson(json);
+        Assert.NotNull(dto);
+        Assert.AreEqual(1, dto.events.Count);
+        Assert.AreEqual(1, dto.events[0].actions.Count);
+        var a = dto.events[0].actions[0];
+        Assert.AreEqual(nameof(NarrativeCalendarLightingAction), a.type);
+        Assert.AreEqual("lightingContext", a.lightingContextKey);
+        Assert.AreEqual(120.5f, a.sunAzimuthDeg, 0.001f);
+        Assert.AreEqual(35.25f, a.sunElevationDeg, 0.001f);
+        Assert.IsTrue(a.sunVisible);
+        Assert.AreEqual(302.5f, a.moonAzimuthDeg, 0.001f);
+        Assert.AreEqual(11.25f, a.moonElevationDeg, 0.001f);
+        Assert.AreEqual(0.67f, a.moonDirectionConfidence, 0.001f);
+        Assert.AreEqual("calculated", a.moonDirectionSource);
+        Assert.AreEqual(0.41f, a.moonIlluminationFraction, 0.001f);
+        Assert.IsTrue(a.moonVisible);
+        Assert.AreEqual(0.78f, a.inferredSunDirectionConfidence, 0.001f);
+        Assert.AreEqual(0.88f, a.lightingValidityScore, 0.001f);
+        Assert.AreEqual("open-meteo", a.weatherProvider);
+        Assert.IsTrue(a.requireValidity);
+
+        UnityEngine.Object.DestroyImmediate(go);
+    }
 }
 #endif
 

@@ -229,6 +229,44 @@ namespace Locomotion.Narrative.Serialization
                     };
                     break;
 
+                case nameof(NarrativeCalendarLightingAction):
+                    a = new NarrativeCalendarLightingAction
+                    {
+                        lightingContextKey = dto.lightingContextKey,
+                        fallbackFindAny = dto.fallbackFindAny,
+                        requireValidity = dto.requireValidity,
+                        minValidityScore = dto.minValidityScore,
+                        preferInferredDirection = dto.preferInferredDirection,
+                        applyDirectionalLight = dto.applyDirectionalLight,
+                        sunAzimuthDeg = dto.sunAzimuthDeg,
+                        sunElevationDeg = dto.sunElevationDeg,
+                        sunVisible = dto.sunVisible,
+                        sunDirectionConfidence = dto.sunDirectionConfidence,
+                        sunDirectionSource = dto.sunDirectionSource,
+                        moonAzimuthDeg = dto.moonAzimuthDeg,
+                        moonElevationDeg = dto.moonElevationDeg,
+                        moonDirectionConfidence = dto.moonDirectionConfidence,
+                        moonDirectionSource = dto.moonDirectionSource,
+                        moonIlluminationFraction = dto.moonIlluminationFraction,
+                        moonVisible = dto.moonVisible,
+                        inferredSunDirectionVector = dto.inferredSunDirectionVector,
+                        inferredSunDirectionConfidence = dto.inferredSunDirectionConfidence,
+                        lightingValidityScore = dto.lightingValidityScore,
+                        lightingValidationFlags = dto.lightingValidationFlags,
+                        weatherProvider = dto.weatherProvider,
+                        cloudCoverPct = dto.cloudCoverPct,
+                        visibilityM = dto.visibilityM,
+                        precipitationMm = dto.precipitationMm,
+                        windSpeedMps = dto.windSpeedMps,
+                        year = dto.year,
+                        month = dto.month,
+                        day = dto.day,
+                        hour = dto.hour,
+                        minute = dto.minute,
+                        second = dto.second
+                    };
+                    break;
+
                 default:
                     // Unknown future action: skip.
                     return null;

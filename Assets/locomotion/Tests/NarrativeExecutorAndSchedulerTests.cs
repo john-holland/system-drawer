@@ -273,5 +273,64 @@ public class NarrativeExecutorAndSchedulerTests
                 return e;
         return null;
     }
+
+    [Test]
+    public void NarrativeCalendarLightingAction_AppliesContextComponent()
+    {
+        var goBindings = new GameObject("Bindings");
+        var bindings = goBindings.AddComponent<NarrativeBindings>();
+        var goTarget = new GameObject("LightingTarget");
+
+        var lightingType = System.Type.GetType("Weather.LightingContextComponent, Weather.Runtime")
+            ?? System.Type.GetType("Weather.LightingContextComponent, Assembly-CSharp");
+        Assert.IsNotNull(lightingType, "LightingContextComponent type should exist.");
+        var component = goTarget.AddComponent(lightingType);
+        Assert.IsNotNull(component);
+
+        bindings.bindings.Add(new NarrativeBindings.BindingEntry { key = "lightingContext", value = goTarget });
+        bindings.RebuildIndex();
+
+        var ctx = new NarrativeExecutionContext(null, bindings, null);
+        var state = new NarrativeRuntimeState();
+        var action = new NarrativeCalendarLightingAction
+        {
+            lightingContextKey = "lightingContext",
+            sunAzimuthDeg = 90f,
+            sunElevationDeg = 25f,
+            sunVisible = true,
+            moonAzimuthDeg = 215f,
+            moonElevationDeg = 9f,
+            moonDirectionConfidence = 0.73f,
+            moonVisible = true,
+            lightingValidityScore = 0.9f,
+            weatherProvider = "open-meteo",
+            year = 2026,
+            month = 2,
+            day = 21,
+            hour = 14
+        };
+
+        var result = action.Execute(ctx, state);
+        Assert.AreEqual(BehaviorTreeStatus.Success, result);
+
+        var azField = lightingType.GetField("sunAzimuthDeg");
+        var sunVisibleField = lightingType.GetField("sunVisible");
+        var validityField = lightingType.GetField("lightingValidityScore");
+        var moonVisibleField = lightingType.GetField("moonVisible");
+        var moonAzField = lightingType.GetField("moonAzimuthDeg");
+        Assert.IsNotNull(azField);
+        Assert.IsNotNull(sunVisibleField);
+        Assert.IsNotNull(validityField);
+        Assert.IsNotNull(moonVisibleField);
+        Assert.IsNotNull(moonAzField);
+        Assert.AreEqual(90f, (float)azField.GetValue(component), 0.001f);
+        Assert.AreEqual(true, (bool)sunVisibleField.GetValue(component));
+        Assert.AreEqual(0.9f, (float)validityField.GetValue(component), 0.001f);
+        Assert.AreEqual(215f, (float)moonAzField.GetValue(component), 0.001f);
+        Assert.AreEqual(true, (bool)moonVisibleField.GetValue(component));
+
+        Object.DestroyImmediate(goTarget);
+        Object.DestroyImmediate(goBindings);
+    }
 }
 #endif

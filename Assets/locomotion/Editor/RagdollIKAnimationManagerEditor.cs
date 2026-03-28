@@ -181,7 +181,8 @@ public class RagdollIKAnimationManagerEditor : Editor
         prefabPath = AssetDatabase.GenerateUniqueAssetPath(prefabPath);
         var newGo = new GameObject(clipName + TreeSuffix);
         var abtNew = newGo.AddComponent<AnimationBehaviorTree>();
-        abtNew.animationClip = clip;
+        abtNew.clipConfigurations = new List<ABTClipConfig> { ABTClipConfig.FromClip(clip) };
+        abtNew.activeClipIndex = 0;
 
         var created = PrefabUtility.SaveAsPrefabAsset(newGo, prefabPath);
         Object.DestroyImmediate(newGo);

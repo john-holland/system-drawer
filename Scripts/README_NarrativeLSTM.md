@@ -57,3 +57,7 @@ Produces `narrative_prompt_interpreter.onnx`. Copy to `StreamingAssets/Narrative
 - **Unity**: `NarrativeLSTMTokenizer` in `Locomotion.Narrative.Serialization` — `LoadFromJson(json)`, `Encode(string)`, `Decode(int[])`.
 
 Same tokenization rules (lowercase, alphanumeric chunks) so runtime matches training.
+
+## Process flow
+
+For the full flow from prompt → interpretation → ORM bindings → 4D placement → spatial generation, see [PROMPT_GENERATOR_FLOW.md](../Assets/Documentation/PROMPT_GENERATOR_FLOW.md).

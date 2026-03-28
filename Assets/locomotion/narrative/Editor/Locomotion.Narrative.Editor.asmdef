@@ -2,6 +2,7 @@
   "name": "Locomotion.Narrative.Editor",
   "rootNamespace": "Locomotion.Narrative.EditorTools",
   "references": [
+    "BedogaGenerator",
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
     "Locomotion.Narrative.Inference",

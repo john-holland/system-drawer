@@ -112,6 +112,7 @@ This document describes how to build what exists in this repository into a **Tim
 
 21. **LSTM narrative (optional)** – Narrative LSTM: prompt interpreter (natural language → events/4D), calendar summarizer, export/training scripts. Wire via NarrativePromptServiceWizard and System Drawer.
     - See: [NarrativeLSTMPromptInterpreter.cs](Assets/locomotion/narrative/Inference/NarrativeLSTMPromptInterpreter.cs), [NarrativePromptServiceWizard](Assets/SystemDrawer/NarrativePromptServiceWizard.cs).
+    - **Prompt → generator flow**: [PROMPT_GENERATOR_FLOW.md](PROMPT_GENERATOR_FLOW.md) — end-to-end flow from prompt through ORM, calendar, 4D placement, and Prompt Tree Inspector.
 
 22. **Networking (optional)** – For multiple bears or multiplayer: determinism, server time authority for narrative clock, spatial interest, card state sync. Not required for single-player time-traveling bear.
     - See: [networking_architecture.md](.cursor/plans/networking_architecture.md).

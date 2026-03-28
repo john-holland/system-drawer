@@ -49,6 +49,8 @@ Options:
 - `--t2v-model-path` – path to T2V model (overrides config; use for local clone)
 - `--script-backend` – `whisper` (if installed) or `stub`
 - `--config` – path to optional `config.yaml`
+- `--loop-strategy` (reconstitute mode) – `loop` (default) or `hold`
+- `--trim-audio` (reconstitute mode) – trim output to video duration instead of extending video to audio duration
 
 ### Reconstitute
 
@@ -60,13 +62,19 @@ python -m video_storage_tool --reconstitute --input ./stored_my_video [--out ./r
 
 If `--out` is omitted, output is `./stored_my_video/reconstituted.mp4`.
 
-The tool looks for `audio.aac`/`audio.mp3` and `resultant.mp4` in the input directory (or paths in `manifest.json`). If the resultant video is shorter than the audio, it is looped so the output duration matches the audio.
+The tool looks for `audio.aac`/`audio.mp3`/`audio.flac` and `resultant.mp4` in the input directory (or paths in `manifest.json`). If both `diff.mkv` and `diff.ogv` exist, `diff.mkv` is preferred for `--original` reconstruction.
+
+If the resultant video is shorter than the audio:
+
+- default (`loop`): repeat the clip to match audio duration
+- `--loop-strategy hold`: freeze the last frame instead of looping
+- `--trim-audio`: trim output duration to available video duration
 
 ## Output layout
 
 After **store**, the output directory contains:
 
-- `audio.aac` (or `audio.mp3`) – compressed audio, target few MB
+- `audio.aac` (or `audio.mp3`/`audio.flac`) – compressed audio, target few MB
 - `script.txt` – transcript (Whisper) and optional exhaustive visual description (frame-by-frame BLIP/BLIP2 captions)
 - `resultant.mp4` – T2V-generated short clip (or stub placeholder)
 - `manifest.json` – paths and metadata for downstream use
@@ -76,7 +84,7 @@ After **store**, the output directory contains:
 Optional `config.yaml` in the package dir or via `--config`:
 
 - `audio.format`, `audio.max_mb`
-- `script.backend`, `script.model` (e.g. Whisper model name), `script.visual_backend` (none | blip | blip2), `script.visual_interval_sec`, `script.visual_max_frames`
+- `script.backend`, `script.model` (e.g. Whisper model name), `script.visual_backend` (none | blip | blip2), `script.visual_interval_sec`, `script.visual_max_frames`, `script.visual_grid` (1 | 2 | 3), `script.visual_sampling` (fixed | change_point), `script.visual_base_interval_sec`, `script.visual_refine_granularity_sec`, `script.visual_change_threshold`
 - `t2v.backend`, `t2v.model_id`, `t2v.model_path`, `t2v.duration_sec` (stub length)
 
 ## Audio size
@@ -85,7 +93,11 @@ Optional `config.yaml` in the package dir or via `--config`:
 
 ## Visual description (script)
 
-In addition to the Whisper transcript, you can add an exhaustive visual description of the video by setting `script.visual_backend` to `blip` or `blip2`. The pipeline samples frames (e.g. one per second, up to `script.visual_max_frames`), runs an image-captioning model (BLIP or BLIP2), and appends timestamped captions to `script.txt` under a `[Visual description]` section. Requires `pip install transformers torch` (and Pillow). Use the Settings UI or config: `script.visual_backend: blip`, `script.visual_interval_sec: 1.0`, `script.visual_max_frames: 60`.
+In addition to the Whisper transcript, you can add an exhaustive visual description of the video by setting `script.visual_backend` to `blip` or `blip2`. The pipeline samples frames (e.g. one per second, up to `script.visual_max_frames`), runs an image-captioning model (BLIP or BLIP2), and appends timestamped captions to `script.txt` under a `[Visual description]` section. Requires `pip install transformers torch` (and Pillow). Use the Settings UI or config: `script.visual_backend: blip`, `script.visual_interval_sec: 1.0`, `script.visual_max_frames: 60`, `script.visual_grid: 2` (`1` whole-frame only, `2`=2x2, `3`=3x3 regions).
+
+For BLIP2 local path issues, set `script.visual_model` to a Hub id fallback such as `Salesforce/blip2-opt-2.7b`.
+
+**Adaptive keyframes** (`script.visual_sampling: change_point`): Instead of fixed intervals, sample at a coarse rate and refine toward description change points. Produces variable cadence (e.g. 0.0s, 0.3s, 1.5s, 1.75s) for min time and accuracy. Config: `script.visual_base_interval_sec` (coarse interval), `script.visual_refine_granularity_sec` (min spacing when refining), `script.visual_change_threshold` (0 = exact match for change detection; >0 = similarity threshold).
 
 ## GPU (CUDA)
 
