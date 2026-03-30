@@ -14,6 +14,8 @@ from typing import Any
 from . import farey_ast
 
 
+#todo: review: again!
+
 def _tokenize(text: str) -> list[str]:
     """Split on whitespace, preserving tokens."""
     return text.split()

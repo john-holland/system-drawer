@@ -111,6 +111,7 @@ If you add a new third-party asset:
 ## Documentation
 
 - [THIRD_PARTY_ASSETS.md](THIRD_PARTY_ASSETS.md) - Required third-party assets
+- [Scripts/EPISODIC_CONTENT_GENERATOR.md](Scripts/EPISODIC_CONTENT_GENERATOR.md) - Episodic content pipeline: add episodes, USC assets, parse scripts, output to Spatial 4D
 - [Scripts/README_NarrativeLSTM.md](Scripts/README_NarrativeLSTM.md) - Narrative LSTM: export → vocab → train (Python) → run in Unity (Barracuda)
 - [.cursor/plans/](.cursor/plans/) - Development plans and architecture docs
 

@@ -136,6 +136,7 @@ def extract_work_orders_from_screenplay(
     )
     created: list[dict[str, Any]] = []
     prev_wo_id: str | None = None
+    # todo: review: again!
     for seg in segments:
         wo_id = "wo_" + uuid.uuid4().hex[:12]
         if seg["type"] == "dialogue":

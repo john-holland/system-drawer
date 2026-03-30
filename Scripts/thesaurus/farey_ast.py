@@ -3,6 +3,9 @@ Farey nested-interval encoding for thesaurus AST. Tree position is a rational
 interval (left_num/left_den, right_num/right_den); insertion between nodes uses
 the mediant (a+c)/(b+d) of Farey neighbors to avoid full renumbering.
 """
+# todo: review: let's review the differences between this and the Farey interval encoding from wan-os
+# eqyptian division with orders of magnitude for the denominators and numerators - should we just use NumPy decimals?
+# i like storing them  as strings better because then the infinitely large text blob
 
 from __future__ import annotations
 

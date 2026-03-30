@@ -1,6 +1,7 @@
 -- Continuum Episodes Schema for 4D Spatial Generator
 -- Run against continuum.db (e.g. via USC CLI or sqlite3)
 -- Tables: episodes, episode_assets, narrative_type_detections, causality_structure, work_orders
+-- todo: review: what do we have as far as schema migration plans?
 
 -- Episodes: time info, scene/engine, tokenized script ref, plot description
 CREATE TABLE IF NOT EXISTS episodes (

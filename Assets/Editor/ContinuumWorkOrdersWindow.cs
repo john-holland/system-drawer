@@ -10,6 +10,7 @@ using UnityEngine;
 /// </summary>
 public class ContinuumWorkOrdersWindow : EditorWindow
 {
+    // todo: review: again!
     [SerializeField] private string dbPath = "";
     [SerializeField] private string pythonPath = "";
     [SerializeField] private string tenantId = "";

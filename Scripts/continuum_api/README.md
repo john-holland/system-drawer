@@ -34,4 +34,4 @@ CONTINUUM_DB=/path/to/continuum.db python -m continuum_api.server --port 5050
 
 Or: `python -m continuum_api.server --db /path/to/continuum.db`
 
-Apply `continuum_episodes_schema.sql`, `continuum_thesaurus_schema.sql`, and `continuum_screenplay_schema.sql` to the DB first (screenplay adds node_kind/quote_id to AST and script_speech_audio, script_sound_effects, script_audio_by_language).
+Apply `continuum_episodes_schema.sql`, `continuum_thesaurus_schema.sql`, `continuum_screenplay_schema.sql`, `continuum_draft_schema.sql`, and `continuum_review_schema.sql` to the DB first.

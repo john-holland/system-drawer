@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Continuum – Episodic Content</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
+    h1 { margin-top: 0; }
+    h2 { margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    form { margin-bottom: 16px; }
+    label { display: block; margin-top: 8px; }
+    input, select, textarea { margin-top: 4px; width: 100%; max-width: 400px; }
+    button { margin-right: 8px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+    th { border-bottom: 1px solid #ccc; }
+    .error { color: #c00; }
+    .steps { margin: 16px 0; padding-left: 20px; }
+    .steps li { margin-bottom: 4px; }
+    a { color: #06c; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #ccc; padding-bottom: 16px; }
+    header nav a { margin-right: 16px; }
+    .notif-badge { background: #c00; color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 12px; margin-left: 4px; }
+    .notif-dropdown { position: relative; }
+    .notif-panel { display: none; position: absolute; right: 0; top: 100%; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto; min-width: 280px; z-index: 10; margin-top: 4px; }
+    .notif-panel.open { display: block; }
+    .notif-item { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .notif-item.unread { background: #f8f8f8; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .script-viewer { border: 1px solid #ccc; padding: 12px; min-height: 120px; font-family: monospace; white-space: pre-wrap; user-select: text; }
+    .comment-form { margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="#" data-route="">Home</a>
+      <a href="#review" data-route="review">Review</a>
+      <a href="#herb-garden" data-route="herb-garden">Herb Garden</a>
+    </nav>
+    <div>
+      <label>User ID <input id="user-id" placeholder="anonymous" style="max-width:120px"></label>
+      <span class="notif-dropdown">
+        <button id="notif-btn">Notifications <span id="notif-badge" class="notif-badge" style="display:none">0</span></button>
+        <div id="notif-panel" class="notif-panel"></div>
+      </span>
+    </div>
+  </header>
+
+  <section id="section-home" class="section active">
+    <h1>Continuum – Episodic Content</h1>
+    <p>Web UI for episode creation, USC asset linking, script parsing, and Spatial 4D output.</p>
+
+    <h2>Pipeline steps</h2>
+    <ol class="steps">
+      <li>Add episode (below)</li>
+      <li>Upload USC asset (via Continuum Library server) and link via episode-assets</li>
+      <li>Create episode script and parse (Build AST via Script Output)</li>
+      <li>Link asset to episode</li>
+      <li>Output to Spatial 4D (export from Unity)</li>
+    </ol>
+
+    <h2>Create episode</h2>
+    <form id="create-episode">
+      <label>Title <input name="title" value="Episode 1" required></label>
+      <label>Tenant <input name="tenantId" value="default"></label>
+      <label>Engine <select name="engine"><option value="unity">Unity</option><option value="unreal">Unreal</option></select></label>
+      <label>Scene path <input name="scenePath" placeholder="Assets/Scenes/Episode1.unity"></label>
+      <label>t_start <input name="tStart" type="number" value="0"></label>
+      <label>t_end <input name="tEnd" type="number" value="3600"></label>
+      <label>Plot description <textarea name="plotDescription" rows="2"></textarea></label>
+      <button type="submit">Create episode</button>
+    </form>
+    <p id="create-result" class="error"></p>
+
+    <h2>Episodes</h2>
+    <button id="refresh-episodes">Refresh</button>
+    <table>
+      <thead><tr><th>Title</th><th>ID</th><th>Engine</th><th>Scene</th><th>Actions</th></tr></thead>
+      <tbody id="episodes-tbody"></tbody>
+    </table>
+
+    <h2>Drafts</h2>
+    <button id="refresh-drafts">Refresh</button>
+    <table>
+      <thead><tr><th>Title</th><th>ID</th><th>Created by</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="drafts-tbody"></tbody>
+    </table>
+
+    <h2>Links</h2>
+    <ul>
+      <li><a href="/" id="script-output-link">Script Output</a> – load script, click words, reorder</li>
+      <li><a href="/api/deeplink?window=Continuum/Episodes" target="_blank">Open Continuum Episodes (Unity)</a></li>
+    </ul>
+  </section>
+
+  <section id="section-review" class="section">
+    <h1>Review Mode</h1>
+    <p>Assign reviewers to drafts, review and approve, then commit.</p>
+
+    <h2>My reviews</h2>
+    <button id="refresh-my-reviews">Refresh</button>
+    <div id="my-reviews-list"></div>
+
+    <h2>Assign reviewer</h2>
+    <form id="assign-reviewer">
+      <label>Draft <select id="assign-draft" required></select></label>
+      <label>Reviewer (User ID) <select id="assign-reviewer-user"></select></label>
+      <button type="submit">Assign</button>
+    </form>
+    <p id="assign-result" class="error"></p>
+
+    <h2>Review detail</h2>
+    <div id="review-detail">
+      <p>Select a review above to see script and add comments.</p>
+    </div>
+  </section>
+
+  <section id="section-herb-garden" class="section">
+    <h1>Herb Garden – Plant Similarity</h1>
+    <p>Compare causality trees to plant germination processes.</p>
+    <form id="herb-garden-form">
+      <label>Draft IDs (comma-separated) <input id="hg-draft-ids" placeholder="uuid1,uuid2"></label>
+      <label>Episode IDs (comma-separated) <input id="hg-episode-ids" placeholder="ep1,ep2"></label>
+      <label>Plant script <textarea id="hg-plant-script" rows="6" placeholder="stage:seed|condition:moisture|description:Germination begins
+stage:root|condition:soil|description:Root develops"></textarea></label>
+      <button type="submit">Compare</button>
+    </form>
+    <div id="herb-garden-result"></div>
+  </section>
+
+  <script>
+    const API = '/api';
+    const scriptOutputBase = (typeof window !== 'undefined' && window.location.port === '5050')
+      ? 'http://localhost:5174' : (window.location.origin.replace(/:\d+$/, ':5174'));
+
+    function getHeaders() {
+      const h = { 'Content-Type': 'application/json' };
+      const uid = document.getElementById('user-id').value.trim();
+      if (uid) h['X-User-ID'] = uid;
+      return h;
+    }
+
+    function apiFetch(url, opts = {}) {
+      return fetch(API + url, { ...opts, headers: { ...getHeaders(), ...(opts.headers || {}) } });
+    }
+
+    document.getElementById('script-output-link').href = scriptOutputBase + '/';
+
+    function getRoute() {
+      const h = window.location.hash.slice(1) || '';
+      return h || 'home';
+    }
+
+    function showSection(route) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      const id = route === 'home' ? 'section-home' : 'section-' + route.replace('/', '-');
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    document.querySelectorAll('[data-route]').forEach(a => {
+      a.onclick = (e) => { e.preventDefault(); const r = a.getAttribute('data-route'); window.location.hash = r || 'home'; };
+    });
+    window.onhashchange = () => { showSection(getRoute()); if (getRoute() === 'review') loadReviewData(); if (getRoute() === 'herb-garden') loadHerbGarden(); };
+
+    async function loadNotifications() {
+      try {
+        const res = await apiFetch('/notifications?limit=10');
+        const data = await res.json();
+        const badge = document.getElementById('notif-badge');
+        badge.textContent = data.unreadCount || 0;
+        badge.style.display = (data.unreadCount || 0) > 0 ? 'inline' : 'none';
+        const panel = document.getElementById('notif-panel');
+        panel.innerHTML = (data.items || []).map(n => `
+          <div class="notif-item ${n.readAt ? '' : 'unread'}" data-id="${n.id}">
+            ${n.message} <small>${n.createdAt}</small>
+          </div>
+        `).join('') || '<div class="notif-item">No notifications</div>';
+        panel.querySelectorAll('.notif-item[data-id]').forEach(el => {
+          el.onclick = async () => {
+            await apiFetch(`/notifications/${el.dataset.id}/read`, { method: 'POST' });
+            loadNotifications();
+          };
+        });
+      } catch (_) {}
+    }
+
+    document.getElementById('notif-btn').onclick = () => {
+      document.getElementById('notif-panel').classList.toggle('open');
+      loadNotifications();
+    };
+
+    async function loadEpisodes() {
+      const res = await fetch(API + '/episodes?limit=50');
+      const data = await res.json();
+      const tbody = document.getElementById('episodes-tbody');
+      tbody.innerHTML = '';
+      (data.items || []).forEach(ep => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${ep.title}</td><td><code>${ep.id}</code></td><td>${ep.engine}</td><td>${ep.scenePath || '—'}</td>
+          <td><a href="${scriptOutputBase}/script?episodeId=${ep.id}">Script</a></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadDrafts() {
+      const res = await apiFetch('/drafts/episodes');
+      const items = await res.json();
+      const tbody = document.getElementById('drafts-tbody');
+      tbody.innerHTML = '';
+      (Array.isArray(items) ? items : []).forEach(d => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${d.title}</td><td><code>${d.id}</code></td><td>${d.createdBy || '—'}</td><td>${d.committedAt ? 'Committed' : 'Draft'}</td>
+          <td><a href="#review" data-draft-id="${d.id}">Review</a></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('create-episode').onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = {
+        title: fd.get('title'),
+        tenantId: fd.get('tenantId') || 'default',
+        engine: fd.get('engine'),
+        scenePath: fd.get('scenePath') || null,
+        tStart: parseFloat(fd.get('tStart')) || 0,
+        tEnd: parseFloat(fd.get('tEnd')) || 3600,
+        plotDescription: fd.get('plotDescription') || null,
+      };
+      const res = await fetch(API + '/episodes', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(body),
+      });
+      const result = document.getElementById('create-result');
+      if (res.ok) {
+        const j = await res.json();
+        result.textContent = 'Created episode ' + j.id;
+        result.className = '';
+        loadEpisodes();
+      } else {
+        const j = await res.json().catch(() => ({}));
+        result.textContent = 'Error: ' + (j.error || res.statusText);
+        result.className = 'error';
+      }
+    };
+
+    document.getElementById('refresh-episodes').onclick = loadEpisodes;
+    document.getElementById('refresh-drafts').onclick = loadDrafts;
+    loadEpisodes();
+    loadDrafts();
+    loadNotifications();
+    setInterval(loadNotifications, 60000);
+
+    async function loadReviewData() {
+      const [reviewsRes, usersRes, draftsRes] = await Promise.all([
+        apiFetch('/reviews?asReviewer=true&asReviewee=true'),
+        apiFetch('/users'),
+        apiFetch('/drafts/episodes'),
+      ]);
+      const reviews = (await reviewsRes.json()).items || [];
+      const users = (await usersRes.json()).items || [];
+      const drafts = (await draftsRes.json()) || [];
+      const draftList = Array.isArray(drafts) ? drafts : drafts.items || [];
+
+      const listEl = document.getElementById('my-reviews-list');
+      listEl.innerHTML = '<table><thead><tr><th>Draft</th><th>Status</th><th>Role</th><th>Actions</th></tr></thead><tbody></tbody></table>';
+      const tbody = listEl.querySelector('tbody');
+      reviews.forEach(r => {
+        const tr = document.createElement('tr');
+        const role = r.reviewerUserId === document.getElementById('user-id').value.trim() ? 'Reviewer' : 'Reviewee';
+        tr.innerHTML = `<td>${r.draftTitle || r.draftEpisodeId}</td><td>${r.status}</td><td>${role}</td>
+          <td><button data-review-id="${r.id}" data-draft-id="${r.draftEpisodeId}" data-committed="${!!r.committedAt}" class="select-review">View</button>
+          ${!r.committedAt && role === 'Reviewee' ? `<button data-draft-id="${r.draftEpisodeId}" class="commit-draft">Commit</button>` : ''}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('assign-draft').innerHTML = draftList.filter(d => !d.committedAt).map(d =>
+        `<option value="${d.id}">${d.title} (${d.id.slice(0,8)})</option>`
+      ).join('') || '<option value="">No drafts</option>';
+
+      document.getElementById('assign-reviewer-user').innerHTML = users.map(u =>
+        `<option value="${u.userId}">${u.userId}</option>`
+      ).join('') || '<option value="">No users</option>';
+
+      listEl.querySelectorAll('.select-review').forEach(btn => {
+        btn.onclick = () => showReviewDetail(btn.dataset.reviewId, btn.dataset.draftId, btn.dataset.committed === 'true');
+      });
+      listEl.querySelectorAll('.commit-draft').forEach(btn => {
+        btn.onclick = async () => {
+          const res = await apiFetch(`/drafts/episodes/${btn.dataset.draftId}/commit`, { method: 'POST' });
+          const j = await res.json().catch(() => ({}));
+          if (res.ok) alert('Committed'); else alert('Error: ' + (j.error || res.statusText));
+          loadReviewData();
+        };
+      });
+    }
+
+    async function showReviewDetail(reviewId, draftId, committed) {
+      const [reviewRes, commentsRes, scriptRes] = await Promise.all([
+        apiFetch(`/reviews/${reviewId}`).catch(() => ({})),
+        apiFetch(`/reviews/${reviewId}/comments`),
+        apiFetch(`/drafts/episodes/${draftId}/script`),
+      ]);
+      const comments = (await commentsRes.json()).items || [];
+      const scriptData = await scriptRes.ok ? scriptRes.json() : { scriptText: '' };
+      const scriptText = scriptData.scriptText || '';
+
+      const detail = document.getElementById('review-detail');
+      const canEdit = !committed;
+      detail.innerHTML = `
+        <div class="script-viewer" id="review-script">${escapeHtml(scriptText)}</div>
+        ${canEdit ? `<p><strong>Status:</strong> <select id="review-status">
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="request_changes">Request changes</option>
+        </select> <button id="save-status">Save status</button></p>
+        <div class="comment-form">
+          <label>Add comment <textarea id="new-comment" rows="2"></textarea></label>
+          <label>Selection start <input type="number" id="sel-start" placeholder="0"></label>
+          <label>Selection end <input type="number" id="sel-end" placeholder="0"></label>
+          <button id="add-comment">Add comment</button>
+        </div>` : '<p><em>Committed – no edits allowed</em></p>'}
+        <h3>Comments</h3>
+        <ul id="review-comments-list"></ul>
+      `;
+      const scriptEl = document.getElementById('review-script');
+      scriptEl.addEventListener('mouseup', () => {
+        const sel = window.getSelection();
+        if (sel.rangeCount === 0) return;
+        try {
+          const range = sel.getRangeAt(0);
+          const pre = document.createRange();
+          pre.setStart(scriptEl, 0);
+          pre.setEnd(range.startContainer, range.startOffset);
+          const start = pre.toString().length;
+          const end = start + range.toString().length;
+          const selStart = document.getElementById('sel-start');
+          const selEnd = document.getElementById('sel-end');
+          if (selStart) selStart.value = start;
+          if (selEnd) selEnd.value = end;
+        } catch (_) {}
+      });
+
+      const statusSelect = detail.querySelector('#review-status');
+      if (statusSelect) {
+        const revRes = await apiFetch('/reviews?asReviewer=true');
+        const revData = await revRes.json();
+        const rev = (revData.items || []).find(x => x.id === reviewId);
+        if (rev) statusSelect.value = rev.status;
+
+        detail.querySelector('#save-status').onclick = async () => {
+          await apiFetch(`/reviews/${reviewId}`, { method: 'PATCH', body: JSON.stringify({ status: statusSelect.value }) });
+          loadReviewData();
+        };
+      }
+
+      const addBtn = detail.querySelector('#add-comment');
+      if (addBtn) addBtn.onclick = async () => {
+        const text = document.getElementById('new-comment').value.trim();
+        if (!text) return;
+        await apiFetch(`/reviews/${reviewId}/comments`, {
+          method: 'POST',
+          body: JSON.stringify({
+            commentText: text,
+            scriptRef: scriptData.id,
+            textSelectionStart: parseInt(document.getElementById('sel-start').value) || null,
+            textSelectionEnd: parseInt(document.getElementById('sel-end').value) || null,
+          }),
+        });
+        document.getElementById('new-comment').value = '';
+        showReviewDetail(reviewId, draftId, committed);
+      };
+
+      const commentsList = detail.querySelector('#review-comments-list');
+      commentsList.innerHTML = comments.map(c =>
+        `<li>${escapeHtml(c.commentText)} (${c.textSelectionStart}-${c.textSelectionEnd})</li>`
+      ).join('');
+      detail.dataset.reviewId = reviewId;
+      detail.dataset.draftId = draftId;
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    document.getElementById('assign-reviewer').onsubmit = async (e) => {
+      e.preventDefault();
+      const draftId = document.getElementById('assign-draft').value;
+      const reviewerId = document.getElementById('assign-reviewer-user').value;
+      if (!draftId || !reviewerId) return;
+      const res = await apiFetch('/reviews', {
+        method: 'POST',
+        body: JSON.stringify({ draftId, reviewerUserId: reviewerId }),
+      });
+      const result = document.getElementById('assign-result');
+      if (res.ok) {
+        result.textContent = 'Assigned';
+        result.className = '';
+        loadReviewData();
+      } else {
+        const j = await res.json().catch(() => ({}));
+        result.textContent = 'Error: ' + (j.error || res.statusText);
+        result.className = 'error';
+      }
+    };
+
+    async function loadHerbGarden() {}
+    document.getElementById('herb-garden-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const draftIds = document.getElementById('hg-draft-ids').value.split(',').map(s => s.trim()).filter(Boolean);
+      const episodeIds = document.getElementById('hg-episode-ids').value.split(',').map(s => s.trim()).filter(Boolean);
+      const plantScript = document.getElementById('hg-plant-script').value;
+      const res = await apiFetch('/herb-garden/compare', {
+        method: 'POST',
+        body: JSON.stringify({ draftIds, episodeIds, plantScript }),
+      });
+      const j = await res.json().catch(() => ({}));
+      document.getElementById('herb-garden-result').innerHTML = res.ok
+        ? '<pre>' + escapeHtml(JSON.stringify(j, null, 2)) + '</pre>'
+        : '<p class="error">' + escapeHtml(j.error || res.statusText) + '</p>';
+    };
+
+    showSection(getRoute());
+    if (getRoute() === 'review') loadReviewData();
+    if (getRoute() === 'herb-garden') loadHerbGarden();
+  </script>
+</body>
+</html>
