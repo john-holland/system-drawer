@@ -135,10 +135,11 @@ public static class PhysicsIKTrainingRunner
         }
         else if (category == PhysicsIKTrainingCategory.PulledHit)
         {
-            // Pulled hit: impact plus pull-through; longer window, slightly higher power use than static Hit.
-            set.completionTime = 0.75f + (2f - 1f / power) * 0.38f + r() * 0.3f;
-            set.accuracyScore = 0.38f + r() * 0.48f;
-            set.powerUsed = power * (0.95f + r() * 0.35f);
+            // Pulled hit (dampened graze): power ramps down so the limb slows ~mid-approach and only grazes the target—no pull-through, much lower impulse than Hit.
+            float midPathDampenCost = 0.22f + r() * 0.18f;
+            set.completionTime = 1.05f + (2f - 1f / power) * 0.32f + midPathDampenCost + r() * 0.22f;
+            set.accuracyScore = 0.44f + r() * 0.4f;
+            set.powerUsed = power * (0.4f + r() * 0.16f);
         }
         else if (category == PhysicsIKTrainingCategory.Weightlift)
         {

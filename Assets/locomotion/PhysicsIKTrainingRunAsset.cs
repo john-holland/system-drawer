@@ -124,7 +124,7 @@ public enum PhysicsIKTrainingCategory
     Catch,
     /// <summary>Launch toward target (e.g. basketball shot); fitness = accuracy toward target.</summary>
     Shoot,
-    /// <summary>Hit with pull-through (contact + follow-through drag). Uses same run asset fields as Hit.</summary>
+    /// <summary>Dampened graze: slow mid-approach, low power, light contact with target (no follow-through). Same run asset fields as Hit.</summary>
     PulledHit
 }
 
