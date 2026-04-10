@@ -490,15 +490,22 @@ public class Spatial4DInGameUI : MonoBehaviour
             if (marker == null) continue;
             sg4.TryGetEntry(marker, out Bounds4 volume, out object payload);
             string leafId = i < leafIds.Count ? leafIds[i] : null;
+            sg4.TryGetGatewayLeafIds(marker, volume, out string gb, out string gp, out string gf);
+            string active = SpatialGenerator4D.GetClosestGatewayTerminusName(volume, t);
             var dto = new CausalityTriggerTrippedDto
             {
                 gameTime = t,
                 px = position.x, py = position.y, pz = position.z,
                 spatialNodeId = marker.name + "(" + marker.GetInstanceID() + ")",
                 causalityLeafId = leafId,
+                causalityLeafBack = gb,
+                causalityLeafPause = gp,
+                causalityLeafForward = gf,
+                activeGatewayTerminus = active,
                 payloadLabel = payload != null ? payload.ToString() : null
             };
             orchestrator.causalityTriggersTripped.Add(dto);
+            orchestrator.AppendCausalityHistorySnapshot(gb, gp, gf, 0, t, position, "volume_enter", null);
         }
     }
 
@@ -651,8 +658,8 @@ public class Spatial4DInGameUI : MonoBehaviour
             t = currentT,
             dateTimeString = NarrativeCalendarMath.SecondsToNarrativeDateTime(currentT).ToString()
         };
+        TryInsertInto4D(pos, currentT, 1f, "Start", entry);
         entries.Add(entry);
-        TryInsertInto4D(pos, currentT, 1f, "Start");
     }
 
     private void OnMarkStop()
@@ -667,16 +674,23 @@ public class Spatial4DInGameUI : MonoBehaviour
             t = currentT,
             dateTimeString = NarrativeCalendarMath.SecondsToNarrativeDateTime(currentT).ToString()
         };
+        TryInsertInto4D(pos, currentT, 1f, "Stop", entry);
         entries.Add(entry);
-        TryInsertInto4D(pos, currentT, 1f, "Stop");
     }
 
-    private void TryInsertInto4D(Vector3 center, float t, float durationT, object payload)
+    private void TryInsertInto4D(Vector3 center, float t, float durationT, object payload, Spatial4DExpressionEntryDto fillGateway = null)
     {
         var sg4 = GetFirst4DGenerator();
         if (sg4 == null) return;
         var b4 = new Bounds4(center, Vector3.one * 0.5f, t, t + durationT);
         sg4.Insert(b4, payload);
+        if (fillGateway != null && sg4.TryFindMarkerForPlacedVolume(b4, payload, out GameObject m))
+        {
+            sg4.TryGetGatewayLeafIds(m, b4, out string bb, out string pp, out string ff);
+            fillGateway.causalityLeafBack = bb;
+            fillGateway.causalityLeafPause = pp;
+            fillGateway.causalityLeafForward = ff;
+        }
     }
 
     private static string GetScenePath(Transform t)
@@ -698,13 +712,19 @@ public class Spatial4DInGameUI : MonoBehaviour
         string path = Spatial4DExportUtility.ResolvePath(orchestrator.inGameUIOutputFilePath);
         var format = Spatial4DExportUtility.FromSpatial4DOutputFormat(orchestrator.inGameUIOutputFormat);
         if (orchestrator.inGameUIAppendToFile)
-            Spatial4DExportUtility.AppendToFile(path, entries, format);
+        {
+            Spatial4DExportUtility.AppendToFile(path, entries, format, orchestrator.causalityHistory);
+            orchestrator.ClearCausalityHistory();
+        }
         else
         {
-            var dto = new Spatial4DExpressionsDto { schemaVersion = 1 };
+            var dto = new Spatial4DExpressionsDto { schemaVersion = Spatial4DExpressionsDto.CurrentSchemaVersion };
             dto.entries.AddRange(entries);
             if (!float.IsNaN(timelineEndT))
                 dto.timelineEndT = timelineEndT;
+            dto.causalityHistory = orchestrator.causalityHistory != null
+                ? orchestrator.causalityHistory.CloneForExport()
+                : null;
             Spatial4DExportUtility.WriteToFile(path, dto, format);
         }
         entries.Clear();

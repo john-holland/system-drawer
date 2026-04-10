@@ -154,7 +154,7 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
                 Debug.LogWarning("[Spatial4D] Refresh 4D mirror: No SpatialGenerator4D in list. Add a 4D generator first.");
             else
             {
-                var entries = sg4.GetPlacedEntries();
+                var entries = sg4.GetPlacedEntriesWithGatewayTermini();
                 Transform mirrorRoot = orch.transform.Find("4DTreeMirror");
                 if (mirrorRoot == null)
                 {
@@ -166,12 +166,12 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
                     Object.DestroyImmediate(mirrorRoot.GetChild(0).gameObject);
                 for (int i = 0; i < entries.Count; i++)
                 {
-                    var (volume, payload) = entries[i];
+                    var (volume, payload, gateway) = entries[i];
                     var child = new GameObject("Volume_" + i + "_" + (payload != null ? payload.ToString() : ""));
                     child.transform.SetParent(mirrorRoot);
                     child.transform.position = volume.center;
                     var node = child.AddComponent<Spatial4DMirrorNode>();
-                    node.SetFrom(volume, payload != null ? payload.ToString() : null);
+                    node.SetFrom(volume, payload != null ? payload.ToString() : null, gateway);
                 }
                 EditorUtility.SetDirty(orch);
             }
@@ -182,6 +182,35 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
                 if (g is SpatialGenerator4D s4) { sg4ForInspector = s4; break; }
         if (sg4ForInspector != null && GUILayout.Button("Open Prompt Tree Inspector", GUILayout.Height(22)))
             PromptTreeInspectorWindow.ShowWindow(sg4ForInspector);
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("4D reset (Play mode recommended for generator Clear)", EditorStyles.miniLabel);
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Reset 4D runtime state", GUILayout.Height(22)))
+        {
+            orch.Reset4DRuntimeState(clearSpatial4DGenerators: Application.isPlaying, clearTrippedTriggers: true,
+                clearMirrorHierarchy: false, clearCausalityHistory: true,
+                archiveCausalityHistoryBeforeClear: orch.archiveCausalityHistoryOnReset);
+            serializedObject.Update();
+            EditorUtility.SetDirty(orch);
+        }
+        if (GUILayout.Button("Clear 4D mirror only", GUILayout.Height(22)))
+        {
+            Transform mirrorRoot = orch.transform.Find("4DTreeMirror");
+            if (mirrorRoot != null)
+                while (mirrorRoot.childCount > 0)
+                    Object.DestroyImmediate(mirrorRoot.GetChild(0).gameObject);
+            EditorUtility.SetDirty(orch);
+        }
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Clear causality history (runtime list)", GUILayout.Height(22)))
+        {
+            orch.ClearCausalityHistory();
+            serializedObject.Update();
+            EditorUtility.SetDirty(orch);
+        }
         EditorGUILayout.EndHorizontal();
 
         var skinController = orch.GetComponent<SpatialGeneratorSkinController>();

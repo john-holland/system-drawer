@@ -15,6 +15,12 @@ public class CausalityTriggerTrippedDto
     public string spatialNodeId; // marker name or instance id (legacy fallback)
     /// <summary>Stable causality leaf ID (e.g. S3.O2.1.7) for export/import compatibility. Prefer over spatialNodeId when available.</summary>
     public string causalityLeafId;
+    /// <summary>Gateway triplet: leaves sampled at volume tMin, centerT, tMax (schema v2+).</summary>
+    public string causalityLeafBack;
+    public string causalityLeafPause;
+    public string causalityLeafForward;
+    /// <summary>Which gateway arm was closest to gameTime on the volume window: Back, Pause, or Forward.</summary>
+    public string activeGatewayTerminus;
     public string treeNodeId;    // optional narrative tree node id
     public string sequenceId;    // optional sequence index or id
     public string payloadLabel;  // optional payload from 4D volume (e.g. "Start", "Stop")
@@ -27,10 +33,15 @@ public class CausalityTriggerTrippedDto
 [Serializable]
 public class Spatial4DExpressionsDto
 {
-    public int schemaVersion = 1;
+    /// <summary>v1: entries only. v2: gateway leaf fields on entries/triggers + causalityHistory.</summary>
+    public const int CurrentSchemaVersion = 2;
+
+    public int schemaVersion = CurrentSchemaVersion;
     public List<Spatial4DExpressionEntryDto> entries = new List<Spatial4DExpressionEntryDto>();
     /// <summary>Optional timeline end (narrative seconds). When set, scrubber can extend past generator tMax.</summary>
     public float? timelineEndT;
+    /// <summary>Append-only 2D causality log (rows × Back/Pause/Forward leaf ids + flags); schema v2+.</summary>
+    public CausalityHistory2D causalityHistory;
 }
 
 /// <summary>
@@ -71,6 +82,11 @@ public class Spatial4DExpressionEntryDto
     // MarkedGameObject: scene path or instance id for file
     public string scenePath;
     public int instanceId;
+
+    /// <summary>Optional gateway leaf ids for this marker (schema v2+); same semantics as SpatialGenerator4D gateway sampling.</summary>
+    public string causalityLeafBack;
+    public string causalityLeafPause;
+    public string causalityLeafForward;
 
     // ToolUse: tool and target refs (path or spacetime link)
     public string toolScenePath;

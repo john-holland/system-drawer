@@ -23,6 +23,8 @@ namespace Locomotion.Narrative.EditorTools
         private Label headerLabel;
         private VisualElement eventBarsRoot;
 
+        private bool _refreshScheduled;
+
         [MenuItem("Window/Locomotion/Narrative/Calendar Wizard")]
         public static void ShowWindow()
         {
@@ -79,7 +81,7 @@ namespace Locomotion.Narrative.EditorTools
                 {
                     calendar = newCalendar;
                     RebindCalendar();
-                    RefreshAll();
+                    ScheduleRefresh();
                 }
             });
             calField.style.flexGrow = 1f;
@@ -208,6 +210,26 @@ namespace Locomotion.Narrative.EditorTools
             calendarSO = calendar != null ? new SerializedObject(calendar) : null;
         }
 
+        /// <summary>
+        /// Defer full UI rebuild to the next editor tick so IMGUIContainer callbacks do not mutate
+        /// UI Toolkit during the same layout pass (avoids recursive layout warnings).
+        /// </summary>
+        private void ScheduleRefresh()
+        {
+            if (_refreshScheduled)
+                return;
+            _refreshScheduled = true;
+            EditorApplication.delayCall += ExecuteScheduledRefresh;
+        }
+
+        private void ExecuteScheduledRefresh()
+        {
+            _refreshScheduled = false;
+            if (this == null)
+                return;
+            RefreshAll();
+        }
+
         private void RefreshAll()
         {
             headerLabel.text = $"{new DateTime(viewYear, viewMonth, 1):MMMM yyyy}  (selected {viewMonth}/{selectedDay}/{viewYear})";
@@ -275,7 +297,7 @@ namespace Locomotion.Narrative.EditorTools
                         cell.RegisterCallback<MouseDownEvent>(_ =>
                         {
                             selectedDay = capturedDay;
-                            RefreshAll();
+                            ScheduleRefresh();
                         });
                     }
                     else
@@ -292,6 +314,7 @@ namespace Locomotion.Narrative.EditorTools
 
         private void RebuildStickyList()
         {
+            stickyList.Unbind();
             stickyList.Clear();
 
             if (calendar == null || calendarSO == null)
@@ -376,27 +399,19 @@ namespace Locomotion.Narrative.EditorTools
                         treeProp.objectReferenceValue = newTree;
                         calendarSO.ApplyModifiedProperties();
                         EditorUtility.SetDirty(calendar);
-                        RefreshAll();
+                        ScheduleRefresh();
                     }
                 });
                 card.Add(treeFieldContainer);
 
                 card.Add(new UnityEditor.UIElements.PropertyField(evtProp.FindPropertyRelative("actions"), "Actions"));
 
-                // Commit changes on UI change
-                card.RegisterCallback<ChangeEvent<string>>(_ =>
-                {
-                    calendarSO.ApplyModifiedProperties();
-                    EditorUtility.SetDirty(calendar);
-                    RefreshAll();
-                });
-
                 stickyList.Add(card);
             }
 
-            // Bind property fields
-            // Older Unity versions may not support per-element binding consistently; binding at root is safest.
-            rootVisualElement.Bind(calendarSO);
+            // Bind only the sticky list subtree — root Bind + full rebuild re-entrantly updates the whole panel.
+            if (calendarSO != null)
+                stickyList.Bind(calendarSO);
         }
 
         private List<int> GetEventIndicesForSelectedDay(SerializedProperty eventsProp)

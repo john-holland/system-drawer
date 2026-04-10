@@ -406,6 +406,110 @@ public class SpatialGenerator4D : SpatialGeneratorBase
         return list;
     }
 
+    /// <summary>Clamp narrative time to this generator's [tMin, tMax].</summary>
+    public float ClampNarrativeTime(float t)
+    {
+        return Mathf.Clamp(t, tMin, tMax);
+    }
+
+    /// <summary>
+    /// Resolve causality leaf id for a placed marker at (volume.center, narrativeT), disambiguating when multiple volumes overlap.
+    /// </summary>
+    public string ResolveLeafIdForMarker(GameObject marker, Bounds4 volume, float narrativeT)
+    {
+        if (marker == null || entryByGo == null)
+            return null;
+        narrativeT = ClampNarrativeTime(narrativeT);
+        var region = new Bounds(volume.center, Vector3.one * 0.01f);
+        var markers = new List<GameObject>();
+        var leafIds = new List<string>();
+        SearchWithLeafIds(region, narrativeT, markers, leafIds);
+        int idx = markers.IndexOf(marker);
+        if (idx >= 0 && idx < leafIds.Count)
+            return leafIds[idx];
+        return null;
+    }
+
+    /// <summary>
+    /// Gateway triplet: sample oct-tree leaf ids at volume center with narrative times tMin, centerT, tMax (clamped to generator).
+    /// </summary>
+    public bool TryGetGatewayLeafIds(GameObject marker, Bounds4 volume, out string back, out string pause, out string forward)
+    {
+        back = pause = forward = null;
+        if (marker == null)
+            return false;
+        EnsureInitialized();
+        back = ResolveLeafIdForMarker(marker, volume, volume.tMin);
+        pause = ResolveLeafIdForMarker(marker, volume, volume.centerT);
+        forward = ResolveLeafIdForMarker(marker, volume, volume.tMax);
+        return back != null || pause != null || forward != null;
+    }
+
+    /// <summary>All placed volumes with payloads and supplementary Back/Pause/Forward gateway leaf ids.</summary>
+    public List<(Bounds4 volume, object payload, Spatial4DTerminusTriplet gateway)> GetPlacedEntriesWithGatewayTermini()
+    {
+        var list = new List<(Bounds4, object, Spatial4DTerminusTriplet)>();
+        if (entryByGo == null)
+            return list;
+        foreach (var kv in entryByGo)
+        {
+            TryGetGatewayLeafIds(kv.Key, kv.Value.volume, out string b, out string p, out string f);
+            var gateway = Spatial4DTerminusTriplet.FromLeafIds(b, p, f);
+            list.Add((kv.Value.volume, kv.Value.payload, gateway));
+        }
+        return list;
+    }
+
+    /// <summary>Which gateway arm is closest to <paramref name="narrativeT"/> on the volume's time window.</summary>
+    public static string GetClosestGatewayTerminusName(Bounds4 volume, float narrativeT)
+    {
+        float dBack = Mathf.Abs(narrativeT - volume.tMin);
+        float dPause = Mathf.Abs(narrativeT - volume.centerT);
+        float dForward = Mathf.Abs(narrativeT - volume.tMax);
+        if (dBack <= dPause && dBack <= dForward)
+            return "Back";
+        if (dPause <= dForward)
+            return "Pause";
+        return "Forward";
+    }
+
+    const float VolumeEps = 0.02f;
+    const float TimeEps = 0.02f;
+
+    static bool ApproximatelySameVolume(Bounds4 a, Bounds4 b)
+    {
+        return Vector3.Distance(a.center, b.center) < VolumeEps
+            && Vector3.Distance(a.size, b.size) < VolumeEps
+            && Mathf.Abs(a.tMin - b.tMin) < TimeEps
+            && Mathf.Abs(a.tMax - b.tMax) < TimeEps;
+    }
+
+    static bool PayloadMatches(object a, object b)
+    {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (a.Equals(b)) return true;
+        return string.Equals(a.ToString(), b.ToString(), StringComparison.Ordinal);
+    }
+
+    /// <summary>Find marker GameObject for a volume just placed (or matching payload), for gateway id resolution.</summary>
+    public bool TryFindMarkerForPlacedVolume(Bounds4 volume, object payload, out GameObject marker)
+    {
+        marker = null;
+        if (entryByGo == null)
+            return false;
+        foreach (var kv in entryByGo)
+        {
+            if (!ApproximatelySameVolume(kv.Value.volume, volume))
+                continue;
+            if (!PayloadMatches(kv.Value.payload, payload))
+                continue;
+            marker = kv.Key;
+            return true;
+        }
+        return false;
+    }
+
     /// <summary>Build 4D grid from placed volumes when buildGrid is true. Registers Sample4D on next OnEnable.</summary>
     public void BuildGrid()
     {

@@ -11,7 +11,7 @@ Pipeline for creating, parsing, and outputting episodic narrative content for th
 - **USC assets** — library documents, semantic chunks, or unique kernels linked to episodes via `episode_assets`
 - **Thesaurus** — languages, entries, alternatives, and AST nodes for translation and reordering
 
-Apply schemas in order: `continuum_episodes_schema.sql`, `continuum_thesaurus_schema.sql`, `continuum_screenplay_schema.sql`, `continuum_thesaurus_version_schema.sql`, `continuum_draft_schema.sql`, `continuum_dictionary_schema.sql`, `continuum_audit_schema.sql`. See [CONTINUUM_AND_COMPRESSOR.md](CONTINUUM_AND_COMPRESSOR.md).
+Apply schemas in order: `continuum_episodes_schema.sql`, `continuum_spatial_4d_schema.sql` (4D volumes + gateway leaf triplet + optional history for Continuum Explorer), `continuum_thesaurus_schema.sql`, `continuum_screenplay_schema.sql`, `continuum_thesaurus_version_schema.sql`, `continuum_draft_schema.sql`, `continuum_dictionary_schema.sql`, `continuum_audit_schema.sql`. See [CONTINUUM_AND_COMPRESSOR.md](CONTINUUM_AND_COMPRESSOR.md).
 
 ---
 
@@ -74,7 +74,7 @@ The Spatial 4D system uses **(x, y, z, t)** volumes: 3D regions plus narrative t
 1. **Calendar events** — `NarrativeCalendarAsset` holds events with optional `spatiotemporalVolume` (Bounds4).
 2. **Narrative4DPlacer** — Inserts event volumes into `SpatialGenerator4D`. Assign calendar and 4D generator (or resolve from `SpatialGenerator4DOrchestrator`).
 3. **Export to file** — Use `Spatial4DExportUtility` or the in-game Spatial 4D editor to export to JSON/YAML/XML (`Spatial4DExpressionsDto`). Configure path in `SpatialGenerator4DOrchestrator` (e.g. `inGameUIOutputFilePath`).
-4. **Continuum → Unity** — The `spatial_4d` table in continuum.db can be browsed via **Continuum Explorer**. ETL from continuum (work_orders, causality_structure, episodes) into `NarrativeCalendarAsset` events is pipeline-specific; the schema supports `episodes.t_start`, `episodes.t_end`, `episodes.scene_path`, and `work_orders.causality_leaf_id` for mapping.
+4. **Continuum → Unity** — The `spatial_4d` table (see `continuum_spatial_4d_schema.sql`) holds Bounds4-style fields plus **causality_leaf_back / _pause / _forward** (gateway termini aligned with `SpatialGenerator4D`) and optional **causality_history_json** (append-only rows). Browse via **Continuum Explorer**. ETL from continuum (work_orders, causality_structure, episodes) into `NarrativeCalendarAsset` events is pipeline-specific; the schema supports `episodes.t_start`, `episodes.t_end`, `episodes.scene_path`, and `work_orders.causality_leaf_id` for mapping.
 
 See [Assets/BedogaGenerator/SpatialGenerator4D_Setup.md](../Assets/BedogaGenerator/SpatialGenerator4D_Setup.md).
 

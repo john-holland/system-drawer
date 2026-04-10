@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using Locomotion.Narrative;
+using Newtonsoft.Json;
 
 /// <summary>Output format for in-game spatial 4D editor flat file.</summary>
 public enum Spatial4DOutputFormat
@@ -66,6 +69,10 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     public bool collectCausalityEvents = false;
     [Tooltip("List of causality triggers tripped (when collectCausalityEvents is true).")]
     public List<CausalityTriggerTrippedDto> causalityTriggersTripped = new List<CausalityTriggerTrippedDto>();
+    [Tooltip("Append-only gateway triplet history (rows × Back/Pause/Forward + flags).")]
+    public CausalityHistory2D causalityHistory = new CausalityHistory2D();
+    [Tooltip("When clearing causality history via Reset4DRuntimeState, write JSON archive under persistentDataPath first.")]
+    public bool archiveCausalityHistoryOnReset = false;
     [Tooltip("File path to write or append to. Relative paths resolve against persistentDataPath at runtime.")]
     public string inGameUIOutputFilePath = "Spatial4DExpressions.json";
     [Tooltip("If true, append new entries to existing file; else overwrite.")]
@@ -163,5 +170,91 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
             pathfindingCoverage.enabled = showPathfindingCoverage;
         if (narrativeCalendar != null)
             narrativeCalendar.showCausalOverlay = showCausal;
+    }
+
+    /// <summary>Append one observation row (e.g. volume entry); prior rows are never modified.</summary>
+    public void AppendCausalityHistorySnapshot(string leafBack, string leafPause, string leafForward, long flags,
+        float narrativeT, Vector3 position, string eventType, IList<CausalityNamedFlagEntryDto> namedFlags = null)
+    {
+        if (causalityHistory == null)
+            causalityHistory = new CausalityHistory2D();
+        causalityHistory.AppendRow(leafBack, leafPause, leafForward, flags, narrativeT, position, eventType, namedFlags);
+    }
+
+    public void ClearCausalityHistory()
+    {
+        causalityHistory?.rows?.Clear();
+    }
+
+    /// <summary>
+    /// Clear 4D runtime caches: optional generator Clear, tripped triggers, mirror children, causality history.
+    /// </summary>
+    public void Reset4DRuntimeState(bool clearSpatial4DGenerators = true, bool clearTrippedTriggers = true,
+        bool clearMirrorHierarchy = false, bool clearCausalityHistory = true, bool archiveCausalityHistoryBeforeClear = false)
+    {
+        bool archive = archiveCausalityHistoryBeforeClear || archiveCausalityHistoryOnReset;
+        if (archive && causalityHistory != null && causalityHistory.rows != null && causalityHistory.rows.Count > 0)
+            ArchiveCausalityHistoryToPersistentData();
+
+        if (clearCausalityHistory)
+            ClearCausalityHistory();
+
+        if (clearTrippedTriggers && causalityTriggersTripped != null)
+            causalityTriggersTripped.Clear();
+
+        if (clearSpatial4DGenerators && spatialGenerators != null)
+        {
+            foreach (var gen in spatialGenerators)
+            {
+                if (gen is SpatialGenerator4D sg4)
+                    sg4.Clear();
+            }
+        }
+
+        if (clearMirrorHierarchy)
+        {
+            Transform mirrorRoot = transform.Find("4DTreeMirror");
+            if (mirrorRoot != null)
+            {
+                for (int i = mirrorRoot.childCount - 1; i >= 0; i--)
+                    Destroy(mirrorRoot.GetChild(i).gameObject);
+            }
+        }
+    }
+
+    void ArchiveCausalityHistoryToPersistentData()
+    {
+        if (causalityHistory == null || causalityHistory.rows == null || causalityHistory.rows.Count == 0)
+            return;
+        try
+        {
+            string dir = Application.persistentDataPath;
+            string name = "Spatial4D_causality_history_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss") + ".json";
+            string path = Path.Combine(dir, name);
+            var settings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            File.WriteAllText(path, JsonConvert.SerializeObject(causalityHistory, settings));
+            Debug.Log("[Spatial4D] Archived causality history to " + path);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[Spatial4D] Failed to archive causality history: " + e.Message);
+        }
+    }
+
+    [ContextMenu("Reset 4D runtime state (generators + triggers + history)")]
+    void ContextReset4DRuntimeState()
+    {
+        Reset4DRuntimeState(clearSpatial4DGenerators: true, clearTrippedTriggers: true, clearMirrorHierarchy: false,
+            clearCausalityHistory: true, archiveCausalityHistoryBeforeClear: archiveCausalityHistoryOnReset);
+    }
+
+    [ContextMenu("Reset 4D — clear history only")]
+    void ContextClearCausalityHistoryOnly()
+    {
+        ClearCausalityHistory();
     }
 }

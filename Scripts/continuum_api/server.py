@@ -90,9 +90,22 @@ def get_db_path() -> Path:
     return Path(os.environ.get("CONTINUUM_DB", str(DEFAULT_DB)))
 
 
+_schema_initialized = False
+
+
 def get_conn():
+    """Open DB connection; on first call in this process, run USC ensure_database if available."""
+    global _schema_initialized
     conn = sqlite3.connect(get_db_path())
     conn.row_factory = sqlite3.Row
+    if not _schema_initialized:
+        try:
+            from unified_semantic_archiver.db import ensure_database
+
+            ensure_database(conn)
+        except ImportError:
+            pass
+        _schema_initialized = True
     return conn
 
 

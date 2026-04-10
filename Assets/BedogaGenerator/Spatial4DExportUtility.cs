@@ -114,8 +114,9 @@ public static class Spatial4DExportUtility
         File.WriteAllText(path, content);
     }
 
-    /// <summary>Append new entries to file: read existing, merge entries, write.</summary>
-    public static void AppendToFile(string path, List<Spatial4DExpressionEntryDto> newEntries, OutputFormat format)
+    /// <summary>Append new entries to file: read existing, merge entries, merge causality history rows, write.</summary>
+    public static void AppendToFile(string path, List<Spatial4DExpressionEntryDto> newEntries, OutputFormat format,
+        CausalityHistory2D mergeHistory = null)
     {
         path = ResolvePath(path);
         Spatial4DExpressionsDto existing = new Spatial4DExpressionsDto();
@@ -137,6 +138,13 @@ public static class Spatial4DExportUtility
             existing.entries = new List<Spatial4DExpressionEntryDto>();
         foreach (var e in newEntries)
             existing.entries.Add(e);
+        if (mergeHistory != null && mergeHistory.rows != null && mergeHistory.rows.Count > 0)
+        {
+            if (existing.causalityHistory == null)
+                existing.causalityHistory = new CausalityHistory2D();
+            CausalityHistory2D.MergeAppend(existing.causalityHistory, mergeHistory);
+        }
+        existing.schemaVersion = System.Math.Max(existing.schemaVersion, Spatial4DExpressionsDto.CurrentSchemaVersion);
         WriteToFile(path, existing, format);
     }
 }
