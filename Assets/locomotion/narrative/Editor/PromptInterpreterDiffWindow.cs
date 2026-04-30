@@ -21,7 +21,7 @@ namespace Locomotion.Narrative.EditorTools
         private const string PrefsBaselineKey = "PromptInterpreterDiffWindow.BaselineSnapshot";
         private const string PrefsPromptKey = "PromptInterpreterDiffWindow.LastPrompt";
 
-        [MenuItem("Window/Locomotion/Narrative/Prompt Interpreter Diff")]
+        [MenuItem("Window/System Drawer/Narrative/Prompt Interpreter Diff", false, 205)]
         public static void ShowWindow()
         {
             var w = GetWindow<PromptInterpreterDiffWindow>("Interpreter Diff");

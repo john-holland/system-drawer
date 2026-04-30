@@ -19,7 +19,7 @@ namespace Locomotion.EditorTools
 
         private List<GameObject> actors = new List<GameObject>();
 
-        [MenuItem("Window/Locomotion/Ragdoll Systems Matrix")]
+        [MenuItem("Window/System Drawer/Ragdoll/Systems Matrix", false, 301)]
         public static void ShowWindow()
         {
             var w = GetWindow<RagdollSystemMatrixWindow>("Ragdoll Systems Matrix");

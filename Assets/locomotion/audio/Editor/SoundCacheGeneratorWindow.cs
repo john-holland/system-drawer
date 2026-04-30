@@ -13,7 +13,7 @@ namespace Locomotion.Audio.Editor
         private ActorSoundStore soundStore;
         private Vector2 scrollPosition;
 
-        [MenuItem("Window/Locomotion/Audio/Sound Cache Generator")]
+        [MenuItem("Window/System Drawer/Audio/Sound Cache Generator", false, 600)]
         public static void ShowWindow()
         {
             GetWindow<SoundCacheGeneratorWindow>("Sound Cache Generator");

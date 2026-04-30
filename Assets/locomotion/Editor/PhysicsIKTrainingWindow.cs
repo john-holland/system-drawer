@@ -86,7 +86,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private int trainAllAnimationIndex;
     private List<RagdollAnimationSet> trainAllSelectedSets = new List<RagdollAnimationSet>();
 
-    [MenuItem("Window/Locomotion/IK Animation Training")]
+    [MenuItem("Window/System Drawer/Animation/IK Animation Training", false, 102)]
     public static void ShowWindow()
     {
         var w = GetWindow<PhysicsIKTrainingWindow>("IK Animation Training");

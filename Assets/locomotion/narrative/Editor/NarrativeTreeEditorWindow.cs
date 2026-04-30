@@ -19,7 +19,7 @@ namespace Locomotion.Narrative.EditorTools
 
         private NarrativeNode selectedNode;
 
-        [MenuItem("Window/Locomotion/Narrative/Tree Editor")]
+        [MenuItem("Window/System Drawer/Narrative/Tree Editor", false, 200)]
         public static void ShowWindow()
         {
             var w = GetWindow<NarrativeTreeEditorWindow>("Narrative Tree");
@@ -258,6 +258,7 @@ namespace Locomotion.Narrative.EditorTools
                     NarrativeActionKind.SetProperty => new SetPropertyAction(),
                     NarrativeActionKind.CallMethod => new CallMethodAction(),
                     NarrativeActionKind.RunBehaviorTree => new RunBehaviorTreeAction(),
+                    NarrativeActionKind.SendThought => new SendThoughtAction(),
                     _ => new CallMethodAction()
                 };
                 EditorUtility.SetDirty(tree);
@@ -313,6 +314,21 @@ namespace Locomotion.Narrative.EditorTools
                 run.goal.targetKey = EditorGUILayout.TextField("Target Key", run.goal.targetKey);
                 run.goal.targetPosition = EditorGUILayout.Vector3Field("Target Position", run.goal.targetPosition);
             }
+            else if (a is SendThoughtAction st)
+            {
+                st.senderKey = EditorGUILayout.TextField("Sender Key", st.senderKey);
+                st.receiverKey = EditorGUILayout.TextField("Receiver Key", st.receiverKey);
+                st.thoughtType = (ThoughtType)EditorGUILayout.EnumPopup("Thought Type", st.thoughtType);
+                if (st.decisionPayload == null)
+                    st.decisionPayload = new DecisionThoughtPayload();
+                st.decisionPayload.proposedGoalName = EditorGUILayout.TextField("Decision Goal Name", st.decisionPayload.proposedGoalName);
+                st.decisionPayload.conviction = EditorGUILayout.Slider("Decision Conviction", st.decisionPayload.conviction, 0f, 1f);
+                st.decisionPayload.optionalTargetPosition = EditorGUILayout.Vector3Field("Decision Target Pos", st.decisionPayload.optionalTargetPosition);
+                if (st.queryPayload == null)
+                    st.queryPayload = new QueryThoughtPayload();
+                st.queryPayload.queryId = EditorGUILayout.TextField("Query Id", st.queryPayload.queryId);
+                st.queryPayload.channels = (QueryChannel)EditorGUILayout.EnumFlagsField("Query Channels", st.queryPayload.channels);
+            }
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -326,7 +342,8 @@ namespace Locomotion.Narrative.EditorTools
             CallMethod,
             SetProperty,
             SpawnPrefab,
-            RunBehaviorTree
+            RunBehaviorTree,
+            SendThought
         }
 
         private static NarrativeActionKind GetKind(NarrativeActionSpec a)
@@ -337,6 +354,7 @@ namespace Locomotion.Narrative.EditorTools
                 SetPropertyAction => NarrativeActionKind.SetProperty,
                 CallMethodAction => NarrativeActionKind.CallMethod,
                 RunBehaviorTreeAction => NarrativeActionKind.RunBehaviorTree,
+                SendThoughtAction => NarrativeActionKind.SendThought,
                 _ => NarrativeActionKind.CallMethod
             };
         }

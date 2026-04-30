@@ -2,7 +2,9 @@
   "name": "Locomotion.Narrative.Runtime",
   "rootNamespace": "Locomotion.Narrative",
   "references": [
-    "Locomotion.Audio"
+    "Locomotion.Audio",
+    "Locomotion.Runtime",
+    "SystemDrawer"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

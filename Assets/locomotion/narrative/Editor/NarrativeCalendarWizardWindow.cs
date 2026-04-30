@@ -25,7 +25,7 @@ namespace Locomotion.Narrative.EditorTools
 
         private bool _refreshScheduled;
 
-        [MenuItem("Window/Locomotion/Narrative/Calendar Wizard")]
+        [MenuItem("Window/System Drawer/Narrative/Calendar Wizard", false, 201)]
         public static void ShowWindow()
         {
             ShowWindow(null);

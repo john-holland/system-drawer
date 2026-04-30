@@ -55,7 +55,7 @@ namespace Weather
         }
         private WeatherPreset selectedPreset = WeatherPreset.ClearDay;
 
-        [MenuItem("Window/Weather/Weather Service Wizard")]
+        [MenuItem("Window/System Drawer/Weather/Service Wizard", false, 700)]
         public static void ShowWindow()
         {
             WeatherServiceWizard window = GetWindow<WeatherServiceWizard>("Weather Service Wizard");

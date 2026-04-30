@@ -36,7 +36,7 @@ public class PhysicsCardGameVisualizerWindow : EditorWindow
     private float cardHeight = 280f;
     private int cardsPerRow = 4;
 
-    [MenuItem("Window/Locomotion/Physics Card Game Visualizer")]
+    [MenuItem("Window/System Drawer/Physics/Card Game Visualizer", false, 401)]
     public static void OpenWindow()
     {
         PhysicsCardGameVisualizerWindow window = GetWindow<PhysicsCardGameVisualizerWindow>();

@@ -54,7 +54,7 @@ public class NervousSystemImpulseViewerWindow : EditorWindow
         new Vector2(0.65f, 0.82f)  // RightLeg
     };
 
-    [MenuItem("Window/Locomotion/Nervous System Impulse Viewer")]
+    [MenuItem("Window/System Drawer/Physics/Nervous System Impulse Viewer", false, 400)]
     public static void ShowWindow()
     {
         var w = GetWindow<NervousSystemImpulseViewerWindow>("Impulse Viewer");

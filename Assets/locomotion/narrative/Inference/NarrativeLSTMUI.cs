@@ -15,13 +15,22 @@ namespace Locomotion.Narrative
         [Header("UI")]
         [Tooltip("Show panel at runtime.")]
         public bool showPanel = true;
-        public int panelWidth = 360;
-        public int panelHeight = 280;
+        public int panelWidth = 440;
+        public int panelHeight = 360;
+        [Tooltip("Font size for labels, buttons, and text fields.")]
+        [SerializeField] private int uiFontSize = 17;
 
         private string _promptInput = "Add event meeting at 9am";
         private string _summaryText = "";
         private string _interpretResult = "";
         private Vector2 _scroll;
+
+        private GUIStyle _titleStyle;
+        private GUIStyle _labelStyle;
+        private GUIStyle _buttonStyle;
+        private GUIStyle _textFieldStyle;
+        private GUIStyle _textAreaStyle;
+        private bool _guiStylesReady;
 
         private void Awake()
         {
@@ -29,24 +38,46 @@ namespace Locomotion.Narrative
             if (promptInterpreter == null) promptInterpreter = GetComponent<NarrativeLSTMPromptInterpreter>();
         }
 
+        private void EnsureGuiStyles()
+        {
+            if (_guiStylesReady) return;
+            _guiStylesReady = true;
+            int fs = Mathf.Max(10, uiFontSize);
+            int row = Mathf.RoundToInt(fs + 14);
+            _titleStyle = new GUIStyle(GUI.skin.box)
+            {
+                fontSize = fs + 1,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                fixedHeight = row + 4
+            };
+            _labelStyle = new GUIStyle(GUI.skin.label) { fontSize = fs, wordWrap = true };
+            _buttonStyle = new GUIStyle(GUI.skin.button) { fontSize = fs, fixedHeight = row };
+            _textFieldStyle = new GUIStyle(GUI.skin.textField) { fontSize = fs };
+            _textAreaStyle = new GUIStyle(GUI.skin.textArea) { fontSize = fs, wordWrap = true };
+        }
+
         private void OnGUI()
         {
             if (!showPanel) return;
+            EnsureGuiStyles();
+            int textAreaH = Mathf.RoundToInt(uiFontSize * 2.5f);
+            int scrollH = Mathf.RoundToInt(uiFontSize * 4f);
             GUILayout.BeginArea(new Rect(Screen.width - panelWidth - 10, 10, panelWidth, panelHeight));
             GUILayout.BeginVertical("box");
-            GUILayout.Label("Narrative LSTM", GUI.skin.box);
+            GUILayout.Label("Narrative LSTM", _titleStyle);
             if (summarizer != null)
             {
-                GUILayout.Label("What's going on:", GUILayout.Width(120));
-                _summaryText = GUILayout.TextArea(_summaryText, GUILayout.Height(40));
-                if (GUILayout.Button("Summarize", GUILayout.Height(24)))
+                GUILayout.Label("What's going on:", _labelStyle);
+                _summaryText = GUILayout.TextArea(_summaryText, _textAreaStyle, GUILayout.Height(textAreaH));
+                if (GUILayout.Button("Summarize", _buttonStyle))
                     _summaryText = summarizer.Summarize();
             }
             if (promptInterpreter != null)
             {
-                GUILayout.Label("Prompt:", GUILayout.Width(60));
-                _promptInput = GUILayout.TextField(_promptInput, GUILayout.Height(22));
-                if (GUILayout.Button("Interpret", GUILayout.Height(24)))
+                GUILayout.Label("Prompt:", _labelStyle);
+                _promptInput = GUILayout.TextField(_promptInput, _textFieldStyle, GUILayout.Height(_buttonStyle.fixedHeight));
+                if (GUILayout.Button("Interpret", _buttonStyle))
                 {
                     promptInterpreter.Interpret(_promptInput);
                     _interpretResult = "";
@@ -54,9 +85,9 @@ namespace Locomotion.Narrative
                         _interpretResult += $"{ev.title} @ {ev.startSeconds:F0}s\n";
                     if (string.IsNullOrEmpty(_interpretResult)) _interpretResult = "(no events)";
                 }
-                GUILayout.Label("Interpreted:", GUILayout.Width(80));
-                _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.Height(60));
-                GUILayout.Label(_interpretResult);
+                GUILayout.Label("Interpreted:", _labelStyle);
+                _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.Height(scrollH));
+                GUILayout.Label(_interpretResult, _labelStyle);
                 GUILayout.EndScrollView();
             }
             GUILayout.EndVertical();

@@ -11,7 +11,7 @@ namespace Locomotion.EditorTools.SystemTests
         private Vector2 scroll;
         private GameObject[] ragdolls;
 
-        [MenuItem("Window/Locomotion/System Tests/Ragdoll Cohesion Test")]
+        [MenuItem("Window/System Drawer/System Tests/Ragdoll Cohesion", false, 502)]
         public static void ShowWindow()
         {
             var w = GetWindow<RagdollCohesionTestWindow>("Ragdoll Cohesion Test");

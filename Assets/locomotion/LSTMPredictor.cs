@@ -83,6 +83,32 @@ public class LSTMPredictor : MonoBehaviour
     }
 
     /// <summary>
+    /// Stub consistency score between an incoming decision thought and receiver context (0–1).
+    /// Until the LSTM is trained, blends <see cref="GetConfidence"/> with a light heuristic.
+    /// </summary>
+    public float EvaluateThoughtConsistencyScore(ThoughtData incoming, Brain receiver)
+    {
+        float c = GetConfidence();
+        if (incoming == null || receiver == null)
+            return Mathf.Clamp01(c);
+
+        float jitter = 0.08f * Mathf.Sin(Time.time * 0.7f + (incoming.GetHashCode() & 0xff));
+        string hint = "";
+        if (incoming.data is DecisionThoughtPayload dp)
+            hint = dp.proposedGoalName ?? "";
+        else
+            hint = incoming.messageType.ToString();
+
+        float goalMix = 0.5f;
+        if (receiver.behaviorTree != null && receiver.behaviorTree.currentGoal != null && !string.IsNullOrEmpty(hint))
+        {
+            goalMix = ThoughtSimilarityMvp.LevenshteinSimilarity(hint, receiver.behaviorTree.currentGoal.goalName);
+        }
+
+        return Mathf.Clamp01(0.55f * c + 0.35f * goalMix + jitter);
+    }
+
+    /// <summary>
     /// Update with a new state (for dual LSTM swizzling).
     /// </summary>
     public void UpdateWithState(RagdollState state)

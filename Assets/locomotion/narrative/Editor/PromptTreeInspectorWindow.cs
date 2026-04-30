@@ -33,7 +33,7 @@ namespace Locomotion.Narrative.EditorTools
             public bool isPhrase;
         }
 
-        [MenuItem("Window/Locomotion/Narrative/Prompt Tree Inspector")]
+        [MenuItem("Window/System Drawer/Narrative/Prompt Tree Inspector", false, 203)]
         public static void ShowWindow()
         {
             var w = GetWindow<PromptTreeInspectorWindow>("Prompt Tree Inspector");

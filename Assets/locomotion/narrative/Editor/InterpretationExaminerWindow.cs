@@ -16,7 +16,7 @@ namespace Locomotion.Narrative.EditorTools
         private Vector2 _scroll;
         private Vector2 _scrollText;
 
-        [MenuItem("Window/Locomotion/Narrative/Interpretation Examiner")]
+        [MenuItem("Window/System Drawer/Narrative/Interpretation Examiner", false, 204)]
         public static void ShowWindow()
         {
             var w = GetWindow<InterpretationExaminerWindow>("Interpretation Examiner");

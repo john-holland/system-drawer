@@ -51,7 +51,7 @@ public class NarrativeCalendarTimelineWindow : EditorWindow
         }
     }
 
-    [MenuItem("Window/Locomotion/Narrative Calendar Timeline")]
+    [MenuItem("Window/System Drawer/Narrative/Calendar Timeline", false, 202)]
     public static void OpenWindow()
     {
         NarrativeCalendarTimelineWindow window = GetWindow<NarrativeCalendarTimelineWindow>();

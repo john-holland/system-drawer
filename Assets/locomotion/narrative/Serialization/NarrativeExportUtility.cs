@@ -320,6 +320,27 @@ namespace Locomotion.Narrative.Serialization
                 };
             }
 
+            if (action is SendThoughtAction st)
+            {
+                string tagsCsv = "";
+                if (st.decisionPayload?.semanticTags != null && st.decisionPayload.semanticTags.Length > 0)
+                    tagsCsv = string.Join(",", st.decisionPayload.semanticTags);
+
+                return new NarrativeActionDto
+                {
+                    type = nameof(SendThoughtAction),
+                    contingency = st.contingency,
+                    brainSenderKey = st.senderKey,
+                    brainReceiverKey = st.receiverKey,
+                    brainThoughtType = st.thoughtType.ToString(),
+                    brainDecisionGoalName = st.decisionPayload != null ? st.decisionPayload.proposedGoalName : null,
+                    brainDecisionConviction = st.decisionPayload != null ? st.decisionPayload.conviction : 0.5f,
+                    brainSemanticTagsCsv = tagsCsv,
+                    brainQueryId = st.queryPayload != null ? st.queryPayload.queryId : null,
+                    brainQueryChannels = st.queryPayload != null ? (int)st.queryPayload.channels : -1
+                };
+            }
+
             // Unknown action type (future-proof): write only its type name.
             return new NarrativeActionDto
             {

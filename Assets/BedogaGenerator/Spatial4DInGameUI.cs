@@ -71,6 +71,12 @@ public class Spatial4DInGameUI : MonoBehaviour
     private Text spacetimeLinkLabel;
     private Button saveButton;
 
+    [Header("UI scale")]
+    [Tooltip("Font size for labels, buttons, and inputs built at runtime.")]
+    [SerializeField] private int uiFontSize = 17;
+    [Tooltip("Vertical spacing between rows in the editor panel.")]
+    [SerializeField] private float verticalSpacing = 8f;
+
     [Header("Roll-up (Alt release)")]
     [Tooltip("Roll-down/roll-up animation duration in seconds.")]
     [SerializeField] private float rollDuration = 0.25f;
@@ -151,16 +157,16 @@ public class Spatial4DInGameUI : MonoBehaviour
         contentRect.anchorMin = new Vector2(0, 1);
         contentRect.anchorMax = new Vector2(1, 1);
         contentRect.pivot = new Vector2(0.5f, 1f);
-        contentRect.offsetMin = new Vector2(0, -800f);
+        contentRect.offsetMin = new Vector2(0, -1100f);
         contentRect.offsetMax = Vector2.zero;
-        contentRect.sizeDelta = new Vector2(0, 800f);
+        contentRect.sizeDelta = new Vector2(0, 1100f);
         var contentSizeFitter = contentGo.AddComponent<ContentSizeFitter>();
         contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
         var vertical = contentGo.AddComponent<VerticalLayoutGroup>();
-        vertical.spacing = 4;
-        vertical.padding = new RectOffset(8, 8, 8, 8);
+        vertical.spacing = Mathf.RoundToInt(verticalSpacing);
+        vertical.padding = new RectOffset(10, 10, 10, 10);
         vertical.childControlHeight = false;
         vertical.childForceExpandHeight = false;
 
@@ -226,10 +232,10 @@ public class Spatial4DInGameUI : MonoBehaviour
         var label = go.AddComponent<Text>();
         label.text = text;
         label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        label.fontSize = 12;
+        label.fontSize = uiFontSize;
         label.color = Color.white;
         var layout = go.AddComponent<LayoutElement>();
-        layout.minHeight = 18;
+        layout.minHeight = Mathf.RoundToInt(uiFontSize + 10);
         return label;
     }
 
@@ -238,13 +244,13 @@ public class Spatial4DInGameUI : MonoBehaviour
         var go = new GameObject("Input", typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var layout = go.AddComponent<LayoutElement>();
-        layout.minHeight = 22;
+        layout.minHeight = Mathf.RoundToInt(uiFontSize + 14);
         var input = go.AddComponent<InputField>();
         var textGo = new GameObject("Text", typeof(RectTransform));
         textGo.transform.SetParent(go.transform, false);
         var text = textGo.AddComponent<Text>();
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = 12;
+        text.fontSize = uiFontSize;
         text.color = Color.black;
         var textRect = (RectTransform)textGo.transform;
         textRect.anchorMin = Vector2.zero;
@@ -264,7 +270,7 @@ public class Spatial4DInGameUI : MonoBehaviour
         var go = new GameObject("Slider", typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var layout = go.AddComponent<LayoutElement>();
-        layout.minHeight = 20;
+        layout.minHeight = Mathf.RoundToInt(uiFontSize + 10);
         var slider = go.AddComponent<Slider>();
         slider.minValue = min;
         slider.maxValue = max;
@@ -296,7 +302,7 @@ public class Spatial4DInGameUI : MonoBehaviour
         var go = new GameObject("Button", typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var layout = go.AddComponent<LayoutElement>();
-        layout.minHeight = 24;
+        layout.minHeight = Mathf.RoundToInt(uiFontSize + 16);
         var button = go.AddComponent<Button>();
         var image = go.AddComponent<Image>();
         image.color = new Color(0.56f, 1f, 0f, 1f);
@@ -307,7 +313,7 @@ public class Spatial4DInGameUI : MonoBehaviour
         var text = textGo.AddComponent<Text>();
         text.text = label;
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = 12;
+        text.fontSize = uiFontSize;
         text.color = Color.black;
         text.alignment = TextAnchor.MiddleCenter;
         var textRect = (RectTransform)textGo.transform;

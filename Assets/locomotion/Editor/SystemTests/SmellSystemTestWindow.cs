@@ -13,7 +13,7 @@ namespace Locomotion.EditorTools.SystemTests
         private HighDefinitionSmellSolver hd;
         private Vector2 scroll;
 
-        [MenuItem("Window/Locomotion/System Tests/Smell System Test")]
+        [MenuItem("Window/System Drawer/System Tests/Smell", false, 501)]
         public static void ShowWindow()
         {
             var w = GetWindow<SmellSystemTestWindow>("Smell System Test");

@@ -310,5 +310,66 @@ namespace Locomotion.Narrative
             return BehaviorTreeStatus.Failure;
         }
     }
+
+    /// <summary>
+    /// Resolve two actor keys to <see cref="Brain"/> components and dispatch a <see cref="ThoughtData"/> message.
+    /// </summary>
+    [Serializable]
+    public class SendThoughtAction : NarrativeActionSpec
+    {
+        public string senderKey;
+        public string receiverKey;
+        public ThoughtType thoughtType = ThoughtType.Decision;
+
+        [Tooltip("Used when thoughtType is Decision.")]
+        public DecisionThoughtPayload decisionPayload = new DecisionThoughtPayload();
+
+        [Tooltip("Used when thoughtType is Query.")]
+        public QueryThoughtPayload queryPayload = new QueryThoughtPayload();
+
+        public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (!contingency.Evaluate(ctx))
+                return BehaviorTreeStatus.Success;
+
+            if (string.IsNullOrWhiteSpace(senderKey) || string.IsNullOrWhiteSpace(receiverKey))
+                return BehaviorTreeStatus.Failure;
+            if (!ctx.TryResolveGameObject(senderKey, out var sgo) || sgo == null)
+                return BehaviorTreeStatus.Failure;
+            if (!ctx.TryResolveGameObject(receiverKey, out var rgo) || rgo == null)
+                return BehaviorTreeStatus.Failure;
+
+            var senderBrain = sgo.GetComponent<Brain>();
+            var recvBrain = rgo.GetComponent<Brain>();
+            if (senderBrain == null || recvBrain == null)
+                return BehaviorTreeStatus.Failure;
+
+            object payload = BuildPayload();
+            var td = new ThoughtData(senderBrain, recvBrain, thoughtType, payload);
+            senderBrain.SendThought(recvBrain, td);
+            return BehaviorTreeStatus.Success;
+        }
+
+        private object BuildPayload()
+        {
+            switch (thoughtType)
+            {
+                case ThoughtType.Decision:
+                    return decisionPayload ?? new DecisionThoughtPayload();
+                case ThoughtType.Query:
+                    if (queryPayload == null || string.IsNullOrEmpty(queryPayload.queryId))
+                        return new QueryThoughtPayload { queryId = Guid.NewGuid().ToString("N"), channels = QueryChannel.All };
+                    return queryPayload;
+                case ThoughtType.Alert:
+                    return new AlertThoughtPayload();
+                case ThoughtType.BehaviorTree:
+                    return new BehaviorTreeThoughtPayload();
+                case ThoughtType.RequestPrune:
+                    return new RequestPruneThoughtPayload();
+                default:
+                    return null;
+            }
+        }
+    }
 }
 

@@ -12,7 +12,7 @@ namespace Locomotion.EditorTools.SystemTests
         private Transform listener;
         private Vector2 scroll;
 
-        [MenuItem("Window/Locomotion/System Tests/Audio System Test")]
+        [MenuItem("Window/System Drawer/System Tests/Audio", false, 500)]
         public static void ShowWindow()
         {
             var w = GetWindow<AudioSystemTestWindow>("Audio System Test");

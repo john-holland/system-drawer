@@ -46,6 +46,9 @@ public class BehaviorTree : MonoBehaviour
     [Tooltip("Optional. Resolve goal targets by string key or synonym (throw/hit/place/carry).")]
     public SceneObjectRegistry sceneObjectRegistry;
 
+    /// <summary>Last sensory sample applied for debugging / downstream reasoning.</summary>
+    public SensoryData LastSensoryContext { get; private set; }
+
     // References
     private PhysicsCardSolver cardSolver;
     private NervousSystem nervousSystem;
@@ -140,6 +143,16 @@ public class BehaviorTree : MonoBehaviour
             return ragdollSystem.GetCurrentState();
         }
         return new RagdollState();
+    }
+
+    /// <summary>
+    /// Feed sensory input upward into planning context (MVP: store last sample for goals / debugging).
+    /// </summary>
+    public void ApplySensoryInput(SensoryData sensory)
+    {
+        LastSensoryContext = sensory;
+        if (sensory != null && sensory.force > 2f && currentGoal != null)
+            currentGoal.priority = Mathf.Min(99, currentGoal.priority + 1);
     }
 
     /// <summary>

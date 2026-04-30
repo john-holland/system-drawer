@@ -62,7 +62,7 @@ public class AnimationBehaviorTreeTimelineWindow : EditorWindow
         }
     }
 
-    [MenuItem("Window/Locomotion/Animation Behavior Tree Timeline")]
+    [MenuItem("Window/System Drawer/Animation/Behavior Tree Timeline", false, 101)]
     public static void OpenWindow()
     {
         AnimationBehaviorTreeTimelineWindow window = GetWindow<AnimationBehaviorTreeTimelineWindow>();

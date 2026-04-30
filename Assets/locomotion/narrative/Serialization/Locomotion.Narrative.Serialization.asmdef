@@ -2,7 +2,8 @@
   "name": "Locomotion.Narrative.Serialization",
   "rootNamespace": "Locomotion.Narrative.Serialization",
   "references": [
-    "Locomotion.Narrative.Runtime"
+    "Locomotion.Narrative.Runtime",
+    "Locomotion.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

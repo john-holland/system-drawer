@@ -105,6 +105,16 @@ namespace Locomotion.Narrative.Serialization
         public int hour;
         public int minute;
         public int second;
+
+        // SendThought brain messages (union-style optional fields)
+        public string brainSenderKey;
+        public string brainReceiverKey;
+        public string brainThoughtType;
+        public string brainDecisionGoalName;
+        public float brainDecisionConviction = 0.5f;
+        public string brainSemanticTagsCsv;
+        public string brainQueryId;
+        public int brainQueryChannels = -1;
     }
 
     /// <summary>Calendar DTO for LSTM training; includes 4D spatiotemporal volume per event.</summary>

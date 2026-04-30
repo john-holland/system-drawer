@@ -23,6 +23,10 @@ public class ThoughtData
     [Tooltip("Timestamp when thought was created")]
     public float timestamp;
 
+    [Tooltip("For Decision thoughts: conviction strength (0–1); may duplicate DecisionThoughtPayload.conviction.")]
+    [Range(0f, 1f)]
+    public float conviction = 1f;
+
     public ThoughtData(Brain sender, Brain receiver, ThoughtType type, object data = null)
     {
         this.sender = sender;

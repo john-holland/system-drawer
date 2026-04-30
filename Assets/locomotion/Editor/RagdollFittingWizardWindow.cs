@@ -48,7 +48,7 @@ namespace Locomotion.EditorTools
             public string roleName; // "Knee", "Shin", "Elbow", etc. for FindOrAdd methods
         }
 
-        [MenuItem("Window/Locomotion/Ragdoll Fitting Wizard")]
+        [MenuItem("Window/System Drawer/Ragdoll/Fitting Wizard", false, 300)]
         public static void ShowWindow()
         {
             var w = GetWindow<RagdollFittingWizardWindow>("Ragdoll Fitting Wizard");

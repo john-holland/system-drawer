@@ -43,8 +43,7 @@ public class WeatherEventWizardWindow : EditorWindow
     private const float WindStep = 2f;
     private const float PressureStep = 5f;
 
-    [MenuItem("Window/Locomotion/Narrative/Weather Event Wizard")]
-    [MenuItem("Window/Weather/Create Narrative Weather Event")]
+    [MenuItem("Window/System Drawer/Narrative/Weather Event Wizard", false, 206)]
     public static void ShowWindow()
     {
         var w = GetWindow<WeatherEventWizardWindow>("Weather Event Wizard");

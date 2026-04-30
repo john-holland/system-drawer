@@ -15,7 +15,7 @@ using UnityEditor;
 /// Converts Unity animations (AnimationClip/AnimatorController) into behavior trees with physics cards.
 /// </summary>
 [AddComponentMenu("Locomotion/Animation Behavior Tree")]
-public class AnimationBehaviorTree : MonoBehaviour
+public class AnimationBehaviorTree : MonoBehaviour, IAnimationLayerReporter
 {
     [Header("Clip Configurations")]
     [Tooltip("List of clip configurations (each holds one clip + its settings)")]
@@ -881,6 +881,24 @@ public class AnimationBehaviorTree : MonoBehaviour
             return ragdoll.GetCurrentState();
         }
         return new RagdollState();
+    }
+
+    private void OnEnable()
+    {
+        var anim = GetComponentInParent<SystemDrawerAnimator>();
+        if (anim != null)
+            anim.RegisterAnimationBehaviorTree(this);
+    }
+
+    void IAnimationLayerReporter.RegisterWithAnimator(SystemDrawerAnimator animator)
+    {
+        animator?.RegisterAnimationBehaviorTree(this);
+    }
+
+    void IAnimationLayerReporter.ReportPlaying(BehaviorTreeNode activeNode, float normalizedTime, int layerId)
+    {
+        var anim = GetComponentInParent<SystemDrawerAnimator>();
+        anim?.NotifyReporterPlayback(this, activeNode, normalizedTime, layerId);
     }
 }
 
