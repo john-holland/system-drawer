@@ -6,6 +6,8 @@ using UnityEngine;
 [System.Serializable]
 public class ThoughtData
 {
+    // todo: do we want to make these weak references out of paranoia?
+    //          if an actor dissappears, we should still be able to think...
     [Tooltip("Sender brain")]
     public Brain sender;
 

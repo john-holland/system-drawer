@@ -185,6 +185,7 @@ namespace Locomotion.Smell
                 }
 
                 // Trim very weak puffs
+                // todo: add option for "infinite puffs"
                 for (int i = list.Count - 1; i >= 0; i--)
                 {
                     if (list[i].intensity < 0.001f)

@@ -177,7 +177,7 @@ public class Brain : MonoBehaviour
             SensoryData sensoryData = impulse.GetData<SensoryData>();
             if (sensoryData != null && behaviorTree != null)
             {
-                // Update behavior tree with sensory input
+                // todo: Update behavior tree with sensory input
                 // This would trigger goal changes or decision-making
             }
         }
@@ -188,14 +188,25 @@ public class Brain : MonoBehaviour
         if (thought == null)
             return;
 
+            // todo: review: these are added via thoughts, so the narrative executor must add thoughts with narrative actions
+            // todo: include behavior tree in ThoughtData, and har har think about decision and query, and if they're different that prune and receive?
+
         // Handle different thought types
         switch (thought.messageType)
         {
             case ThoughtType.Decision:
                 // Apply decision from another brain
+                // todo: review: sort of like being convinced rather than telepathy, but we should include a coefficient to tune "hardness"
+                //              add goals, effect filters, and add impulses or thoughts
+                //              \/ do we want to reflect the query, such that we can send an actor a query, then use the received answer?
+                //                  or should we add a "ask / answer"?
                 break;
             case ThoughtType.Query:
                 // Respond to query
+                // todo: review: does this want to be a request for impulse filters and / or thoughts?
+                //              do we include current goals from behavior trees?
+                //              do we allow lieing? Should we use the LSTM to produce the answer?
+                //              ^ perhaps this is the best way to go, as we're attempting to see what an actors response to a given thought of ours is?
                 break;
             case ThoughtType.BehaviorTree:
                 // Receive behavior tree from another brain

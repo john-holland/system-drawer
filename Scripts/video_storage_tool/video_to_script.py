@@ -401,7 +401,7 @@ def _describe_video_frames(
             device = "cuda" if torch.cuda.is_available() else "cpu"
         model = model.to(device)
 
-        grid_size = int(script_cfg.get("visual_grid", 2) or 2)  # 2 = 2x2, 3 = 3x3; 1 = whole only
+        grid_size = int(script_cfg.get("visual_grid", 3) or 3)  # 2 = 2x2, 3 = 3x3 (default); 1 = whole only
         grid_size = max(1, min(3, grid_size))
 
         # Style preface: one conditional caption on a representative frame (middle)
@@ -522,23 +522,50 @@ def _describe_video_frames(
         return visual_text, gradient_text, style_comment
 
 
+def _grid_cell_preposition(rows: int, cols: int, r: int, c: int) -> str:
+    """Single cell: natural prepositional phrase (e.g. 'In the upper left')."""
+    if rows == 1 and cols == 1:
+        return "In the center"
+    if rows == 1:
+        if c == 0:
+            return "On the left"
+        if c == cols - 1:
+            return "On the right"
+        return "In the center"
+    if cols == 1:
+        if r == 0:
+            return "In the upper area"
+        if r == rows - 1:
+            return "In the lower area"
+        return "In the middle"
+    if rows % 2 == 1 and cols % 2 == 1:
+        cr, cc = rows // 2, cols // 2
+        if r == cr and c == cc:
+            return "In the center"
+    if r == 0:
+        vert = "upper"
+    elif r == rows - 1:
+        vert = "lower"
+    else:
+        vert = "middle"
+    if c == 0:
+        horiz = "left"
+    elif c == cols - 1:
+        horiz = "right"
+    else:
+        horiz = "center"
+    if vert == "middle" and horiz == "center":
+        return "In the center"
+    if horiz == "center":
+        return f"In the {vert} center"
+    if vert == "middle":
+        return f"In the middle {horiz}"
+    return f"In the {vert} {horiz}"
+
+
 def _grid_position_labels(rows: int, cols: int) -> list[str]:
-    """Return prepositional labels for grid cells in row-major order (e.g. top-left, top-right, …)."""
-    labels = []
-    for r in range(rows):
-        for c in range(cols):
-            if rows == 1 and cols == 1:
-                labels.append("In the center")
-            else:
-                rn = "top" if r == 0 else ("bottom" if r == rows - 1 else "middle")
-                cn = "center" if cols == 1 else ("left" if c == 0 else ("right" if c == cols - 1 else "center"))
-                if rows == 1:
-                    labels.append(f"To the {cn}")
-                elif cols == 1:
-                    labels.append(f"At the {rn}")
-                else:
-                    labels.append(f"In the {rn}-{cn}")
-    return labels
+    """Return prepositional labels for grid cells in row-major order (e.g. In the upper left, …)."""
+    return [_grid_cell_preposition(rows, cols, r, c) for r in range(rows) for c in range(cols)]
 
 
 def _compute_color_gradient(pil_image) -> str:
@@ -629,10 +656,10 @@ def _chunk_image(pil_image, grid_rows: int, grid_cols: int) -> list[tuple[Any, t
     return crops
 
 
-def _exhaustive_frame_description(processor, model, pil_image, device: str, *, grid_size: int = 2) -> str:
+def _exhaustive_frame_description(processor, model, pil_image, device: str, *, grid_size: int = 3) -> str:
     """
     Build an exhaustive description: full-frame caption first, then grid regions with
-    coordinates (row,col) and prepositional labels. grid_size 1 = whole only; 2 = 2x2; 3 = 3x3.
+    coordinates (row,col) and prepositional labels. grid_size 1 = whole only; 2 = 2x2; 3 = 3x3 (default).
     """
     whole = _caption_image_blip(processor, model, pil_image, device)
     if grid_size <= 1:
@@ -647,7 +674,7 @@ def _exhaustive_frame_description(processor, model, pil_image, device: str, *, g
         coord = f"({r + 1},{c + 1})"  # 1-based (1,1) = top-left
         cap = _caption_image_blip(processor, model, crop, device)
         if cap:
-            parts.append(f"{coord} {label}, {cap}")
+            parts.append(f"{coord} {label}: {cap}")
     return " ".join(parts) if parts else ""
 
 

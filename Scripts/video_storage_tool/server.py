@@ -243,7 +243,7 @@ def api_settings_get():
             "visual_backend": cfg.get("script", {}).get("visual_backend", "none"),
             "visual_interval_sec": cfg.get("script", {}).get("visual_interval_sec", 1.0),
             "visual_max_frames": cfg.get("script", {}).get("visual_max_frames", 60),
-            "visual_grid": cfg.get("script", {}).get("visual_grid", 2),
+            "visual_grid": cfg.get("script", {}).get("visual_grid", 3),
         },
         "audio": {
             "ffmpeg_path": cfg.get("audio", {}).get("ffmpeg_path") or "",

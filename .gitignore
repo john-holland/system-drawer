@@ -1,6 +1,8 @@
 # Unity generated files
 [Ll]ibrary/
 [Tt]emp/
+# Unity Editor recovery / crash backups
+[Aa]ssets/_Recovery/
 [Oo]bj/
 [Bb]uild/
 [Bb]uilds/
@@ -112,6 +114,19 @@ Assets/Scenes/Acronym Studio - Wooden Houses Free/
 # Python
 __pycache__/
 *.py[cod]
+.venv/
+.venv*/
+venv/
+.pytest_cache/
+
+# Node.js / JS tooling (Scripts/, nested tools)
+node_modules/
+.npm/
+.yarn/
+
+# If sibling repos are cloned at the repository root (multi-root workspace)
+/continuum/
+/unified-semantic-compressor/
 
 # Test fixtures (generated/downloaded)
 Scripts/video_storage_tool/tests/fixtures/random_test_image.jpg

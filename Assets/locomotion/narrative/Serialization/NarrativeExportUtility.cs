@@ -278,6 +278,8 @@ namespace Locomotion.Narrative.Serialization
 
             if (action is NarrativeCalendarLightingAction lighting)
             {
+                // todo: review: consider adding "planetoid visibility" for rendering purposes
+                // todo: review: consider adding "star visibility" for prebaking space game planet side night time light rendering
                 return new NarrativeActionDto
                 {
                     type = nameof(NarrativeCalendarLightingAction),

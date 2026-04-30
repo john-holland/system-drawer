@@ -26,6 +26,11 @@ namespace Locomotion.Narrative
     /// LSTM prompt interpreter: natural language prompt -> decoded events (and optional 4D).
     /// Run Interpret(prompt) to get a list of InterpretedEvent; optionally call ApplyToCalendar to add them.
     /// </summary>
+    /// 
+    /// <remarks>
+    /// The concept of time and prepositions could be adjusted via the Continuuuum ORM, or inline directly with markup.
+    /// todo: review: should we add additional GENERATE{PARAMETERS} with a pho json object?
+    /// </remarks>
     public class NarrativeLSTMPromptInterpreter : MonoBehaviour
     {
         [Header("Model")]

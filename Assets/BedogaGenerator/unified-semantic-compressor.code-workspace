@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "../../../unified-semantic-compressor"
+		},
+		{
+			"path": "../../../continuum"
+		},
+		{
+			"path": "../.."
+		},
+		{
+			"path": "D:/Development/log-view-machine"
+		}
+	],
+	"settings": {
+		"dotrush.roslyn.projectOrSolutionFiles": [
+			"c:\\Users\\John\\Drawer 2\\Drawer 2.sln"
+		]
+	}
+}
