@@ -311,7 +311,7 @@ public class NarrativeExecutorAndSchedulerTests
         };
 
         var result = action.Execute(ctx, state);
-        Assert.AreEqual(BehaviorTreeStatus.Success, result);
+        Assert.AreEqual((int)BehaviorTreeStatus.Success, (int)result);
 
         var azField = lightingType.GetField("sunAzimuthDeg");
         var sunVisibleField = lightingType.GetField("sunVisible");

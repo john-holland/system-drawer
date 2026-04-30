@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Locomotion.Narrative;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -17,7 +18,9 @@ namespace Locomotion.Narrative.Serialization
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             Formatting = Formatting.Indented,
-            NullValueHandling = NullValueHandling.Ignore
+            NullValueHandling = NullValueHandling.Ignore,
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            Converters = new List<JsonConverter> { new UnityVector3JsonConverter() }
         };
 
         public static string ExportCalendarToJson(NarrativeCalendarAsset calendar)
@@ -407,6 +410,36 @@ namespace Locomotion.Narrative.Serialization
                 Mathf.Cos(az) * Mathf.Cos(el)
             );
             return dir.sqrMagnitude > 0.000001f ? dir.normalized : Vector3.up;
+        }
+    }
+
+    /// <summary>
+    /// Serializes <see cref="Vector3"/> as {x,y,z} so Json.NET does not follow Unity's properties (e.g. normalized), which can trigger self-reference errors.
+    /// </summary>
+    sealed class UnityVector3JsonConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType) => objectType == typeof(Vector3);
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            var v = (Vector3)value;
+            writer.WriteStartObject();
+            writer.WritePropertyName("x");
+            writer.WriteValue(v.x);
+            writer.WritePropertyName("y");
+            writer.WriteValue(v.y);
+            writer.WritePropertyName("z");
+            writer.WriteValue(v.z);
+            writer.WriteEndObject();
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var o = JObject.Load(reader);
+            return new Vector3(
+                o.Value<float?>("x") ?? 0f,
+                o.Value<float?>("y") ?? 0f,
+                o.Value<float?>("z") ?? 0f);
         }
     }
 }

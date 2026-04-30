@@ -109,7 +109,6 @@ public class PhysicsIKAndCardTests
     {
         var card = new HemisphericalGraspCard
         {
-            sectionName = "grasp_test",
             targetObject = null,
             enclosureRatio = 0.6f
         };

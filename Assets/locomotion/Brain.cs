@@ -88,8 +88,8 @@ public class Brain : MonoBehaviour
         {
             if (animationSetManager != null && (animationSetManager.IsPaused || animationSetManager.IsStopped))
                 return;
-            var drawerAnimator = GetComponentInParent<SystemDrawerAnimator>();
-            if (drawerAnimator == null || !drawerAnimator.ManagesBehaviorTree(behaviorTree))
+            var playbackGate = GetComponentInParent<IBehaviorTreePlaybackGate>();
+            if (playbackGate == null || !playbackGate.ManagesBehaviorTree(behaviorTree))
                 behaviorTree.Execute();
         }
 

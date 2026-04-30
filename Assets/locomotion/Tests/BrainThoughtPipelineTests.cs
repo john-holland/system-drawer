@@ -18,6 +18,8 @@ public class BrainThoughtPipelineTests
         var recvGo = new GameObject("recv_br");
         var sender = sendGo.AddComponent<Brain>();
         var recv = recvGo.AddComponent<Brain>();
+        sender.enabled = false;
+        recv.enabled = false;
         var bt = recvGo.AddComponent<BehaviorTree>();
         recv.behaviorTree = bt;
 
@@ -53,6 +55,8 @@ public class BrainThoughtPipelineTests
         var recvGo = new GameObject("a2");
         var sender = sendGo.AddComponent<Brain>();
         var recv = recvGo.AddComponent<Brain>();
+        sender.enabled = false;
+        recv.enabled = false;
         var bt = recvGo.AddComponent<BehaviorTree>();
         recv.behaviorTree = bt;
 
@@ -73,7 +77,7 @@ public class BrainThoughtPipelineTests
 
         var state = new NarrativeRuntimeState();
         var status = action.Execute(ctx, state);
-        Assert.AreEqual(BehaviorTreeStatus.Success, status);
+        Assert.AreEqual((int)BehaviorTreeStatus.Success, (int)status);
         FlushThoughtQueue(recv);
         Assert.IsNotNull(bt.currentGoal);
         Assert.AreEqual("Sit", bt.currentGoal.goalName);
@@ -86,6 +90,8 @@ public class BrainThoughtPipelineTests
         var recvGo = new GameObject("recv_br");
         var sender = sendGo.AddComponent<Brain>();
         var recv = recvGo.AddComponent<Brain>();
+        sender.enabled = false;
+        recv.enabled = false;
         recv.acceptThoughtDecision = false;
         var bt = recvGo.AddComponent<BehaviorTree>();
         recv.behaviorTree = bt;

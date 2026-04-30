@@ -2,7 +2,8 @@
     "name": "SystemDrawer",
     "rootNamespace": "",
     "references": [
-        "BedogaGenerator"
+        "Locomotion.Runtime",
+        "Locomotion.Narrative.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -80,6 +80,11 @@ public class SectionLimits
     /// </summary>
     public bool CheckFeasibility(RagdollState currentState, RagdollState requiredState)
     {
+        if (currentState == null)
+            return false;
+        if (requiredState == null)
+            return true;
+
         // Check degrees difference
         float degreesDiff = CalculateDegreesDifference(currentState, requiredState);
         if (degreesDiff > maxDegreesDifference)
@@ -123,6 +128,9 @@ public class SectionLimits
     /// </summary>
     public float GetLimitScore(RagdollState currentState, RagdollState requiredState)
     {
+        if (currentState == null || requiredState == null)
+            return 1f;
+
         float score = 1f;
 
         // Degrees difference (30% weight)
@@ -161,6 +169,9 @@ public class SectionLimits
     /// </summary>
     private float CalculateDegreesDifference(RagdollState currentState, RagdollState requiredState)
     {
+        if (currentState == null || requiredState == null)
+            return 0f;
+
         // Calculate rotation difference
         float rootRotDiff = Quaternion.Angle(currentState.rootRotation, requiredState.rootRotation);
 
@@ -168,9 +179,13 @@ public class SectionLimits
         float totalJointDiff = 0f;
         int jointCount = 0;
 
-        foreach (var kvp in requiredState.jointStates)
+        var reqJoints = requiredState.jointStates;
+        if (reqJoints == null)
+            return rootRotDiff;
+
+        foreach (var kvp in reqJoints)
         {
-            if (currentState.jointStates.TryGetValue(kvp.Key, out JointState currentJoint))
+            if (currentState.jointStates != null && currentState.jointStates.TryGetValue(kvp.Key, out JointState currentJoint))
             {
                 float jointDiff = Quaternion.Angle(currentJoint.rotation, kvp.Value.rotation);
                 totalJointDiff += jointDiff;
@@ -189,6 +204,9 @@ public class SectionLimits
     /// </summary>
     private float EstimateTorqueRequirement(RagdollState currentState, RagdollState requiredState)
     {
+        if (currentState == null || requiredState == null)
+            return 0f;
+
         // Simplified: torque proportional to angular velocity change
         float angularVelChange = (requiredState.rootAngularVelocity - currentState.rootAngularVelocity).magnitude;
         
@@ -201,6 +219,9 @@ public class SectionLimits
     /// </summary>
     private float EstimateForceRequirement(RagdollState currentState, RagdollState requiredState)
     {
+        if (currentState == null || requiredState == null)
+            return 0f;
+
         // Simplified: force proportional to velocity change
         float velChange = (requiredState.rootVelocity - currentState.rootVelocity).magnitude;
         
@@ -213,6 +234,9 @@ public class SectionLimits
     /// </summary>
     private float EstimateVelocityChange(RagdollState currentState, RagdollState requiredState)
     {
+        if (currentState == null || requiredState == null)
+            return 0f;
+
         return (requiredState.rootVelocity - currentState.rootVelocity).magnitude;
     }
 

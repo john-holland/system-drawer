@@ -12,8 +12,8 @@
   <Project Path="Generated.Runtime.csproj" />
   <Project Path="Locomotion.Audio.csproj" />
   <Project Path="Weather.Editor.csproj" />
-  <Project Path="Locomotion.Narrative.Editor.csproj" />
   <Project Path="Locomotion.Tests.csproj" />
+  <Project Path="Locomotion.Narrative.Editor.csproj" />
   <Project Path="SystemDrawer.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />

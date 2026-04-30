@@ -5,7 +5,8 @@
     "Locomotion.Runtime",
     "Locomotion.Audio",
     "HierarchicalPathFinding",
-    "Generated.Runtime"
+    "Generated.Runtime",
+    "SystemDrawer"
   ],
   "includePlatforms": [
     "Editor"

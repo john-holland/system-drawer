@@ -3,8 +3,7 @@
   "rootNamespace": "Locomotion.Narrative",
   "references": [
     "Locomotion.Audio",
-    "Locomotion.Runtime",
-    "SystemDrawer"
+    "Locomotion.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

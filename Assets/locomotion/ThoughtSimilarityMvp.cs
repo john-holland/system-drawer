@@ -80,6 +80,7 @@ public static class ThoughtSimilarityMvp
     private static IEnumerable<string> Tokenize(string s)
     {
         if (string.IsNullOrWhiteSpace(s)) yield break;
+        s = InsertCamelWordBreaks(s);
         var sb = new StringBuilder();
         foreach (char c in s)
         {
@@ -93,6 +94,24 @@ public static class ThoughtSimilarityMvp
         }
         if (sb.Length > 0)
             yield return sb.ToString();
+    }
+
+    /// <summary>
+    /// Inserts spaces before capitals so compound identifiers (e.g. WalkForward) contribute overlapping tokens with tags (walk, forward).
+    /// </summary>
+    private static string InsertCamelWordBreaks(string s)
+    {
+        if (string.IsNullOrEmpty(s) || s.Length < 2)
+            return s;
+        var sb = new StringBuilder();
+        sb.Append(s[0]);
+        for (int i = 1; i < s.Length; i++)
+        {
+            if (char.IsUpper(s[i]) && char.IsLower(s[i - 1]))
+                sb.Append(' ');
+            sb.Append(s[i]);
+        }
+        return sb.ToString();
     }
 
     /// <summary>

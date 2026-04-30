@@ -885,20 +885,20 @@ public class AnimationBehaviorTree : MonoBehaviour, IAnimationLayerReporter
 
     private void OnEnable()
     {
-        var anim = GetComponentInParent<SystemDrawerAnimator>();
-        if (anim != null)
-            anim.RegisterAnimationBehaviorTree(this);
+        var host = GetComponentInParent<ISystemDrawerAnimationRegistration>();
+        if (host != null)
+            host.RegisterAnimationBehaviorTree(this);
     }
 
-    void IAnimationLayerReporter.RegisterWithAnimator(SystemDrawerAnimator animator)
+    void IAnimationLayerReporter.RegisterWithHost(ISystemDrawerAnimationRegistration host)
     {
-        animator?.RegisterAnimationBehaviorTree(this);
+        host?.RegisterAnimationBehaviorTree(this);
     }
 
     void IAnimationLayerReporter.ReportPlaying(BehaviorTreeNode activeNode, float normalizedTime, int layerId)
     {
-        var anim = GetComponentInParent<SystemDrawerAnimator>();
-        anim?.NotifyReporterPlayback(this, activeNode, normalizedTime, layerId);
+        var host = GetComponentInParent<ISystemDrawerAnimationRegistration>();
+        host?.NotifyReporterPlayback(this, activeNode, normalizedTime, layerId);
     }
 }
 

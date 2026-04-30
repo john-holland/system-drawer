@@ -65,8 +65,8 @@ public class RagdollAnimationSetManager : MonoBehaviour
         if (set == null)
             return;
 
-        var drawerAnimator = GetComponent<SystemDrawerAnimator>() ?? GetComponentInParent<SystemDrawerAnimator>();
-        if (drawerAnimator != null && drawerAnimator.ShouldDeferSetManagerPlayback())
+        var deferral = GetComponent<IAnimationSetManagerDeferral>() ?? GetComponentInParent<IAnimationSetManagerDeferral>();
+        if (deferral != null && deferral.ShouldDeferSetManagerPlayback())
             return;
 
         currentSet = set;

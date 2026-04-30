@@ -5,7 +5,8 @@
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
     "Locomotion.Runtime",
-    "HierarchicalPathFinding"
+    "HierarchicalPathFinding",
+    "SystemDrawer"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

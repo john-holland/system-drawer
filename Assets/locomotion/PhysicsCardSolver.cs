@@ -205,21 +205,24 @@ public class PhysicsCardSolver : MonoBehaviour
         // Order by feasibility
         List<PhysicsCard> ordered = OrderCardsByFeasibility(applicable, state);
 
-        // Try to find direct path to goal
+        // Try to find direct path to goal in temporal graph
         if (temporalGraph != null && ordered.Count > 0)
         {
-            // Find card that matches goal type
             PhysicsCard goalCard = FindCardMatchingGoal(ordered, goal);
             if (goalCard != null)
             {
-                // Find path to goal card
-                return temporalGraph.FindPath(state, goalCard);
+                var path = temporalGraph.FindPath(state, goalCard);
+                if (path != null && path.Count > 0)
+                    return path;
             }
         }
 
-        // Fallback: return most feasible card
+        // No graph path (or no graph): one-card solve — prefer goal type over raw feasibility ordering
         if (ordered.Count > 0)
         {
+            PhysicsCard matched = FindCardMatchingGoal(ordered, goal);
+            if (matched != null)
+                return new List<PhysicsCard> { matched };
             return new List<PhysicsCard> { ordered[0] };
         }
 

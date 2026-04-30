@@ -8,7 +8,10 @@ using UnityEngine;
 /// Place on the ragdoll root (or same hierarchy as <see cref="RagdollSystem"/>).
 /// </summary>
 [AddComponentMenu("Locomotion/System Drawer Animator")]
-public class SystemDrawerAnimator : MonoBehaviour
+public class SystemDrawerAnimator : MonoBehaviour,
+    IBehaviorTreePlaybackGate,
+    IAnimationSetManagerDeferral,
+    ISystemDrawerAnimationRegistration
 {
     [Header("References")]
     [Tooltip("Ragdoll driven by animation layers; defaults to self or children.")]
@@ -339,7 +342,6 @@ public class SystemDrawerAnimator : MonoBehaviour
         if (layers == null || layers.Count == 0)
             return;
 
-        // Monotonicity along configured playOrder: later entries must have executed after earlier ones (when both ticked)
         if (playOrder != null && playOrder.Count >= 2)
         {
             int? prevPhase = null;
@@ -356,7 +358,6 @@ public class SystemDrawerAnimator : MonoBehaviour
             }
         }
 
-        // Nested trees: parent AnimationBehaviorTree transform ancestor of child's — parent phase < child phase when both ticked
         for (int i = 0; i < layers.Count; i++)
         {
             for (int j = 0; j < layers.Count; j++)
