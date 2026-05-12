@@ -172,6 +172,7 @@ def run_store(
     # Step 4: optional diff (original - resultant); run if resultant exists (idempotent)
     diff_config = config.get("diff", {})
     diff_lossless = diff_config.get("lossless", loss_coef == 0)
+    progress_dir = diff_config.get("progress_images_dir")
     diff_path = compute_diff(
         input_video,
         resultant_path,
@@ -180,6 +181,8 @@ def run_store(
         quality=diff_config.get("quality", 6),
         lossless=diff_lossless,
         ffmpeg_path=config.get("audio", {}).get("ffmpeg_path"),
+        progress_images_dir=Path(progress_dir) if progress_dir else None,
+        progress_interval_sec=float(diff_config.get("progress_interval_sec", 1.0)),
     )
     _write_manifest(
         out_dir,
@@ -304,11 +307,31 @@ def main() -> int:
     )
     parser.add_argument("--extract-frame", action="store_true", help="Extract first frame as image (use with --reconstitute). Output format matches input_image_format from manifest or png")
     parser.add_argument("--check-cache", action="store_true", help="Print Hugging Face / T2V cache locations and whether configured model is present; then exit")
+    parser.add_argument(
+        "--diff-progress-dir",
+        type=Path,
+        default=None,
+        help="While computing diff, save aligned preview PNGs (original/, resultant/, subtract/) at --diff-progress-interval.",
+    )
+    parser.add_argument(
+        "--diff-progress-interval",
+        type=float,
+        default=None,
+        help="Seconds between diff preview frames (default 1.0). Only used with --diff-progress-dir.",
+    )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     args = parser.parse_args()
 
     config_path = args.config or (Path(__file__).resolve().parent / "config.yaml")
     config = _load_config(config_path)
+
+    if args.diff_progress_dir is not None:
+        config.setdefault("diff", {})
+        config["diff"]["progress_images_dir"] = str(args.diff_progress_dir.resolve())
+        if args.diff_progress_interval is not None:
+            config["diff"]["progress_interval_sec"] = float(args.diff_progress_interval)
+        elif "progress_interval_sec" not in config["diff"]:
+            config["diff"]["progress_interval_sec"] = 1.0
 
     if args.check_cache:
         # Merge settings.json (UI-saved) so we check the model the user actually configured

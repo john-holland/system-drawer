@@ -208,4 +208,10 @@ def _generate_cogvideo(
         _report(progress_callback, "done", 1.0, "Done.")
     except Exception as e:
         _report(progress_callback, "error", 0, str(e))
+        log.warning(
+            "CogVideoX failed (%s); falling back to black stub video. "
+            "Install integration extras (sentencepiece, protobuf, accelerate, imageio, imageio-ffmpeg) and check model_path.",
+            e,
+            exc_info=True,
+        )
         _generate_stub(script_text, out_path, config=config, ffmpeg_path=ffmpeg_path)

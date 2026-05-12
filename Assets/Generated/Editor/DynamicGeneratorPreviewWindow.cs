@@ -81,6 +81,8 @@ public class DynamicGeneratorPreviewWindow : EditorWindow
 
     private void CleanupPreviewScene()
     {
+        if (previewCamera != null)
+            previewCamera.targetTexture = null;
         if (previewRenderTexture != null && previewRenderTexture.IsCreated())
             previewRenderTexture.Release();
         previewRenderTexture = null;

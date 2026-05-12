@@ -36,6 +36,17 @@ public class PathfindingNode : BehaviorTreeNode
     [Tooltip("When no walk path exists, use good sections that enable traversability (climb, swing, pick, roll, throw) to bridge gaps. Uses causality (position, t) to filter sections.")]
     public bool useToolTraversability = false;
 
+    [Header("Physical medium pathing (stubs)")]
+    [Tooltip("When true, query PhysicalPathingSolverRegistry for requestPhysicalMedium before default FindPath.")]
+    public bool usePhysicalMediumSolver = false;
+
+    [Tooltip("Medium-specific stub path (Air uses Fly grid path; Water/Space straight segment stubs).")]
+    public PhysicalPathingMedium requestPhysicalMedium = PhysicalPathingMedium.Unspecified;
+
+    [Header("Drive pathing (stub)")]
+    [Tooltip("Use PathingMode.Drive on solver during path query (same occupancy as Walk on XZ grid).")]
+    public bool useDrivePathfinding = false;
+
     [Tooltip("Optional: sections to consider for tool traversability. If empty, uses PhysicsCardSolver.availableCards or BehaviorTree.availableCards when building path.")]
     public List<GoodSection> availableSectionsForTraversability;
 
@@ -142,16 +153,26 @@ public class PathfindingNode : BehaviorTreeNode
         }
 
         PathingMode savedMode = pathfindingSolver.pathingMode;
-        if (useFlyingPathfinding)
-            pathfindingSolver.pathingMode = PathingMode.Fly;
-
         try
         {
-            currentPath = pathfindingSolver.FindPath(origin, destination, returnBestEffortPath);
+            if (useDrivePathfinding)
+                pathfindingSolver.pathingMode = PathingMode.Drive;
+            else if (useFlyingPathfinding)
+                pathfindingSolver.pathingMode = PathingMode.Fly;
+
+            if (usePhysicalMediumSolver && requestPhysicalMedium != PhysicalPathingMedium.Unspecified)
+                currentPath = PhysicalPathingSolverRegistry.FindPathForMedium(
+                    requestPhysicalMedium,
+                    pathfindingSolver,
+                    origin,
+                    destination,
+                    returnBestEffortPath);
+            else
+                currentPath = pathfindingSolver.FindPath(origin, destination, returnBestEffortPath);
         }
         finally
         {
-            if (useFlyingPathfinding)
+            if (useDrivePathfinding || useFlyingPathfinding)
                 pathfindingSolver.pathingMode = savedMode;
         }
         
@@ -374,9 +395,9 @@ public class PathfindingNode : BehaviorTreeNode
                     List<GoodSection> applicableCards = cardSolver.FindApplicableCards(currentState);
                     
                     // Filter for walking if enabled
-                    if (cardSolver.onlyAllowLegsForWalking)
+                    if (cardSolver.onlyAllowAmbulationExtentsForWalking)
                     {
-                        applicableCards = cardSolver.FilterCardsForWalking(applicableCards);
+                        applicableCards = cardSolver.FilterCardsForAmbulationWalking(applicableCards);
                     }
                     
                     if (applicableCards.Count > 0)

@@ -6,7 +6,8 @@
     "Locomotion.Audio",
     "HierarchicalPathFinding",
     "Generated.Runtime",
-    "SystemDrawer"
+    "SystemDrawer",
+    "BedogaGenerator"
   ],
   "includePlatforms": [
     "Editor"

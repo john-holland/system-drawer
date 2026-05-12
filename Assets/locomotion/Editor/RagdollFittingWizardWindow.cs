@@ -27,6 +27,9 @@ namespace Locomotion.EditorTools
         private bool ensureSensors = true;
         private bool ensureHybridRagdollPhysics = true;
 
+        /// <summary>Target total mass (kg) for proportional distribution across ragdoll rigidbodies.</summary>
+        private float ragdollTargetTotalMass = 75f;
+
         private Vector2 scroll;
         private Vector2 bodyPartsScroll;
         private ValidationReport validation = new ValidationReport();
@@ -133,6 +136,9 @@ namespace Locomotion.EditorTools
             EditorGUILayout.Space(8);
 
             DrawOptions();
+            EditorGUILayout.Space(8);
+
+            DrawRagdollPhysicsTools();
             EditorGUILayout.Space(8);
 
             DrawActions();
@@ -660,6 +666,182 @@ namespace Locomotion.EditorTools
             ensureHybridRagdollPhysics = EditorGUILayout.ToggleLeft("Hybrid ragdoll build (create missing Rigidbody/Joints/Muscles on humanoid bones)", ensureHybridRagdollPhysics);
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawRagdollPhysicsTools()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Ragdoll physics", EditorStyles.boldLabel);
+
+            if (actorRoot == null)
+            {
+                EditorGUILayout.HelpBox("Assign an Actor Root to use mass and rigidbody reset tools.", MessageType.Info);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
+            var rbs = GetRagdollRigidbodies();
+            float currentTotal = 0f;
+            for (int i = 0; i < rbs.Length; i++)
+            {
+                if (rbs[i] != null)
+                    currentTotal += rbs[i].mass;
+            }
+
+            EditorGUILayout.LabelField("Current total mass", $"{currentTotal:F2} (sum of Rigidbody.mass under ragdoll root)");
+
+            using (new EditorGUI.DisabledScope(Application.isPlaying))
+            {
+                if (Application.isPlaying)
+                {
+                    EditorGUILayout.HelpBox("Mass distribution and rigidbody reset are disabled during play mode.", MessageType.Warning);
+                }
+
+                ragdollTargetTotalMass = EditorGUILayout.FloatField(
+                    new GUIContent("Total mass", "Distributed across ragdoll rigidbodies. Relative masses are preserved; if all masses were zero, mass is split evenly."),
+                    Mathf.Max(0.01f, ragdollTargetTotalMass));
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Apply total mass", GUILayout.Height(24)))
+                {
+                    ApplyRagdollTotalMass();
+                }
+
+                if (GUILayout.Button("Reset rigidbody data", GUILayout.Height(24)))
+                {
+                    ResetRagdollRigidbodiesToDefaults();
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            if (rbs.Length == 0)
+            {
+                EditorGUILayout.HelpBox("No Rigidbody components found under the ragdoll root. Run hybrid ragdoll build or add rigidbodies first.", MessageType.Info);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private Transform GetRagdollPhysicsRoot()
+        {
+            if (actorRoot == null)
+                return null;
+            var rs = actorRoot.GetComponent<RagdollSystem>();
+            if (rs != null && rs.ragdollRoot != null)
+                return rs.ragdollRoot;
+            return actorRoot.transform;
+        }
+
+        private Rigidbody[] GetRagdollRigidbodies()
+        {
+            var root = GetRagdollPhysicsRoot();
+            if (root == null)
+                return System.Array.Empty<Rigidbody>();
+            return root.GetComponentsInChildren<Rigidbody>(true);
+        }
+
+        private void ApplyRagdollTotalMass()
+        {
+            if (Application.isPlaying)
+                return;
+
+            var rbs = GetRagdollRigidbodies();
+            if (rbs.Length == 0)
+            {
+                EditorUtility.DisplayDialog("Apply total mass", "No Rigidbody components found under the ragdoll root.", "OK");
+                return;
+            }
+
+            float total = Mathf.Max(0.01f, ragdollTargetTotalMass);
+            float sum = 0f;
+            for (int i = 0; i < rbs.Length; i++)
+            {
+                if (rbs[i] != null)
+                    sum += rbs[i].mass;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Apply ragdoll total mass");
+
+            if (sum < 1e-5f)
+            {
+                float each = total / rbs.Length;
+                for (int i = 0; i < rbs.Length; i++)
+                {
+                    if (rbs[i] == null)
+                        continue;
+                    Undo.RecordObject(rbs[i], "Set rigidbody mass");
+                    rbs[i].mass = each;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < rbs.Length; i++)
+                {
+                    if (rbs[i] == null)
+                        continue;
+                    Undo.RecordObject(rbs[i], "Set rigidbody mass");
+                    rbs[i].mass = total * (rbs[i].mass / sum);
+                }
+            }
+
+            Undo.CollapseUndoOperations(group);
+
+            for (int i = 0; i < rbs.Length; i++)
+            {
+                if (rbs[i] != null)
+                    EditorUtility.SetDirty(rbs[i]);
+            }
+
+            if (!Application.isPlaying)
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        }
+
+        private void ResetRagdollRigidbodiesToDefaults()
+        {
+            if (Application.isPlaying)
+                return;
+
+            var rbs = GetRagdollRigidbodies();
+            if (rbs.Length == 0)
+            {
+                EditorUtility.DisplayDialog("Reset rigidbody data", "No Rigidbody components found under the ragdoll root.", "OK");
+                return;
+            }
+
+            var templateGo = new GameObject("__RigidbodyDefaultsTemplate");
+            templateGo.hideFlags = HideFlags.HideAndDontSave;
+            var templateRb = templateGo.AddComponent<Rigidbody>();
+
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Reset ragdoll rigidbodies");
+
+            for (int i = 0; i < rbs.Length; i++)
+            {
+                if (rbs[i] == null)
+                    continue;
+                Undo.RecordObject(rbs[i], "Reset Rigidbody");
+                EditorUtility.CopySerialized(templateRb, rbs[i]);
+            }
+
+            Object.DestroyImmediate(templateGo);
+
+            Undo.CollapseUndoOperations(group);
+
+            for (int i = 0; i < rbs.Length; i++)
+            {
+                if (rbs[i] == null)
+                    continue;
+                rbs[i].ResetCenterOfMass();
+                rbs[i].ResetInertiaTensor();
+                EditorUtility.SetDirty(rbs[i]);
+            }
+
+            if (!Application.isPlaying)
+                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         }
 
         private void DrawActions()

@@ -3,12 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Pathing mode: Walk = ground/slope/terrain; Fly = 3D movement, no slope blocking, Y interpolated along path.
+/// Pathing mode: Walk = ground/slope/terrain; Fly = 2D grid with Y interpolated along path; Drive = vehicle route (stub: same occupancy as Walk on XZ grid).
 /// </summary>
 public enum PathingMode
 {
     Walk,
-    Fly
+    Fly,
+    Drive
+}
+
+/// <summary>
+/// Spatial backend used by <see cref="HierarchicalPathingSolver"/>.
+/// </summary>
+public enum HierarchicalPathingBackend
+{
+    Grid2DVolumeXZ,
+    UniformVolume3D,
+    OctreeLeaves
 }
 
 /// <summary>
@@ -25,8 +36,22 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     public bool autoFindMarkers = true;
 
     [Header("Pathing Mode")]
-    [Tooltip("Walk = ground, slope, terrain. Fly = no slope blocking, Y interpolated between start and goal along path.")]
+    [Tooltip("Walk = ground, slope, terrain. Fly = no slope blocking, Y interpolated between start and goal along path. Drive = vehicle path stub (same grid occupancy as Walk).")]
     public PathingMode pathingMode = PathingMode.Walk;
+
+    [Header("Spatial Backend")]
+    [Tooltip("Grid2DVolumeXZ = legacy XZ occupancy; UniformVolume3D = full 3D cells; OctreeLeaves = adaptive octree leaf graph.")]
+    public HierarchicalPathingBackend pathingBackend = HierarchicalPathingBackend.Grid2DVolumeXZ;
+
+    [Tooltip("Cell size for UniformVolume3D backend.")]
+    public float volumeCellSize = 1f;
+
+    [Tooltip("Maximum subdivision depth for OctreeLeaves backend.")]
+    [Range(1, 12)]
+    public int octreeMaxDepth = 6;
+
+    [Tooltip("Stop subdividing octree when a leaf is smaller than this extent on every axis.")]
+    public float octreeMinLeafExtent = 0.75f;
 
     [Header("Grid (2D XZ)")]
     public Bounds worldBounds = new Bounds(Vector3.zero, new Vector3(50f, 10f, 50f));
@@ -72,6 +97,9 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     private bool dirty;
     private float lastRebuildRequestTime = -999f;
     private HierarchicalPathingGrid2D grid2D;
+    private HierarchicalPathingVolumeGrid3D grid3D;
+    private HierarchicalPathingOctTree octTreeBuilt;
+    private readonly List<DoNotPathRegion> doNotPathMarkers = new List<DoNotPathRegion>(64);
     private int gridVersion = 0;
 
     public bool IsDirty => dirty;
@@ -81,6 +109,9 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     {
         NoPathing.Changed += HandleNoPathingChanged;
         OffLimitsSpace.Changed += HandleOffLimitsChanged;
+        DoNotPathRegion.Changed += HandleDoNotPathChanged;
+        PhysicsPathingZone.Changed += HandlePhysicsZoneChanged;
+        PhysicalMediumVolume.Changed += HandlePhysicalMediumVolumeChanged;
 
         if (autoFindMarkers)
         {
@@ -94,6 +125,24 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     {
         NoPathing.Changed -= HandleNoPathingChanged;
         OffLimitsSpace.Changed -= HandleOffLimitsChanged;
+        DoNotPathRegion.Changed -= HandleDoNotPathChanged;
+        PhysicsPathingZone.Changed -= HandlePhysicsZoneChanged;
+        PhysicalMediumVolume.Changed -= HandlePhysicalMediumVolumeChanged;
+    }
+
+    private void HandleDoNotPathChanged(DoNotPathRegion _)
+    {
+        MarkDirty();
+    }
+
+    private void HandlePhysicsZoneChanged(PhysicsPathingZone _)
+    {
+        MarkDirty();
+    }
+
+    private void HandlePhysicalMediumVolumeChanged(PhysicalMediumVolume _)
+    {
+        MarkDirty();
     }
 
     private void Update()
@@ -146,7 +195,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     {
         if (autoFindMarkers)
             RefreshMarkers();
-        RebuildOccupancyGrid2D();
+        RebuildPathBackendData();
         gridVersion++;
         dirty = false;
         Rebuilt?.Invoke();
@@ -172,21 +221,120 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
 
         noPathingMarkers.Clear();
         noPathingMarkers.AddRange(FindObjectsByType<NoPathing>(FindObjectsSortMode.None));
+
+        doNotPathMarkers.Clear();
+        doNotPathMarkers.AddRange(FindObjectsByType<DoNotPathRegion>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
     }
 
     private void RebuildNow()
     {
-        // Rebuild marker lists + occupancy grid.
         if (autoFindMarkers)
-        {
             RefreshMarkers();
-        }
 
-        RebuildOccupancyGrid2D();
+        RebuildPathBackendData();
         gridVersion++;
 
         dirty = false;
         Rebuilt?.Invoke();
+    }
+
+    void RebuildPathBackendData()
+    {
+        switch (pathingBackend)
+        {
+            case HierarchicalPathingBackend.Grid2DVolumeXZ:
+                grid3D = null;
+                octTreeBuilt = null;
+                RebuildOccupancyGrid2D();
+                break;
+            case HierarchicalPathingBackend.UniformVolume3D:
+                grid2D = null;
+                octTreeBuilt = null;
+                RebuildOccupancyVolume3D();
+                break;
+            case HierarchicalPathingBackend.OctreeLeaves:
+                grid2D = null;
+                grid3D = null;
+                RebuildOctreeLeaves();
+                break;
+        }
+    }
+
+    bool DoNotPathContains(Vector3 worldCenter)
+    {
+        for (int i = 0; i < doNotPathMarkers.Count; i++)
+        {
+            DoNotPathRegion r = doNotPathMarkers[i];
+            if (r != null && r.isActiveAndEnabled && r.ContainsWorldPosition(worldCenter))
+                return true;
+        }
+
+        return false;
+    }
+
+    float PhysicsZoneEdgeCostMultiplier(Vector3 a, Vector3 b)
+    {
+        PhysicsPathingZone.SampleAt((a + b) * 0.5f, out float pathCostMul, out _);
+        return pathCostMul;
+    }
+
+    bool EvaluateCapsuleBlocked(Vector3 center)
+    {
+        float halfH = Mathf.Max(0.01f, agentHeight * 0.5f);
+        float capsuleBottomOffset = Mathf.Max(agentRadius, 0.01f);
+        Vector3 p1 = center + Vector3.up * (halfH - capsuleBottomOffset);
+        Vector3 p2 = center - Vector3.up * (halfH - capsuleBottomOffset);
+        return Physics.CheckCapsule(p1, p2, agentRadius, obstacleMask, QueryTriggerInteraction.Ignore);
+    }
+
+    bool EvaluateMarkersBlocked(Vector3 center)
+    {
+        for (int i = 0; i < offLimitsSpaces.Count; i++)
+        {
+            OffLimitsSpace ol = offLimitsSpaces[i];
+            if (ol != null && ol.GetWorldBounds().Contains(center))
+                return true;
+        }
+
+        for (int i = 0; i < noPathingMarkers.Count; i++)
+        {
+            NoPathing np = noPathingMarkers[i];
+            if (np != null && np.GetWorldBounds().Contains(center))
+                return true;
+        }
+
+        if (DoNotPathContains(center))
+            return true;
+
+        return false;
+    }
+
+    void RebuildOccupancyVolume3D()
+    {
+        float cs = Mathf.Max(0.05f, volumeCellSize > 0f ? volumeCellSize : cellSize);
+        grid3D = new HierarchicalPathingVolumeGrid3D(worldBounds, cs);
+
+        for (int iz = 0; iz < grid3D.depth; iz++)
+        {
+            for (int iy = 0; iy < grid3D.height; iy++)
+            {
+                for (int ix = 0; ix < grid3D.width; ix++)
+                {
+                    Vector3 center = grid3D.CellCenterWorld(ix, iy, iz);
+                    bool blocked = EvaluateCapsuleBlocked(center) || EvaluateMarkersBlocked(center);
+                    grid3D.SetBlocked(ix, iy, iz, blocked);
+                }
+            }
+        }
+    }
+
+    void RebuildOctreeLeaves()
+    {
+        octTreeBuilt = HierarchicalPathingOctTree.Build(
+            worldBounds,
+            octreeMaxDepth,
+            octreeMinLeafExtent,
+            center => EvaluateCapsuleBlocked(center) || EvaluateMarkersBlocked(center));
     }
 
     /// <summary>
@@ -197,23 +345,49 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     {
         EnsureGridBuiltForQuery();
 
-        float sampleY = pathingMode == PathingMode.Fly ? Mathf.Lerp(startWorld.y, goalWorld.y, 0.5f) : startWorld.y;
-        List<Vector3> path = HierarchicalPathingAStar2D.FindPath(
-            grid2D,
-            startWorld,
-            goalWorld,
-            sampleY,
-            new HierarchicalPathingAStar2D.Settings
-            {
-                allowDiagonals = allowDiagonals,
-                maxExpandedNodes = maxExpandedNodes,
-                returnBestEffortPathWhenNoPath = returnBestEffortPathWhenNoPath
-            });
+        List<Vector3> path;
 
-        if (path != null && path.Count > 0 && pathingMode == PathingMode.Fly)
-            ApplyFlyingYInterpolation(path, startWorld.y, goalWorld.y);
+        switch (pathingBackend)
+        {
+            case HierarchicalPathingBackend.UniformVolume3D:
+                path = HierarchicalPathingAStar3D.FindPath(
+                    grid3D,
+                    startWorld,
+                    goalWorld,
+                    new HierarchicalPathingAStar3D.Settings
+                    {
+                        allowDiagonalSteps = allowDiagonals,
+                        maxExpandedNodes = maxExpandedNodes,
+                        returnBestEffortPathWhenNoPath = returnBestEffortPathWhenNoPath,
+                        EdgeCost = (a, b) => PhysicsZoneEdgeCostMultiplier(a, b)
+                    });
+                return path ?? new List<Vector3>();
 
-        return path ?? new List<Vector3>();
+            case HierarchicalPathingBackend.OctreeLeaves:
+                path = HierarchicalPathingOctTree.FindPathThroughLeaves(octTreeBuilt != null ? octTreeBuilt.Leaves : null, startWorld, goalWorld, maxExpandedNodes);
+                return path ?? new List<Vector3>();
+
+            default:
+                PathingMode gridMode = pathingMode == PathingMode.Drive ? PathingMode.Walk : pathingMode;
+                float sampleY = gridMode == PathingMode.Fly ? Mathf.Lerp(startWorld.y, goalWorld.y, 0.5f) : startWorld.y;
+                path = HierarchicalPathingAStar2D.FindPath(
+                    grid2D,
+                    startWorld,
+                    goalWorld,
+                    sampleY,
+                    new HierarchicalPathingAStar2D.Settings
+                    {
+                        allowDiagonals = allowDiagonals,
+                        maxExpandedNodes = maxExpandedNodes,
+                        returnBestEffortPathWhenNoPath = returnBestEffortPathWhenNoPath,
+                        EdgeCostMultiplier = PhysicsZoneEdgeCostMultiplier
+                    });
+
+                if (path != null && path.Count > 0 && gridMode == PathingMode.Fly)
+                    ApplyFlyingYInterpolation(path, startWorld.y, goalWorld.y);
+
+                return path ?? new List<Vector3>();
+        }
     }
 
     /// <summary>
@@ -258,30 +432,64 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     {
         EnsureGridBuiltForQuery();
 
-        if (grid2D == null)
-            return true;
+        switch (pathingBackend)
+        {
+            case HierarchicalPathingBackend.UniformVolume3D:
+                if (grid3D == null)
+                    return true;
+                if (!grid3D.TryWorldToCell(worldPos, out int vx, out int vy, out int vz))
+                    return true;
+                return grid3D.IsBlocked(vx, vy, vz);
 
-        if (!grid2D.TryWorldToCell(worldPos, out int x, out int z))
-            return true;
+            case HierarchicalPathingBackend.OctreeLeaves:
+                if (octTreeBuilt == null || octTreeBuilt.Leaves == null)
+                    return true;
+                foreach (var leaf in octTreeBuilt.Leaves)
+                {
+                    if (leaf == null || !leaf.bounds.Contains(worldPos))
+                        continue;
+                    return leaf.blocked;
+                }
 
-        return grid2D.IsBlocked(x, z);
+                return true;
+
+            default:
+                if (grid2D == null)
+                    return true;
+
+                if (!grid2D.TryWorldToCell(worldPos, out int x, out int z))
+                    return true;
+
+                return grid2D.IsBlocked(x, z);
+        }
+    }
+
+    bool BackendHasValidData()
+    {
+        switch (pathingBackend)
+        {
+            case HierarchicalPathingBackend.Grid2DVolumeXZ:
+                return grid2D != null;
+            case HierarchicalPathingBackend.UniformVolume3D:
+                return grid3D != null;
+            case HierarchicalPathingBackend.OctreeLeaves:
+                return octTreeBuilt != null && octTreeBuilt.Leaves != null && octTreeBuilt.Leaves.Count > 0;
+            default:
+                return false;
+        }
     }
 
     private void EnsureGridBuiltForQuery()
     {
-        // If we don't have a grid or it's marked dirty, rebuild immediately for query correctness.
-        // (Debounce is for Update-driven rebuilds; query callers generally want a correct answer now.)
-        if (grid2D == null || dirty)
-        {
-            if (autoFindMarkers)
-            {
-                RefreshMarkers();
-            }
+        if (!dirty && BackendHasValidData())
+            return;
 
-            RebuildOccupancyGrid2D();
-            gridVersion++;
-            dirty = false;
-        }
+        if (autoFindMarkers)
+            RefreshMarkers();
+
+        RebuildPathBackendData();
+        gridVersion++;
+        dirty = false;
     }
 
     private void RebuildOccupancyGrid2D()
@@ -354,6 +562,9 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
                     }
                 }
 
+                if (!blocked && DoNotPathContains(center))
+                    blocked = true;
+
                 // Slope check (Walk only): block cell if rise to any neighbor exceeds max walkable slope
                 if (!blocked && !flying && useTerrainHeights && maxWalkableSlopeDegrees > 0f)
                 {
@@ -414,7 +625,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         Gizmos.color = new Color(1f, 1f, 1f, 0.5f);
         Gizmos.DrawWireCube(worldBounds.center, worldBounds.size);
 
-        if (grid2D == null)
+        if (pathingBackend != HierarchicalPathingBackend.Grid2DVolumeXZ || grid2D == null)
             return;
 
         int stride = Mathf.Max(1, gizmoCellStride);

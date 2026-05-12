@@ -30,6 +30,19 @@ public class GoodSection
     [Tooltip("Description of what this section does")]
     public string description;
 
+    [Header("Physical pathing (medium / drive stubs)")]
+    [Tooltip("Physical environment tag for planners and filters.")]
+    public PhysicalPathingMedium physicalPathingMedium = PhysicalPathingMedium.Unspecified;
+
+    [Tooltip("Optional custom tag for medium-specific matching.")]
+    public string physicalPathingTag;
+
+    [Tooltip("Driving animation phase when this section applies to vehicle/instrument control.")]
+    public DriveAnimationPhase driveAnimationPhase = DriveAnimationPhase.None;
+
+    [Tooltip("Vehicle instrument slot id when this section targets driving.")]
+    public string driveInstrumentId;
+
     [Header("Impulse Stack")]
     [Tooltip("Stack of impulse actions to execute for this section")]
     public List<ImpulseAction> impulseStack = new List<ImpulseAction>();

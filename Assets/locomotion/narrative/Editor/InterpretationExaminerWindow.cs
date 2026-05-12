@@ -44,6 +44,8 @@ namespace Locomotion.Narrative.EditorTools
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
             EditorGUI.BeginChangeCheck();
             _interpreter = (NarrativeLSTMPromptInterpreter)EditorGUILayout.ObjectField("Interpreter", _interpreter, typeof(NarrativeLSTMPromptInterpreter), true);
+            if (GUILayout.Button(new GUIContent("+", "Create NarrativeLSTMPromptInterpreter"), EditorStyles.toolbarButton, GUILayout.Width(24)))
+                CreateInterpreterObject();
             if (EditorGUI.EndChangeCheck())
                 Repaint();
             var sg4 = UnityEngine.Object.FindAnyObjectByType<SpatialGenerator4D>();
@@ -71,6 +73,41 @@ namespace Locomotion.Narrative.EditorTools
                 _interpreter.Interpret(_selectedAsset);
                 Repaint();
             }
+        }
+
+        private void CreatePromptAsset()
+        {
+            string path = EditorUtility.SaveFilePanelInProject(
+                "New Narrative Prompt",
+                "NewPrompt.asset",
+                "asset",
+                "Choose save location");
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            string unique = AssetDatabase.GenerateUniqueAssetPath(path);
+            var asset = CreateInstance<NarrativePromptAsset>();
+            asset.key = "prompt_" + System.DateTime.UtcNow.Ticks;
+            asset.originalText = "";
+
+            Undo.RegisterCreatedObjectUndo(asset, "Create narrative prompt");
+            AssetDatabase.CreateAsset(asset, unique);
+            AssetDatabase.SaveAssets();
+
+            _selectedAsset = asset;
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
+            Repaint();
+        }
+
+        private void CreateInterpreterObject()
+        {
+            var go = new GameObject("NarrativeLSTMPromptInterpreter");
+            Undo.RegisterCreatedObjectUndo(go, "Create NarrativeLSTMPromptInterpreter");
+            _interpreter = go.AddComponent<NarrativeLSTMPromptInterpreter>();
+            Selection.activeGameObject = go;
+            EditorGUIUtility.PingObject(go);
+            Repaint();
         }
 
         private void DrawOriginalVsProcedural()

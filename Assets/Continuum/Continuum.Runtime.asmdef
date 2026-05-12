@@ -1,0 +1,16 @@
+{
+    "name": "Continuum.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "SystemDrawer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

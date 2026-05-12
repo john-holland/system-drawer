@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ using UnityEngine;
 /// Realtime paper-doll viewer for NervousSystem: slots at body positions,
 /// gray lines (sensory up / motor down) that light up when impulses are processed.
 /// Step through in Play mode to see impulses up to brain and activations down to limbs.
+/// Includes Brain summary and behavior-tree / related component discovery under the ragdoll root.
 /// </summary>
 public class NervousSystemImpulseViewerWindow : EditorWindow
 {
@@ -15,7 +17,9 @@ public class NervousSystemImpulseViewerWindow : EditorWindow
     private NervousSystem nervousSystem;
     private RagdollSystem ragdollSystem;
     private Vector2 scroll;
+    private Vector2 scrollBrainRefs;
     private bool showEditPanel = true;
+    private bool showBrainRefsPanel = true;
     private string selectedChannelForClear = "";
     private string injectChannel = "Spinal";
     private ImpulseType injectType = ImpulseType.Sensory;
@@ -23,6 +27,13 @@ public class NervousSystemImpulseViewerWindow : EditorWindow
     private string injectTarget = "Brain";
     private string injectMuscleGroup = "Torso";
     private float injectActivation = 0.5f;
+
+    private Brain[] cachedBrains;
+    private BehaviorTree[] cachedBehaviorTrees;
+    private AnimationBehaviorTree[] cachedAnimationBehaviorTrees;
+    private PhysicsCardSolver[] cachedPhysicsCardSolvers;
+    private RagdollAnimationSetManager[] cachedRagdollAnimationSetManagers;
+    private WorldInteraction[] cachedWorldInteractions;
 
     private const float DollPadding = 20f;
     private const float SlotRadius = 12f;
@@ -58,7 +69,7 @@ public class NervousSystemImpulseViewerWindow : EditorWindow
     public static void ShowWindow()
     {
         var w = GetWindow<NervousSystemImpulseViewerWindow>("Impulse Viewer");
-        w.minSize = new Vector2(380, 520);
+        w.minSize = new Vector2(420, 560);
     }
 
     private void OnEnable()
@@ -124,6 +135,12 @@ public class NervousSystemImpulseViewerWindow : EditorWindow
 
         EditorGUILayout.Space(8);
 
+        showBrainRefsPanel = EditorGUILayout.Foldout(showBrainRefsPanel, "Brain & behavior references", true);
+        if (showBrainRefsPanel)
+            DrawBrainAndReferencesPanel();
+
+        EditorGUILayout.Space(6);
+
         showEditPanel = EditorGUILayout.Foldout(showEditPanel, "Edit / Debug", true);
         if (showEditPanel)
         {
@@ -138,8 +155,193 @@ public class NervousSystemImpulseViewerWindow : EditorWindow
     {
         nervousSystem = targetObject != null ? targetObject.GetComponent<NervousSystem>() : null;
         ragdollSystem = targetObject != null ? targetObject.GetComponent<RagdollSystem>() : null;
+        if (ragdollSystem == null && nervousSystem != null)
+            ragdollSystem = nervousSystem.GetComponentInParent<RagdollSystem>() ?? nervousSystem.GetComponentInChildren<RagdollSystem>(true);
         if (nervousSystem != null && selectedChannelForClear == "" && nervousSystem.impulseChannels != null && nervousSystem.impulseChannels.Count > 0)
             selectedChannelForClear = nervousSystem.impulseChannels[0].channelName;
+        RefreshRelatedComponentCaches();
+    }
+
+    void RefreshRelatedComponentCaches()
+    {
+        cachedBrains = null;
+        cachedBehaviorTrees = null;
+        cachedAnimationBehaviorTrees = null;
+        cachedPhysicsCardSolvers = null;
+        cachedRagdollAnimationSetManagers = null;
+        cachedWorldInteractions = null;
+        if (nervousSystem == null)
+            return;
+
+        Transform root = nervousSystem.transform.root;
+        cachedBrains = root.GetComponentsInChildren<Brain>(true);
+        cachedBehaviorTrees = root.GetComponentsInChildren<BehaviorTree>(true);
+        cachedAnimationBehaviorTrees = root.GetComponentsInChildren<AnimationBehaviorTree>(true);
+        cachedPhysicsCardSolvers = root.GetComponentsInChildren<PhysicsCardSolver>(true);
+        cachedRagdollAnimationSetManagers = root.GetComponentsInChildren<RagdollAnimationSetManager>(true);
+        cachedWorldInteractions = root.GetComponentsInChildren<WorldInteraction>(true);
+    }
+
+    static string HierarchyPath(Transform t)
+    {
+        if (t == null)
+            return "";
+        var sb = new StringBuilder();
+        while (t != null)
+        {
+            sb.Insert(0, "/" + t.name);
+            t = t.parent;
+        }
+
+        return sb.ToString();
+    }
+
+    static void PingRow(Component c)
+    {
+        if (c == null)
+            return;
+        Selection.activeObject = c.gameObject;
+        EditorGUIUtility.PingObject(c.gameObject);
+    }
+
+    void DrawBrainAndReferencesPanel()
+    {
+        if (nervousSystem == null)
+            return;
+
+        EditorGUILayout.HelpBox(
+            "Components under the same hierarchy root as this NervousSystem (typical ragdoll / actor subtree).",
+            MessageType.None);
+
+        scrollBrainRefs = EditorGUILayout.BeginScrollView(scrollBrainRefs, GUILayout.MaxHeight(280f));
+
+        EditorGUILayout.LabelField("Brains", EditorStyles.boldLabel);
+        if (cachedBrains == null || cachedBrains.Length == 0)
+            EditorGUILayout.LabelField("  (none)", EditorStyles.miniLabel);
+        else
+        {
+            foreach (Brain brain in cachedBrains)
+            {
+                if (brain == null)
+                    continue;
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.LabelField(HierarchyPath(brain.transform), EditorStyles.miniLabel);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("priority", GUILayout.Width(52));
+                EditorGUILayout.LabelField(brain.priority.ToString(), GUILayout.Width(40));
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Ping", GUILayout.Width(44)))
+                    PingRow(brain);
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.ObjectField("Behavior tree", brain.behaviorTree, typeof(BehaviorTree), true);
+                EditorGUILayout.ObjectField("Body part", brain.attachedBodyPart, typeof(GameObject), true);
+                EditorGUI.EndDisabledGroup();
+
+                EditorGUILayout.LabelField(
+                    $"Dual LSTM: {brain.enableDualLSTM}  |  Lie detection: {brain.enableLieDetection}  |  Connected brains: {(brain.connectedBrains != null ? brain.connectedBrains.Count : 0)}",
+                    EditorStyles.miniLabel);
+
+                bool playbackPaused = false;
+                var ras = brain.GetComponentInParent<RagdollAnimationSetManager>();
+                if (ras != null)
+                    playbackPaused = ras.IsPaused || ras.IsStopped;
+
+                if (Application.isPlaying && ras != null)
+                    EditorGUILayout.LabelField($"RagdollAnimationSetManager playback: {(playbackPaused ? "paused/stopped (BT gated)" : "running")}", EditorStyles.miniLabel);
+
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(2);
+            }
+        }
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("BehaviorTree components", EditorStyles.boldLabel);
+        if (cachedBehaviorTrees == null || cachedBehaviorTrees.Length == 0)
+            EditorGUILayout.LabelField("  (none)", EditorStyles.miniLabel);
+        else
+        {
+            foreach (BehaviorTree bt in cachedBehaviorTrees)
+            {
+                if (bt == null)
+                    continue;
+                EditorGUILayout.BeginHorizontal();
+                string rootName = bt.rootNode != null ? bt.rootNode.gameObject.name : "(no root)";
+                EditorGUILayout.LabelField($"{bt.gameObject.name}  →  root: {rootName}", EditorStyles.miniLabel);
+                if (GUILayout.Button("Ping", GUILayout.Width(44)))
+                    PingRow(bt);
+                EditorGUILayout.EndHorizontal();
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.ObjectField("Scene registry", bt.sceneObjectRegistry, typeof(SceneObjectRegistry), true);
+                EditorGUI.EndDisabledGroup();
+            }
+        }
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("AnimationBehaviorTree", EditorStyles.boldLabel);
+        if (cachedAnimationBehaviorTrees == null || cachedAnimationBehaviorTrees.Length == 0)
+            EditorGUILayout.LabelField("  (none)", EditorStyles.miniLabel);
+        else
+        {
+            foreach (AnimationBehaviorTree abt in cachedAnimationBehaviorTrees)
+            {
+                if (abt == null)
+                    continue;
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(HierarchyPath(abt.transform), EditorStyles.miniLabel, GUILayout.ExpandWidth(true));
+                if (GUILayout.Button("Ping", GUILayout.Width(44)))
+                    PingRow(abt);
+                EditorGUILayout.EndHorizontal();
+            }
+        }
+
+        if (ragdollSystem != null && ragdollSystem.animationTree != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("RagdollSystem.animationTree (primary)", EditorStyles.miniBoldLabel);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.ObjectField(ragdollSystem.animationTree, typeof(AnimationBehaviorTree), true);
+            EditorGUI.EndDisabledGroup();
+            if (GUILayout.Button("Ping", GUILayout.Width(44)))
+                PingRow(ragdollSystem.animationTree);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Related components", EditorStyles.boldLabel);
+        DrawRelatedRowGroup("PhysicsCardSolver", cachedPhysicsCardSolvers);
+        DrawRelatedRowGroup("RagdollAnimationSetManager", cachedRagdollAnimationSetManagers);
+        DrawRelatedRowGroup("WorldInteraction", cachedWorldInteractions);
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("NervousSystem lists", EditorStyles.miniBoldLabel);
+        EditorGUILayout.LabelField($"Consider components (serialized): {(nervousSystem.considerComponents != null ? nervousSystem.considerComponents.Count : 0)}", EditorStyles.miniLabel);
+
+        EditorGUILayout.EndScrollView();
+    }
+
+    static void DrawRelatedRowGroup<T>(string title, T[] items) where T : Component
+    {
+        EditorGUILayout.LabelField(title, EditorStyles.miniBoldLabel);
+        if (items == null || items.Length == 0)
+        {
+            EditorGUILayout.LabelField("  (none)", EditorStyles.miniLabel);
+            return;
+        }
+
+        foreach (T c in items)
+        {
+            if (c == null)
+                continue;
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("  " + c.gameObject.name, GUILayout.MinWidth(80f));
+            EditorGUILayout.LabelField(HierarchyPath(c.transform), EditorStyles.miniLabel, GUILayout.ExpandWidth(true));
+            if (GUILayout.Button("Ping", GUILayout.Width(44)))
+                PingRow(c);
+            EditorGUILayout.EndHorizontal();
+        }
     }
 
     private void RefreshFromScene()

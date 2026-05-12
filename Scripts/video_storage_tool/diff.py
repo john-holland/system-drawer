@@ -77,11 +77,15 @@ def compute_diff(
     quality: int = 6,
     lossless: bool = False,
     ffmpeg_path: str | Path | None = None,
+    progress_images_dir: Path | None = None,
+    progress_interval_sec: float = 1.0,
 ) -> Path | None:
     """
     Compute diff = original - resultant (per-frame, 8-bit wrap).
     When lossless: encode as FFV1 (diff.mkv). Otherwise: Ogg Theora (diff.ogv).
     Aligns resolution (scale resultant to original), fps, and duration (min of both).
+    If progress_images_dir is set, saves PNG sequences (original / resultant / subtract)
+    at the given interval so you can visually verify alignment before trusting diff.ogv.
     Returns path to diff file or None if skipped/failed (does not raise).
     """
     if not enabled:
@@ -109,25 +113,99 @@ def compute_diff(
     out_dir.mkdir(parents=True, exist_ok=True)
     # Filter: [0]=original, [1]=resultant. Blend in high-precision RGB to reduce chroma artifacts,
     # then convert to a delivery format for codec compatibility.
-    filter_parts = [
-        f"[0:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,format=gbrp16le[o16]",
-        f"[1:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,format=gbrp16le[r16]",
-        "[o16][r16]blend=all_mode=subtract,format=yuv420p[out]",
-    ]
-    filter_complex = ";".join(filter_parts)
+    trim_o = (
+        f"[0:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},"
+        f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,format=gbrp16le[o16]"
+    )
+    trim_r = (
+        f"[1:v]trim=duration={duration_sec},setpts=PTS-STARTPTS,fps={fps},"
+        f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,format=gbrp16le[r16]"
+    )
     if lossless:
         codec_args = ["-c:v", "ffv1", "-level", "3"]
     else:
         codec_args = ["-c:v", "libtheora", "-q:v", str(min(10, max(0, quality)))]
-    cmd = [
-        ffmpeg_exe, "-y",
-        "-i", str(original_path),
-        "-i", str(resultant_path),
-        "-filter_complex", filter_complex,
-        "-map", "[out]",
-        *codec_args,
-        str(out_path),
-    ]
+
+    progress_images_dir = Path(progress_images_dir).resolve() if progress_images_dir else None
+    if progress_images_dir:
+        progress_images_dir.mkdir(parents=True, exist_ok=True)
+        od = progress_images_dir / "original"
+        rd = progress_images_dir / "resultant"
+        sd = progress_images_dir / "subtract"
+        od.mkdir(exist_ok=True)
+        rd.mkdir(exist_ok=True)
+        sd.mkdir(exist_ok=True)
+        interval = max(float(progress_interval_sec), 0.25)
+        sample_fps = 1.0 / interval
+        filter_parts = [
+            trim_o,
+            trim_r,
+            "[o16]split=2[o_b][o_d]",
+            "[r16]split=2[r_b][r_d]",
+            "[o_b][r_b]blend=all_mode=subtract,format=yuv420p[out]",
+            f"[o_d]fps={sample_fps},format=yuv420p[orig_frames]",
+            f"[r_d]fps={sample_fps},format=yuv420p[res_frames]",
+            "[out]split=2[out_enc][out_s]",
+            f"[out_s]fps={sample_fps},format=yuv420p[diff_frames]",
+        ]
+        filter_complex = ";".join(filter_parts)
+        cmd = [
+            ffmpeg_exe,
+            "-y",
+            "-i",
+            str(original_path),
+            "-i",
+            str(resultant_path),
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "[orig_frames]",
+            "-vsync",
+            "0",
+            str(od / "frame_%04d.png"),
+            "-map",
+            "[res_frames]",
+            "-vsync",
+            "0",
+            str(rd / "frame_%04d.png"),
+            "-map",
+            "[diff_frames]",
+            "-vsync",
+            "0",
+            str(sd / "frame_%04d.png"),
+            "-map",
+            "[out_enc]",
+            *codec_args,
+            str(out_path),
+        ]
+        log.info(
+            "Also saving diff progress PNGs every %.2fs under %s",
+            interval,
+            progress_images_dir,
+        )
+    else:
+        filter_parts = [
+            trim_o,
+            trim_r,
+            "[o16][r16]blend=all_mode=subtract,format=yuv420p[out]",
+        ]
+        filter_complex = ";".join(filter_parts)
+        cmd = [
+            ffmpeg_exe,
+            "-y",
+            "-i",
+            str(original_path),
+            "-i",
+            str(resultant_path),
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "[out]",
+            *codec_args,
+            str(out_path),
+        ]
     try:
         log.info("Computing diff (original - resultant), duration=%.1fs, %dx%d @ %.1ffps, lossless=%s", duration_sec, w, h, fps, lossless)
         subprocess.run(cmd, check=True, capture_output=True, timeout=600)

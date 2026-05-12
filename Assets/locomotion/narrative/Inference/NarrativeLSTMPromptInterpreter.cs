@@ -251,6 +251,7 @@ namespace Locomotion.Narrative
         {
             var cal = targetCalendar != null ? targetCalendar : calendar;
             if (cal == null || cal.events == null) return;
+            if (targetCalendar == null) { Debug.Log("No target calendar, using NarrativeLSTMPromptInterpreter member!"); }
             for (int i = 0; i < lastInterpretedEvents.Count; i++)
             {
                 var ev = lastInterpretedEvents[i];

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using PhysicsCard = GoodSection;
 
 /// <summary>
@@ -39,9 +40,31 @@ public class PhysicsCardSolver : MonoBehaviour
     [Range(0f, 1f)]
     public float feasibilityWeight = 0.7f;
 
-    [Header("Walking Card Generation")]
-    [Tooltip("Only allow leg muscle groups for walking cards (restricts arm/hand/head usage unless placement card)")]
-    public bool onlyAllowLegsForWalking = true;
+    [Header("Walking / Ambulation Card Generation")]
+    [FormerlySerializedAs("onlyAllowLegsForWalking")]
+    [Tooltip("Restrict automated walking card picks to ambulation-extent muscle groups (lower limbs + trunk/core), excluding arm/hand/head activations unless placement card.")]
+    [SerializeField]
+    bool onlyAllowAmbulationExtentsForWalkingField = true;
+
+    /// <summary>When true, walking waypoint execution prefers cards that only activate ambulation extents.</summary>
+    public bool onlyAllowAmbulationExtentsForWalking
+    {
+        get => onlyAllowAmbulationExtentsForWalkingField;
+        set => onlyAllowAmbulationExtentsForWalkingField = value;
+    }
+
+    [System.Obsolete("Use onlyAllowAmbulationExtentsForWalking.")]
+    public bool onlyAllowLegsForWalking
+    {
+        get => onlyAllowAmbulationExtentsForWalkingField;
+        set => onlyAllowAmbulationExtentsForWalkingField = value;
+    }
+
+    [Tooltip("Optional explicit Do-Not-Path volumes for this solver (ambulation). Also respects scene DoNotPathRegion when enabled.")]
+    public List<DoNotPathRegion> ambulationDoNotPathRegions = new List<DoNotPathRegion>();
+
+    [Tooltip("When true, merge scene-wide DoNotPathRegion markers into ambulation checks.")]
+    public bool ambulationIncludeSceneDoNotPathRegions = true;
 
     [Tooltip("Keywords that indicate a placement/manipulation card (case-insensitive). Includes lift/place for Place goals.")]
     public List<string> placementCardKeywords = new List<string> { "placement", "grasp", "hold", "tip", "manipulate", "grip", "pick", "place", "lift" };
@@ -164,8 +187,10 @@ public class PhysicsCardSolver : MonoBehaviour
         float degreesScore = 1f - Mathf.Clamp01(degreesDiff / 180f);
         score += degreesScore * degreesWeight;
 
-        // Torque feasibility (30% weight)
-        float torqueFeasibility = CheckTorqueFeasibility(card, state);
+        PhysicsPathingZone.SampleAt(state.rootPosition, out _, out float gripMul);
+
+        // Torque feasibility (30% weight), scaled by physics-zone grip (low traction reduces feasible torque utilisation).
+        float torqueFeasibility = CheckTorqueFeasibility(card, state) * Mathf.Clamp01(gripMul);
         score += torqueFeasibility * torqueWeight;
 
         // Force feasibility (20% weight)
@@ -520,7 +545,7 @@ public class PhysicsCardSolver : MonoBehaviour
             if (hasManipulationForces)
             {
                 // Check if it's NOT just leg movement (legs can have forces for walking)
-                if (!IsLegOnlyCard(card))
+                if (!AmbulationCardClassifier.IsAmbulationExtentOnlyCard(card))
                 {
                     return true;
                 }
@@ -528,64 +553,6 @@ public class PhysicsCardSolver : MonoBehaviour
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Check if a card only activates leg muscle groups.
-    /// </summary>
-    private bool IsLegOnlyCard(PhysicsCard card)
-    {
-        if (card == null || card.impulseStack == null)
-            return false;
-
-        // Leg muscle group keywords
-        string[] legKeywords = { "hip", "knee", "ankle", "foot", "leg", "thigh", "calf", "toe" };
-        string[] armKeywords = { "arm", "hand", "wrist", "elbow", "shoulder", "finger", "thumb" };
-        string[] headKeywords = { "head", "neck", "jaw", "eye" };
-
-        bool hasLegActivation = false;
-        bool hasArmActivation = false;
-        bool hasHeadActivation = false;
-
-        foreach (var action in card.impulseStack)
-        {
-            if (action == null || string.IsNullOrEmpty(action.muscleGroup))
-                continue;
-
-            string lowerGroup = action.muscleGroup.ToLowerInvariant();
-
-            // Check for leg activation
-            foreach (var keyword in legKeywords)
-            {
-                if (lowerGroup.Contains(keyword))
-                {
-                    hasLegActivation = true;
-                    break;
-                }
-            }
-
-            // Check for arm activation
-            foreach (var keyword in armKeywords)
-            {
-                if (lowerGroup.Contains(keyword))
-                {
-                    hasArmActivation = true;
-                    break;
-                }
-            }
-
-            // Check for head activation
-            foreach (var keyword in headKeywords)
-            {
-                if (lowerGroup.Contains(keyword))
-                {
-                    hasHeadActivation = true;
-                    break;
-                }
-            }
-        }
-
-        return hasLegActivation && !hasArmActivation && !hasHeadActivation;
     }
 
     /// <summary>
@@ -638,17 +605,15 @@ public class PhysicsCardSolver : MonoBehaviour
     }
 
     /// <summary>
-    /// Filter cards for walking based on "Only Allow Legs for Walking" option.
+    /// Filter cards for walking using ambulation-extent rules (full-body limits, not leg-only naming).
     /// </summary>
-    public List<PhysicsCard> FilterCardsForWalking(List<PhysicsCard> cards)
+    public List<PhysicsCard> FilterCardsForAmbulationWalking(List<PhysicsCard> cards)
     {
         if (cards == null)
             return new List<PhysicsCard>();
 
-        if (!onlyAllowLegsForWalking)
-        {
-            return new List<PhysicsCard>(cards); // Return all cards unchanged
-        }
+        if (!onlyAllowAmbulationExtentsForWalkingField)
+            return new List<PhysicsCard>(cards);
 
         List<PhysicsCard> filtered = new List<PhysicsCard>();
 
@@ -657,25 +622,53 @@ public class PhysicsCardSolver : MonoBehaviour
             if (card == null)
                 continue;
 
-            // Always keep placement cards
             if (IsPlacementCard(card))
             {
                 filtered.Add(card);
                 continue;
             }
 
-            // Keep cards that only activate leg muscle groups
-            if (IsLegOnlyCard(card))
-            {
+            if (AmbulationCardClassifier.IsAmbulationExtentOnlyCard(card))
                 filtered.Add(card);
-                continue;
-            }
-
-            // Remove cards that activate arm/hand/head (unless placement card)
-            // (Already handled by IsPlacementCard check above)
         }
 
         return filtered;
+    }
+
+    [System.Obsolete("Use FilterCardsForAmbulationWalking.")]
+    public List<PhysicsCard> FilterCardsForWalking(List<PhysicsCard> cards) => FilterCardsForAmbulationWalking(cards);
+
+    /// <summary>Returns true if world position lies in any configured or discovered Do-Not-Path volume.</summary>
+    public bool IsWorldPositionAmbulationDoNotPath(Vector3 worldPosition)
+    {
+        if (ambulationDoNotPathRegions != null)
+        {
+            foreach (var r in ambulationDoNotPathRegions)
+            {
+                if (r != null && r.isActiveAndEnabled && r.ContainsWorldPosition(worldPosition))
+                    return true;
+            }
+        }
+
+        if (ambulationIncludeSceneDoNotPathRegions && DoNotPathRegion.AnyContainsWorld(worldPosition))
+            return true;
+
+        return false;
+    }
+
+    /// <summary>True if a straight segment crosses Do-Not-Path volumes (sampled).</summary>
+    public bool IsAmbulationSegmentDoNotPath(Vector3 fromWorld, Vector3 toWorld, int samples = 10)
+    {
+        samples = Mathf.Max(2, samples);
+        for (int i = 0; i < samples; i++)
+        {
+            float t = i / (float)(samples - 1);
+            Vector3 p = Vector3.Lerp(fromWorld, toWorld, t);
+            if (IsWorldPositionAmbulationDoNotPath(p))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -871,6 +864,9 @@ public class PhysicsCardSolver : MonoBehaviour
         if (ragdollSystem == null)
             return null;
 
+        if (IsWorldPositionAmbulationDoNotPath(to) || IsAmbulationSegmentDoNotPath(from, to))
+            return null;
+
         // Calculate direction and distance
         Vector3 direction = (to - from);
         direction.y = 0f; // Keep movement on horizontal plane
@@ -897,12 +893,10 @@ public class PhysicsCardSolver : MonoBehaviour
         walkingCard.targetState.rootVelocity = direction * 2f; // Walking speed
         walkingCard.targetState.rootRotation = Quaternion.LookRotation(direction);
 
-        // Generate impulse actions for leg muscle groups
-        // Common leg muscle group names (will work with various naming conventions)
+        // Generate impulse actions for ambulation-extent muscle groups (limbs + trunk stabilization below).
         string[] legMuscleGroups = { "hip", "knee", "ankle", "foot", "leg", "thigh", "calf" };
 
-        // Create impulse actions for walking motion
-        // Left leg
+        // Left side
         foreach (var groupName in legMuscleGroups)
         {
             ImpulseAction leftAction = new ImpulseAction

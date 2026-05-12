@@ -8,7 +8,8 @@ namespace Locomotion.Narrative
         NotUnderstood,
         UnderstoodNoOrmMatch,
         OrmMatched,
-        MarkedGenerate
+        MarkedGenerate,
+        BuiltInLexeme
     }
 
     /// <summary>One binding: phrase or event title resolved (or not) to an ORM key; status for examination.</summary>
@@ -21,6 +22,10 @@ namespace Locomotion.Narrative
         public string phrase;
         /// <summary>Resolved ORM key when status is OrmMatched.</summary>
         public string resolvedOrmKey;
+        /// <summary>Continuum built-in URN when status is BuiltInLexeme.</summary>
+        public string builtInEntryId;
+        /// <summary>Built-in category when status is BuiltInLexeme.</summary>
+        public VocabularyBuiltInCategory builtInCategory;
         public BindingStatus status;
 
         public static InterpretedEventBinding NoMatch(int eventIndex, string phrase)
@@ -30,6 +35,8 @@ namespace Locomotion.Narrative
                 eventIndex = eventIndex,
                 phrase = phrase ?? "",
                 resolvedOrmKey = "",
+                builtInEntryId = "",
+                builtInCategory = default,
                 status = BindingStatus.UnderstoodNoOrmMatch
             };
         }
@@ -41,6 +48,8 @@ namespace Locomotion.Narrative
                 eventIndex = eventIndex,
                 phrase = phrase ?? "",
                 resolvedOrmKey = ormKey ?? "",
+                builtInEntryId = "",
+                builtInCategory = default,
                 status = BindingStatus.OrmMatched
             };
         }
@@ -52,7 +61,22 @@ namespace Locomotion.Narrative
                 eventIndex = eventIndex,
                 phrase = phrase ?? "",
                 resolvedOrmKey = "",
+                builtInEntryId = "",
+                builtInCategory = default,
                 status = BindingStatus.MarkedGenerate
+            };
+        }
+
+        public static InterpretedEventBinding BuiltIn(int eventIndex, string phrase, string entryId, VocabularyBuiltInCategory category)
+        {
+            return new InterpretedEventBinding
+            {
+                eventIndex = eventIndex,
+                phrase = phrase ?? "",
+                resolvedOrmKey = "",
+                builtInEntryId = entryId ?? "",
+                builtInCategory = category,
+                status = BindingStatus.BuiltInLexeme
             };
         }
     }

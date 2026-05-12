@@ -11,13 +11,20 @@
   <Project Path="Locomotion.Narrative.Runtime.csproj" />
   <Project Path="Generated.Runtime.csproj" />
   <Project Path="Locomotion.Audio.csproj" />
+  <Project Path="Locomotion.Narrative.Tests.csproj" />
   <Project Path="Weather.Editor.csproj" />
+  <Project Path="Continuum.Runtime.csproj" />
   <Project Path="Locomotion.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Editor.csproj" />
-  <Project Path="SystemDrawer.csproj" />
+  <Project Path="Continuum.Library.Runtime.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
+  <Project Path="SystemDrawer.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />
+  <Project Path="SystemDrawer.Editor.csproj" />
   <Project Path="Generated.Tests.csproj" />
   <Project Path="Weather.Tests.csproj" />
+  <Project Path="Continuum.Editor.csproj" />
+  <Project Path="HierarchicalPathFinding.Tests.csproj" />
+  <Project Path="HierarchicalPathFinding.Editor.csproj" />
 </Solution>

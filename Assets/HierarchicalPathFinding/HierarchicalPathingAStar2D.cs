@@ -12,6 +12,8 @@ public sealed class HierarchicalPathingAStar2D
         public bool allowDiagonals;
         public int maxExpandedNodes;
         public bool returnBestEffortPathWhenNoPath;
+        /// <summary>Optional multiplier on geometric step cost (physics zones). Uses cell centers in world space.</summary>
+        public Func<Vector3, Vector3, float> EdgeCostMultiplier;
     }
 
     public static List<Vector3> FindPath(
@@ -122,7 +124,11 @@ public sealed class HierarchicalPathingAStar2D
                 if (inClosed[ni])
                     continue;
 
+                Vector3 fromCenter = grid.CellCenterWorld(cx, cz, sampleY);
+                Vector3 toCenter = grid.CellCenterWorld(nx, nz, sampleY);
                 float step = n.cost;
+                if (settings.EdgeCostMultiplier != null)
+                    step *= Mathf.Max(0.01f, settings.EdgeCostMultiplier(fromCenter, toCenter));
                 float tentative = gScore[current] + step;
                 if (tentative < gScore[ni])
                 {

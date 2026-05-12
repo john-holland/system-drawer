@@ -33,6 +33,8 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private const string PreviewSceneName = "IKTrainingPreview_Scene";
     private const int PreviewSize = 300;
     private Scene previewScene;
+    /// <summary>When additive preview scene cannot be created (e.g. untitled unsaved), preview lives under this hidden root in the active scene.</summary>
+    private GameObject previewEmbeddedRoot;
     private Camera previewCamera;
     private GameObject previewContainer;
     private RenderTexture previewRenderTexture;
@@ -142,6 +144,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         previewCamera = null;
         previewContainer = null;
         previewScene = default;
+        previewEmbeddedRoot = null;
         // Don't close/destroy the scene here—let EnsurePreviewScene handle rebuild. RenderTexture persists.
     }
 
@@ -242,11 +245,18 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
     private void EnsurePreviewScene()
     {
-        // Rebuild if scene invalid, or if camera/container are null (e.g. after play mode transition when refs were destroyed).
-        bool sceneIntact = previewScene.IsValid() && previewScene.isLoaded
-            && previewCamera != null && !previewCamera.Equals(null)
+        bool infrastructureOk = previewCamera != null && !previewCamera.Equals(null)
             && previewContainer != null && !previewContainer.Equals(null);
+        bool sceneIntact = infrastructureOk && (
+            (previewScene.IsValid() && previewScene.isLoaded)
+            || previewEmbeddedRoot != null);
         if (sceneIntact) return;
+
+        if (previewEmbeddedRoot != null)
+        {
+            UnityEngine.Object.DestroyImmediate(previewEmbeddedRoot);
+            previewEmbeddedRoot = null;
+        }
 
         if (previewScene.IsValid() && previewScene.isLoaded)
         {
@@ -256,14 +266,44 @@ public class PhysicsIKTrainingWindow : EditorWindow
                 EditorSceneManager.CloseScene(previewScene, true);
         }
         previewScene = default;
+        previewCamera = null;
+        previewContainer = null;
 
         if (Application.isPlaying)
-            previewScene = SceneManager.CreateScene(PreviewSceneName);
+        {
+            previewScene = SceneManager.CreateScene($"{PreviewSceneName}_{GetInstanceID()}");
+            PopulatePreviewHierarchyInScene(previewScene);
+        }
         else
         {
-            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-            previewScene = SceneManager.GetActiveScene();
+            Scene userSceneBeforeAdditive = EditorSceneManager.GetActiveScene();
+            try
+            {
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+                previewScene = SceneManager.GetActiveScene();
+                PopulatePreviewHierarchyInScene(previewScene);
+                if (userSceneBeforeAdditive.IsValid())
+                    EditorSceneManager.SetActiveScene(userSceneBeforeAdditive);
+            }
+            catch (InvalidOperationException)
+            {
+                previewScene = default;
+                PopulatePreviewHierarchyEmbedded();
+            }
         }
+
+        if (previewRenderTexture == null || !previewRenderTexture.IsCreated())
+        {
+            previewRenderTexture = new RenderTexture(PreviewSize, PreviewSize, 24);
+            previewRenderTexture.Create();
+        }
+        previewCamera.targetTexture = previewRenderTexture;
+        previewCamera.enabled = true;
+    }
+
+    /// <summary>Creates PreviewCamera, PreviewContainer, PreviewDirectionalLight in the given scene (objects are moved after creation).</summary>
+    private void PopulatePreviewHierarchyInScene(Scene targetScene)
+    {
         var camGo = new GameObject("PreviewCamera");
         camGo.AddComponent<Camera>();
         previewCamera = camGo.GetComponent<Camera>();
@@ -274,22 +314,44 @@ public class PhysicsIKTrainingWindow : EditorWindow
         cameraOrbitYaw = 20f;
         cameraOrbitPitch = 15f;
         UpdatePreviewCameraTransform();
-        SceneManager.MoveGameObjectToScene(camGo, previewScene);
+        SceneManager.MoveGameObjectToScene(camGo, targetScene);
         previewContainer = new GameObject("PreviewContainer");
-        SceneManager.MoveGameObjectToScene(previewContainer, previewScene);
+        SceneManager.MoveGameObjectToScene(previewContainer, targetScene);
         var lightGo = new GameObject("PreviewDirectionalLight");
         var light = lightGo.AddComponent<Light>();
         light.type = LightType.Directional;
         light.intensity = 1f;
         light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-        SceneManager.MoveGameObjectToScene(lightGo, previewScene);
-        if (previewRenderTexture == null || !previewRenderTexture.IsCreated())
-        {
-            previewRenderTexture = new RenderTexture(PreviewSize, PreviewSize, 24);
-            previewRenderTexture.Create();
-        }
-        previewCamera.targetTexture = previewRenderTexture;
-        previewCamera.enabled = true;
+        SceneManager.MoveGameObjectToScene(lightGo, targetScene);
+    }
+
+    /// <summary>Fallback when additive preview scene cannot be created (untitled/unsaved): hidden roots in the active scene.</summary>
+    private void PopulatePreviewHierarchyEmbedded()
+    {
+        previewEmbeddedRoot = new GameObject("IKTrainingPreview_Embedded");
+        previewEmbeddedRoot.hideFlags = HideFlags.HideAndDontSave;
+
+        var camGo = new GameObject("PreviewCamera");
+        camGo.transform.SetParent(previewEmbeddedRoot.transform, false);
+        camGo.AddComponent<Camera>();
+        previewCamera = camGo.GetComponent<Camera>();
+        previewCamera.orthographic = false;
+        previewCamera.clearFlags = CameraClearFlags.SolidColor;
+        previewCamera.backgroundColor = new Color(0.22f, 0.22f, 0.24f, 1f);
+        cameraDistance = 4f;
+        cameraOrbitYaw = 20f;
+        cameraOrbitPitch = 15f;
+        UpdatePreviewCameraTransform();
+
+        previewContainer = new GameObject("PreviewContainer");
+        previewContainer.transform.SetParent(previewEmbeddedRoot.transform, false);
+
+        var lightGo = new GameObject("PreviewDirectionalLight");
+        lightGo.transform.SetParent(previewEmbeddedRoot.transform, false);
+        var light = lightGo.AddComponent<Light>();
+        light.type = LightType.Directional;
+        light.intensity = 1f;
+        light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
     }
 
     private void UpdatePreviewCameraTransform()
@@ -309,11 +371,30 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private void CleanupPreviewScene()
     {
         DestroyPreviewInstance();
+
+        if (previewCamera != null)
+            previewCamera.targetTexture = null;
         if (previewRenderTexture != null && previewRenderTexture.IsCreated())
             previewRenderTexture.Release();
         previewRenderTexture = null;
+
+        if (previewEmbeddedRoot != null)
+        {
+            UnityEngine.Object.DestroyImmediate(previewEmbeddedRoot);
+            previewEmbeddedRoot = null;
+        }
+
         if (previewScene.IsValid() && previewScene.isLoaded)
         {
+            if (!Application.isPlaying)
+            {
+                foreach (var root in previewScene.GetRootGameObjects())
+                {
+                    if (root != null)
+                        UnityEngine.Object.DestroyImmediate(root);
+                }
+            }
+
             if (Application.isPlaying)
                 SceneManager.UnloadSceneAsync(previewScene);
             else
@@ -415,11 +496,15 @@ public class PhysicsIKTrainingWindow : EditorWindow
         if (previewInstance != null) return;
 
         EnsurePreviewScene();
-        if (!previewScene.IsValid() || previewContainer == null) return;
+        if (previewContainer == null) return;
+        if (!previewScene.IsValid() && previewEmbeddedRoot == null) return;
 
         GameObject instance = Instantiate(root);
         instance.name = root.name + "(Preview)";
-        SceneManager.MoveGameObjectToScene(instance, previewScene);
+        if (previewEmbeddedRoot != null)
+            instance.transform.SetParent(previewContainer.transform, false);
+        else
+            SceneManager.MoveGameObjectToScene(instance, previewScene);
         previewInstance = instance;
         previewInstanceSolver = instance.GetComponent<PhysicsCardSolver>();
         previewInstanceRagdollRigidbody = FindRagdollCapsuleRigidbody(previewInstanceSolver);
@@ -432,15 +517,31 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
     private void AddPreviewScenePlane()
     {
+        if (previewEmbeddedRoot != null)
+        {
+            foreach (var t in previewEmbeddedRoot.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.gameObject.name == "PreviewFloor") return;
+            }
+
+            var planeGo = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            planeGo.name = "PreviewFloor";
+            planeGo.transform.SetParent(previewEmbeddedRoot.transform, false);
+            planeGo.transform.localPosition = Vector3.zero;
+            planeGo.transform.localRotation = Quaternion.identity;
+            planeGo.transform.localScale = Vector3.one * 2f;
+            return;
+        }
+
         if (!previewScene.IsValid()) return;
         foreach (var go in previewScene.GetRootGameObjects())
             if (go.name == "PreviewFloor") return;
-        var planeGo = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        planeGo.name = "PreviewFloor";
-        planeGo.transform.position = Vector3.zero;
-        planeGo.transform.rotation = Quaternion.identity;
-        planeGo.transform.localScale = Vector3.one * 2f;
-        SceneManager.MoveGameObjectToScene(planeGo, previewScene);
+        var planeGoScene = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        planeGoScene.name = "PreviewFloor";
+        planeGoScene.transform.position = Vector3.zero;
+        planeGoScene.transform.rotation = Quaternion.identity;
+        planeGoScene.transform.localScale = Vector3.one * 2f;
+        SceneManager.MoveGameObjectToScene(planeGoScene, previewScene);
     }
 
     private void PositionActorBoundsAbovePlane(GameObject instance, float planeY, float epsilon = 0.01f)
@@ -458,10 +559,14 @@ public class PhysicsIKTrainingWindow : EditorWindow
         if (previewInstance != null) return;
         GameObject root = GetActorRootForPreview();
         EnsurePreviewScene();
-        if (!previewScene.IsValid() || previewContainer == null) return;
+        if (previewContainer == null) return;
+        if (!previewScene.IsValid() && previewEmbeddedRoot == null) return;
         GameObject instance = Instantiate(root);
         instance.name = root.name + "(Display)";
-        SceneManager.MoveGameObjectToScene(instance, previewScene);
+        if (previewEmbeddedRoot != null)
+            instance.transform.SetParent(previewContainer.transform, false);
+        else
+            SceneManager.MoveGameObjectToScene(instance, previewScene);
         previewInstance = instance;
         previewInstanceSolver = null;
         previewInstanceRagdollRigidbody = null;

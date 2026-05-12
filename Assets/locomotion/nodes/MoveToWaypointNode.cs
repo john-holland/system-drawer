@@ -192,10 +192,13 @@ public class MoveToWaypointNode : BehaviorTreeNode
         // Find applicable cards
         List<GoodSection> applicableCards = cardSolver.FindApplicableCards(currentState);
 
-        // Filter for walking if enabled
-        if (cardSolver.onlyAllowLegsForWalking)
+        if (cardSolver.IsWorldPositionAmbulationDoNotPath(waypoint))
+            return false;
+
+        // Filter for walking / ambulation if enabled
+        if (cardSolver.onlyAllowAmbulationExtentsForWalking)
         {
-            applicableCards = cardSolver.FilterCardsForWalking(applicableCards);
+            applicableCards = cardSolver.FilterCardsForAmbulationWalking(applicableCards);
         }
 
         // Try to find a card that moves toward waypoint
@@ -282,11 +285,17 @@ public class MoveToWaypointNode : BehaviorTreeNode
         if (distance < 0.01f)
             return false; // Already at waypoint
 
+        bool waypointForbidden = cardSolver != null
+            ? cardSolver.IsWorldPositionAmbulationDoNotPath(waypoint)
+            : DoNotPathRegion.AnyContainsWorld(waypoint);
+        if (waypointForbidden)
+            return false;
+
         direction.Normalize();
 
         // Create motor data for movement
         MotorData motorData = new MotorData(
-            "legs", // muscle group
+            "ambulation",
             Mathf.Clamp01(distance / 5f), // activation strength
             0.5f, // duration
             null // curve

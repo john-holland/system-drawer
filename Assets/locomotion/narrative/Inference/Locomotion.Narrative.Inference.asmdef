@@ -2,6 +2,7 @@
   "name": "Locomotion.Narrative.Inference",
   "rootNamespace": "Locomotion.Narrative",
   "references": [
+    "Continuum.Runtime",
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
     "Locomotion.Runtime",

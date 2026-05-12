@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Text;
+using Continuum.Library;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,21 +27,7 @@ public class ContinuumLibraryWindow : EditorWindow
     [SerializeField] private Vector2 scroll;
     [SerializeField] private Vector2 listScroll;
     [SerializeField] private int selectedIndex = -1;
-    private List<LibraryDocument> results = new List<LibraryDocument>();
-    private static readonly string[] DistanceOptions = { "Infinite", "0 (same bucket)", "10 mi", "100 mi", "500 mi", "1000 mi", "5000 mi", "24000 mi" };
-    private static readonly float[] DistanceMiles = { -1f, 0f, 10f, 100f, 500f, 1000f, 5000f, 24000f };
-    private static readonly string[] DocumentTypes = { "All", "video", "document", "audio", "image", "program", "data" };
-
-    private class LibraryDocument
-    {
-        public int id;
-        public string document_type;
-        public string url;
-        public string type_metadata;
-        public double? lat;
-        public double? lon;
-        public string blob_ref;
-    }
+    private readonly List<ContinuumLibraryDocument> results = new List<ContinuumLibraryDocument>();
 
     [MenuItem("Window/Continuum/Continuum Library")]
     public static void ShowWindow()
@@ -101,11 +87,11 @@ public class ContinuumLibraryWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Distance", GUILayout.Width(60));
-        distanceIndex = EditorGUILayout.Popup(distanceIndex, DistanceOptions);
+        distanceIndex = EditorGUILayout.Popup(distanceIndex, ContinuumLibraryQuery.DistanceOptionLabels);
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Type", GUILayout.Width(60));
-        documentTypeIndex = EditorGUILayout.Popup(documentTypeIndex, DocumentTypes);
+        documentTypeIndex = EditorGUILayout.Popup(documentTypeIndex, ContinuumLibraryQuery.DocumentTypes);
         EditorGUILayout.LabelField("Text", GUILayout.Width(32));
         searchQuery = EditorGUILayout.TextField(searchQuery);
         EditorGUILayout.EndHorizontal();
@@ -124,16 +110,9 @@ public class ContinuumLibraryWindow : EditorWindow
             var doc = results[i];
             bool sel = i == selectedIndex;
             string label = $"#{doc.id} {doc.document_type}";
-            try
-            {
-                if (!string.IsNullOrEmpty(doc.type_metadata))
-                {
-                    var jo = Newtonsoft.Json.Linq.JObject.Parse(doc.type_metadata);
-                    var title = jo["title"]?.ToString() ?? jo["author"]?.ToString();
-                    if (!string.IsNullOrEmpty(title)) label = title + " (" + doc.document_type + ")";
-                }
-            }
-            catch { }
+            var title = ContinuumLibraryJson.TryGetDisplayTitle(doc);
+            if (!string.IsNullOrEmpty(title))
+                label = title + " (" + doc.document_type + ")";
             if (GUILayout.Toggle(sel, label, EditorStyles.foldoutHeader) && !sel)
             {
                 selectedIndex = i;
@@ -171,21 +150,23 @@ public class ContinuumLibraryWindow : EditorWindow
         lastError = "";
         try
         {
-            var uri = new Uri(new Uri(caveBaseUrl.TrimEnd('/')), "/api/geocode?address=" + Uri.EscapeDataString(searchAddress.Trim()));
-            using (var client = new HttpClient())
+            var url = ContinuumLibraryHttp.BuildGeocodeUrl(caveBaseUrl.TrimEnd('/'), searchAddress.Trim());
+            if (!ContinuumLibraryHttp.TryGetJsonSync(url, GetEffectiveTenant(), null, out var json, out var err))
             {
-                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Tenant-ID", GetEffectiveTenant());
-                var resp = client.GetAsync(uri).GetAwaiter().GetResult();
-                var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                if (!resp.IsSuccessStatusCode) { lastError = json; return; }
-                var jo = Newtonsoft.Json.Linq.JObject.Parse(json);
-                var latTok = jo["lat"];
-                var lonTok = jo["lon"];
-                if (latTok != null && latTok.Type != Newtonsoft.Json.Linq.JTokenType.Null)
-                    searchLat = latTok.ToString();
-                if (lonTok != null && lonTok.Type != Newtonsoft.Json.Linq.JTokenType.Null)
-                    searchLon = lonTok.ToString();
+                lastError = err;
+                return;
             }
+
+            if (!ContinuumLibraryJson.TryParseGeocode(json, out var latStr, out var lonStr))
+            {
+                lastError = json;
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(latStr))
+                searchLat = latStr;
+            if (!string.IsNullOrEmpty(lonStr))
+                searchLon = lonStr;
         }
         catch (Exception ex) { lastError = ex.Message; }
     }
@@ -205,23 +186,24 @@ public class ContinuumLibraryWindow : EditorWindow
     {
         try
         {
-            var q = new List<string>();
-            if (!string.IsNullOrWhiteSpace(searchQuery)) q.Add("q=" + Uri.EscapeDataString(searchQuery));
-            if (documentTypeIndex > 0) q.Add("document_type=" + Uri.EscapeDataString(DocumentTypes[documentTypeIndex]));
-            if (!string.IsNullOrWhiteSpace(searchLat)) q.Add("lat=" + Uri.EscapeDataString(searchLat));
-            if (!string.IsNullOrWhiteSpace(searchLon)) q.Add("lon=" + Uri.EscapeDataString(searchLon));
-            q.Add("distance_mi=" + (distanceIndex < DistanceMiles.Length && DistanceMiles[distanceIndex] >= 0
-                ? (DistanceMiles[distanceIndex] == 0 ? "0" : DistanceMiles[distanceIndex].ToString("0"))
-                : "infinite"));
-            var uri = new Uri(new Uri(caveBaseUrl.TrimEnd('/')), "/api/library/search?" + string.Join("&", q));
-            using (var client = new HttpClient())
+            var url = ContinuumLibraryHttp.BuildSearchUrl(
+                caveBaseUrl.TrimEnd('/'),
+                searchQuery,
+                documentTypeIndex,
+                searchLat,
+                searchLon,
+                distanceIndex);
+
+            if (!ContinuumLibraryHttp.TryGetJsonSync(url, GetEffectiveTenant(), null, out var json, out var err))
             {
-                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Tenant-ID", GetEffectiveTenant());
-                var resp = client.GetAsync(uri).GetAwaiter().GetResult();
-                var json = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                if (!resp.IsSuccessStatusCode) { lastError = json; results.Clear(); return; }
-                ParseSearchResults(json);
+                lastError = err;
+                results.Clear();
+                return;
             }
+
+            results.Clear();
+            selectedIndex = -1;
+            results.AddRange(ContinuumLibraryJson.ParseSearchResults(json));
         }
         catch (Exception ex)
         {
@@ -239,15 +221,15 @@ public class ContinuumLibraryWindow : EditorWindow
         string tenant = GetEffectiveTenant();
         sb.Append("-m unified_semantic_archiver.cli.query_db --db \"").Append(dbPath.Replace("\"", "\\\"")).Append("\" --table library_documents --tenant \"").Append(tenant.Replace("\"", "\\\"")).Append("\"");
         if (!string.IsNullOrWhiteSpace(searchQuery)) sb.Append(" -q \"").Append(searchQuery.Replace("\"", "\\\"")).Append("\"");
-        if (documentTypeIndex > 0) sb.Append(" --document_type ").Append(DocumentTypes[documentTypeIndex]);
+        if (documentTypeIndex > 0) sb.Append(" --document_type ").Append(ContinuumLibraryQuery.DocumentTypes[documentTypeIndex]);
         if (!string.IsNullOrWhiteSpace(searchLat)) sb.Append(" --lat ").Append(searchLat);
         if (!string.IsNullOrWhiteSpace(searchLon)) sb.Append(" --lon ").Append(searchLon);
-        if (distanceIndex < DistanceMiles.Length)
+        if (distanceIndex < ContinuumLibraryQuery.DistanceMiles.Length)
         {
             sb.Append(" --distance_mi ");
             if (distanceIndex == 0) sb.Append("infinite");
-            else if (DistanceMiles[distanceIndex] == 0) sb.Append("0");
-            else sb.Append(DistanceMiles[distanceIndex].ToString("0"));
+            else if (ContinuumLibraryQuery.DistanceMiles[distanceIndex] == 0) sb.Append("0");
+            else sb.Append(ContinuumLibraryQuery.DistanceMiles[distanceIndex].ToString("0"));
         }
         string argsStr = sb.ToString();
         try
@@ -271,7 +253,9 @@ public class ContinuumLibraryWindow : EditorWindow
                 string stderr = p.StandardError.ReadToEnd();
                 p.WaitForExit(10000);
                 if (p.ExitCode != 0) { lastError = stderr.Length > 0 ? stderr : stdout; results.Clear(); return; }
-                ParseSearchResults(stdout);
+                results.Clear();
+                selectedIndex = -1;
+                results.AddRange(ContinuumLibraryJson.ParseSearchResults(stdout));
             }
         }
         catch (Exception ex)
@@ -281,39 +265,7 @@ public class ContinuumLibraryWindow : EditorWindow
         }
     }
 
-    private void ParseSearchResults(string json)
-    {
-        results.Clear();
-        selectedIndex = -1;
-        try
-        {
-            var arr = Newtonsoft.Json.Linq.JArray.Parse(json);
-            foreach (var tok in arr)
-            {
-                var obj = tok as Newtonsoft.Json.Linq.JObject;
-                if (obj == null) continue;
-                var doc = new LibraryDocument
-                {
-                    id = obj["id"] != null ? (int)obj["id"] : 0,
-                    document_type = obj["document_type"]?.ToString() ?? "",
-                    url = obj["url"]?.ToString(),
-                    type_metadata = obj["type_metadata"]?.ToString(),
-                    blob_ref = obj["blob_ref"]?.ToString()
-                };
-                if (obj["lat"] != null && obj["lat"].Type != Newtonsoft.Json.Linq.JTokenType.Null && obj["lat"].Type != Newtonsoft.Json.Linq.JTokenType.Undefined)
-                    doc.lat = (double)obj["lat"];
-                if (obj["lon"] != null && obj["lon"].Type != Newtonsoft.Json.Linq.JTokenType.Null && obj["lon"].Type != Newtonsoft.Json.Linq.JTokenType.Undefined)
-                    doc.lon = (double)obj["lon"];
-                results.Add(doc);
-            }
-        }
-        catch (Exception ex)
-        {
-            lastError = "Parse: " + ex.Message;
-        }
-    }
-
-    private void DownloadDocument(LibraryDocument doc)
+    private void DownloadDocument(ContinuumLibraryDocument doc)
     {
         if (!string.IsNullOrEmpty(doc.url))
         {
@@ -321,8 +273,7 @@ public class ContinuumLibraryWindow : EditorWindow
             return;
         }
         if (string.IsNullOrWhiteSpace(caveBaseUrl)) { lastError = "Set Cave Base URL to download."; return; }
-        var tenant = Uri.EscapeDataString(GetEffectiveTenant());
-        var url = caveBaseUrl.TrimEnd('/') + "/api/library/documents/" + doc.id + "/download?tenant=" + tenant;
+        var url = ContinuumLibraryHttp.BuildDownloadUrl(caveBaseUrl.TrimEnd('/'), GetEffectiveTenant(), doc.id);
         Application.OpenURL(url);
     }
 

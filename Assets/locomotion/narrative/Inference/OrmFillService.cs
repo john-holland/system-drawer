@@ -12,11 +12,13 @@ namespace Locomotion.Narrative
         /// <summary>
         /// For each event title (and optionally phrase), try to resolve against registry. Fills outBindings with Matched, UnderstoodNoOrmMatch, or MarkedGenerate.
         /// </summary>
+        /// <param name="builtInsByEventIndex">Optional bindings resolved from Continuum built-ins (skip SceneObjectRegistry for those indices).</param>
         public static void FillFromRegistry(
             IList<InterpretedEvent> events,
             SceneObjectRegistry registry,
             HashSet<int> markedGenerateEventIndices,
-            List<InterpretedEventBinding> outBindings)
+            List<InterpretedEventBinding> outBindings,
+            IReadOnlyDictionary<int, InterpretedEventBinding> builtInsByEventIndex = null)
         {
             outBindings?.Clear();
             if (outBindings == null) return;
@@ -24,12 +26,23 @@ namespace Locomotion.Narrative
             if (registry == null)
             {
                 for (int i = 0; i < (events?.Count ?? 0); i++)
-                    outBindings.Add(InterpretedEventBinding.NoMatch(i, events[i].title));
+                {
+                    if (builtInsByEventIndex != null && builtInsByEventIndex.TryGetValue(i, out var bb))
+                        outBindings.Add(bb);
+                    else
+                        outBindings.Add(InterpretedEventBinding.NoMatch(i, events[i].title));
+                }
                 return;
             }
 
             for (int i = 0; i < (events?.Count ?? 0); i++)
             {
+                if (builtInsByEventIndex != null && builtInsByEventIndex.TryGetValue(i, out var builtIn))
+                {
+                    outBindings.Add(builtIn);
+                    continue;
+                }
+
                 var ev = events[i];
                 string phrase = (ev.title ?? "").Trim();
                 if (markedGenerateEventIndices != null && markedGenerateEventIndices.Contains(i))

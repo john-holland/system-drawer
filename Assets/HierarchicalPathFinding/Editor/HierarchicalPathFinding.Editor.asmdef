@@ -1,0 +1,18 @@
+{
+    "name": "HierarchicalPathFinding.Editor",
+    "rootNamespace": "",
+    "references": [
+        "HierarchicalPathFinding"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

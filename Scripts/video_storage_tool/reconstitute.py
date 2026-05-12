@@ -55,6 +55,64 @@ def find_artifacts(stored_dir: Path) -> tuple[Path | None, Path | None, Path | N
     return audio_path, resultant_path, diff_path
 
 
+def _probe_video_size(path: Path, ffprobe_exe: str = "ffprobe") -> tuple[int, int]:
+    """Return (width, height) of first video stream; defaults suitable for HD metadata if probe fails."""
+    try:
+        out = subprocess.run(
+            [
+                ffprobe_exe,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=width,height",
+                "-of",
+                "csv=p=0:s=x",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
+        )
+        line = (out.stdout or "").strip().splitlines()[0] if out.stdout else ""
+        if "x" in line:
+            w, h = line.split("x", 1)
+            return int(w), int(h)
+    except (subprocess.CalledProcessError, ValueError, IndexError, FileNotFoundError, OSError):
+        pass
+    return 1920, 1080
+
+
+def _mpeg4_color_metadata_args(width: int, height: int) -> list[str]:
+    """
+    Tag color matrix/TRC/primaries on libx264 re-encode. Untagged 480p is often interpreted as BT.709;
+    re-encoding then shifts hue (e.g. bluer). SD -> BT.601 (smpte170m); HD -> BT.709.
+    """
+    if height > 0 and height <= 576:
+        return [
+            "-colorspace",
+            "smpte170m",
+            "-color_primaries",
+            "smpte170m",
+            "-color_trc",
+            "smpte170m",
+            "-color_range",
+            "tv",
+        ]
+    return [
+        "-colorspace",
+        "bt709",
+        "-color_primaries",
+        "bt709",
+        "-color_trc",
+        "bt709",
+        "-color_range",
+        "tv",
+    ]
+
+
 def get_media_duration_seconds(path: Path, ffprobe_exe: str = "ffprobe") -> float:
     """Probe duration with ffprobe."""
     try:
@@ -155,6 +213,7 @@ def reconstitute(
         video_duration_sec=video_dur,
         loop_strategy=loop_strategy,
         ffmpeg_exe=ffmpeg_exe,
+        ffprobe_exe=ffprobe_exe,
     )
     log.info("Reconstituted: %s", out_path)
 
@@ -215,6 +274,7 @@ def _merge_ffmpeg(
     video_duration_sec: float,
     loop_strategy: str = "loop",
     ffmpeg_exe: str = "ffmpeg",
+    ffprobe_exe: str = "ffprobe",
 ) -> None:
     """
     Mux video + audio. If video is shorter than target_duration_sec, either loop the video
@@ -235,6 +295,8 @@ def _merge_ffmpeg(
             str(out_path),
         ]
     else:
+        vw, vh = _probe_video_size(video_path, ffprobe_exe)
+        color_args = _mpeg4_color_metadata_args(vw, vh)
         if mode == "hold":
             hold_seconds = max(0.0, target_duration_sec - video_duration_sec)
             cmd = [
@@ -246,6 +308,7 @@ def _merge_ffmpeg(
                 "-map", "1:a",
                 "-t", str(target_duration_sec),
                 "-c:v", "libx264", "-c:a", "aac",
+                *color_args,
                 str(out_path),
             ]
         else:
@@ -258,6 +321,7 @@ def _merge_ffmpeg(
                 "-i", str(audio_path),
                 "-t", str(target_duration_sec),
                 "-c:v", "libx264", "-c:a", "aac",
+                *color_args,
                 str(out_path),
             ]
     subprocess.run(cmd, check=True, capture_output=True, timeout=600)
