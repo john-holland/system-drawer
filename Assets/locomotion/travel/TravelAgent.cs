@@ -61,16 +61,42 @@ public class TravelAgent : MonoBehaviour
 
     [Header("Gizmos")]
     public bool drawTravelGizmos = true;
+    [Tooltip("When multibody runs, also draw the pre-adjustment plan (magenta in scene handles).")]
+    public bool drawMultibodyBasePlan = true;
+
+    [Header("Multibody travel")]
+    public TravelAgentMultibodySettings multibody = new TravelAgentMultibodySettings();
+
+    [Header("Timeline planner (optional)")]
+    public PlannerTimelineOptions plannerTimelineOptions = PlannerTimelineOptions.DefaultLegacy();
+
+    [Tooltip("Optional extra landmark positions merged into the timeline chord graph (world space).")]
+    public List<Vector3> timelineExtraLandmarks = new List<Vector3>();
 
     [SerializeField] GenericMultiModalPathPlan cachedPlan = new GenericMultiModalPathPlan();
 
+    [SerializeField] GenericMultiModalPathPlan cachedPlanBeforeMultibody;
+
     [SerializeField] List<TravelDiscoveredNodeInfo> discoveredNodes = new List<TravelDiscoveredNodeInfo>();
 
-    /// <summary>Last rebuilt multi-modal plan (preview / runtime).</summary>
+    /// <summary>Last rebuilt multi-modal plan (preview / runtime); multibody-adjusted when multibody is enabled.</summary>
     public GenericMultiModalPathPlan CachedPlan => cachedPlan;
+
+    /// <summary>Plan from the traversibility solver before multibody post-process (null when multibody was off for last rebuild).</summary>
+    public GenericMultiModalPathPlan CachedPlanBeforeMultibody => cachedPlanBeforeMultibody;
 
     /// <summary>Discovered nodes from last <see cref="RefreshDiscoveredNodes"/>.</summary>
     public IReadOnlyList<TravelDiscoveredNodeInfo> DiscoveredNodes => discoveredNodes;
+
+    void OnEnable()
+    {
+        TravelAgentRegistry.Register(this);
+    }
+
+    void OnDisable()
+    {
+        TravelAgentRegistry.Unregister(this);
+    }
 
     void Awake()
     {
@@ -85,6 +111,24 @@ public class TravelAgent : MonoBehaviour
         if (actorRootOverride != null)
             return actorRootOverride;
         return transform;
+    }
+
+    /// <summary>World position used as the multibody actor origin at runtime.</summary>
+    public Vector3 ResolveMultibodyActorWorld()
+    {
+        if (ambulatingActor != null)
+            return ambulatingActor.transform.position;
+        return transform.position;
+    }
+
+    /// <summary>Plan polyline peers should use for inference (base plan if present, else current).</summary>
+    public GenericMultiModalPathPlan GetPlanReferenceForMultibodyPeer()
+    {
+        if (cachedPlanBeforeMultibody != null && !cachedPlanBeforeMultibody.IsEmpty)
+            return cachedPlanBeforeMultibody;
+        if (cachedPlan != null && !cachedPlan.IsEmpty)
+            return cachedPlan;
+        return null;
     }
 
     /// <summary>
@@ -120,6 +164,7 @@ public class TravelAgent : MonoBehaviour
     /// </summary>
     public void RebuildCachedPlan(GameObject goalTarget = null)
     {
+        cachedPlanBeforeMultibody = null;
         cachedPlan = new GenericMultiModalPathPlan();
         HierarchicalPathingSolver solver = pathingSolverForPreview != null
             ? pathingSolverForPreview
@@ -136,7 +181,11 @@ public class TravelAgent : MonoBehaviour
             preferredVehicle = hintVehicle
         };
 
-        cachedPlan = GenericTraversibilityPlannerSolver.BuildPlan(
+        PlannerTimelineOptions tl = plannerTimelineOptions;
+        if (timelineExtraLandmarks != null && timelineExtraLandmarks.Count > 0)
+            tl.extraLandmarks = timelineExtraLandmarks;
+
+        GenericMultiModalPathPlan built = GenericTraversibilityPlannerSolver.BuildPlan(
             previewStartWorld,
             previewGoalWorld,
             solver,
@@ -146,7 +195,26 @@ public class TravelAgent : MonoBehaviour
             0f,
             hints,
             tryToolBridgeWhenNoWalk: true,
-            goalTarget);
+            goalTarget,
+            PhysicalPathingMedium.Air,
+            in tl);
+
+        if (built == null || built.IsEmpty)
+        {
+            cachedPlan = built ?? new GenericMultiModalPathPlan();
+            return;
+        }
+
+        if (multibody != null && multibody.enableMultibody)
+        {
+            cachedPlanBeforeMultibody = built.Clone();
+            Vector3 actorWorld = Application.isPlaying ? ResolveMultibodyActorWorld() : previewStartWorld;
+            cachedPlan = TravelMultibodyPathAdjuster.Adjust(built, multibody, actorWorld, solver, this);
+        }
+        else
+        {
+            cachedPlan = built;
+        }
     }
 
     static string BuildHierarchyPath(Transform leaf, Transform root)
@@ -180,13 +248,38 @@ public class TravelAgent : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        if (!drawTravelGizmos || cachedPlan == null || cachedPlan.IsEmpty)
+        if (!drawTravelGizmos)
+            return;
+
+        if (drawMultibodyBasePlan && cachedPlanBeforeMultibody != null && !cachedPlanBeforeMultibody.IsEmpty)
+        {
+            Gizmos.color = new Color(1f, 0.2f, 1f, 0.85f);
+            List<Vector3> basePts = cachedPlanBeforeMultibody.FlattenWaypointsForGizmos();
+            for (int i = 1; i < basePts.Count; i++)
+                Gizmos.DrawLine(basePts[i - 1], basePts[i]);
+        }
+
+        if (cachedPlan == null || cachedPlan.IsEmpty)
             return;
 
         Gizmos.color = Color.cyan;
         List<Vector3> pts = cachedPlan.FlattenWaypointsForGizmos();
         for (int i = 1; i < pts.Count; i++)
             Gizmos.DrawLine(pts[i - 1], pts[i]);
+
+        if (multibody != null)
+        {
+            if (multibody.finalTarget != null)
+            {
+                Gizmos.color = new Color(0.3f, 1f, 0.5f, 0.9f);
+                Gizmos.DrawWireSphere(multibody.finalTarget.position, 0.35f);
+            }
+            else if (multibody.finalTargetWorld.sqrMagnitude > 1e-6f)
+            {
+                Gizmos.color = new Color(0.3f, 1f, 0.5f, 0.9f);
+                Gizmos.DrawWireSphere(multibody.finalTargetWorld, 0.35f);
+            }
+        }
 
         Gizmos.color = Color.yellow;
         if (cachedPlan.segments != null)

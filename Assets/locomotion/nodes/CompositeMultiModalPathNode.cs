@@ -25,6 +25,16 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
     public bool useFlyingCardsForFlySegments;
     public GameObject goalTarget;
 
+    [Header("Multibody travel (optional)")]
+    [Tooltip("When enabled, post-processes the built plan against other TravelAgent instances and cached dynamic actors.")]
+    public bool applyMultibodyAdjustment;
+
+    [Tooltip("Policy source for multibody fields (clearance, masks, pace). Defaults to TravelAgent on the behavior tree object hierarchy when null.")]
+    public TravelAgent multibodyPolicySource;
+
+    [Header("Timeline planner (optional)")]
+    public PlannerTimelineOptions plannerTimelineOptions = PlannerTimelineOptions.DefaultLegacy();
+
     bool pathBuilt;
 
     void Awake()
@@ -78,6 +88,7 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             preferredVehicle = preferredVehicle
         };
 
+        PlannerTimelineOptions tl = plannerTimelineOptions;
         GenericMultiModalPathPlan plan = GenericTraversibilityPlannerSolver.BuildPlan(
             origin,
             destination,
@@ -88,10 +99,24 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             queryT,
             hints,
             tryToolBridgeWhenNoWalk,
-            goalTarget);
+            goalTarget,
+            PhysicalPathingMedium.Air,
+            in tl);
 
         if (plan == null || plan.IsEmpty)
             return false;
+
+        if (applyMultibodyAdjustment)
+        {
+            TravelAgent policy = multibodyPolicySource;
+            if (policy == null && tree != null)
+                policy = tree.GetComponentInParent<TravelAgent>();
+            if (policy != null && policy.multibody != null && policy.multibody.enableMultibody)
+            {
+                Vector3 actorWorld = policy.ResolveMultibodyActorWorld();
+                plan = TravelMultibodyPathAdjuster.Adjust(plan, policy.multibody, actorWorld, pathfindingSolver, policy);
+            }
+        }
 
         return BuildChildrenFromPlan(plan, tree);
     }

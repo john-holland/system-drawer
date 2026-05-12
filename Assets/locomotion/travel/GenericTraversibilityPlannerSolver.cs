@@ -5,6 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Composes walk, fly (medium registry), drive (XZ grid stub), tool traversability, and acrobatics-stub bridges.
 /// Hint weights bias section picking when multiple tool/acrobatics sections qualify.
+/// Optional PlannerTimelineOptions enables multi-leg shortest-path search over landmarks before greedy fallback.
 /// </summary>
 public static class GenericTraversibilityPlannerSolver
 {
@@ -31,10 +32,87 @@ public static class GenericTraversibilityPlannerSolver
         GameObject goalTarget = null,
         PhysicalPathingMedium tryFlyMedium = PhysicalPathingMedium.Air)
     {
-        var plan = new GenericMultiModalPathPlan();
-        if (solver == null)
-            return plan;
+        PlannerTimelineOptions timeline = PlannerTimelineOptions.DefaultLegacy();
+        return BuildPlan(
+            start,
+            goal,
+            solver,
+            toolTraversabilitySections,
+            acrobaticsSections,
+            queryPosition,
+            queryT,
+            hints,
+            tryToolBridgeWhenNoWalk,
+            goalTarget,
+            tryFlyMedium,
+            in timeline);
+    }
 
+    /// <summary>
+    /// Build plan with optional timeline multi-leg search. When <paramref name="timeline"/>.enableMultiLegTimelineSearch is false, behavior matches the legacy overload.
+    /// </summary>
+    public static GenericMultiModalPathPlan BuildPlan(
+        Vector3 start,
+        Vector3 goal,
+        HierarchicalPathingSolver solver,
+        List<GoodSection> toolTraversabilitySections,
+        List<GoodSection> acrobaticsSections,
+        Vector3 queryPosition,
+        float queryT,
+        PlannerHints hints,
+        bool tryToolBridgeWhenNoWalk,
+        GameObject goalTarget,
+        PhysicalPathingMedium tryFlyMedium,
+        in PlannerTimelineOptions timeline)
+    {
+        if (solver == null)
+            return new GenericMultiModalPathPlan();
+
+        float hintEff = timeline.GetEffectiveHintEffectiveness();
+
+        if (timeline.enableMultiLegTimelineSearch)
+        {
+            GenericMultiModalPathPlan timelinePlan = TimelineMultiModalPlanner.TryBuildPlan(
+                start,
+                goal,
+                solver,
+                in timeline,
+                in hints,
+                tryFlyMedium);
+            if (!timelinePlan.IsEmpty)
+                return timelinePlan;
+        }
+
+        return BuildPlanGreedyLegacy(
+            start,
+            goal,
+            solver,
+            toolTraversabilitySections,
+            acrobaticsSections,
+            queryPosition,
+            queryT,
+            hints,
+            tryToolBridgeWhenNoWalk,
+            goalTarget,
+            tryFlyMedium,
+            hintEff);
+    }
+
+    static GenericMultiModalPathPlan BuildPlanGreedyLegacy(
+        Vector3 start,
+        Vector3 goal,
+        HierarchicalPathingSolver solver,
+        List<GoodSection> toolTraversabilitySections,
+        List<GoodSection> acrobaticsSections,
+        Vector3 queryPosition,
+        float queryT,
+        PlannerHints hints,
+        bool tryToolBridgeWhenNoWalk,
+        GameObject goalTarget,
+        PhysicalPathingMedium tryFlyMedium,
+        float acrobaticsHintEffectiveness)
+    {
+        var plan = new GenericMultiModalPathPlan();
         PathingMode savedMode = solver.pathingMode;
 
         try
@@ -90,7 +168,8 @@ public static class GenericTraversibilityPlannerSolver
                 acrobaticsSections,
                 queryPosition,
                 queryT,
-                hints);
+                hints,
+                acrobaticsHintEffectiveness);
             if (acrobaticsPick != null && acrobaticsPick.EnablesTraversabilityAt(queryPosition, queryT))
             {
                 List<GameObject> tls = acrobaticsPick.GetRequiredToolsList();
@@ -138,7 +217,8 @@ public static class GenericTraversibilityPlannerSolver
         List<GoodSection> acrobaticsSections,
         Vector3 queryPosition,
         float queryT,
-        PlannerHints hints)
+        PlannerHints hints,
+        float hintEffectiveness01)
     {
         if (acrobaticsSections == null || acrobaticsSections.Count == 0)
             return null;
@@ -149,6 +229,8 @@ public static class GenericTraversibilityPlannerSolver
         if (candidates.Count == 0)
             return null;
 
+        float eff = Mathf.Clamp01(hintEffectiveness01);
+
         float Score(GoodSection s)
         {
             int toolCount = s.GetRequiredToolsList()?.Count ?? 0;
@@ -157,7 +239,7 @@ public static class GenericTraversibilityPlannerSolver
             float typeBias = string.IsNullOrEmpty(s.traversabilityTag)
                 ? 0f
                 : (1f - Mathf.Clamp01(hints.requireType01)) * 0.5f;
-            return assetBias + typeBias;
+            return (assetBias + typeBias) * eff;
         }
 
         GoodSection best = candidates[0];

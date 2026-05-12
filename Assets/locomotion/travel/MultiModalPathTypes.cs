@@ -28,6 +28,9 @@ public class MultiModalSegment
     public PhysicalPathingMedium medium = PhysicalPathingMedium.Unspecified;
     [NonSerialized] public VehicleActor optionalVehicleHint;
 
+    [Tooltip("Planner-estimated travel time for this leg (seconds), when timeline search fills it.")]
+    public float estimatedTimeSec;
+
     public static MultiModalSegment FromWalk(List<Vector3> path)
     {
         return new MultiModalSegment
@@ -77,6 +80,29 @@ public class MultiModalSegment
         s.mode = TravelLegMode.Acrobatics;
         return s;
     }
+
+    /// <summary>Deep copy of waypoint list; shallow refs for card/tools.</summary>
+    public MultiModalSegment CloneShallowRefs()
+    {
+        var copy = new MultiModalSegment
+        {
+            mode = mode,
+            card = card,
+            segmentEnd = segmentEnd,
+            medium = medium,
+            optionalVehicleHint = optionalVehicleHint,
+            estimatedTimeSec = estimatedTimeSec
+        };
+        if (waypoints != null)
+            copy.waypoints = new List<Vector3>(waypoints);
+        else
+            copy.waypoints = new List<Vector3>();
+        if (tools != null)
+            copy.tools = new List<GameObject>(tools);
+        else
+            copy.tools = new List<GameObject>();
+        return copy;
+    }
 }
 
 /// <summary>
@@ -100,5 +126,20 @@ public class GenericMultiModalPathPlan
                 list.Add(w);
         }
         return list;
+    }
+
+    public GenericMultiModalPathPlan Clone()
+    {
+        var p = new GenericMultiModalPathPlan();
+        if (segments == null)
+            return p;
+        foreach (MultiModalSegment seg in segments)
+        {
+            if (seg == null)
+                continue;
+            p.segments.Add(seg.CloneShallowRefs());
+        }
+
+        return p;
     }
 }

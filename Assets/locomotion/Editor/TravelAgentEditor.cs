@@ -24,6 +24,12 @@ public class TravelAgentEditor : Editor
             SceneView.RepaintAll();
         }
 
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Multibody", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "When Multibody travel is enabled on the agent, rebuild runs TravelMultibodyPathAdjuster against other registered TravelAgents and dynamic colliders in the near-path bounds (see dynamic actor mask).",
+            MessageType.None);
+
         if (GUILayout.Button("Open Pathing Editor"))
             TravelPathingEditorWindow.Open(ta);
 
