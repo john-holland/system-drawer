@@ -35,4 +35,30 @@ public static class TravelAgentRegistry
                 into.Add(a);
         }
     }
+
+    /// <summary>
+    /// Fills <paramref name="into"/> with peers for multibody relaxation. When
+    /// <paramref name="settings"/>.<c>limitMultibodyPeersToSameFormationGroup</c> is true and <paramref name="self"/> has a non-empty
+    /// <see cref="TravelAgent.multibodyFormationGroupId"/>, only agents in that group are included; otherwise same as <see cref="CopyPeersExcluding"/>.
+    /// </summary>
+    public static void CopyPeersForMultibody(TravelAgent exclude, List<TravelAgent> into, TravelAgentMultibodySettings settings, TravelAgent self)
+    {
+        into.Clear();
+        bool limit = settings != null && settings.limitMultibodyPeersToSameFormationGroup
+                     && self != null && !string.IsNullOrEmpty(self.multibodyFormationGroupId);
+        string gid = self != null ? self.multibodyFormationGroupId : null;
+
+        for (int i = 0; i < s_agents.Count; i++)
+        {
+            TravelAgent a = s_agents[i];
+            if (a == null || a == exclude)
+                continue;
+            if (limit)
+            {
+                if (string.IsNullOrEmpty(a.multibodyFormationGroupId) || a.multibodyFormationGroupId != gid)
+                    continue;
+            }
+            into.Add(a);
+        }
+    }
 }

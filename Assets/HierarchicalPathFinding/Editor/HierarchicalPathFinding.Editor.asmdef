@@ -2,7 +2,8 @@
     "name": "HierarchicalPathFinding.Editor",
     "rootNamespace": "",
     "references": [
-        "HierarchicalPathFinding"
+        "HierarchicalPathFinding",
+        "SdfMax"
     ],
     "includePlatforms": [
         "Editor"

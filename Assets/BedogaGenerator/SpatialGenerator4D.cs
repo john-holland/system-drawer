@@ -124,8 +124,9 @@ public class SpatialGenerator4D : SpatialGeneratorBase
     private void OnEnable()
     {
         NarrativeVolumeQuery.IsInsideNarrativeVolumeImpl = (position, t) =>
-            Overlaps(new Bounds(position, Vector3.zero), t);
+            Overlaps(new Bounds(position, Vector3.zero), t) || IsInsideSpatialProviders(position, t);
         NarrativeVolumeQuery.IsEventActiveAtImpl = (tStart, tEnd, t) => IsActiveAt(tStart, tEnd, t);
+        NarrativeVolumeQuery.SampleSpatialVolumeImpl = IsInsideSpatialProviders;
         if (buildGrid && grid4D != null && grid4D.IsBuilt)
             NarrativeVolumeQuery.Sample4DImpl = (position, t) =>
             {
@@ -139,6 +140,29 @@ public class SpatialGenerator4D : SpatialGeneratorBase
         NarrativeVolumeQuery.IsInsideNarrativeVolumeImpl = null;
         NarrativeVolumeQuery.IsEventActiveAtImpl = null;
         NarrativeVolumeQuery.Sample4DImpl = null;
+        NarrativeVolumeQuery.SampleSpatialVolumeImpl = null;
+    }
+
+    bool IsInsideSpatialProviders(Vector3 position, float t)
+    {
+        var providers = volumeProviders;
+        if ((providers == null || providers.Count == 0) && transform.parent != null)
+        {
+            var orch = transform.parent.GetComponentInParent<SpatialGenerator4DOrchestrator>();
+            if (orch != null)
+                providers = orch.volumeProviders;
+        }
+        if (providers == null)
+            return false;
+        for (int i = 0; i < providers.Count; i++)
+        {
+            var p = providers[i];
+            if (p == null || !p.isActiveAndEnabled)
+                continue;
+            if (p.TrySample(position, t, out _, out bool inside) && inside)
+                return true;
+        }
+        return false;
     }
 
     private void EnsureInitialized()
@@ -366,13 +390,48 @@ public class SpatialGenerator4D : SpatialGeneratorBase
     }
 
     /// <summary>Collect all placed Bounds4 volumes (for grid build).</summary>
+    [Header("Spatial volumes")]
+    [Tooltip("Optional providers (or set on SpatialGenerator4DOrchestrator). Bounds exported into 4D grid build.")]
+    public List<SpatialVolumes.SpatialVolumeProvider> volumeProviders = new List<SpatialVolumes.SpatialVolumeProvider>();
+
     public List<Bounds4> GetPlacedVolumes()
     {
         var list = new List<Bounds4>(entryByGo != null ? entryByGo.Count : 0);
-        if (entryByGo == null) return list;
-        foreach (var e in entryByGo.Values)
-            list.Add(e.volume);
+        if (entryByGo != null)
+        {
+            foreach (var e in entryByGo.Values)
+                list.Add(e.volume);
+        }
+        AppendSpatialVolumeBounds(list);
         return list;
+    }
+
+    void AppendSpatialVolumeBounds(List<Bounds4> list)
+    {
+        var providers = volumeProviders;
+        if ((providers == null || providers.Count == 0) && transform.parent != null)
+        {
+            var orch = transform.parent.GetComponentInParent<SpatialGenerator4DOrchestrator>();
+            if (orch != null)
+                providers = orch.volumeProviders;
+        }
+        if (providers == null)
+            return;
+
+        var scratch = new List<SpatialVolumes.SpatialVolumeBounds4>(16);
+        for (int i = 0; i < providers.Count; i++)
+        {
+            var p = providers[i];
+            if (p == null || !p.isActiveAndEnabled)
+                continue;
+            scratch.Clear();
+            p.ExportVolumeBounds(scratch, tMin, tMax);
+            for (int j = 0; j < scratch.Count; j++)
+            {
+                var b = scratch[j];
+                list.Add(new Bounds4(b.center, b.size, b.tMin, b.tMax));
+            }
+        }
     }
 
     /// <summary>Collect all placed volumes with payloads (for 4D tree mirror).</summary>

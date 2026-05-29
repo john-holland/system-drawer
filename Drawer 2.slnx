@@ -2,7 +2,9 @@
   <Project Path="Locomotion.Runtime.csproj" />
   <Project Path="Weather.Runtime.csproj" />
   <Project Path="Locomotion.Editor.csproj" />
+  <Project Path="SdfMax.Tests.csproj" />
   <Project Path="BedogaGenerator.csproj" />
+  <Project Path="SdfMax.csproj" />
   <Project Path="Generated.Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="BedogaGenerator.Editor.csproj" />
@@ -19,6 +21,7 @@
   <Project Path="Continuum.Library.Runtime.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
   <Project Path="SystemDrawer.csproj" />
+  <Project Path="SdfMax.Editor.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />
   <Project Path="SystemDrawer.Editor.csproj" />

@@ -5,7 +5,10 @@
         "BedogaGenerator",
         "SystemDrawer",
         "Locomotion.Narrative.Runtime",
-        "Locomotion.Narrative.Editor"
+        "Locomotion.Narrative.Editor",
+        "HierarchicalPathFinding",
+        "SdfMax",
+        "SdfMax.Editor"
     ],
     "includePlatforms": [
         "Editor"

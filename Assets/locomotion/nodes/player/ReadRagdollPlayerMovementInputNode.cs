@@ -1,0 +1,47 @@
+using UnityEngine;
+
+/// <summary>
+/// Samples legacy <see cref="Input"/> axes and sprint/jump; writes <see cref="RagdollPlayerInputBuffer"/>.
+/// </summary>
+public class ReadRagdollPlayerMovementInputNode : BehaviorTreeNode
+{
+    RagdollPlayerInputBuffer buffer;
+
+    void Awake()
+    {
+        nodeType = NodeType.Action;
+        buffer = GetComponentInParent<RagdollPlayerInputBuffer>();
+    }
+
+    public override bool Predicate(BehaviorTree tree)
+    {
+        return buffer != null && buffer.options != null;
+    }
+
+    public override BehaviorTreeStatus Execute(BehaviorTree tree)
+    {
+        if (buffer == null || buffer.options == null)
+            return BehaviorTreeStatus.Failure;
+
+        var o = buffer.options;
+        bool uiMode = o.altHeldEnablesUIMode &&
+                      (Input.GetKey(o.uiModeHoldKey) || Input.GetKey(KeyCode.RightAlt));
+
+        bool blockMove = uiMode || !o.enableMovement;
+        float h = blockMove ? 0f : Input.GetAxis("Horizontal");
+        float v = blockMove ? 0f : Input.GetAxis("Vertical");
+        bool sprint = !blockMove && Input.GetKey(KeyCode.LeftShift);
+        bool jump = !blockMove && Input.GetButtonDown("Jump");
+
+        buffer.WriteState(new RagdollPlayerInputState
+        {
+            horizontal = h,
+            vertical = v,
+            sprint = sprint,
+            jumpPressedThisFrame = jump,
+            uiMode = uiMode
+        });
+
+        return BehaviorTreeStatus.Success;
+    }
+}

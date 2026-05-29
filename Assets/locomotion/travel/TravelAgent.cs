@@ -67,6 +67,13 @@ public class TravelAgent : MonoBehaviour
     [Header("Multibody travel")]
     public TravelAgentMultibodySettings multibody = new TravelAgentMultibodySettings();
 
+    [Header("Multibody formation (optional)")]
+    [Tooltip("Agents with the same non-empty id share a formation cohort for slot assignment and optional peer filtering.")]
+    public string multibodyFormationGroupId = "";
+
+    [Tooltip("Slot index within cohort when >= 0; -1 = order by stable instance id sort within group.")]
+    public int formationSlotIndex = -1;
+
     [Header("Timeline planner (optional)")]
     public PlannerTimelineOptions plannerTimelineOptions = PlannerTimelineOptions.DefaultLegacy();
 
@@ -205,15 +212,21 @@ public class TravelAgent : MonoBehaviour
             return;
         }
 
+        Vector3 actorWorld = Application.isPlaying ? ResolveMultibodyActorWorld() : previewStartWorld;
+
+        GenericMultiModalPathPlan working = built.Clone();
+        if (TravelFormationPathOffset.ShouldApply(this))
+            TravelFormationPathOffset.ApplyToPlan(this, working, actorWorld);
+
         if (multibody != null && multibody.enableMultibody)
         {
-            cachedPlanBeforeMultibody = built.Clone();
-            Vector3 actorWorld = Application.isPlaying ? ResolveMultibodyActorWorld() : previewStartWorld;
-            cachedPlan = TravelMultibodyPathAdjuster.Adjust(built, multibody, actorWorld, solver, this);
+            cachedPlanBeforeMultibody = working.Clone();
+            cachedPlan = TravelMultibodyPathAdjuster.Adjust(working, multibody, actorWorld, solver, this);
         }
         else
         {
-            cachedPlan = built;
+            cachedPlanBeforeMultibody = null;
+            cachedPlan = working;
         }
     }
 

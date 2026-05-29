@@ -698,7 +698,7 @@ namespace Locomotion.EditorTools
                 }
 
                 ragdollTargetTotalMass = EditorGUILayout.FloatField(
-                    new GUIContent("Total mass", "Distributed across ragdoll rigidbodies. Relative masses are preserved; if all masses were zero, mass is split evenly."),
+                    new GUIContent("Total mass", "Distributed across ragdoll rigidbodies. Relative masses are preserved; if all masses were zero, mass is split evenly. Apply also sets each Rigidbody to Continuous collision detection and Interpolate."),
                     Mathf.Max(0.01f, ragdollTargetTotalMass));
 
                 EditorGUILayout.BeginHorizontal();
@@ -772,8 +772,10 @@ namespace Locomotion.EditorTools
                 {
                     if (rbs[i] == null)
                         continue;
-                    Undo.RecordObject(rbs[i], "Set rigidbody mass");
+                    Undo.RecordObject(rbs[i], "Apply ragdoll rigidbody mass & detection");
                     rbs[i].mass = each;
+                    rbs[i].collisionDetectionMode = CollisionDetectionMode.Continuous;
+                    rbs[i].interpolation = RigidbodyInterpolation.Interpolate;
                 }
             }
             else
@@ -782,8 +784,10 @@ namespace Locomotion.EditorTools
                 {
                     if (rbs[i] == null)
                         continue;
-                    Undo.RecordObject(rbs[i], "Set rigidbody mass");
+                    Undo.RecordObject(rbs[i], "Apply ragdoll rigidbody mass & detection");
                     rbs[i].mass = total * (rbs[i].mass / sum);
+                    rbs[i].collisionDetectionMode = CollisionDetectionMode.Continuous;
+                    rbs[i].interpolation = RigidbodyInterpolation.Interpolate;
                 }
             }
 
@@ -814,6 +818,8 @@ namespace Locomotion.EditorTools
             var templateGo = new GameObject("__RigidbodyDefaultsTemplate");
             templateGo.hideFlags = HideFlags.HideAndDontSave;
             var templateRb = templateGo.AddComponent<Rigidbody>();
+            templateRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            templateRb.interpolation = RigidbodyInterpolation.Interpolate;
 
             Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();

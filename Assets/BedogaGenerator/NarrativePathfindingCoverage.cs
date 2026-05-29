@@ -18,6 +18,8 @@ public class NarrativePathfindingCoverage : MonoBehaviour
     [Header("Pathfinding")]
     [Tooltip("Optional pathfinding solver to sample reachable space. If null, coverage stays empty or uses fallback.")]
     public HierarchicalPathingSolver pathingSolver;
+    [Tooltip("When set, cells inside these SDF/mesh volumes are excluded from reachable coverage.")]
+    public List<SpatialVolumes.SpatialVolumeProvider> volumeProviders = new List<SpatialVolumes.SpatialVolumeProvider>();
     [Tooltip("Agent transform to start paths from. If null, uses transform.position of this GameObject.")]
     public Transform agent;
     [Tooltip("Number of goal samples when building coverage (paths from agent to goals).")]
@@ -89,8 +91,37 @@ public class NarrativePathfindingCoverage : MonoBehaviour
         for (int i = 0; i < count; i++)
             reachableGrid[i] = 0f;
         foreach (var cell in filled)
-            reachableGrid[Index(cell.ix, cell.iy, cell.iz)] = 1f;
+        {
+            Vector3 center = CellCenterWorld(cell.ix, cell.iy, cell.iz);
+            if (!IsInsideVolumeProvider(center))
+                reachableGrid[Index(cell.ix, cell.iy, cell.iz)] = 1f;
+        }
         built = true;
+    }
+
+    Vector3 CellCenterWorld(int ix, int iy, int iz)
+    {
+        Vector3 min = gridBounds.min;
+        Vector3 size = gridBounds.size;
+        return new Vector3(
+            min.x + (ix + 0.5f) / gx * size.x,
+            min.y + (iy + 0.5f) / gy * size.y,
+            min.z + (iz + 0.5f) / gz * size.z);
+    }
+
+    bool IsInsideVolumeProvider(Vector3 world)
+    {
+        if (volumeProviders == null || volumeProviders.Count == 0)
+            return false;
+        for (int i = 0; i < volumeProviders.Count; i++)
+        {
+            var p = volumeProviders[i];
+            if (p == null || !p.isActiveAndEnabled)
+                continue;
+            if (p.TrySample(world, 0f, out _, out bool inside) && inside)
+                return true;
+        }
+        return false;
     }
 
     private void WorldToCell(Vector3 world, out int ix, out int iy, out int iz)

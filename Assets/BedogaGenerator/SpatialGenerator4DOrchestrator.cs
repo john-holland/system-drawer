@@ -31,6 +31,8 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     public GameObject weatherSystemObject;
     [Tooltip("Optional bounds provider (e.g. WeatherPhysicsManifold). When set, generator bounds can be aligned with this.")]
     public MonoBehaviour boundsProvider;
+    [Tooltip("SDF max / mesh convex tree volume providers merged into 4D grids when generators build.")]
+    public List<SpatialVolumes.SpatialVolumeProvider> volumeProviders = new List<SpatialVolumes.SpatialVolumeProvider>();
 
     [SerializeField, HideInInspector]
     [System.Obsolete("Use spatialGenerators list; migrated automatically.")]

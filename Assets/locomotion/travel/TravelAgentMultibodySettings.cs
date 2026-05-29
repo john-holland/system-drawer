@@ -54,10 +54,38 @@ public class TravelAgentMultibodySettings
     [Tooltip("Extra margin on near-path actor cache bounds.")]
     public float nearPathBoundsMargin = 2.5f;
 
+    [Header("Formation (optional)")]
+    [Tooltip("When set with a non-empty formation group id on TravelAgent, waypoints are offset before multibody relaxation.")]
+    public TravelFormationAsset formation;
+
+    public TravelFormationWrapDirection formationWrapDirection = TravelFormationWrapDirection.Back;
+
+    [Min(0f)]
+    [Tooltip("When > 0, used as spacing between wrap rows; otherwise formation asset defaultWrapRowSpacing is used.")]
+    public float formationWrapRowSpacing;
+
+    [Tooltip("When true, wrap row spacing uses clearanceRadius * 2 instead of explicit spacing.")]
+    public bool formationRowSpacingUsesClearance;
+
+    [Tooltip("When true, multibody relaxation only considers peers in the same multibodyFormationGroupId (unsafe if group is incomplete).")]
+    public bool limitMultibodyPeersToSameFormationGroup;
+
     public Vector3 ResolveFinalTargetWorld()
     {
         if (useFinalTargetTransform && finalTarget != null)
             return finalTarget.position;
         return finalTargetWorld;
+    }
+
+    /// <summary>Row spacing for formation wrap rows (meters).</summary>
+    public float ResolveFormationWrapRowSpacing(TravelFormationAsset formationAsset)
+    {
+        if (formationRowSpacingUsesClearance)
+            return Mathf.Max(0.05f, clearanceRadius * 2f);
+        if (formationWrapRowSpacing > 0.001f)
+            return formationWrapRowSpacing;
+        if (formationAsset != null && formationAsset.defaultWrapRowSpacing > 0.001f)
+            return formationAsset.defaultWrapRowSpacing;
+        return 1.2f;
     }
 }

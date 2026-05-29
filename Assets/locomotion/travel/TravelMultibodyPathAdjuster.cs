@@ -55,7 +55,7 @@ public static class TravelMultibodyPathAdjuster
 
         var peers = new List<TravelAgent>(16);
         if (selfOptional != null)
-            TravelAgentRegistry.CopyPeersExcluding(selfOptional, peers);
+            TravelAgentRegistry.CopyPeersForMultibody(selfOptional, peers, settings, selfOptional);
         else
         {
             foreach (TravelAgent a in TravelAgentRegistry.All)
@@ -73,7 +73,7 @@ public static class TravelMultibodyPathAdjuster
         IReadOnlyList<TravelNearPathActorCache.DynamicActorEntry> dynamics =
             TravelNearPathActorCache.Rebuild(bounds, settings.dynamicActorAvoidanceMask);
 
-        Vector3 travelFwd = ComputeTravelForward(working, actorWorld);
+        Vector3 travelFwd = ComputeTravelForwardXZ(working, actorWorld);
         if (travelFwd.sqrMagnitude < 1e-6f)
             travelFwd = Vector3.forward;
         travelFwd.y = 0f;
@@ -310,7 +310,8 @@ public static class TravelMultibodyPathAdjuster
         return b;
     }
 
-    static Vector3 ComputeTravelForward(GenericMultiModalPathPlan plan, Vector3 actorWorld)
+    /// <summary>Flattened XZ travel direction from plan waypoints (first to last), or toward actor when a single waypoint.</summary>
+    public static Vector3 ComputeTravelForwardXZ(GenericMultiModalPathPlan plan, Vector3 actorWorld)
     {
         List<Vector3> flat = plan.FlattenWaypointsForGizmos();
         if (flat.Count >= 2)

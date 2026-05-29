@@ -82,8 +82,12 @@ public static class VocabularyBuiltInRegistry
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, null);
 
         // Subjects / world
-        foreach (var w in new[] { "player", "object", "scene", "world", "door", "target", "source", "effect" })
+        foreach (var w in new[] { "object", "scene", "world", "door", "target", "source", "effect" })
             Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, new[] { "world" });
+        string[] playerControllerTags = { "controller", "spatial", "player" };
+        Add("noun", "player", "noun", VocabularyBuiltInCategory.Subject, new[] { "controller", "spatial", "player", "world" });
+        Add("noun", "first-person", "noun", VocabularyBuiltInCategory.Subject, playerControllerTags);
+        Add("noun", "third-person", "noun", VocabularyBuiltInCategory.Subject, playerControllerTags);
 
         // Literal types — pos_tag type_name avoids collision with natural-language homonyms (e.g. time).
         void Lit(string term, string tag)

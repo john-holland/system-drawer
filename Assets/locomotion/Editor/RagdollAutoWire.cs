@@ -164,7 +164,10 @@ namespace Locomotion.EditorTools
 
             var rootRb = actor.GetComponent<Rigidbody>();
             if (rootRb == null) rootRb = Undo.AddComponent<Rigidbody>(actor);
+            Undo.RecordObject(rootRb, "Configure hybrid root Rigidbody");
             rootRb.isKinematic = false;
+            rootRb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            rootRb.interpolation = RigidbodyInterpolation.Interpolate;
 
             // Bone list (MVP) — Head group includes Head + Jaw (merged body part group)
             HumanBodyBones[] required =
@@ -211,7 +214,10 @@ namespace Locomotion.EditorTools
                 GameObject go = t.gameObject;
                 Rigidbody rb = go.GetComponent<Rigidbody>();
                 if (rb == null) rb = Undo.AddComponent<Rigidbody>(go);
+                Undo.RecordObject(rb, "Configure hybrid bone Rigidbody");
                 rb.mass = Mathf.Max(0.1f, rb.mass);
+                rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
 
                 // Connect to parent rigidbody when possible
                 Rigidbody parentRb = null;

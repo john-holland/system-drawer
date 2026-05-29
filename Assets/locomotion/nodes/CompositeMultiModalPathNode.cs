@@ -18,6 +18,7 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
 
     [Header("Execution")]
     public float waypointReachedDistance = 0.5f;
+    [Tooltip("When > 0, limits the number of plan legs (not individual waypoints).")]
     public int maxPathLength = 0;
     public bool tryToolBridgeWhenNoWalk = true;
 
@@ -35,7 +36,13 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
     [Header("Timeline planner (optional)")]
     public PlannerTimelineOptions plannerTimelineOptions = PlannerTimelineOptions.DefaultLegacy();
 
+    [Header("Mode transition activations")]
+    [Tooltip("Run matching activation subtrees once when TravelLegMode changes between plan legs.")]
+    public List<TravelModeTransitionBinding> modeTransitionBindings = new List<TravelModeTransitionBinding>();
+
     bool pathBuilt;
+    TravelExecutionContextProvider _contextProvider;
+    TravelAgent _resolvedTravelAgent;
 
     void Awake()
     {
@@ -65,12 +72,22 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
                 continue;
             BehaviorTreeStatus childStatus = children[i].Execute(tree);
             if (childStatus == BehaviorTreeStatus.Failure)
+            {
+                _contextProvider?.Clear();
                 return BehaviorTreeStatus.Failure;
+            }
             if (childStatus == BehaviorTreeStatus.Running)
                 return BehaviorTreeStatus.Running;
         }
 
+        _contextProvider?.Clear();
         return BehaviorTreeStatus.Success;
+    }
+
+    /// <summary>Test hook: build leg hierarchy from a plan without running the planner.</summary>
+    public bool BuildChildrenFromPlanForTests(GenericMultiModalPathPlan plan, BehaviorTree tree)
+    {
+        return BuildChildrenFromPlan(plan, tree);
     }
 
     bool BuildFromPlanner(BehaviorTree tree)
@@ -108,9 +125,7 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
 
         if (applyMultibodyAdjustment)
         {
-            TravelAgent policy = multibodyPolicySource;
-            if (policy == null && tree != null)
-                policy = tree.GetComponentInParent<TravelAgent>();
+            TravelAgent policy = ResolveTravelAgent(tree);
             if (policy != null && policy.multibody != null && policy.multibody.enableMultibody)
             {
                 Vector3 actorWorld = policy.ResolveMultibodyActorWorld();
@@ -119,6 +134,13 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
         }
 
         return BuildChildrenFromPlan(plan, tree);
+    }
+
+    TravelAgent ResolveTravelAgent(BehaviorTree tree)
+    {
+        if (multibodyPolicySource != null)
+            return multibodyPolicySource;
+        return tree != null ? tree.GetComponentInParent<TravelAgent>() : null;
     }
 
     bool BuildChildrenFromPlan(GenericMultiModalPathPlan plan, BehaviorTree tree)
@@ -135,35 +157,39 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             children.Clear();
         }
 
+        _resolvedTravelAgent = ResolveTravelAgent(tree);
+        _contextProvider = TravelExecutionContextProvider.Ensure(gameObject, tree, _resolvedTravelAgent);
+
         PhysicsCardSolver cardSolver = tree != null ? tree.GetComponentInParent<PhysicsCardSolver>() : null;
 
-        foreach (MultiModalSegment seg in plan.segments)
+        if (plan.segments == null)
+            return false;
+
+        for (int segIndex = 0; segIndex < plan.segments.Count; segIndex++)
         {
+            MultiModalSegment seg = plan.segments[segIndex];
             if (seg == null)
                 continue;
 
-            switch (seg.mode)
-            {
-                case TravelLegMode.ToolBridge:
-                case TravelLegMode.Acrobatics:
-                    AddToolSegment(seg);
-                    break;
+            TravelLegMode prevMode = segIndex > 0 ? plan.segments[segIndex - 1].mode : seg.mode;
 
-                case TravelLegMode.Fly:
-                    if (useFlyingCardsForFlySegments && cardSolver != null && cardSolver.flyingCardConfig != null &&
-                        seg.waypoints != null && seg.waypoints.Count >= 2)
-                    {
-                        if (!AppendFlyingCardChildren(seg.waypoints, tree, cardSolver))
-                            AppendWaypointChain(seg.waypoints);
-                    }
-                    else
-                        AppendWaypointChain(seg.waypoints);
-                    break;
+            var legGo = new GameObject($"Leg_{segIndex}_{seg.mode}");
+            legGo.transform.SetParent(transform, worldPositionStays: false);
+            var legNode = legGo.AddComponent<TravelLegSequenceNode>();
+            legNode.provider = _contextProvider;
+            legNode.composite = this;
+            legNode.segment = seg.CloneShallowRefs();
+            legNode.segmentIndex = segIndex;
+            legNode.legMode = seg.mode;
+            legNode.previousLegMode = prevMode;
+            legNode.transitionWorld = ResolveTransitionWorld(seg);
+            legNode.travelAgent = _resolvedTravelAgent;
 
-                default:
-                    AppendWaypointChain(seg.waypoints);
-                    break;
-            }
+            if (segIndex > 0 && prevMode != seg.mode)
+                TryAddTransitionChild(legNode, prevMode, seg.mode, seg, segIndex, tree);
+
+            AddLegLocomotionChildren(legNode, seg, tree, cardSolver);
+            children.Add(legNode);
         }
 
         if (maxPathLength > 0 && children.Count > maxPathLength)
@@ -180,31 +206,142 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
         return children.Count > 0;
     }
 
-    void AppendWaypointChain(List<Vector3> path)
+    static Vector3 ResolveTransitionWorld(MultiModalSegment seg)
     {
-        if (path == null)
+        if (seg?.waypoints != null && seg.waypoints.Count > 0)
+            return seg.waypoints[0];
+        return seg != null ? seg.segmentEnd : Vector3.zero;
+    }
+
+    void TryAddTransitionChild(
+        TravelLegSequenceNode legNode,
+        TravelLegMode from,
+        TravelLegMode to,
+        MultiModalSegment seg,
+        int segIndex,
+        BehaviorTree tree)
+    {
+        if (!TravelModeTransitionBinding.TryResolve(from, to, modeTransitionBindings, out TravelModeTransitionBinding binding))
             return;
-        foreach (Vector3 wp in path)
+
+        var transGo = new GameObject($"Transition_{from}_to_{to}");
+        transGo.transform.SetParent(legNode.transform, worldPositionStays: false);
+        var transNode = transGo.AddComponent<TravelModeTransitionSequenceNode>();
+        transNode.provider = _contextProvider;
+        transNode.composite = this;
+        transNode.segment = legNode.segment;
+        transNode.segmentIndex = segIndex;
+        transNode.fromMode = from;
+        transNode.toMode = to;
+        transNode.previousLegMode = legNode.previousLegMode;
+        transNode.travelAgent = _resolvedTravelAgent;
+
+        if (legNode.children == null)
+            legNode.children = new List<BehaviorTreeNode>();
+        legNode.children.Add(transNode);
+
+        CloneActivationSubtree(transNode, binding, tree);
+    }
+
+    void CloneActivationSubtree(TravelModeTransitionSequenceNode host, TravelModeTransitionBinding binding, BehaviorTree tree)
+    {
+        if (host.children == null)
+            host.children = new List<BehaviorTreeNode>();
+
+        if (binding.activationRoot != null)
         {
-            GameObject go = new GameObject($"Waypoint_{children.Count}");
-            go.transform.SetParent(transform, worldPositionStays: false);
-            MoveToWaypointNode node = go.AddComponent<MoveToWaypointNode>();
-            node.waypoint = wp;
-            node.reachedDistance = waypointReachedDistance;
-            children.Add(node);
+            GameObject cloneRoot = Instantiate(binding.activationRoot, host.transform);
+            cloneRoot.name = binding.activationRoot.name + "_Instance";
+            BehaviorTreeNode rootBt = cloneRoot.GetComponent<BehaviorTreeNode>();
+            if (rootBt != null)
+                host.children.Add(rootBt);
+            for (int c = 0; c < cloneRoot.transform.childCount; c++)
+            {
+                BehaviorTreeNode childBt = cloneRoot.transform.GetChild(c).GetComponent<BehaviorTreeNode>();
+                if (childBt != null && childBt != rootBt)
+                    host.children.Add(childBt);
+            }
+        }
+
+        if (binding.activationNodes != null)
+        {
+            for (int i = 0; i < binding.activationNodes.Count; i++)
+            {
+                BehaviorTreeNode template = binding.activationNodes[i];
+                if (template == null)
+                    continue;
+                GameObject cloneGo = Instantiate(template.gameObject, host.transform);
+                cloneGo.name = template.gameObject.name + "_Instance";
+                BehaviorTreeNode cloneNode = cloneGo.GetComponent<BehaviorTreeNode>();
+                if (cloneNode != null)
+                    host.children.Add(cloneNode);
+            }
         }
     }
 
-    bool AppendFlyingCardChildren(List<Vector3> path, BehaviorTree tree, PhysicsCardSolver solver)
+    void AddLegLocomotionChildren(
+        TravelLegSequenceNode legNode,
+        MultiModalSegment seg,
+        BehaviorTree tree,
+        PhysicsCardSolver cardSolver)
     {
-        if (path == null || path.Count < 2 || solver == null || solver.flyingCardConfig == null)
+        if (legNode.children == null)
+            legNode.children = new List<BehaviorTreeNode>();
+
+        switch (seg.mode)
+        {
+            case TravelLegMode.ToolBridge:
+            case TravelLegMode.Acrobatics:
+                AddToolSegment(legNode, seg);
+                break;
+
+            case TravelLegMode.Fly:
+                if (useFlyingCardsForFlySegments && cardSolver != null && cardSolver.flyingCardConfig != null &&
+                    seg.waypoints != null && seg.waypoints.Count >= 2)
+                {
+                    if (!AppendFlyingCardChildren(legNode, seg.waypoints, tree, cardSolver))
+                        AppendWaypointChain(legNode, seg.waypoints);
+                }
+                else
+                    AppendWaypointChain(legNode, seg.waypoints);
+                break;
+
+            default:
+                AppendWaypointChain(legNode, seg.waypoints);
+                break;
+        }
+    }
+
+    void AppendWaypointChain(TravelLegSequenceNode legNode, List<Vector3> path)
+    {
+        if (path == null || legNode == null)
+            return;
+
+        foreach (Vector3 wp in path)
+        {
+            GameObject go = new GameObject($"Waypoint_{legNode.children.Count}");
+            go.transform.SetParent(legNode.transform, worldPositionStays: false);
+            MoveToWaypointNode node = go.AddComponent<MoveToWaypointNode>();
+            node.waypoint = wp;
+            node.reachedDistance = waypointReachedDistance;
+            legNode.children.Add(node);
+        }
+    }
+
+    bool AppendFlyingCardChildren(
+        TravelLegSequenceNode legNode,
+        List<Vector3> path,
+        BehaviorTree tree,
+        PhysicsCardSolver solver)
+    {
+        if (path == null || path.Count < 2 || solver == null || solver.flyingCardConfig == null || legNode == null)
             return false;
 
         RagdollSystem ragdoll = tree != null ? tree.GetComponent<RagdollSystem>() : null;
         RagdollState state = ragdoll != null ? ragdoll.GetCurrentState() : null;
         float fuel = solver.flyingCardConfig.fuelCapacity;
         Vector3 prev = path[0];
-        int countBefore = children.Count;
+        int countBefore = legNode.children.Count;
 
         for (int i = 1; i < path.Count; i++)
         {
@@ -213,13 +350,13 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             if (card == null)
                 return false;
 
-            GameObject nodeObj = new GameObject($"Flying_{children.Count}");
-            nodeObj.transform.SetParent(transform, worldPositionStays: false);
+            GameObject nodeObj = new GameObject($"Flying_{legNode.children.Count}");
+            nodeObj.transform.SetParent(legNode.transform, worldPositionStays: false);
             ExecuteToolTraversabilityNode execNode = nodeObj.AddComponent<ExecuteToolTraversabilityNode>();
             execNode.card = card;
             execNode.toolUseTo = to;
             execNode.reachedDistance = waypointReachedDistance;
-            children.Add(execNode);
+            legNode.children.Add(execNode);
             prev = to;
             if (state != null)
             {
@@ -228,16 +365,16 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             }
         }
 
-        return children.Count > countBefore;
+        return legNode.children.Count > countBefore;
     }
 
-    void AddToolSegment(MultiModalSegment seg)
+    void AddToolSegment(TravelLegSequenceNode legNode, MultiModalSegment seg)
     {
-        if (seg.card == null)
+        if (seg.card == null || legNode == null)
             return;
 
-        GameObject toolNodeObj = new GameObject($"ToolUse_{children.Count}");
-        toolNodeObj.transform.SetParent(transform, worldPositionStays: false);
+        GameObject toolNodeObj = new GameObject($"ToolUse_{legNode.children.Count}");
+        toolNodeObj.transform.SetParent(legNode.transform, worldPositionStays: false);
         ExecuteToolTraversabilityNode toolNode = toolNodeObj.AddComponent<ExecuteToolTraversabilityNode>();
         toolNode.card = seg.card;
         if (seg.tools != null && seg.tools.Count > 0)
@@ -251,6 +388,6 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
         else if (seg.segmentEnd.sqrMagnitude > 1e-6f)
             toolNode.toolUseTo = seg.segmentEnd;
         toolNode.reachedDistance = waypointReachedDistance;
-        children.Add(toolNode);
+        legNode.children.Add(toolNode);
     }
 }

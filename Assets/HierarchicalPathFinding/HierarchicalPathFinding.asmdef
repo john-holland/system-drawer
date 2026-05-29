@@ -1,7 +1,9 @@
 {
   "name": "HierarchicalPathFinding",
   "rootNamespace": "",
-  "references": [],
+    "references": [
+        "SdfMax"
+    ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

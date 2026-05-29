@@ -1,0 +1,19 @@
+{
+    "name": "SdfMax.Editor",
+    "rootNamespace": "SdfMax.Editor",
+    "references": [
+        "SdfMax",
+        "HierarchicalPathFinding"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

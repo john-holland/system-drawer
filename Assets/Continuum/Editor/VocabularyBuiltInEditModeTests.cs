@@ -93,4 +93,20 @@ public class VocabularyBuiltInEditModeTests
         Assert.IsTrue(ok);
         Assert.AreEqual("lang-en-1", id);
     }
+
+    [Test]
+    public void BuiltInSynonyms_MultiWord_FirstAndThirdPerson_MapToCanonicalLemma()
+    {
+        Assert.AreEqual("first-person", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "first", "person" }));
+        Assert.AreEqual("third-person", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "Third", "Person" }));
+    }
+
+    [Test]
+    public void VocabularyBuiltInRegistry_Includes_PlayerPerspectiveLemmas()
+    {
+        string fp = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "first-person");
+        string tp = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "third-person");
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(fp));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(tp));
+    }
 }

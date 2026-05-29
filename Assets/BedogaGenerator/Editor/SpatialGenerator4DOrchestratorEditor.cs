@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEditor;
 using Locomotion.Narrative.EditorTools;
+using SpatialVolumes;
+using SdfMax.Editor;
 
 [CustomEditor(typeof(SpatialGenerator4DOrchestrator))]
 public class SpatialGenerator4DOrchestratorEditor : Editor
@@ -182,6 +184,11 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
                 if (g is SpatialGenerator4D s4) { sg4ForInspector = s4; break; }
         if (sg4ForInspector != null && GUILayout.Button("Open Prompt Tree Inspector", GUILayout.Height(22)))
             PromptTreeInspectorWindow.ShowWindow(sg4ForInspector);
+        SpatialVolumeProvider volProvider = null;
+        if (orch.volumeProviders != null && orch.volumeProviders.Count > 0)
+            volProvider = orch.volumeProviders[0];
+        if (GUILayout.Button("Open SDF Max Editor", GUILayout.Height(22)))
+            SdfMaxCompositionEditorWindow.ShowWindow(volProvider);
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();

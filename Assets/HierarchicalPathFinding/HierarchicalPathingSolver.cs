@@ -35,6 +35,10 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     [Header("Discovery")]
     public bool autoFindMarkers = true;
 
+    [Header("Spatial volume providers (SDF max / mesh convex tree)")]
+    [Tooltip("Optional SDF max or mesh convex tree volumes treated as off-limits during grid rebuild.")]
+    public List<SpatialVolumes.SpatialVolumeProvider> volumeProviders = new List<SpatialVolumes.SpatialVolumeProvider>();
+
     [Header("Pathing Mode")]
     [Tooltip("Walk = ground, slope, terrain. Fly = no slope blocking, Y interpolated between start and goal along path. Drive = vehicle path stub (same grid occupancy as Walk).")]
     public PathingMode pathingMode = PathingMode.Walk;
@@ -112,6 +116,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         DoNotPathRegion.Changed += HandleDoNotPathChanged;
         PhysicsPathingZone.Changed += HandlePhysicsZoneChanged;
         PhysicalMediumVolume.Changed += HandlePhysicalMediumVolumeChanged;
+        SpatialVolumes.SpatialVolumeProvider.Changed += HandleSpatialVolumeProviderChanged;
 
         if (autoFindMarkers)
         {
@@ -128,6 +133,13 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         DoNotPathRegion.Changed -= HandleDoNotPathChanged;
         PhysicsPathingZone.Changed -= HandlePhysicsZoneChanged;
         PhysicalMediumVolume.Changed -= HandlePhysicalMediumVolumeChanged;
+        SpatialVolumes.SpatialVolumeProvider.Changed -= HandleSpatialVolumeProviderChanged;
+    }
+
+    void HandleSpatialVolumeProviderChanged(SpatialVolumes.SpatialVolumeProvider provider)
+    {
+        if (provider != null && provider.SyncSDFTreeShape)
+            MarkDirty();
     }
 
     private void HandleDoNotPathChanged(DoNotPathRegion _)
@@ -305,6 +317,26 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
 
         if (DoNotPathContains(center))
             return true;
+
+        if (EvaluateSpatialVolumesBlocked(center))
+            return true;
+
+        return false;
+    }
+
+    bool EvaluateSpatialVolumesBlocked(Vector3 center)
+    {
+        if (volumeProviders == null || volumeProviders.Count == 0)
+            return false;
+
+        for (int i = 0; i < volumeProviders.Count; i++)
+        {
+            var provider = volumeProviders[i];
+            if (provider == null || !provider.isActiveAndEnabled)
+                continue;
+            if (provider.TrySample(center, 0f, out _, out bool inside) && inside)
+                return true;
+        }
 
         return false;
     }

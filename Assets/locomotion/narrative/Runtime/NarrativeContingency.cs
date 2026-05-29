@@ -138,6 +138,15 @@ namespace Locomotion.Narrative
         public static System.Func<float, float, float, bool> IsEventActiveAtImpl;
         /// <summary>When set (e.g. by NarrativeVolumeGrid4D), returns occupancy and causal depth at (position, t).</summary>
         public static System.Func<Vector3, float, (float occupancy, float causalDepth)> Sample4DImpl;
+        /// <summary>When set, returns true if (position, t) is inside any registered spatial volume provider (SDF max / mesh tree).</summary>
+        public static System.Func<Vector3, float, bool> SampleSpatialVolumeImpl;
+
+        public static bool IsInsideSpatialVolume(Vector3 position, float t)
+        {
+            if (SampleSpatialVolumeImpl != null)
+                return SampleSpatialVolumeImpl(position, t);
+            return false;
+        }
 
         public static bool IsInsideNarrativeVolume(Vector3 position, float t)
         {

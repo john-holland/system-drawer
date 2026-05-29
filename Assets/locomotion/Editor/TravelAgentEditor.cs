@@ -27,7 +27,7 @@ public class TravelAgentEditor : Editor
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Multibody", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "When Multibody travel is enabled on the agent, rebuild runs TravelMultibodyPathAdjuster against other registered TravelAgents and dynamic colliders in the near-path bounds (see dynamic actor mask).",
+            "When Multibody travel is enabled, rebuild runs TravelMultibodyPathAdjuster against peers (optionally limited to the same multibodyFormationGroupId) and dynamic colliders. With a formation asset + non-empty group id, waypoints are offset first (wrap rows default Back).",
             MessageType.None);
 
         if (GUILayout.Button("Open Pathing Editor"))

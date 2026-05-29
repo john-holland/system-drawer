@@ -9,7 +9,9 @@ public static class BuiltInSynonyms
     private static readonly Dictionary<string, string> AliasToCanonical =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "nil", "null" }
+            { "nil", "null" },
+            { "first person", "first-person" },
+            { "third person", "third-person" }
         };
 
     /// <summary>Returns canonical lemma for lookup, or original token if none.</summary>
@@ -27,5 +29,19 @@ public static class BuiltInSynonyms
         for (int i = 0; i < tokens.Length; i++)
             tokens[i] = CanonicalizeToken(tokens[i]);
         return string.Join(" ", tokens);
+    }
+
+    /// <summary>
+    /// If the joined tokens match a known multi-word alias (e.g. <c>first person</c>), returns the canonical lemma (e.g. <c>first-person</c>).
+    /// Otherwise returns null.
+    /// </summary>
+    public static string TryCanonicalizeMultiWordPhrase(string[] tokens)
+    {
+        if (tokens == null || tokens.Length < 2)
+            return null;
+        string joined = string.Join(" ", tokens).Trim();
+        if (string.IsNullOrEmpty(joined))
+            return null;
+        return AliasToCanonical.TryGetValue(joined.ToLowerInvariant(), out string c) ? c : null;
     }
 }
