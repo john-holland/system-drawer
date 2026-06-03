@@ -4,7 +4,7 @@ using Planetary.Composition;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Planetary.Weather
+namespace Planetary.WeatherStreaming
 {
     [Serializable]
     public struct WeatherTilePayload

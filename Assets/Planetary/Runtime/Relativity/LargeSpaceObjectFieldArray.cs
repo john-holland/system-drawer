@@ -34,7 +34,7 @@ namespace Planetary
             {
                 Transform = t,
                 Mass = mass,
-                Velocity = rb != null ? rb.velocity : Vector3.zero
+                Velocity = rb != null ? rb.linearVelocity : Vector3.zero
             });
         }
 

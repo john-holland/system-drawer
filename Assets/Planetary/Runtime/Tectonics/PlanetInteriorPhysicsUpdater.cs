@@ -26,7 +26,7 @@ namespace Planetary.Tectonics
             }
             jobProgress = 0.6f;
             var estimator = new AtmosphereCompositionEstimator();
-            var atmos = estimator.Estimate(planet, FindFirstObjectByType<Weather.WeatherPhysicsManifold>());
+            var atmos = estimator.Estimate(planet, FindFirstObjectByType<global::Weather.WeatherPhysicsManifold>());
             if (compositionProfile != null)
             {
                 planet.composition = PlanetaryCompositionBaker.Bake(

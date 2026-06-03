@@ -4,8 +4,7 @@
     "references": [
         "SdfMax",
         "HierarchicalPathFinding",
-        "Weather.Runtime",
-        "Locomotion.Narrative.Runtime"
+        "Weather.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

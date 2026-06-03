@@ -11,7 +11,7 @@ namespace Planetary
     /// <summary>
     /// Planet host: planar sampling, SDF composition, chunked mesh render, LOD overlay.
     /// </summary>
-    public sealed class PlanetBody : MonoBehaviour, Weather.IExternalHeightProvider
+    public sealed class PlanetBody : MonoBehaviour, global::Weather.IExternalHeightProvider
     {
         public PlanetaryPlanarBase planarBase;
         public SdfMaxSolverProfile solverProfile;
@@ -77,7 +77,7 @@ namespace Planetary
             _regression.Engine.SetRules(elementalRules);
             var plates = _regression.RegressPlatesFromSurface(this, 8, elementalRules);
             var estimator = new AtmosphereCompositionEstimator();
-            var atmos = estimator.Estimate(this, FindFirstObjectByType<Weather.WeatherPhysicsManifold>());
+            var atmos = estimator.Estimate(this, FindFirstObjectByType<global::Weather.WeatherPhysicsManifold>());
             if (compositionProfile != null)
                 composition = PlanetaryCompositionBaker.Bake(this, planarBase, solverProfile, compositionProfile, atmos, plates);
             else

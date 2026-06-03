@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using Planetary;
 using UnityEngine;
+using Weather;
 
 namespace Locomotion.Spaceship
 {
     public sealed class RadiationAwarePathingSolver
     {
-        public PhysicalManifold radiationManifold;
+        public PhysicsManifold radiationManifold;
         [Range(0f, 1f)] public float radiationVsTimeAlpha = 0.5f;
         public bool ignoreRadiation;
         public bool ignoreTime;

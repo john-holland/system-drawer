@@ -26,11 +26,11 @@ namespace SdfMax
         public Bounds ComputeWorldBounds()
         {
             if (_asset == null || _asset.nodes == null || _asset.nodes.Count == 0)
-                return new Bounds(_localToWorld.GetColumn(3), Vector3.one);
+                return new Bounds(_localToWorld.MultiplyPoint3x4(Vector3.zero), Vector3.one);
 
             int root = _asset.ResolveRootIndex();
             if (root < 0)
-                return new Bounds(_localToWorld.GetColumn(3), Vector3.one);
+                return new Bounds(_localToWorld.MultiplyPoint3x4(Vector3.zero), Vector3.one);
 
             Bounds local = EstimateNodeBounds(root);
             Vector3 worldCenter = _localToWorld.MultiplyPoint3x4(local.center);
@@ -215,14 +215,16 @@ namespace SdfMax
                 return 1000f;
             float h = _planar.SampleStampHeight(fi, uv);
             float r = Mathf.Max(0.1f, node.stampFootprintMeters);
-            float dist = Vector3.Distance(world, _localToWorld.GetColumn(3));
+            Vector3 origin = _localToWorld.MultiplyPoint3x4(Vector3.zero);
+            float dist = Vector3.Distance(world, origin);
             return dist - (r + h * node.weight);
         }
 
         float EvalLatLonShell(SdfMaxNode node, Vector3 world, float t)
         {
             float radius = node.sphereRadius > 0f ? node.sphereRadius : node.radius;
-            float dist = (world - _localToWorld.GetColumn(3)).magnitude;
+            Vector3 origin = _localToWorld.MultiplyPoint3x4(Vector3.zero);
+            float dist = Vector3.Distance(world, origin);
             float shell = dist - radius;
             if (_planar != null && _planar.TryWorldToLatLon(world, out float lat, out float lon))
             {

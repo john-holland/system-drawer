@@ -1,12 +1,10 @@
 using System.Collections.Generic;
-using Locomotion.Narrative;
 using UnityEngine;
 
 namespace Planetary
 {
     public sealed class PhysicalManifoldRelativitySolver : MonoBehaviour
     {
-        public NarrativeScheduler narrativeScheduler;
         public float identityEpsilon = 0.01f;
         public AngularGradientSearchTargetCachingService angularCache = new AngularGradientSearchTargetCachingService();
 
@@ -33,12 +31,7 @@ namespace Planetary
             });
         }
 
-        public float GetNarrativeTime()
-        {
-            if (narrativeScheduler == null || narrativeScheduler.calendar == null)
-                return 0f;
-            return Time.time;
-        }
+        public float GetNarrativeTime() => Time.time;
 
         void Update()
         {
@@ -51,7 +44,7 @@ namespace Planetary
                 float speed = 0f;
                 var rb = e.Transform.GetComponent<Rigidbody>();
                 if (rb != null)
-                    speed = rb.velocity.magnitude;
+                    speed = rb.linearVelocity.magnitude;
                 bool degrade = e.Mass < identityEpsilon || speed < identityEpsilon;
                 e.UseIdentity = degrade;
                 if (!degrade)

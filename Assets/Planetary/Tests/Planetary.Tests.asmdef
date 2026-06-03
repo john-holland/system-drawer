@@ -3,6 +3,8 @@
     "rootNamespace": "Planetary.Tests",
     "references": [
         "Planetary",
+        "SdfMax",
+        "Weather.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

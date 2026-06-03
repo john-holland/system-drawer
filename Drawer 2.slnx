@@ -3,6 +3,7 @@
   <Project Path="Weather.Runtime.csproj" />
   <Project Path="Locomotion.Editor.csproj" />
   <Project Path="SdfMax.Tests.csproj" />
+  <Project Path="Planetary.csproj" />
   <Project Path="BedogaGenerator.csproj" />
   <Project Path="SdfMax.csproj" />
   <Project Path="Generated.Editor.csproj" />
@@ -12,6 +13,7 @@
   <Project Path="SystemDrawer.MemorySwizzle.csproj" />
   <Project Path="Locomotion.Narrative.Inference.csproj" />
   <Project Path="Locomotion.Narrative.Runtime.csproj" />
+  <Project Path="Planetary.Tests.csproj" />
   <Project Path="Generated.Runtime.csproj" />
   <Project Path="Locomotion.Audio.csproj" />
   <Project Path="Locomotion.Narrative.Tests.csproj" />
@@ -24,6 +26,7 @@
   <Project Path="SystemDrawer.csproj" />
   <Project Path="SdfMax.Editor.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.Editor.csproj" />
+  <Project Path="Planetary.Editor.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />
   <Project Path="SystemDrawer.Editor.csproj" />

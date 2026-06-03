@@ -4,8 +4,7 @@
   "references": [
     "Weather.Runtime",
     "HierarchicalPathFinding",
-    "Locomotion.Audio",
-    "Planetary"
+    "Locomotion.Audio"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

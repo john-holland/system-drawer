@@ -15,7 +15,7 @@ namespace Planetary.Tectonics
     public sealed class VolcanoStressSolver : MonoBehaviour
     {
         public LavaPhysicsManifold lava;
-        public float maxVolcanoesPerFrame = 4;
+        public int maxVolcanoesPerFrame = 4;
         readonly List<VolcanoSite> _sites = new List<VolcanoSite>();
 
         public IReadOnlyList<VolcanoSite> Sites => _sites;

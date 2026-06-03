@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Planetary
+namespace Planetary.Voxel
 {
     public enum LoopEdgePermeability
     {

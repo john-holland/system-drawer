@@ -107,5 +107,10 @@ namespace Weather
             // Would query spatial tree here
             return temperature;
         }
+
+        /// <summary>
+        /// Radiation dose rate along a path segment; override in planet gameplay manifolds.
+        /// </summary>
+        public virtual float SampleRadiation(Vector3 position) => 0f;
     }
 }

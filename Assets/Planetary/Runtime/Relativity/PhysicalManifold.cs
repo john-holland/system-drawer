@@ -11,7 +11,7 @@ namespace Planetary
         public float lensingStrength;
         public float fastMoverHazard;
 
-        public float SampleRadiation(Vector3 world) => radiationLevel;
+        public override float SampleRadiation(Vector3 world) => radiationLevel;
         public float SampleLensing(Vector3 world) => lensingStrength;
     }
 }

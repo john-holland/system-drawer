@@ -9,7 +9,6 @@ namespace Planetary.TimeTravel
     public sealed class PlanetaryWeatherTimeTravelSystem : MonoBehaviour
     {
         public PlanetBody planet;
-        public Locomotion.Narrative.NarrativeScheduler narrativeScheduler;
         readonly Stack<WeatherTimeTravelFrame> _undo = new Stack<WeatherTimeTravelFrame>();
         readonly Stack<WeatherTimeTravelFrame> _redo = new Stack<WeatherTimeTravelFrame>();
         string CacheDir => Path.Combine(Application.persistentDataPath, "PlanetWeatherCache");
