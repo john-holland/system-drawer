@@ -6,7 +6,8 @@
         "Locomotion.Narrative.Runtime",
         "Locomotion.Runtime",
         "HierarchicalPathFinding",
-        "SystemDrawer"
+        "SystemDrawer",
+        "Planetary"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

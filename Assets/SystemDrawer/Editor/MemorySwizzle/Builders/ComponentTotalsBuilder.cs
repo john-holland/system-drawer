@@ -64,7 +64,7 @@ public sealed class ComponentTotalsBuilder : IMemorySwizzleTreeBuilder
 
     static MemorySwizzleNode Empty(MemorySwizzleNode root)
     {
-        root.Children.Add(MemorySwizzleNode.Create("empty", "Capture a snapshot first.", 1, MemorySwizzleKind.Other, Mode));
+        root.Children.Add(MemorySwizzleNode.Create("empty", "Capture a snapshot first.", 1, MemorySwizzleKind.Other, MemorySwizzleViewMode.ComponentTotals));
         root.ComputeTotalBytes();
         return root;
     }

@@ -1,0 +1,19 @@
+{
+    "name": "Planetary",
+    "rootNamespace": "Planetary",
+    "references": [
+        "SdfMax",
+        "HierarchicalPathFinding",
+        "Weather.Runtime",
+        "Locomotion.Narrative.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

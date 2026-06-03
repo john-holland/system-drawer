@@ -4,6 +4,7 @@
     "references": [
         "SdfMax",
         "HierarchicalPathFinding",
+        "Planetary",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

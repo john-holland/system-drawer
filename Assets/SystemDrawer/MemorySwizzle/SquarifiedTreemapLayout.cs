@@ -103,8 +103,11 @@ public static class SquarifiedTreemapLayout
             float wSum = 0f;
             for (int k = 0; k < count; k++)
             {
-                float w = area.width * (items[start + k].Weight / (float)rowWeight);
-                items[start + k].Rect = new Rect(x + wSum, area.y, w, rowH);
+                int idx = start + k;
+                float w = area.width * (items[idx].Weight / (float)rowWeight);
+                var item = items[idx];
+                item.Rect = new Rect(x + wSum, area.y, w, rowH);
+                items[idx] = item;
                 wSum += w;
             }
             remainder = new Rect(area.x, area.y + rowH, area.width, area.height - rowH);
@@ -116,8 +119,11 @@ public static class SquarifiedTreemapLayout
             float hSum = 0f;
             for (int k = 0; k < count; k++)
             {
-                float h = area.height * (items[start + k].Weight / (float)rowWeight);
-                items[start + k].Rect = new Rect(area.x, y + hSum, rowW, h);
+                int idx = start + k;
+                float h = area.height * (items[idx].Weight / (float)rowWeight);
+                var item = items[idx];
+                item.Rect = new Rect(area.x, y + hSum, rowW, h);
+                items[idx] = item;
                 hSum += h;
             }
             remainder = new Rect(area.x + rowW, area.y, area.width - rowW, area.height);

@@ -11,6 +11,7 @@ namespace Weather
         Water,
         Steam,
         Smoke,
+        Plasma,
         Custom
     }
 

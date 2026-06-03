@@ -12,7 +12,9 @@ namespace Weather
         Water,
         Rain,
         Cloud,
-        Wind
+        Wind,
+        Lava,
+        MagmaPlume
     }
 
     /// <summary>
@@ -26,6 +28,9 @@ namespace Weather
         public float temperature; // °C
         public float density; // kg/m³
         public WeatherMode mode;
+        public Vector3 lavaVelocity;
+        public float gasPressure;
+        public float surfaceTensionCoeff;
     }
 
     /// <summary>

@@ -40,5 +40,6 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("System Tests", "Ragdoll Cohesion", "Window/System Drawer/System Tests/Ragdoll Cohesion"),
         new Entry("Continuum", "Continuum Library", "Window/Continuum/Continuum Library"),
         new Entry("Diagnostics", "Memory Swizzle View", "Window/System Drawer/Diagnostics/Memory Swizzle View"),
+        new Entry("Planet", "Import Planar Scan", "Window/System Drawer/Planet/Import Planar Scan"),
     };
 }

@@ -22,5 +22,17 @@ namespace SdfMax
         public Color gizmoColor = new Color(0.2f, 0.7f, 1f, 0.35f);
         public int childIndexA = -1;
         public int childIndexB = -1;
+
+        [Header("Noise / planet")]
+        public int noiseSeed;
+        public float noiseFrequency = 1f;
+        public int noiseOctaves = 4;
+        public float noisePersistence = 0.5f;
+        public float noiseLacunarity = 2f;
+        public int mandelbrotIterations = 32;
+        public float mandelbrotEscape = 4f;
+        public int planarFeatureIndex = -1;
+        public float sphereRadius = 1f;
+        public float stampFootprintMeters = 100f;
     }
 }

@@ -240,16 +240,17 @@ public class MemorySwizzleViewWindow : EditorWindow
 
     void RebuildTree()
     {
+        var recordsForBuild = _mode == MemorySwizzleViewMode.UnitySystems
+            ? new List<MemorySwizzleObjectRecord>()
+            : _records;
+
         var ctx = new MemorySwizzleBuildContext
         {
             Mode = _mode,
-            Records = _records,
+            Records = recordsForBuild,
             RegisteredEntitiesOnly = _registeredEntitiesOnly,
             InstanceIdToRegistryKey = MemorySwizzleRegistryLookup.BuildInstanceIdToKeyMap()
         };
-
-        if (_mode == MemorySwizzleViewMode.UnitySystems)
-            _records = System.Array.Empty<MemorySwizzleObjectRecord>();
 
         var builder = MemorySwizzleTreeBuilderRegistry.Get(_mode);
         _root = builder.Build(ctx);

@@ -191,6 +191,10 @@ When adding a new `.md` under `Assets/` or `Scripts/`, append it here (and to si
 
 - [Assets/SystemDrawer/docs/MemorySwizzleView.md](Assets/SystemDrawer/docs/MemorySwizzleView.md) — Memory Swizzle treemap profiler (WinDirStat-style)
 
+### Planetary
+
+- [Assets/Planetary/docs/PlanetaryArchitecture.md](Assets/Planetary/docs/PlanetaryArchitecture.md) — Planet meshes, SDF planar features, relativity pathing, spaceship integration
+
 ### USC build (Unity)
 
 - [Assets/Documentation/USC_BUILD_MODES.md](Assets/Documentation/USC_BUILD_MODES.md) — USC build modes

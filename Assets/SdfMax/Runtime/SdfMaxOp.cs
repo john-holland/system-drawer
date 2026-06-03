@@ -19,6 +19,11 @@ namespace SdfMax
         Box = 1,
         Capsule = 2,
         Plane = 3,
-        MeshBounds = 4
+        MeshBounds = 4,
+        FractalNoise = 5,
+        MandelbrotDisplacement = 6,
+        DisplacedSphere = 7,
+        PlanarStamp = 8,
+        LatLonShell = 9
     }
 }

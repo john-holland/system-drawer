@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a39dcee74864d47a5cc2f8ff9b4c0c, type: 3}
+  m_Name: SdfMaxComposition2
+  m_EditorClassIdentifier: SdfMax::SdfMax.SdfMaxCompositionAsset
+  rootNodeIndex: 2
+  nodes:
+  - op: 0
+    primitiveType: 4
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 1, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+  - op: 0
+    primitiveType: 1
+    localPosition: {x: 0, y: 0.55, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.225, y: 0.45, z: 0.225}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+  - op: 8
+    primitiveType: 4
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 0
+    childIndexB: 1

@@ -32,5 +32,9 @@ namespace SdfMax
         public bool recalculateNormals = true;
         public bool generateColliderMesh = true;
         public bool convexCollider;
+
+        [Header("Planar / planet")]
+        public bool enablePlanarContext = true;
+        public NoiseLibrarySettings noiseDefaults = new NoiseLibrarySettings();
     }
 }
