@@ -187,6 +187,10 @@ When adding a new `.md` under `Assets/` or `Scripts/`, append it here (and to si
 - [Assets/Weather/weather.md](Assets/Weather/weather.md) — Weather system overview
 - [Assets/Weather/cloud_lighting_integration.md](Assets/Weather/cloud_lighting_integration.md) — Cloud lighting integration
 
+### System Drawer
+
+- [Assets/SystemDrawer/docs/MemorySwizzleView.md](Assets/SystemDrawer/docs/MemorySwizzleView.md) — Memory Swizzle treemap profiler (WinDirStat-style)
+
 ### USC build (Unity)
 
 - [Assets/Documentation/USC_BUILD_MODES.md](Assets/Documentation/USC_BUILD_MODES.md) — USC build modes

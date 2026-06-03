@@ -1,0 +1,23 @@
+{
+    "name": "SystemDrawer.MemorySwizzle.Editor",
+    "rootNamespace": "",
+    "references": [
+        "SystemDrawer.MemorySwizzle",
+        "SystemDrawer",
+        "Locomotion.Runtime",
+        "Unity.MemoryProfiler",
+        "Unity.MemoryProfiler.Editor",
+        "Unity.EditorCoroutines.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
