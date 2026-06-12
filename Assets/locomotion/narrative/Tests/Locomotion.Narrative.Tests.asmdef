@@ -2,7 +2,9 @@
     "name": "Locomotion.Narrative.Tests",
     "rootNamespace": "",
     "references": [
+        "BedogaGenerator",
         "Continuum.Runtime",
+        "HierarchicalPathFinding",
         "Locomotion.Narrative.Inference",
         "Locomotion.Narrative.Runtime",
         "Locomotion.Narrative.Serialization",

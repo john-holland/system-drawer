@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cc3528e9c843cb4c9ebcdd490488bc7, type: 3}
+  m_Name: PlanetaryPlanarBase
+  m_EditorClassIdentifier: Planetary::Planetary.PlanetaryPlanarBase
+  featureStack: {fileID: 11400000, guid: 3d28541fdf353714eb18f54ddda6f581, type: 2}
+  authoredHeightmap: {fileID: 2800000, guid: 3a3c0acc807e9264ca0b32602a928a9a, type: 3}
+  proceduralNoise:
+    seed: 1
+    frequency: 0.01
+    octaves: 4
+    persistence: 0.5
+    lacunarity: 2
+    amplitude: 1
+  googleMaskPreview: {fileID: 2800000, guid: f9c6074c5a78e71448f9efd3013cadda, type: 3}

@@ -18,7 +18,7 @@ namespace Planetary
         public SdfMaxCompositionAsset composition;
         public PlanetaryCompositionProfile compositionProfile;
         public PlanetarySdfLodProfile sdfLodProfile;
-        public PlanetaryHorizonLodSettings horizonLodSettings;
+        public HorizonLodSettings horizonLodSettings;
         public ElementalRule[] elementalRules = System.Array.Empty<ElementalRule>();
         public PlanetFeatureFlags featureFlags = PlanetFeatureFlags.StablePoles | PlanetFeatureFlags.MagneticPoles;
         public float planetRadius = 1000f;

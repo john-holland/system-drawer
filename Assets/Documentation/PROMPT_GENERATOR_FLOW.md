@@ -79,6 +79,17 @@ flowchart LR
 - Stylesheet maps `nodeKey` (or `SGBehaviorTreeNode.skinKey` / `node.name`) → prefab overrides.
 - ORM keys (e.g. "ball") must be bridged to stylesheet `nodeKey` or node names for prefab placement.
 
+### 6. With-expr layout and road placement
+
+After **NarrativeLSTMPromptInterpreter.Interpret()**, the active prompt text is also parsed by **WithLayoutExprParser** (s-expression lists or plain English):
+
+- Example: `a world with roads, and buildings` → **LayoutPlacementFrame** tree.
+- **SpatialRelationResolver** maps frames to **LayoutPlacementInstruction** (anchors, Bounds4 hints, path-solve flags).
+- **LayoutPlacementBroadcast** notifies **SpatialGenerator** (`layoutPlacementRoot`) and **CausalityPlacementCoordinator** (queued flush).
+- Omitted prepositions → **LayoutPlacementPolicy** + `PlaceSearchMode.Random` for non-overlapping slots.
+- Road entities delegate to **IRoadLayoutPlacer** / **RoadLayoutPlacementSolver** (hierarchical path solve → **RoadSpline3D** control points → **RoadMeshBaker**).
+- Optional RTS gating: **PathReplacementGate** blocks path replacement and layout until causality depth or BT subtree success (**CausalityPlacementCoordinator** flushes on **AppendCausalityHistorySnapshot**).
+
 ---
 
 ## Prompt Tree Inspector
@@ -105,6 +116,10 @@ The **Prompt Tree Inspector** (Window → Locomotion → Narrative → Prompt Tr
 |------|------|
 | Prompt asset | [NarrativePromptAsset.cs](../locomotion/narrative/Runtime/NarrativePromptAsset.cs) |
 | LSTM interpreter | [NarrativeLSTMPromptInterpreter.cs](../locomotion/narrative/Inference/NarrativeLSTMPromptInterpreter.cs) |
+| With-expr parser | [WithLayoutExprParser.cs](../locomotion/narrative/Inference/WithLayoutExprParser.cs) |
+| Spatial relation resolver | [SpatialRelationResolver.cs](../locomotion/narrative/Inference/SpatialRelationResolver.cs) |
+| Road layout solver | [RoadLayoutPlacementSolver.cs](../Roads/Runtime/Placement/RoadLayoutPlacementSolver.cs) |
+| Path replacement gate | [PathReplacementGate.cs](../HierarchicalPathFinding/PathReplacementGate.cs) |
 | ORM fill | [OrmFillService.cs](../locomotion/narrative/Inference/OrmFillService.cs) |
 | Scene registry | [SceneObjectORM.cs](../locomotion/SceneObjectORM.cs) |
 | 4D placer | [Narrative4DPlacer.cs](../BedogaGenerator/Narrative4DPlacer.cs) |

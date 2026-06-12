@@ -21,7 +21,7 @@ namespace Planetary.Sources
                 return 0f;
             float u = (lonDeg + 180f) / 360f;
             float v = (latDeg + 90f) / 180f;
-            return _height.GetPixelBilinear(u, v).r * _heightScale;
+            return TextureSamplingUtility.SampleRedBilinear(_height, u, v) * _heightScale;
         }
 
         public float SampleSlope(float latDeg, float lonDeg)

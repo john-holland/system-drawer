@@ -51,6 +51,14 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             pathfindingSolver = FindAnyObjectByType<HierarchicalPathingSolver>();
     }
 
+    public override void OnEnter(BehaviorTree tree)
+    {
+        bool btOk = tree != null && tree.lastStatus == BehaviorTreeStatus.Success;
+        if (!PathReplacementGate.CanReplacePath(btOk))
+            return;
+        pathBuilt = false;
+    }
+
     public override BehaviorTreeStatus Execute(BehaviorTree tree)
     {
         if (pathfindingSolver == null)

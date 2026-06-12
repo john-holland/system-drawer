@@ -66,10 +66,25 @@ namespace Planetary.TimeTravel
 
         void ApplyFrame(WeatherTimeTravelFrame frame)
         {
-            if (frame?.atmosphereSnapshot == null || planet == null)
+            if (frame == null || planet == null)
                 return;
-            // Composition rebake hook: PlanetBody uses snapshot on next interior update
-            //todo: implement
+
+            // Atmosphere snapshot consumed on next PlanetBody interior update when wired.
+            ApplyRoadWearSlice(frame.roadWearSnapshot);
+        }
+
+        void ApplyRoadWearSlice(RoadWearSnapshotDto wear)
+        {
+            if (wear == null)
+                return;
+            var integrations = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            foreach (var mb in integrations)
+            {
+                if (mb == null || mb.GetType().Name != "RoadWeatherIntegration")
+                    continue;
+                mb.SendMessage("RestoreWearFromTimeTravelFrame", new WeatherTimeTravelFrame { roadWearSnapshot = wear }, SendMessageOptions.DontRequireReceiver);
+                break;
+            }
         }
 
         void SaveFrameToDisk(WeatherTimeTravelFrame frame, int index)

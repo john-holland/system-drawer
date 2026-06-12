@@ -23,6 +23,17 @@ namespace Planetary.Rendering
         {
             if (ranges == null || ranges.Length == 0)
                 return default;
+
+            if (cell.roadSurfaceType != RoadSurfaceType.None)
+            {
+                for (int i = 0; i < ranges.Length; i++)
+                {
+                    var r = ranges[i];
+                    if (!string.IsNullOrEmpty(r.shaderKeyword) && r.shaderKeyword.Contains("ROAD"))
+                        return r;
+                }
+            }
+
             for (int i = 0; i < ranges.Length; i++)
             {
                 var r = ranges[i];

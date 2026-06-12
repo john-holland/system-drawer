@@ -8,7 +8,7 @@ namespace Planetary.Rendering
     {
         public Material lodMaterial;
         public PlanetarySdfLodProfile profile;
-        public PlanetaryHorizonLodSettings horizonSettings;
+        public HorizonLodSettings horizonSettings;
 
         readonly PlanetarySdfLodBaker _baker = new PlanetarySdfLodBaker();
         PlanetarySdfLodController _controller;
@@ -37,9 +37,13 @@ namespace Planetary.Rendering
 
         public void Rebake()
         {
+            if (_filter == null)
+                _filter = GetComponent<MeshFilter>();
+            if (_renderer == null)
+                _renderer = GetComponent<MeshRenderer>();
             if (_body == null)
                 _body = GetComponentInParent<PlanetBody>();
-            if (_body == null)
+            if (_body == null || _filter == null)
                 return;
             _baker.RebuildTiers(_body, profile);
             if (_baker.TierMeshes.Count > 0)

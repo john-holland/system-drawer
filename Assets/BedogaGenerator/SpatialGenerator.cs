@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Text;
+using Locomotion.Narrative;
 
 // Main component for procedural spatial generation
 // Manages generation lifecycle, coordinates with behavior tree and spatial trees
@@ -39,6 +40,12 @@ public class SpatialGenerator : SpatialGeneratorBase
     [Header("Empty Space Markers")]
     public bool useEmptySpaceMarkers = true;
     public List<SGBehaviorTreeEmptySpace> emptySpaceMarkers = new List<SGBehaviorTreeEmptySpace>();
+
+    [Header("Layout placement")]
+    [Tooltip("Optional. Parsed with-expr frames from prompt interpreter.")]
+    public LayoutPlacementFrame layoutPlacementRoot;
+    [Tooltip("When true, path/scene replacement waits for causality/BT gate.")]
+    public bool requirePathReplacementGate = false;
 
     [Header("Debug")]
     [Tooltip("When enabled, log every FindAvailableSpaceForNode and ApplyAlignment (noisy in tests).")]
@@ -146,6 +153,22 @@ public class SpatialGenerator : SpatialGeneratorBase
         if (node == null) return null;
         if (prefabResolver != null) return prefabResolver.GetPrefabsForNode(node);
         return node.gameObjectPrefabs;
+    }
+
+    void OnEnable()
+    {
+        LayoutPlacementBroadcast.RootParsed += OnLayoutRootParsed;
+    }
+
+    void OnDisable()
+    {
+        LayoutPlacementBroadcast.RootParsed -= OnLayoutRootParsed;
+    }
+
+    void OnLayoutRootParsed(object root)
+    {
+        if (root is LayoutPlacementFrame frame)
+            layoutPlacementRoot = frame;
     }
     
     void Start()
@@ -308,6 +331,9 @@ public class SpatialGenerator : SpatialGeneratorBase
         {
             Initialize();
         }
+
+        if (requirePathReplacementGate && !PathReplacementGate.CanReplacePath())
+            return;
         
         // Clear existing generation
         ClearGeneration();
@@ -603,7 +629,9 @@ public class SpatialGenerator : SpatialGeneratorBase
         // If no parent or no space found in parent, use root solver with a global placement index so each placement (across all nodes) gets a different slot (avoids different nodes e.g. room vs spotlight getting the same slot).
         if (!result.HasValue)
         {
-            int placementIndex = nextRootPlacementIndex;
+            int placementIndex = node.placeSearchMode == SGBehaviorTreeNode.PlaceSearchMode.Random
+                ? LayoutPlacementPolicy.ResolvePlacementIndex(node, null, nextRootPlacementIndex, seed)
+                : nextRootPlacementIndex;
             if (mode == GenerationMode.TwoDimensional)
             {
                 SGQuadTreeSolver quadSolver = treeSolver as SGQuadTreeSolver;
@@ -873,6 +901,8 @@ public class SpatialGenerator : SpatialGeneratorBase
         
         // Apply alignment (this may change the position)
         ApplyAlignment(node, instance, worldBounds);
+
+        TryPlaceRoadLayoutOnInstance(instance, node, worldBounds);
         
         // Debug: Draw line from bounds center to final position
         #if UNITY_EDITOR
@@ -885,6 +915,69 @@ public class SpatialGenerator : SpatialGeneratorBase
         treeSolver.Insert(localPlacementBounds, node, instance);
     }
     
+    void TryPlaceRoadLayoutOnInstance(GameObject instance, SGBehaviorTreeNode node, Bounds worldBounds)
+    {
+        if (instance == null)
+            return;
+        var components = instance.GetComponentsInChildren<MonoBehaviour>(true);
+        IRoadLayoutPlacer placer = null;
+        foreach (var mb in components)
+        {
+            if (mb is IRoadLayoutPlacer p)
+            {
+                placer = p;
+                break;
+            }
+        }
+        if (placer == null)
+            return;
+
+        var instruction = BuildRoadInstructionForNode(node, worldBounds);
+        placer.TryPlaceRoad(instruction, out _);
+    }
+
+    LayoutPlacementInstruction BuildRoadInstructionForNode(SGBehaviorTreeNode node, Bounds worldBounds)
+    {
+        if (layoutPlacementRoot != null)
+        {
+            var ctx = new SpatialRelationResolver.ResolveContext
+            {
+                defaultCenter = worldBounds.center,
+                defaultSize = worldBounds.size,
+                randomSeed = seed
+            };
+            var instructions = SpatialRelationResolver.ResolveTree(layoutPlacementRoot, ctx);
+            string key = node.skinKey ?? node.name;
+            foreach (var inst in instructions)
+            {
+                if (inst.entities == null || inst.entities.Count == 0)
+                    continue;
+                foreach (var e in inst.entities)
+                {
+                    if (string.Equals(e, key, StringComparison.OrdinalIgnoreCase) ||
+                        key.IndexOf(e, StringComparison.OrdinalIgnoreCase) >= 0)
+                        return inst;
+                }
+            }
+            foreach (var inst in instructions)
+            {
+                if (inst.requiresPathSolve)
+                    return inst;
+            }
+        }
+
+        return new LayoutPlacementInstruction
+        {
+            entities = new List<string> { node.name },
+            startWorld = worldBounds.center - Vector3.forward * worldBounds.extents.z,
+            goalWorld = worldBounds.center + Vector3.forward * worldBounds.extents.z,
+            anchorCenter = worldBounds.center,
+            anchorSize = worldBounds.size,
+            requiresPathSolve = true,
+            useRandomSlot = true
+        };
+    }
+
     private void ApplyAlignment(SGBehaviorTreeNode node, GameObject obj, Bounds bounds)
     {
         Vector3 position = obj.transform.position;

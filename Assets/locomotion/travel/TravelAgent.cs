@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 
@@ -51,6 +52,11 @@ public class TravelAgent : MonoBehaviour
 
     [Tooltip("When true with static seed mode, location + asset slot enabled per authoring flow.")]
     public bool staticGeneratorSeedMode;
+
+    [Header("Road network (optional)")]
+    [Tooltip("Assign a GameObject with Roads.RoadNetwork (resolved at runtime to avoid asmdef cycle).")]
+    public MonoBehaviour roadNetwork;
+    public RoadTravelBinding roadTravelBinding;
 
     [Header("Preview navigation (editor)")]
     public TravelPreviewFitMode previewFitMode = TravelPreviewFitMode.EntirePath;
@@ -228,6 +234,22 @@ public class TravelAgent : MonoBehaviour
             cachedPlanBeforeMultibody = null;
             cachedPlan = working;
         }
+
+        EnrichPlanWithRoads(cachedPlan);
+    }
+
+    void EnrichPlanWithRoads(GenericMultiModalPathPlan plan)
+    {
+        if (plan == null || plan.IsEmpty)
+            return;
+        if (roadTravelBinding == null)
+            roadTravelBinding = GetComponent<RoadTravelBinding>();
+        if (roadTravelBinding != null)
+        {
+            if (roadTravelBinding.roadNetwork == null)
+                roadTravelBinding.roadNetwork = roadNetwork != null ? roadNetwork : RoadTravelBinding.FindRoadNetworkInstance();
+            roadTravelBinding.EnrichPlan(plan);
+        }
     }
 
     static string BuildHierarchyPath(Transform leaf, Transform root)
@@ -307,5 +329,73 @@ public class TravelAgent : MonoBehaviour
                     Gizmos.DrawSphere(cur.waypoints[0], 0.25f);
             }
         }
+    }
+}
+
+/// <summary>Binds road network to TravelAgent drive legs (runtime bridge; no Roads asmdef reference).</summary>
+[AddComponentMenu("Locomotion/Travel/Road Travel Binding")]
+public class RoadTravelBinding : MonoBehaviour
+{
+    public TravelAgent travelAgent;
+    public MonoBehaviour roadNetwork;
+    public float snapDistance = 8f;
+    public bool snapDriveLegs = true;
+
+    void Awake()
+    {
+        if (travelAgent == null)
+            travelAgent = GetComponent<TravelAgent>();
+        if (roadNetwork == null)
+            roadNetwork = FindRoadNetworkInstance();
+    }
+
+    public static MonoBehaviour FindRoadNetworkInstance()
+    {
+        foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        {
+            if (mb != null && mb.GetType().FullName == "Roads.RoadNetwork")
+                return mb;
+        }
+        return null;
+    }
+
+    public void EnrichPlan(GenericMultiModalPathPlan plan)
+    {
+        if (plan?.segments == null)
+            return;
+        foreach (var seg in plan.segments)
+            EnrichDriveSegment(seg);
+    }
+
+    public void EnrichDriveSegment(MultiModalSegment segment)
+    {
+        if (!snapDriveLegs || segment == null || segment.mode != TravelLegMode.Drive || roadNetwork == null)
+            return;
+
+        var networkType = roadNetwork.GetType();
+        MethodInfo snap = networkType.GetMethod("SnapWaypointsToRoad", BindingFlags.Instance | BindingFlags.Public);
+        if (snap != null && segment.waypoints != null)
+            segment.waypoints = snap.Invoke(roadNetwork, new object[] { segment.waypoints, snapDistance }) as List<Vector3>;
+
+        MethodInfo nearest = networkType.GetMethod("TryFindNearestSegment", BindingFlags.Instance | BindingFlags.Public);
+        if (nearest == null || segment.waypoints == null || segment.waypoints.Count == 0)
+            return;
+
+        object[] argsStart = { segment.waypoints[0], null, 0f, 0f };
+        if (!(bool)nearest.Invoke(roadNetwork, argsStart))
+            return;
+
+        var segObj = argsStart[1];
+        if (segObj != null)
+        {
+            var idField = segObj.GetType().GetField("roadSegmentId", BindingFlags.Instance | BindingFlags.Public);
+            if (idField != null)
+                segment.roadSegmentId = idField.GetValue(segObj) as string;
+        }
+        segment.distanceAlongStart = (float)argsStart[2];
+
+        object[] argsEnd = { segment.waypoints[segment.waypoints.Count - 1], null, 0f, 0f };
+        if ((bool)nearest.Invoke(roadNetwork, argsEnd))
+            segment.distanceAlongEnd = (float)argsEnd[2];
     }
 }

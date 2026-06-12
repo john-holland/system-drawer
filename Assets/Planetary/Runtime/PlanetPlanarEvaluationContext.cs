@@ -66,7 +66,8 @@ namespace Planetary
             var f = _planar.featureStack.features[featureIndex];
             if (f?.heightMap == null)
                 return 0f;
-            return f.heightMap.GetPixelBilinear(Mathf.Clamp01(uv.x), Mathf.Clamp01(uv.y)).r * f.strength * 100f;
+            return TextureSamplingUtility.SampleRedBilinear(
+                f.heightMap, Mathf.Clamp01(uv.x), Mathf.Clamp01(uv.y)) * f.strength * 100f;
         }
 
         public float SampleProceduralNoise(Vector2 uv, float narrativeTime, NoiseKind kind)

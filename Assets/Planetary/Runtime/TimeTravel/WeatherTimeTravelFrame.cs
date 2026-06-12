@@ -5,6 +5,16 @@ using UnityEngine;
 namespace Planetary.TimeTravel
 {
     [Serializable]
+    public sealed class RoadWearSnapshotDto
+    {
+        public float[] flowArcLengths;
+        public float[] flowIntensities;
+        public float[] flowLateral;
+        public bool debrisCached;
+        public string roadSegmentId;
+    }
+
+    [Serializable]
     public sealed class WeatherTimeTravelFrame
     {
         public float narrativeTime;
@@ -13,5 +23,6 @@ namespace Planetary.TimeTravel
         public float plateStressSnapshot;
         public AtmosphereRegressionProfile atmosphereSnapshot;
         public int altitudeBandMask;
+        public RoadWearSnapshotDto roadWearSnapshot;
     }
 }

@@ -34,6 +34,11 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     [Tooltip("SDF max / mesh convex tree volume providers merged into 4D grids when generators build.")]
     public List<SpatialVolumes.SpatialVolumeProvider> volumeProviders = new List<SpatialVolumes.SpatialVolumeProvider>();
 
+    [Tooltip("Optional road bake bridge (assign RoadGeneratorOrchestratorBridge).")]
+    public MonoBehaviour roadBakeBridge;
+    [Tooltip("Optional layout coordinator; flushes queued with-expr frames when causality gate opens.")]
+    public CausalityPlacementCoordinator layoutPlacementCoordinator;
+
     [SerializeField, HideInInspector]
     [System.Obsolete("Use spatialGenerators list; migrated automatically.")]
     private SpatialGenerator4D spatialGenerator4D;
@@ -172,6 +177,9 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
             pathfindingCoverage.enabled = showPathfindingCoverage;
         if (narrativeCalendar != null)
             narrativeCalendar.showCausalOverlay = showCausal;
+
+        if (roadBakeBridge != null)
+            roadBakeBridge.SendMessage("BakeAllRoads", SendMessageOptions.DontRequireReceiver);
     }
 
     /// <summary>Append one observation row (e.g. volume entry); prior rows are never modified.</summary>
@@ -181,6 +189,8 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
         if (causalityHistory == null)
             causalityHistory = new CausalityHistory2D();
         causalityHistory.AppendRow(leafBack, leafPause, leafForward, flags, narrativeT, position, eventType, namedFlags);
+        if (layoutPlacementCoordinator != null)
+            layoutPlacementCoordinator.OnCausalitySnapshotAppended(causalityHistory);
     }
 
     public void ClearCausalityHistory()
@@ -258,5 +268,104 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     void ContextClearCausalityHistoryOnly()
     {
         ClearCausalityHistory();
+    }
+}
+
+/// <summary>Queues layout placement until causality/BT gate opens.</summary>
+public class CausalityPlacementCoordinator : MonoBehaviour
+{
+    public SpatialGenerator4DOrchestrator orchestrator;
+    public bool requireBTCompleteBeforeLayout;
+    public int requiredCausalityDepth;
+
+    readonly Queue<LayoutPlacementFrame> _pendingFrames = new Queue<LayoutPlacementFrame>();
+    readonly List<LayoutPlacementInstruction> _resolvedInstructions = new List<LayoutPlacementInstruction>();
+
+    public IReadOnlyList<LayoutPlacementInstruction> ResolvedInstructions => _resolvedInstructions;
+
+    void Awake()
+    {
+        if (orchestrator == null)
+            orchestrator = FindAnyObjectByType<SpatialGenerator4DOrchestrator>();
+    }
+
+    void OnEnable()
+    {
+        LayoutPlacementBroadcast.RootParsed += OnLayoutRootParsed;
+    }
+
+    void OnDisable()
+    {
+        LayoutPlacementBroadcast.RootParsed -= OnLayoutRootParsed;
+    }
+
+    void OnLayoutRootParsed(object root)
+    {
+        if (root is LayoutPlacementFrame frame)
+            EnqueueLayout(frame);
+    }
+
+    public void EnqueueLayout(LayoutPlacementFrame root)
+    {
+        if (root == null)
+            return;
+        _pendingFrames.Enqueue(root);
+        if (!requireBTCompleteBeforeLayout)
+            FlushQueue();
+    }
+
+    public void OnCausalitySnapshotAppended(CausalityHistory2D history)
+    {
+        if (history?.rows == null)
+            return;
+        PathReplacementGate.SetCausalityDepth(history.rows.Count);
+        if (requireBTCompleteBeforeLayout && history.rows.Count >= requiredCausalityDepth)
+            PathReplacementGate.LockUntilCausalityDepth(requiredCausalityDepth);
+        FlushQueue();
+    }
+
+    public void FlushQueue()
+    {
+        if (requireBTCompleteBeforeLayout && !PathReplacementGate.CanReplacePath())
+            return;
+
+        var ctx = new SpatialRelationResolver.ResolveContext
+        {
+            defaultCenter = transform.position,
+            defaultSize = Vector3.one * 20f,
+            randomSeed = orchestrator != null ? 42 : 0
+        };
+
+        if (orchestrator?.causalityHistory?.rows != null && orchestrator.causalityHistory.rows.Count > 0)
+        {
+            var last = orchestrator.causalityHistory.rows[orchestrator.causalityHistory.rows.Count - 1];
+            ctx.causalityPosition = new Vector3(last.px, last.py, last.pz);
+        }
+
+        while (_pendingFrames.Count > 0)
+        {
+            var frame = _pendingFrames.Dequeue();
+            _resolvedInstructions.AddRange(SpatialRelationResolver.ResolveTree(frame, ctx));
+        }
+
+        TryPlaceRoads();
+    }
+
+    void TryPlaceRoads()
+    {
+        var placers = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        foreach (var mb in placers)
+        {
+            if (mb is not IRoadLayoutPlacer placer)
+                continue;
+            foreach (var inst in _resolvedInstructions)
+            {
+                if (!inst.requiresPathSolve)
+                    continue;
+                if (placer.TryPlaceRoad(inst, out _))
+                    break;
+            }
+            break;
+        }
     }
 }

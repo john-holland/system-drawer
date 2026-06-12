@@ -14,7 +14,18 @@ namespace Weather
         Cloud,
         Wind,
         Lava,
-        MagmaPlume
+        MagmaPlume,
+        RoadSurface,
+        RoadShoulder,
+        RoadDirt
+    }
+
+    public enum RoadSurfaceType
+    {
+        None,
+        RoadSurface,
+        RoadShoulder,
+        RoadDirt
     }
 
     /// <summary>
@@ -31,6 +42,9 @@ namespace Weather
         public Vector3 lavaVelocity;
         public float gasPressure;
         public float surfaceTensionCoeff;
+        public RoadSurfaceType roadSurfaceType;
+        public float surfaceFriction;
+        public float surfacePorosity;
     }
 
     /// <summary>
@@ -83,26 +97,30 @@ namespace Weather
 
         private void Awake()
         {
-            InitializeManifold();
+            EnsureCellDataAllocated();
         }
 
-        /// <summary>
-        /// Initialize the manifold with default data
-        /// </summary>
-        private void InitializeManifold()
+        void EnsureCellDataAllocated()
         {
             int totalCells = cellCount.x * cellCount.y * cellCount.z;
-            cellData = new ManifoldCellData[totalCells];
+            if (totalCells <= 0)
+            {
+                cellData = System.Array.Empty<ManifoldCellData>();
+                return;
+            }
 
-            // Initialize with default air values
+            if (cellData != null && cellData.Length == totalCells)
+                return;
+
+            cellData = new ManifoldCellData[totalCells];
             for (int i = 0; i < totalCells; i++)
             {
                 cellData[i] = new ManifoldCellData
                 {
                     velocity = Vector3.zero,
-                    pressure = 1013.25f, // Standard sea level pressure in hPa
+                    pressure = 1013.25f,
                     temperature = 20f,
-                    density = 1.225f, // Air density at sea level
+                    density = 1.225f,
                     mode = WeatherMode.Air
                 };
             }
@@ -209,14 +227,19 @@ namespace Weather
         /// </summary>
         public ManifoldCellData GetDataAtPosition(Vector3 position)
         {
-            Vector3Int cellIndex = WorldToCellIndex(position);
-            if (IsValidCellIndex(cellIndex))
-            {
-                int flatIndex = CellIndexToFlat(cellIndex);
-                return cellData[flatIndex];
-            }
+            EnsureCellDataAllocated();
+            if (cellData == null || cellData.Length == 0)
+                return new ManifoldCellData();
 
-            return new ManifoldCellData(); // Default
+            Vector3Int cellIndex = WorldToCellIndex(position);
+            if (!IsValidCellIndex(cellIndex))
+                return new ManifoldCellData();
+
+            int flatIndex = CellIndexToFlat(cellIndex);
+            if (flatIndex < 0 || flatIndex >= cellData.Length)
+                return new ManifoldCellData();
+
+            return cellData[flatIndex];
         }
 
         /// <summary>
@@ -224,12 +247,19 @@ namespace Weather
         /// </summary>
         public void SetDataAtPosition(Vector3 position, ManifoldCellData data)
         {
+            EnsureCellDataAllocated();
+            if (cellData == null || cellData.Length == 0)
+                return;
+
             Vector3Int cellIndex = WorldToCellIndex(position);
-            if (IsValidCellIndex(cellIndex))
-            {
-                int flatIndex = CellIndexToFlat(cellIndex);
-                cellData[flatIndex] = data;
-            }
+            if (!IsValidCellIndex(cellIndex))
+                return;
+
+            int flatIndex = CellIndexToFlat(cellIndex);
+            if (flatIndex < 0 || flatIndex >= cellData.Length)
+                return;
+
+            cellData[flatIndex] = data;
         }
 
         /// <summary>
@@ -276,9 +306,13 @@ namespace Weather
         private Vector3Int WorldToCellIndex(Vector3 worldPos)
         {
             Vector3 localPos = worldPos - worldBounds.min;
-            int x = Mathf.FloorToInt(localPos.x / cellResolution);
-            int y = Mathf.FloorToInt(localPos.y / cellResolution);
-            int z = Mathf.FloorToInt(localPos.z / cellResolution);
+            Vector3 size = worldBounds.size;
+            int x = size.x > 0f ? Mathf.FloorToInt(localPos.x / size.x * cellCount.x) : 0;
+            int y = size.y > 0f ? Mathf.FloorToInt(localPos.y / size.y * cellCount.y) : 0;
+            int z = size.z > 0f ? Mathf.FloorToInt(localPos.z / size.z * cellCount.z) : 0;
+            x = Mathf.Clamp(x, 0, Mathf.Max(0, cellCount.x - 1));
+            y = Mathf.Clamp(y, 0, Mathf.Max(0, cellCount.y - 1));
+            z = Mathf.Clamp(z, 0, Mathf.Max(0, cellCount.z - 1));
             return new Vector3Int(x, y, z);
         }
 

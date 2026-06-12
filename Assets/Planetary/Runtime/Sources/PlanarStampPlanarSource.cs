@@ -40,7 +40,7 @@ namespace Planetary.Sources
                     continue;
                 float u = (dLon / (f.footprintRadiusMeters * 0.01f) + 1f) * 0.5f;
                 float v = (dLat / (f.footprintRadiusMeters * 0.01f) + 1f) * 0.5f;
-                sum += f.heightMap.GetPixelBilinear(u, v).r * f.strength * 100f;
+                sum += TextureSamplingUtility.SampleRedBilinear(f.heightMap, u, v) * f.strength * 100f;
             }
             return sum;
         }

@@ -62,6 +62,10 @@ namespace Locomotion.Narrative
         public List<InterpretedEventBinding> lastBindings = new List<InterpretedEventBinding>();
         [Tooltip("(GENERATE) requests parsed from last prompt (read-only).")]
         public List<GenerationRequest> lastGenerationRequests = new List<GenerationRequest>();
+        [Tooltip("Last parsed with-expr layout root (read-only).")]
+        public LayoutPlacementFrame lastLayoutRoot;
+        [Tooltip("Resolved layout instructions from last interpret (read-only).")]
+        public List<LayoutPlacementInstruction> lastLayoutInstructions = new List<LayoutPlacementInstruction>();
 
         private readonly Dictionary<int, InterpretationResult> _resultByAsset = new Dictionary<int, InterpretationResult>();
         private const int PromptMaxLen = 128;
@@ -159,6 +163,7 @@ namespace Locomotion.Narrative
             result.bindings.AddRange(bindings);
             result.generationRequests.AddRange(lastGenerationRequests);
             _resultByAsset[asset.GetInstanceID()] = result;
+            ApplyLayoutFromText(activeText);
             return lastInterpretedEvents;
         }
 
@@ -195,10 +200,38 @@ namespace Locomotion.Narrative
             {
                 OrmFillService.FillFromRegistry(lastInterpretedEvents, sceneObjectRegistry, null, lastBindings);
             }
+            ApplyLayoutFromText(prompt);
 #if UNITY_EDITOR
             InterpretCompleted?.Invoke(this);
 #endif
             return lastInterpretedEvents;
+        }
+
+        void ApplyLayoutFromText(string text)
+        {
+            lastLayoutRoot = null;
+            lastLayoutInstructions.Clear();
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+            if (!WithLayoutExprParser.TryParse(text, out var root) || root == null)
+                return;
+            lastLayoutRoot = root;
+            var ctx = new SpatialRelationResolver.ResolveContext
+            {
+                defaultCenter = transform.position,
+                defaultSize = Vector3.one * 20f,
+                randomSeed = text.GetHashCode()
+            };
+            if (lastInterpretedEvents != null && lastInterpretedEvents.Count > 0)
+            {
+                var ev = lastInterpretedEvents[0];
+                ctx.defaultCenter = ev.center;
+                ctx.defaultSize = ev.size;
+                ctx.tStart = ev.tMin;
+                ctx.tEnd = ev.tMax;
+            }
+            lastLayoutInstructions.AddRange(SpatialRelationResolver.ResolveTree(root, ctx));
+            LayoutPlacementBroadcast.NotifyRootParsed(root);
         }
 
         /// <summary>Get stored result for a prompt asset (from last Interpret(asset) for that asset).</summary>

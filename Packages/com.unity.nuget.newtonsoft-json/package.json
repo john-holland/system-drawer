@@ -1,0 +1,9 @@
+{
+  "name": "com.unity.nuget.newtonsoft-json",
+  "version": "3.2.1",
+  "displayName": "Newtonsoft Json",
+  "description": "Local vendored copy of Newtonsoft Json for offline Unity builds.",
+  "unity": "2021.3",
+  "type": "library",
+  "dependencies": {}
+}

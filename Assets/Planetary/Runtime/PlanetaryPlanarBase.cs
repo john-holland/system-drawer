@@ -31,7 +31,8 @@ namespace Planetary
                 var mask = new float[res, res];
                 for (int y = 0; y < res; y++)
                 for (int x = 0; x < res; x++)
-                    mask[x, y] = googleMaskPreview.GetPixelBilinear(x / (float)(res - 1), y / (float)(res - 1)).a;
+                    mask[x, y] = TextureSamplingUtility.SampleAlphaBilinear(
+                        googleMaskPreview, x / (float)(res - 1), y / (float)(res - 1));
                 _sources.Add(new GoogleMapsShapesPlanarSource(mask, res));
             }
         }

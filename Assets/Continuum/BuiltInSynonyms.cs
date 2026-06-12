@@ -11,8 +11,21 @@ public static class BuiltInSynonyms
         {
             { "nil", "null" },
             { "first person", "first-person" },
-            { "third person", "third-person" }
+            { "third person", "third-person" },
+            { "to the left of", "to-the-left-of" },
+            { "to the right of", "to-the-right-of" },
+            { "in front of", "in-front-of" },
+            { "through there", "through-there" },
+            { "over here", "over-here" },
+            { "along the road", "along-the-road" }
         };
+
+    public static void RegisterAlias(string alias, string canonical)
+    {
+        if (string.IsNullOrWhiteSpace(alias) || string.IsNullOrWhiteSpace(canonical))
+            return;
+        AliasToCanonical[alias.Trim().ToLowerInvariant()] = canonical.Trim().ToLowerInvariant();
+    }
 
     /// <summary>Returns canonical lemma for lookup, or original token if none.</summary>
     public static string CanonicalizeToken(string token)

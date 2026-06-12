@@ -10,22 +10,11 @@ namespace Planetary.Composition
         SpaceImpostor
     }
 
-    [CreateAssetMenu(fileName = "PlanetaryHorizonLodSettings", menuName = "Planetary/Horizon LOD Settings")]
-    public sealed class PlanetaryHorizonLodSettings : ScriptableObject
-    {
-        public float fullSimRadiusKm = 50f;
-        public float fullSimAltitudeMaxM = 12000f;
-        public float horizonDistanceKm = 500f;
-        public float surfaceBandMaxM = 2000f;
-        public float troposphereMaxM = 12000f;
-        public float upperAtmosphereMaxM = 80000f;
-    }
-
     public sealed class PlanetaryHorizonLodController
     {
-        readonly PlanetaryHorizonLodSettings _settings;
+        readonly HorizonLodSettings _settings;
 
-        public PlanetaryHorizonLodController(PlanetaryHorizonLodSettings settings) => _settings = settings;
+        public PlanetaryHorizonLodController(HorizonLodSettings settings) => _settings = settings;
 
         public PlanetaryAltitudeBand SelectBand(float altitudeMSL, float cloudBaseM, float cloudTopM)
         {

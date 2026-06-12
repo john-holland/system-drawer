@@ -7,7 +7,7 @@ namespace Planetary.Rendering
 {
     public sealed class PlanetarySimulationScheduler : MonoBehaviour
     {
-        public PlanetaryHorizonLodSettings lodSettings;
+        public HorizonLodSettings lodSettings;
         public PlanetBody planet;
         public PlateTectonicsPhysicsSolver plateSolver;
         public LavaPhysicsManifold lava;

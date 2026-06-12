@@ -1,0 +1,22 @@
+{
+  "name": "Roads.Runtime",
+  "rootNamespace": "Roads",
+  "references": [
+    "Weather.Runtime",
+    "BedogaGenerator",
+    "HierarchicalPathFinding",
+    "Locomotion.Narrative.Inference",
+    "SdfMax",
+    "Locomotion.Narrative.Runtime",
+    "Planetary"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

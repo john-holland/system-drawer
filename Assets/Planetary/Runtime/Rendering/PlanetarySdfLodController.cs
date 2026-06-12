@@ -16,7 +16,7 @@ namespace Planetary.Rendering
         readonly PlanetarySdfLodProfile _profile;
         readonly PlanetaryHorizonLodController _horizon;
 
-        public PlanetarySdfLodController(PlanetarySdfLodProfile profile, PlanetaryHorizonLodSettings horizonSettings)
+        public PlanetarySdfLodController(PlanetarySdfLodProfile profile, HorizonLodSettings horizonSettings)
         {
             _profile = profile;
             _horizon = horizonSettings != null ? new PlanetaryHorizonLodController(horizonSettings) : null;

@@ -3,7 +3,8 @@
   "rootNamespace": "Locomotion.Narrative.Serialization",
   "references": [
     "Locomotion.Narrative.Runtime",
-    "Locomotion.Runtime"
+    "Locomotion.Runtime",
+    "Unity.Newtonsoft.Json"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

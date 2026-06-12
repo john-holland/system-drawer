@@ -20,7 +20,13 @@ CREATE TABLE IF NOT EXISTS spatial_4d (
     causality_leaf_back TEXT,
     causality_leaf_pause TEXT,
     causality_leaf_forward TEXT,
-    causality_history_json TEXT
+    causality_history_json TEXT,
+    road_segment_id TEXT,
+    road_control_points_json TEXT,
+    road_width REAL,
+    road_gateway_back_json TEXT,
+    road_gateway_pause_json TEXT,
+    road_gateway_forward_json TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_spatial_4d_episode ON spatial_4d(episode_id);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Pathing mode: Walk = ground/slope/terrain; Fly = 2D grid with Y interpolated along path; Drive = vehicle route (stub: same occupancy as Walk on XZ grid).
+/// Pathing mode: Walk = ground/slope/terrain; Fly = 2D grid with Y interpolated along path; Drive = vehicle route preferring road corridor markers.
 /// </summary>
 public enum PathingMode
 {
@@ -40,8 +40,15 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     public List<SpatialVolumes.SpatialVolumeProvider> volumeProviders = new List<SpatialVolumes.SpatialVolumeProvider>();
 
     [Header("Pathing Mode")]
-    [Tooltip("Walk = ground, slope, terrain. Fly = no slope blocking, Y interpolated between start and goal along path. Drive = vehicle path stub (same grid occupancy as Walk).")]
+    [Tooltip("Walk = ground, slope, terrain. Fly = no slope blocking, Y interpolated between start and goal along path. Drive = prefer RoadCorridorMarker cells.")]
     public PathingMode pathingMode = PathingMode.Walk;
+
+    [Header("Drive / Roads")]
+    [Tooltip("When Drive mode, block cells not on a road corridor unless no corridor markers exist.")]
+    public bool restrictDriveToRoadCorridors = true;
+
+    [Tooltip("Edge cost multiplier for off-road cells in Drive mode (>1 penalizes off-road).")]
+    public float driveOffRoadCostMultiplier = 4f;
 
     [Header("Spatial Backend")]
     [Tooltip("Grid2DVolumeXZ = legacy XZ occupancy; UniformVolume3D = full 3D cells; OctreeLeaves = adaptive octree leaf graph.")]
@@ -287,7 +294,27 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     float PhysicsZoneEdgeCostMultiplier(Vector3 a, Vector3 b)
     {
         PhysicsPathingZone.SampleAt((a + b) * 0.5f, out float pathCostMul, out _);
+        if (pathingMode == PathingMode.Drive)
+            pathCostMul *= DriveCorridorEdgeCostMultiplier((a + b) * 0.5f);
         return pathCostMul;
+    }
+
+    float DriveCorridorEdgeCostMultiplier(Vector3 midpoint)
+    {
+        bool onRoad = RoadCorridorMarker.IsOnRoadCorridor(midpoint);
+        if (restrictDriveToRoadCorridors && !onRoad)
+            return driveOffRoadCostMultiplier;
+        return onRoad ? 1f : driveOffRoadCostMultiplier;
+    }
+
+    bool EvaluateDriveCorridorBlocked(Vector3 center)
+    {
+        if (pathingMode != PathingMode.Drive || !restrictDriveToRoadCorridors)
+            return false;
+        var markers = FindObjectsByType<RoadCorridorMarker>(FindObjectsSortMode.None);
+        if (markers == null || markers.Length == 0)
+            return false;
+        return !RoadCorridorMarker.IsOnRoadCorridor(center);
     }
 
     bool EvaluateCapsuleBlocked(Vector3 center)
@@ -353,7 +380,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
                 for (int ix = 0; ix < grid3D.width; ix++)
                 {
                     Vector3 center = grid3D.CellCenterWorld(ix, iy, iz);
-                    bool blocked = EvaluateCapsuleBlocked(center) || EvaluateMarkersBlocked(center);
+                    bool blocked = EvaluateCapsuleBlocked(center) || EvaluateMarkersBlocked(center) || EvaluateDriveCorridorBlocked(center);
                     grid3D.SetBlocked(ix, iy, iz, blocked);
                 }
             }
@@ -366,7 +393,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
             worldBounds,
             octreeMaxDepth,
             octreeMinLeafExtent,
-            center => EvaluateCapsuleBlocked(center) || EvaluateMarkersBlocked(center));
+            center => EvaluateCapsuleBlocked(center) || EvaluateMarkersBlocked(center) || EvaluateDriveCorridorBlocked(center));
     }
 
     /// <summary>
@@ -676,6 +703,100 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
                 Gizmos.DrawCube(grid2D.CellCenterWorld(x, z, y), size);
             }
         }
+    }
+}
+
+/// <summary>
+/// RTS-style gate: behavior subtree / causality depth must complete before path replacement or layout.
+/// </summary>
+public static class PathReplacementGate
+{
+    static bool _globallyLocked;
+    static int _requiredCausalityDepth;
+    static int _currentCausalityDepth;
+    static readonly HashSet<string> _pendingSubtreeIds = new HashSet<string>();
+    static readonly HashSet<string> _completedSubtreeIds = new HashSet<string>();
+
+    public static bool IsLocked => _globallyLocked;
+
+    public static void LockUntilCausalityDepth(int minDepth)
+    {
+        _globallyLocked = true;
+        _requiredCausalityDepth = Mathf.Max(0, minDepth);
+    }
+
+    public static void LockUntilSubtreeSuccess(string subtreeId)
+    {
+        if (string.IsNullOrEmpty(subtreeId))
+            return;
+        _globallyLocked = true;
+        _pendingSubtreeIds.Add(subtreeId);
+    }
+
+    public static void NotifySubtreeSuccess(string subtreeId)
+    {
+        if (string.IsNullOrEmpty(subtreeId))
+            return;
+        _completedSubtreeIds.Add(subtreeId);
+        _pendingSubtreeIds.Remove(subtreeId);
+        TryUnlock();
+    }
+
+    public static void SetCausalityDepth(int depth)
+    {
+        _currentCausalityDepth = Mathf.Max(0, depth);
+        TryUnlock();
+    }
+
+    public static void Unlock()
+    {
+        _globallyLocked = false;
+        _requiredCausalityDepth = 0;
+        _pendingSubtreeIds.Clear();
+    }
+
+    static void TryUnlock()
+    {
+        if (_currentCausalityDepth < _requiredCausalityDepth)
+            return;
+        if (_pendingSubtreeIds.Count > 0)
+            return;
+        _globallyLocked = false;
+    }
+
+    public static bool CanReplacePath(bool behaviorTreeSucceeded = false)
+    {
+        if (!_globallyLocked)
+            return true;
+        return behaviorTreeSucceeded;
+    }
+}
+
+/// <summary>Marks baked road corridor bounds for Drive pathing preference (set by Roads bake).</summary>
+public class RoadCorridorMarker : MonoBehaviour
+{
+    public string roadSegmentId;
+    public List<Bounds> corridorBounds = new List<Bounds>();
+
+    public bool ContainsWorldPoint(Vector3 worldPoint)
+    {
+        for (int i = 0; i < corridorBounds.Count; i++)
+        {
+            if (corridorBounds[i].Contains(worldPoint))
+                return true;
+        }
+        return false;
+    }
+
+    public static bool IsOnRoadCorridor(Vector3 worldPoint)
+    {
+        var markers = FindObjectsByType<RoadCorridorMarker>(FindObjectsSortMode.None);
+        foreach (var m in markers)
+        {
+            if (m != null && m.isActiveAndEnabled && m.ContainsWorldPoint(worldPoint))
+                return true;
+        }
+        return false;
     }
 }
 

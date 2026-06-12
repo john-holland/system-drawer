@@ -5,8 +5,6 @@ using SdfMax;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEditor.SceneManagement;
 
 namespace SdfMax.Editor
 {
@@ -19,7 +17,6 @@ namespace SdfMax.Editor
         ReorderableList _nodeList;
         int _selectedNode = -1;
 
-        Scene _previewScene;
         Camera _previewCamera;
         GameObject _previewRoot;
         RenderTexture _previewRt;
@@ -32,7 +29,6 @@ namespace SdfMax.Editor
         GameObject _previewSurfaceGo;
         Vector2 _leftScroll;
         const int PreviewSize = 512;
-        const string PreviewSceneName = "SdfMaxPreview_Scene";
 
         [MenuItem("Window/System Drawer/SDF Max Composition Editor")]
         public static void ShowWindow()
@@ -188,7 +184,6 @@ namespace SdfMax.Editor
             if (_previewRt != null && _previewCamera != null)
             {
                 UpdateCamera();
-                DrawPreviewGizmos();
                 if (Event.current.type == EventType.Repaint)
                     _previewCamera.Render();
                 EditorGUI.DrawPreviewTexture(previewRect, _previewRt, null, ScaleMode.ScaleToFit);
@@ -285,48 +280,33 @@ namespace SdfMax.Editor
             }
         }
 
-        void DrawPreviewGizmos()
-        {
-            if (_previewRoot == null || _composition == null)
-                return;
-
-            var graph = new SdfMaxExpressionGraph(_composition, _provider != null ? _provider.profile : null, _previewRoot.transform.localToWorldMatrix);
-            Bounds wb = graph.ComputeWorldBounds();
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireCube(wb.center, wb.size);
-
-            if (_provider != null && SpatialVolumeCacheRegistry.TryGetBackend(_provider, out var backend))
-            {
-                var leaves = new List<SpatialVolumeLeaf>();
-                backend.CollectLeaves(wb, 0f, leaves);
-                Gizmos.color = new Color(1f, 0.5f, 0.1f, 0.9f);
-                for (int i = 0; i < leaves.Count; i++)
-                    Gizmos.DrawWireCube(leaves[i].Bounds.center, leaves[i].Bounds.size);
-            }
-        }
-
         void EnsurePreviewScene()
         {
-            if (_previewScene.IsValid() && _previewScene.isLoaded && _previewCamera != null)
+            if (_previewCamera != null && _previewRoot != null)
                 return;
 
-            _previewScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-            _previewScene.name = PreviewSceneName;
+            if (_previewCamera == null)
+            {
+                var camGo = EditorUtility.CreateGameObjectWithHideFlags(
+                    "SdfMaxPreviewCamera", HideFlags.HideAndDontSave);
+                _previewCamera = camGo.AddComponent<Camera>();
+                _previewCamera.clearFlags = CameraClearFlags.SolidColor;
+                _previewCamera.backgroundColor = new Color(0.18f, 0.18f, 0.2f);
+                _previewCamera.enabled = false;
+            }
 
-            var camGo = new GameObject("SdfMaxPreviewCamera");
-            _previewCamera = camGo.AddComponent<Camera>();
-            _previewCamera.clearFlags = CameraClearFlags.SolidColor;
-            _previewCamera.backgroundColor = new Color(0.18f, 0.18f, 0.2f);
-            SceneManager.MoveGameObjectToScene(camGo, _previewScene);
-
-            _previewRoot = new GameObject("SdfMaxPreviewRoot");
-            SceneManager.MoveGameObjectToScene(_previewRoot, _previewScene);
+            if (_previewRoot == null)
+            {
+                _previewRoot = EditorUtility.CreateGameObjectWithHideFlags(
+                    "SdfMaxPreviewRoot", HideFlags.HideAndDontSave);
+            }
 
             if (_previewRt == null || !_previewRt.IsCreated())
             {
                 _previewRt = new RenderTexture(PreviewSize, PreviewSize, 24);
                 _previewRt.Create();
             }
+
             _previewCamera.targetTexture = _previewRt;
         }
 
@@ -413,12 +393,25 @@ namespace SdfMax.Editor
         void CleanupPreview()
         {
             if (_previewCamera != null)
+            {
                 _previewCamera.targetTexture = null;
-            if (_previewRt != null && _previewRt.IsCreated())
-                _previewRt.Release();
-            _previewRt = null;
-            if (_previewScene.IsValid() && _previewScene.isLoaded)
-                EditorSceneManager.CloseScene(_previewScene, true);
+                DestroyImmediate(_previewCamera.gameObject);
+                _previewCamera = null;
+            }
+
+            if (_previewRoot != null)
+            {
+                DestroyImmediate(_previewRoot);
+                _previewRoot = null;
+            }
+
+            if (_previewRt != null)
+            {
+                if (_previewRt.IsCreated())
+                    _previewRt.Release();
+                DestroyImmediate(_previewRt);
+                _previewRt = null;
+            }
         }
     }
 }

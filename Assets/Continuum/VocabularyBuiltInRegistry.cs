@@ -77,6 +77,13 @@ public static class VocabularyBuiltInRegistry
         foreach (var w in new[] { "volume", "region", "path", "boundary", "time", "slice" })
             Add("noun", w, "noun", VocabularyBuiltInCategory.SpatialGateway, new[] { "spatial" });
 
+        foreach (var w in new[] { "roads", "road", "buildings", "building", "town-hall", "highway", "street" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, new[] { "world", "spatial" });
+        foreach (var w in new[] { "to-the-left-of", "to-the-right-of", "in-front-of", "through-there", "over-here", "along-the-road", "left-of", "right-of" })
+            Add("prep", w, "preposition", VocabularyBuiltInCategory.Preposition, prepSpatial);
+        foreach (var w in new[] { "there", "here" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.SpatialGateway, new[] { "spatial", "deictic" });
+
         // Actions
         foreach (var w in new[] { "go", "move", "open", "take", "use", "place", "connect", "set", "run" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, null);

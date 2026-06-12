@@ -17,7 +17,6 @@ public class ContinuumWorkOrdersWindow : EditorWindow
     [SerializeField] private string lastError = "";
     [SerializeField] private Vector2 scroll;
     [SerializeField] private string statusFilter = "pending";
-    [SerializeField] private string sourceFilter = "all";
 
     [MenuItem("Window/Continuum/Continuum Work Orders")]
     public static void ShowWindow()

@@ -31,6 +31,15 @@ public class MultiModalSegment
     [Tooltip("Planner-estimated travel time for this leg (seconds), when timeline search fills it.")]
     public float estimatedTimeSec;
 
+    [Tooltip("Optional road segment id when drive leg follows a baked road spline.")]
+    public string roadSegmentId;
+
+    [Tooltip("Arc-length along road at leg start (meters).")]
+    public float distanceAlongStart;
+
+    [Tooltip("Arc-length along road at leg end (meters).")]
+    public float distanceAlongEnd;
+
     public static MultiModalSegment FromWalk(List<Vector3> path)
     {
         return new MultiModalSegment
@@ -91,7 +100,10 @@ public class MultiModalSegment
             segmentEnd = segmentEnd,
             medium = medium,
             optionalVehicleHint = optionalVehicleHint,
-            estimatedTimeSec = estimatedTimeSec
+            estimatedTimeSec = estimatedTimeSec,
+            roadSegmentId = roadSegmentId,
+            distanceAlongStart = distanceAlongStart,
+            distanceAlongEnd = distanceAlongEnd
         };
         if (waypoints != null)
             copy.waypoints = new List<Vector3>(waypoints);

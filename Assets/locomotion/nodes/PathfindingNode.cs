@@ -442,6 +442,9 @@ public class PathfindingNode : BehaviorTreeNode
 
     public override void OnEnter(BehaviorTree tree)
     {
+        bool btOk = tree != null && tree.lastStatus == BehaviorTreeStatus.Success;
+        if (!PathReplacementGate.CanReplacePath(btOk))
+            return;
         pathBuilt = false;
         currentPath.Clear();
     }

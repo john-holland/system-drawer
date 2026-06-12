@@ -13,6 +13,7 @@
   <Project Path="SystemDrawer.MemorySwizzle.csproj" />
   <Project Path="Locomotion.Narrative.Inference.csproj" />
   <Project Path="Locomotion.Narrative.Runtime.csproj" />
+  <Project Path="Roads.Runtime.csproj" />
   <Project Path="Planetary.Tests.csproj" />
   <Project Path="Generated.Runtime.csproj" />
   <Project Path="Locomotion.Audio.csproj" />
@@ -28,9 +29,11 @@
   <Project Path="SystemDrawer.MemorySwizzle.Editor.csproj" />
   <Project Path="Planetary.Editor.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />
+  <Project Path="Roads.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />
   <Project Path="SystemDrawer.Editor.csproj" />
   <Project Path="Generated.Tests.csproj" />
+  <Project Path="Roads.Editor.csproj" />
   <Project Path="Weather.Tests.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.Editor.Tests.csproj" />
   <Project Path="Continuum.Editor.csproj" />
