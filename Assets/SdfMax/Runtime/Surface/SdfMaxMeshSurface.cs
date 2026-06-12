@@ -33,10 +33,13 @@ namespace SdfMax
 
         void OnValidate()
         {
-            EnsureComponents();
+            _meshFilter = GetComponent<MeshFilter>();
+            _meshRenderer = GetComponent<MeshRenderer>();
             ApplyMaterials();
             _meshDirty = true;
         }
+
+        public void EnsureRenderComponents() => EnsureComponents();
 
         void Update()
         {

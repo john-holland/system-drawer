@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using SdfMax;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace SpatialVolumes
 {
@@ -31,7 +34,12 @@ namespace SpatialVolumes
 
         Matrix4x4 _lastLocalToWorld;
         int _surfaceMeshVersion;
+        bool _pendingRenderSync;
         readonly List<SpatialVolumeLeaf> _scratchLeaves = new List<SpatialVolumeLeaf>(64);
+
+#if UNITY_EDITOR
+        static readonly HashSet<SpatialVolumeProvider> PendingEditorRenderSync = new HashSet<SpatialVolumeProvider>();
+#endif
 
         SdfMaxCompositionAsset ISdfMaxVolumeHost.Composition => composition;
         SdfMaxSolverProfile ISdfMaxVolumeHost.Profile => profile;
@@ -61,10 +69,42 @@ namespace SpatialVolumes
         {
             SyncColliderReference();
             WarnIfBothSurfaceRenderers();
-            SyncRenderComponents();
+            RequestRenderSync();
             RefreshSurfaceMeshVersion();
             NotifyChanged();
         }
+
+        void RequestRenderSync()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                PendingEditorRenderSync.Add(this);
+                EditorApplication.delayCall -= ProcessPendingEditorRenderSync;
+                EditorApplication.delayCall += ProcessPendingEditorRenderSync;
+                return;
+            }
+#endif
+            _pendingRenderSync = true;
+        }
+
+#if UNITY_EDITOR
+        static void ProcessPendingEditorRenderSync()
+        {
+            EditorApplication.delayCall -= ProcessPendingEditorRenderSync;
+            if (PendingEditorRenderSync.Count == 0)
+                return;
+
+            var batch = new List<SpatialVolumeProvider>(PendingEditorRenderSync);
+            PendingEditorRenderSync.Clear();
+            for (int i = 0; i < batch.Count; i++)
+            {
+                var provider = batch[i];
+                if (provider != null)
+                    provider.SyncRenderComponents();
+            }
+        }
+#endif
 
         void WarnIfBothSurfaceRenderers()
         {
@@ -76,6 +116,12 @@ namespace SpatialVolumes
 
         void Update()
         {
+            if (_pendingRenderSync)
+            {
+                _pendingRenderSync = false;
+                SyncRenderComponents();
+            }
+
             if (!SyncSDFTreeShape || !notifyOnTransformChange)
                 return;
 
@@ -137,18 +183,27 @@ namespace SpatialVolumes
             switch (renderMode)
             {
                 case SdfMaxRenderMode.StaticMesh:
-                    if (skinnedMesh != null && skinnedMesh.enabled)
+                    if (skinnedMesh != null)
+                    {
                         skinnedMesh.enabled = false;
+                        DestroyRenderComponent<SkinnedMeshRenderer>();
+                    }
                     if (staticMesh == null)
                         staticMesh = gameObject.AddComponent<SdfMaxMeshSurface>();
                     staticMesh.enabled = true;
+                    staticMesh.EnsureRenderComponents();
                     break;
                 case SdfMaxRenderMode.SkinnedMesh:
-                    if (staticMesh != null && staticMesh.enabled)
+                    if (staticMesh != null)
+                    {
                         staticMesh.enabled = false;
+                        DestroyRenderComponent<MeshRenderer>();
+                        DestroyRenderComponent<MeshFilter>();
+                    }
                     if (skinnedMesh == null)
                         skinnedMesh = gameObject.AddComponent<SdfMaxSkinnedMeshSurface>();
                     skinnedMesh.enabled = true;
+                    skinnedMesh.EnsureRenderComponents();
                     break;
                 default:
                     if (staticMesh != null)
@@ -157,6 +212,19 @@ namespace SpatialVolumes
                         skinnedMesh.enabled = false;
                     break;
             }
+        }
+
+        void DestroyRenderComponent<T>() where T : Component
+        {
+            var component = GetComponent<T>();
+            if (component == null)
+                return;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                DestroyImmediate(component);
+            else
+#endif
+                Destroy(component);
         }
 
         public bool TrySample(Vector3 worldPos, float t, out float fieldValue, out bool inside)

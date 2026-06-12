@@ -34,12 +34,16 @@ namespace SdfMax
             _meshDirty = true;
         }
 
+        void Reset() => EnsureRenderComponents();
+
         void OnValidate()
         {
-            EnsureComponents();
+            _skinnedRenderer = GetComponent<SkinnedMeshRenderer>();
             ApplyMaterials();
             _meshDirty = true;
         }
+
+        public void EnsureRenderComponents() => EnsureComponents();
 
         void Update()
         {
@@ -247,8 +251,29 @@ namespace SdfMax
         {
             _skinnedRenderer = GetComponent<SkinnedMeshRenderer>();
             if (_skinnedRenderer == null)
+            {
+                RemoveConflictingStaticMeshRenderComponents();
                 _skinnedRenderer = gameObject.AddComponent<SkinnedMeshRenderer>();
+            }
             ApplyMaterials();
+        }
+
+        static void DestroyComponent(Component component)
+        {
+            if (component == null)
+                return;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                Object.DestroyImmediate(component);
+            else
+#endif
+                Object.Destroy(component);
+        }
+
+        void RemoveConflictingStaticMeshRenderComponents()
+        {
+            DestroyComponent(GetComponent<MeshRenderer>());
+            DestroyComponent(GetComponent<MeshFilter>());
         }
 
         void ApplyMaterials()
