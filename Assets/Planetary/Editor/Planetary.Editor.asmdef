@@ -3,7 +3,8 @@
     "rootNamespace": "Planetary.Editor",
     "references": [
         "Planetary",
-        "SdfMax"
+        "SdfMax",
+        "Weather.Runtime"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],

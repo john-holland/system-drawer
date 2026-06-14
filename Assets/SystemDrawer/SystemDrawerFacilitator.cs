@@ -1,7 +1,6 @@
 using System.Reflection;
 using Locomotion.Narrative;
 using UnityEngine;
-
 /// <summary>
 /// Scene hub linking <see cref="SystemDrawerService"/> to typed wizard/service components with optional bulk sync.
 /// Loose <see cref="Object"/> slots avoid asmdef cycles to BedogaGenerator (assign Spatial 4D wizard there manually).
@@ -19,6 +18,7 @@ public class SystemDrawerFacilitator : MonoBehaviour
     [SerializeField] private RagdollServiceWizard ragdollWizard;
     [SerializeField] private UscBuildServiceWizard uscBuildWizard;
     [SerializeField] private WeatherServiceWizardComponent weatherWizard;
+    [SerializeField] private PlanetServiceWizardComponent planetWizard;
 
     [Header("Other helpers (optional)")]
     [SerializeField] private BrainMessageService brainMessageService;
@@ -51,6 +51,8 @@ public class SystemDrawerFacilitator : MonoBehaviour
             uscBuildWizard = GetComponentInChildren<UscBuildServiceWizard>();
         if (weatherWizard == null)
             weatherWizard = GetComponentInChildren<WeatherServiceWizardComponent>();
+        if (planetWizard == null)
+            planetWizard = GetComponentInChildren<PlanetServiceWizardComponent>();
         if (brainMessageService == null)
             brainMessageService = GetComponentInChildren<BrainMessageService>();
         if (systemDrawerAnimator == null)
@@ -85,6 +87,8 @@ public class SystemDrawerFacilitator : MonoBehaviour
         if (uscBuildWizard != null && uscBuildWizard.TryCompleteFromService())
             n++;
         if (weatherWizard != null && weatherWizard.TryCompleteFromService())
+            n++;
+        if (planetWizard != null && planetWizard.TryCompleteFromService())
             n++;
         if (TrySpatialLooseTryComplete())
             n++;
@@ -131,6 +135,20 @@ public class SystemDrawerFacilitator : MonoBehaviour
         if (weatherWizard != null && weatherWizard.weatherSystemObject != null)
         {
             svc.Register(WeatherServiceWizardComponent.ServiceKey, weatherWizard.weatherSystemObject);
+            svc.Register(SystemDrawerServiceKeys.WeatherSystemLegacy, weatherWizard.weatherSystemObject);
+            svc.Register(SystemDrawerServiceKeys.WeatherSystem, weatherWizard.weatherSystemObject);
+            count++;
+        }
+
+        if (planetWizard != null)
+        {
+            planetWizard.RegisterAll();
+            count++;
+        }
+
+        if (systemDrawerAnimator != null)
+        {
+            svc.Register(SystemDrawerServiceKeys.SystemDrawerAnimator, systemDrawerAnimator);
             count++;
         }
 
@@ -142,6 +160,13 @@ public class SystemDrawerFacilitator : MonoBehaviour
         }
 
         count += TryRegisterSpatialLooseInternal(svc, spatial4DServiceWizard);
+
+        HierarchicalPathingSolver pathing = FindAnyObjectByType<HierarchicalPathingSolver>();
+        if (pathing != null)
+        {
+            svc.Register(SystemDrawerServiceKeys.HierarchicalPathingSolver, pathing);
+            count++;
+        }
 
         return count;
     }

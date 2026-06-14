@@ -2,7 +2,9 @@
   "name": "HierarchicalPathFinding",
   "rootNamespace": "",
     "references": [
-        "SdfMax"
+        "SdfMax",
+        "SystemDrawer.PerfTrace",
+        "Weather.Runtime"
     ],
   "includePlatforms": [],
   "excludePlatforms": [],

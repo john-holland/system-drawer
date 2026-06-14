@@ -60,6 +60,10 @@ public class AnimationBehaviorTree : MonoBehaviour, IAnimationLayerReporter
     [Tooltip("Multiple animation root nodes (one per clip or mode). Primary root is first; others used by IK trainer and ragdoll.")]
     public List<AnimationBehaviorTreeNode> rootNodes = new List<AnimationBehaviorTreeNode>();
 
+    [Header("Playback")]
+    [Tooltip("1 = forward frame order, -1 = reverse frame order for generated sequence roots.")]
+    public int playbackDirection = 1;
+
     // Internal state
     private List<AnimationFrame> allFrames = new List<AnimationFrame>();
     private bool isGenerating = false;

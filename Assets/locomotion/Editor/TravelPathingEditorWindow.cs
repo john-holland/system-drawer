@@ -304,6 +304,37 @@ public class TravelPathingEditorWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Path kinematics", EditorStyles.boldLabel);
+        EditorGUI.BeginChangeCheck();
+        float revLimit = EditorGUILayout.Slider("Reverse leg limit", focusedAgent.reverseLegLimit01, 0f, 1f);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(focusedAgent, "Reverse leg limit");
+            focusedAgent.reverseLegLimit01 = revLimit;
+            focusedAgent.UpdatePathLengthMetricsPublic();
+            EditorUtility.SetDirty(focusedAgent);
+        }
+
+        EditorGUILayout.LabelField(
+            TravelPathReverseLimits.FormatDistanceLabel(focusedAgent.ReverseBudgetMeters, focusedAgent.TotalPathLengthMeters),
+            EditorStyles.miniLabel);
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Reset reverse to default"))
+        {
+            Undo.RecordObject(focusedAgent, "Reset reverse limit");
+            focusedAgent.ResetReverseLegLimitToDefault();
+            EditorUtility.SetDirty(focusedAgent);
+        }
+        EditorGUILayout.EndHorizontal();
+
+        focusedAgent.showVelocityTrack = EditorGUILayout.Toggle("Show velocity track", focusedAgent.showVelocityTrack);
+        focusedAgent.showIkSamples = EditorGUILayout.Toggle("Show IK samples", focusedAgent.showIkSamples);
+        focusedAgent.showReverseBudget = EditorGUILayout.Toggle("Show reverse budget", focusedAgent.showReverseBudget);
+        focusedAgent.velocityTrackSpacingMeters = EditorGUILayout.Slider(
+            "Track spacing (m)", focusedAgent.velocityTrackSpacingMeters, 0.5f, 10f);
+
+        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
         serializedAgent.Update();
         EditorGUILayout.PropertyField(serializedAgent.FindProperty("previewFitMode"));

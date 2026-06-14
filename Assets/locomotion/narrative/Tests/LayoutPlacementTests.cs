@@ -64,6 +64,56 @@ namespace Locomotion.Narrative.Tests
         }
 
         [Test]
+        public void ParseHereHere_ReducesToCompoundDeicticKey()
+        {
+            Assert.IsTrue(WithLayoutExprParser.TryParse("roads here here", out var root));
+            Assert.AreEqual(1, root.entities.Count);
+            Assert.AreEqual("roads", root.entities[0]);
+            Assert.AreEqual("here-here", root.anchor);
+            Assert.AreEqual(0, root.children.Count);
+        }
+
+        [Test]
+        public void ParseHereThere_SpawnsCoequalAnchorChildren()
+        {
+            Assert.IsTrue(WithLayoutExprParser.TryParse("a world with roads here there", out var root));
+            Assert.AreEqual(1, root.children.Count);
+            var clause = root.children[0];
+            Assert.AreEqual("roads", clause.entities[0]);
+            Assert.AreEqual("there", clause.anchor);
+            Assert.AreEqual(1, clause.children.Count);
+            Assert.AreEqual("here", clause.children[0].anchor);
+            Assert.AreEqual("roads", clause.children[0].entities[0]);
+        }
+
+        [Test]
+        public void ParseHereThere_ResolvesDistinctAnchorCenters()
+        {
+            Assert.IsTrue(WithLayoutExprParser.TryParse("roads here there", out var root));
+            var player = new Vector3(1f, 0f, 2f);
+            var causality = new Vector3(9f, 0f, 8f);
+            var ctx = new SpatialRelationResolver.ResolveContext
+            {
+                defaultCenter = Vector3.zero,
+                defaultSize = Vector3.one * 10f,
+                playerPosition = player,
+                causalityPosition = causality
+            };
+            var instructions = SpatialRelationResolver.ResolveTree(root, ctx);
+            bool foundHere = false;
+            bool foundThere = false;
+            foreach (var inst in instructions)
+            {
+                if (inst.anchorKey == "here" && Vector3.Distance(inst.anchorCenter, player) < 0.01f)
+                    foundHere = true;
+                if (inst.anchorKey == "there" && Vector3.Distance(inst.anchorCenter, causality) < 0.01f)
+                    foundThere = true;
+            }
+            Assert.IsTrue(foundHere);
+            Assert.IsTrue(foundThere);
+        }
+
+        [Test]
         public void PathReplacementGate_BlocksUntilCausalityDepth()
         {
             PathReplacementGate.Unlock();

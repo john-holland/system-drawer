@@ -6,7 +6,8 @@
     "Locomotion.Narrative.Serialization",
     "Locomotion.Runtime",
     "HierarchicalPathFinding",
-    "SystemDrawer"
+    "SystemDrawer",
+    "Weather.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

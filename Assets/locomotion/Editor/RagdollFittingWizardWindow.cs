@@ -29,6 +29,8 @@ namespace Locomotion.EditorTools
 
         /// <summary>Target total mass (kg) for proportional distribution across ragdoll rigidbodies.</summary>
         private float ragdollTargetTotalMass = 75f;
+        private Planetary.PlanetBody planetContext;
+        private bool enableTravelVelocityPreview;
 
         private Vector2 scroll;
         private Vector2 bodyPartsScroll;
@@ -139,6 +141,9 @@ namespace Locomotion.EditorTools
             EditorGUILayout.Space(8);
 
             DrawRagdollPhysicsTools();
+            EditorGUILayout.Space(8);
+
+            DrawPlanetTravelSection();
             EditorGUILayout.Space(8);
 
             DrawActions();
@@ -896,6 +901,64 @@ namespace Locomotion.EditorTools
                     EditorGUILayout.HelpBox(string.Join("\n", lastReport.warnings), MessageType.Warning);
                 if (lastReport.info.Count > 0)
                     EditorGUILayout.HelpBox(string.Join("\n", lastReport.info), MessageType.None);
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawPlanetTravelSection()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Planet context & travel preview", EditorStyles.boldLabel);
+            planetContext = (Planetary.PlanetBody)EditorGUILayout.ObjectField(
+                "Planet body", planetContext, typeof(Planetary.PlanetBody), true);
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Snap actor to planet surface") && planetContext != null && actorRoot != null)
+            {
+                Vector3 pos = actorRoot.transform.position;
+                if (planetContext.TrySampleHeightAtWorld(pos, out float height, out _))
+                {
+                    Vector3 dir = (pos - planetContext.PlanetCenter).normalized;
+                    Undo.RecordObject(actorRoot.transform, "Snap to planet");
+                    actorRoot.transform.position = planetContext.PlanetCenter + dir * (planetContext.PlanetRadius + height);
+                    actorRoot.transform.up = dir;
+                }
+            }
+
+            if (GUILayout.Button("Add planet physics bridge") && actorRoot != null)
+            {
+                var bridge = actorRoot.GetComponentInChildren<Planetary.Bridges.PlanetPhysicsManifoldBridge>();
+                if (bridge == null)
+                    bridge = actorRoot.AddComponent<Planetary.Bridges.PlanetPhysicsManifoldBridge>();
+                bridge.planet = planetContext;
+            }
+
+            if (GUILayout.Button("Open Physics Bridge Editor"))
+                EditorApplication.ExecuteMenuItem("Window/System Drawer/Physics/Physics Bridge Editor");
+            EditorGUILayout.EndHorizontal();
+
+            var mobReport = actorRoot != null
+                ? RagdollMobilityValidator.Validate(actorRoot.transform)
+                : default;
+            if (actorRoot != null && mobReport.HasWarnings)
+            {
+                foreach (string w in mobReport.warnings)
+                    EditorGUILayout.HelpBox(w, MessageType.Warning);
+            }
+
+            enableTravelVelocityPreview = EditorGUILayout.Toggle("Travel velocity preview", enableTravelVelocityPreview);
+            if (enableTravelVelocityPreview && actorRoot != null)
+            {
+                TravelAgent agent = actorRoot.GetComponentInChildren<TravelAgent>();
+                if (agent != null)
+                {
+                    agent.showVelocityTrack = true;
+                    agent.RebuildCachedPlan();
+                    SceneView.RepaintAll();
+                }
+                else
+                    EditorGUILayout.HelpBox("No TravelAgent on actor hierarchy.", MessageType.Info);
             }
 
             EditorGUILayout.EndVertical();

@@ -78,5 +78,11 @@ public class PhysicalPathingAndDriveTests
         Object.DestroyImmediate(map);
         Object.DestroyImmediate(go);
     }
+
+    [Test]
+    public void PhysicalMediumVolumeIndex_WaterBlocksDriveMode()
+    {
+        Assert.IsFalse(PhysicalMediumVolumeRules.MediumAllowsMode(PhysicalPathingMedium.Water, TravelLegMode.Drive));
+    }
 }
 #endif

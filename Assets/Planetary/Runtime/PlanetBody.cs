@@ -1,3 +1,4 @@
+using Planetary.Bridges;
 using Planetary.Composition;
 using Planetary.Elemental;
 using Planetary.Rendering;
@@ -5,6 +6,7 @@ using Planetary.Tectonics;
 using SdfMax;
 using SpatialVolumes;
 using UnityEngine;
+using Weather;
 
 namespace Planetary
 {
@@ -35,6 +37,10 @@ namespace Planetary
         public PlanetInteriorPhysicsUpdater interiorUpdater;
         public PlanetarySimulationScheduler simulationScheduler;
 
+        [Header("Physics bridge gizmos")]
+        public bool drawPhysicsBridgeGizmos = true;
+        public PlanetPhysicsManifoldBridge physicsManifoldBridge;
+
         PlanetPlanarEvaluationContext _planarContext;
         readonly MaterialRegressionService _regression = new MaterialRegressionService();
         int _compositionVersion;
@@ -57,27 +63,42 @@ namespace Planetary
                 sdfLodRenderer = GetComponentInChildren<PlanetarySdfLodRenderer>();
             if (interiorUpdater == null)
                 interiorUpdater = GetComponent<PlanetInteriorPhysicsUpdater>();
+            if (physicsManifoldBridge == null)
+                physicsManifoldBridge = GetComponentInChildren<PlanetPhysicsManifoldBridge>();
             RebuildAll();
         }
 
         [ContextMenu("Rebuild Planet")]
         public void RebuildAll()
         {
-            if (planarBase != null)
-                planarBase.RebuildSources(PlanetCenter, stablePoleAxis, primeMeridianOffsetDeg, streamingService);
+            using (PerfTrace.Scope("RebuildAll"))
+            {
+                if (planarBase != null)
+                    planarBase.RebuildSources(PlanetCenter, stablePoleAxis, primeMeridianOffsetDeg, streamingService);
 
-            RebakeComposition();
-            RebuildChunkMeshes();
-            if (sdfLodRenderer != null)
-                sdfLodRenderer.Rebake();
+                RebakeComposition();
+                RebuildChunkMeshes();
+                if (sdfLodRenderer != null)
+                    sdfLodRenderer.Rebake();
+            }
         }
 
         public void RebakeComposition()
         {
+            using (PerfTrace.Scope("RebakeComposition"))
+            {
+                RebakeCompositionCore();
+            }
+        }
+
+        void RebakeCompositionCore()
+        {
             _regression.Engine.SetRules(elementalRules);
             var plates = _regression.RegressPlatesFromSurface(this, 8, elementalRules);
             var estimator = new AtmosphereCompositionEstimator();
-            var atmos = estimator.Estimate(this, FindFirstObjectByType<global::Weather.WeatherPhysicsManifold>());
+            WeatherPhysicsManifold weatherManifold = null;
+            SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherManifold);
+            var atmos = estimator.Estimate(this, weatherManifold);
             if (compositionProfile != null)
                 composition = PlanetaryCompositionBaker.Bake(this, planarBase, solverProfile, compositionProfile, atmos, plates);
             else
@@ -91,6 +112,12 @@ namespace Planetary
                 volumeProvider.composition = composition;
                 volumeProvider.profile = solverProfile;
                 volumeProvider.RebuildIfDirty(true);
+            }
+
+            if (physicsManifoldBridge != null)
+            {
+                physicsManifoldBridge.planet = this;
+                physicsManifoldBridge.StampFromCompositionBake();
             }
         }
 

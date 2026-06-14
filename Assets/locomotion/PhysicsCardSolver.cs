@@ -859,7 +859,7 @@ public class PhysicsCardSolver : MonoBehaviour
     /// <summary>
     /// Auto-generate a kinematic walking card for movement from one position to another.
     /// </summary>
-    public PhysicsCard GenerateWalkingCard(Vector3 from, Vector3 to, RagdollState currentState)
+    public PhysicsCard GenerateWalkingCard(Vector3 from, Vector3 to, RagdollState currentState, int playDirection = 1)
     {
         if (ragdollSystem == null)
             return null;
@@ -867,15 +867,16 @@ public class PhysicsCardSolver : MonoBehaviour
         if (IsWorldPositionAmbulationDoNotPath(to) || IsAmbulationSegmentDoNotPath(from, to))
             return null;
 
-        // Calculate direction and distance
         Vector3 direction = (to - from);
-        direction.y = 0f; // Keep movement on horizontal plane
+        direction.y = 0f;
         float distance = direction.magnitude;
 
         if (distance < 0.01f)
-            return null; // Already at destination
+            return null;
 
         direction.Normalize();
+        if (playDirection < 0)
+            direction = -direction;
 
         // Create walking card
         PhysicsCard walkingCard = new PhysicsCard
@@ -889,8 +890,8 @@ public class PhysicsCardSolver : MonoBehaviour
         };
 
         // Set target state
-        walkingCard.targetState.rootPosition = to;
-        walkingCard.targetState.rootVelocity = direction * 2f; // Walking speed
+        walkingCard.targetState.rootPosition = playDirection < 0 ? from : to;
+        walkingCard.targetState.rootVelocity = direction * 2f;
         walkingCard.targetState.rootRotation = Quaternion.LookRotation(direction);
 
         // Generate impulse actions for ambulation-extent muscle groups (limbs + trunk stabilization below).
@@ -934,6 +935,9 @@ public class PhysicsCardSolver : MonoBehaviour
         };
         walkingCard.impulseStack.Add(torsoAction);
 
+
+        // todo: review: should consider all arms when generating impulses, but with respect to the walking animation
+        //   additionally, the comment below is somewhat outdated, but refers to PhysicallyBasedPathing
         // todo: note: we may want to use the path finding component
         //   and make ray casts down along foot falls on the path, then apply forces to the ground
         //     or generate additional placement cards at the foot falls - this would allow us to

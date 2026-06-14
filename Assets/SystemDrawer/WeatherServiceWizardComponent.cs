@@ -28,12 +28,36 @@ public class WeatherServiceWizardComponent : MonoBehaviour
     private void OnEnable()
     {
         if (weatherSystemObject != null && SystemDrawerService.Instance != null)
+        {
             SystemDrawerService.Instance.Register(ServiceKey, weatherSystemObject);
+            SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.WeatherSystemLegacy, weatherSystemObject);
+            SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.WeatherSystem, weatherSystemObject);
+            RegisterWeatherManifold();
+        }
     }
 
     private void OnDisable()
     {
         if (SystemDrawerService.Instance != null)
+        {
             SystemDrawerService.Instance.Unregister(ServiceKey);
+            SystemDrawerService.Instance.Unregister(SystemDrawerServiceKeys.WeatherSystemLegacy);
+            SystemDrawerService.Instance.Unregister(SystemDrawerServiceKeys.WeatherSystem);
+            SystemDrawerService.Instance.Unregister(SystemDrawerServiceKeys.WeatherPhysicsManifold);
+        }
+    }
+
+    void RegisterWeatherManifold()
+    {
+        if (weatherSystemObject == null || SystemDrawerService.Instance == null)
+            return;
+        foreach (MonoBehaviour mb in weatherSystemObject.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (mb != null && mb.GetType().Name == "WeatherPhysicsManifold")
+            {
+                SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.WeatherPhysicsManifold, mb);
+                break;
+            }
+        }
     }
 }

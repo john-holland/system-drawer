@@ -1,3 +1,4 @@
+using Planetary.Field;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -63,6 +64,10 @@ public sealed class VehicleAmbulationSolver : MonoBehaviour
 
         PhysicsPathingZone.SampleAt(sampleWorldPosition, out _, out float gripMul);
         float grip01 = Mathf.Clamp01(gripMul);
+
+        var field = Planetary.Field.CanonicalSpatiotemporalField.Resolve();
+        if (field != null && field.TrySampleBlended(sampleWorldPosition, Time.time, out Planetary.Field.SpatiotemporalSample sample))
+            grip01 = Mathf.Clamp01(sample.surfaceFriction);
         float budget = Mathf.Clamp01(tractionBudget01) * grip01;
 
         if (rangePropagator != null && rangePropagator.CurrentRange.IsEmpty)

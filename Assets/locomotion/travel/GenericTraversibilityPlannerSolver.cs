@@ -121,7 +121,9 @@ public static class GenericTraversibilityPlannerSolver
             List<Vector3> walkPath = solver.FindPath(start, goal, returnBestEffortPathWhenNoPath: false);
             if (walkPath != null && walkPath.Count > 0)
             {
-                plan.segments.Add(MultiModalSegment.FromWalk(walkPath));
+                var seg = MultiModalSegment.FromWalk(walkPath);
+                seg.medium = PhysicalMediumVolumeIndex.ResolveSegmentMedium(walkPath);
+                plan.segments.Add(seg);
                 return plan;
             }
 
@@ -141,7 +143,9 @@ public static class GenericTraversibilityPlannerSolver
             List<Vector3> drivePath = solver.FindPath(start, goal, returnBestEffortPathWhenNoPath: false);
             if (drivePath != null && drivePath.Count > 0)
             {
-                plan.segments.Add(MultiModalSegment.FromDrive(drivePath, hints.preferredVehicle));
+                var seg = MultiModalSegment.FromDrive(drivePath, hints.preferredVehicle);
+                seg.medium = PhysicalMediumVolumeIndex.ResolveSegmentMedium(drivePath);
+                plan.segments.Add(seg);
                 return plan;
             }
 

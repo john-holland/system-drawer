@@ -17,7 +17,9 @@ public static class BuiltInSynonyms
             { "in front of", "in-front-of" },
             { "through there", "through-there" },
             { "over here", "over-here" },
-            { "along the road", "along-the-road" }
+            { "along the road", "along-the-road" },
+            { "here here", "here-here" },
+            { "there there", "there-there" }
         };
 
     public static void RegisterAlias(string alias, string canonical)

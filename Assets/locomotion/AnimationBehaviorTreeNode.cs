@@ -37,11 +37,18 @@ public class AnimationBehaviorTreeNode : BehaviorTreeNode
 
     private void Awake()
     {
-        nodeType = NodeType.Action;
+        if (nodeType != NodeType.Sequence)
+            nodeType = NodeType.Action;
     }
+
+    int _sequenceChildIndex;
+    bool _sequenceChildActive;
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)
     {
+        if (nodeType == NodeType.Sequence)
+            return ExecuteSequence(tree);
+
         if (physicsCard == null)
         {
             Debug.LogWarning($"AnimationBehaviorTreeNode {gameObject.name}: No physics card assigned.");
@@ -58,7 +65,9 @@ public class AnimationBehaviorTreeNode : BehaviorTreeNode
 
         // Update physics card
         RagdollState currentState = tree.GetComponent<RagdollSystem>()?.GetCurrentState() ?? new RagdollState();
-        bool stillExecuting = physicsCard.Update(currentState, Time.deltaTime);
+        float direction = rootBehaviorTree != null ? rootBehaviorTree.playbackDirection : 1;
+        float delta = direction < 0 ? -Time.deltaTime : Time.deltaTime;
+        bool stillExecuting = physicsCard.Update(currentState, delta);
 
         if (!stillExecuting)
         {
@@ -70,8 +79,87 @@ public class AnimationBehaviorTreeNode : BehaviorTreeNode
         return BehaviorTreeStatus.Running;
     }
 
+    BehaviorTreeStatus ExecuteSequence(BehaviorTree tree)
+    {
+        if (children == null || children.Count == 0)
+            return BehaviorTreeStatus.Success;
+
+        int direction = rootBehaviorTree != null ? rootBehaviorTree.playbackDirection : 1;
+        if (direction >= 0)
+        {
+            for (int i = _sequenceChildIndex; i < children.Count; i++)
+            {
+                BehaviorTreeNode child = children[i];
+                if (child == null)
+                    continue;
+
+                if (!_sequenceChildActive)
+                {
+                    child.OnEnter(tree);
+                    _sequenceChildActive = true;
+                }
+
+                BehaviorTreeStatus status = child.Execute(tree);
+                if (status == BehaviorTreeStatus.Running)
+                {
+                    _sequenceChildIndex = i;
+                    return BehaviorTreeStatus.Running;
+                }
+
+                if (status == BehaviorTreeStatus.Failure)
+                {
+                    child.OnExit(tree);
+                    _sequenceChildActive = false;
+                    return BehaviorTreeStatus.Failure;
+                }
+
+                child.OnExit(tree);
+                _sequenceChildActive = false;
+            }
+        }
+        else
+        {
+            for (int i = _sequenceChildIndex; i >= 0; i--)
+            {
+                BehaviorTreeNode child = children[i];
+                if (child == null)
+                    continue;
+
+                if (!_sequenceChildActive)
+                {
+                    child.OnEnter(tree);
+                    _sequenceChildActive = true;
+                }
+
+                BehaviorTreeStatus status = child.Execute(tree);
+                if (status == BehaviorTreeStatus.Running)
+                {
+                    _sequenceChildIndex = i;
+                    return BehaviorTreeStatus.Running;
+                }
+
+                if (status == BehaviorTreeStatus.Failure)
+                {
+                    child.OnExit(tree);
+                    _sequenceChildActive = false;
+                    return BehaviorTreeStatus.Failure;
+                }
+
+                child.OnExit(tree);
+                _sequenceChildActive = false;
+            }
+        }
+
+        return BehaviorTreeStatus.Success;
+    }
+
     public override void OnEnter(BehaviorTree tree)
     {
+        _sequenceChildIndex = nodeType == NodeType.Sequence && rootBehaviorTree != null &&
+            rootBehaviorTree.playbackDirection < 0 && children != null && children.Count > 0
+            ? children.Count - 1
+            : 0;
+        _sequenceChildActive = false;
         isExecuting = false;
         executionStartTime = 0f;
         if (physicsCard != null)

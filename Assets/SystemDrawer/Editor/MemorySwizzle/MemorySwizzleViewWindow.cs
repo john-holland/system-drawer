@@ -24,7 +24,12 @@ public class MemorySwizzleViewWindow : EditorWindow
     [MenuItem("Window/System Drawer/Diagnostics/Memory Swizzle View", false, 50)]
     public static void Open()
     {
-        var w = GetWindow<MemorySwizzleViewWindow>("Memory Swizzle");
+        OpenMemorySwizzle();
+    }
+
+    public static void OpenMemorySwizzle()
+    {
+        var w = GetWindow<MemorySwizzleViewWindow>("Diagnostics — Memory");
         w.minSize = new Vector2(720, 480);
         w.Show();
     }
@@ -92,6 +97,14 @@ public class MemorySwizzleViewWindow : EditorWindow
 
         if (GUILayout.Button("Refresh", GUILayout.Width(70)))
             RefreshData();
+
+        EditorGUILayout.LabelField("|", GUILayout.Width(10));
+        if (GUILayout.Button("Perf Trace View", GUILayout.Width(110)))
+            DiagnosticsWindowLauncher.TryOpenPerfTrace();
+
+        string perfCorr = ReadPerfTraceCorrelationLabel();
+        if (!string.IsNullOrEmpty(perfCorr))
+            EditorGUILayout.LabelField(perfCorr, EditorStyles.miniLabel, GUILayout.Width(120));
 
         _autoRefresh = GUILayout.Toggle(_autoRefresh, "Auto-refresh (Systems)", GUILayout.Width(160));
         if (_mode == MemorySwizzleViewMode.EntityTotals)
@@ -193,7 +206,7 @@ public class MemorySwizzleViewWindow : EditorWindow
             EditorGUILayout.Space(6);
             if (_selected.InstanceId != 0 && GUILayout.Button("Ping"))
             {
-                var obj = EditorUtility.InstanceIDToObject(_selected.InstanceId);
+                var obj = EditorUtility.EntityIdToObject(_selected.InstanceId);
                 if (obj != null)
                     EditorGUIUtility.PingObject(obj);
             }
@@ -286,6 +299,17 @@ public class MemorySwizzleViewWindow : EditorWindow
         else
             list.AddRange(focus.Children);
         return list;
+    }
+
+    static string ReadPerfTraceCorrelationLabel()
+    {
+        string utc = EditorPrefs.GetString("PerfTrace.LastCorrelationUtc", "");
+        if (string.IsNullOrEmpty(utc))
+            return "";
+        if (!System.DateTime.TryParse(utc, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+            return "";
+        return "Perf @ " + parsed.ToLocalTime().ToString("HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     static void CopyChildrenTsv(MemorySwizzleNode node)

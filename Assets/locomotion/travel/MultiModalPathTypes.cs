@@ -40,6 +40,9 @@ public class MultiModalSegment
     [Tooltip("Arc-length along road at leg end (meters).")]
     public float distanceAlongEnd;
 
+    [Tooltip("When true, allocate this leg into the reverse budget when building kinematics profile.")]
+    public bool reverseLeg;
+
     public static MultiModalSegment FromWalk(List<Vector3> path)
     {
         return new MultiModalSegment
@@ -103,7 +106,8 @@ public class MultiModalSegment
             estimatedTimeSec = estimatedTimeSec,
             roadSegmentId = roadSegmentId,
             distanceAlongStart = distanceAlongStart,
-            distanceAlongEnd = distanceAlongEnd
+            distanceAlongEnd = distanceAlongEnd,
+            reverseLeg = reverseLeg
         };
         if (waypoints != null)
             copy.waypoints = new List<Vector3>(waypoints);

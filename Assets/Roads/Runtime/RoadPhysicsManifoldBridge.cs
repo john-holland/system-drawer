@@ -21,7 +21,7 @@ namespace Roads
         public void StampFromBake()
         {
             if (manifold == null)
-                manifold = FindAnyObjectByType<WeatherPhysicsManifold>();
+                SceneServiceLookup.TryResolve("weather.physicsManifold", out manifold);
             if (manifold == null || spline == null)
                 return;
 

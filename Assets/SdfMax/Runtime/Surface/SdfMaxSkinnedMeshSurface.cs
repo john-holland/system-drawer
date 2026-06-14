@@ -99,6 +99,12 @@ namespace SdfMax
 
         public void RebuildSurfaceMesh()
         {
+            using (PerfTrace.Scope("RebuildSurfaceMesh"))
+                RebuildSurfaceMeshCore();
+        }
+
+        void RebuildSurfaceMeshCore()
+        {
             EnsureComponents();
             _host = GetComponent<ISdfMaxVolumeHost>();
             if (_host == null || _host.Composition == null)

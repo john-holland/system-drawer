@@ -73,7 +73,7 @@ namespace Locomotion.Narrative
                     while (i < tokens.Count && tokens[i] != ")" && tokens[i] != "(")
                     {
                         if (WithLemmaRegistry.IsDeictic(tokens[i]))
-                            child.anchor = tokens[i++];
+                            ApplyDeictic(child, tokens[i++]);
                         else
                             child.entities.Add(tokens[i++]);
                     }
@@ -82,7 +82,7 @@ namespace Locomotion.Narrative
                 else
                 {
                     if (WithLemmaRegistry.IsDeictic(tokens[i]))
-                        frame.anchor = tokens[i++];
+                        ApplyDeictic(frame, tokens[i++]);
                     else
                         frame.entities.Add(tokens[i++]);
                 }
@@ -139,6 +139,13 @@ namespace Locomotion.Narrative
                     i++;
                     continue;
                 }
+                if (WithLemmaRegistry.TryParseDeicticPhrase(words, i, out _, out int rootDeicticConsumed))
+                {
+                    for (int d = 0; d < rootDeicticConsumed; d++)
+                        ApplyDeictic(root, words[i + d]);
+                    i += rootDeicticConsumed;
+                    continue;
+                }
                 if (WithLemmaRegistry.TryParseRelationPhrase(words, i, out var rel, out int consumed))
                 {
                     var child = new LayoutPlacementFrame { relation = rel };
@@ -150,8 +157,14 @@ namespace Locomotion.Narrative
                     i += consumed;
                     while (i < words.Length && words[i] != "and" && words[i] != "with" && words[i] != ",")
                     {
-                        if (WithLemmaRegistry.IsDeictic(words[i]))
-                            child.anchor = words[i++];
+                        if (WithLemmaRegistry.TryParseDeicticPhrase(words, i, out _, out int deicticConsumed))
+                        {
+                            for (int d = 0; d < deicticConsumed; d++)
+                                ApplyDeictic(child, words[i + d]);
+                            i += deicticConsumed;
+                        }
+                        else if (WithLemmaRegistry.IsDeictic(words[i]))
+                            ApplyDeictic(child, words[i++]);
                         else if (!WithLemmaRegistry.TryParseRelation(words[i], out _))
                             child.entities.Add(words[i++]);
                         else
@@ -177,20 +190,53 @@ namespace Locomotion.Narrative
                     i++;
                     continue;
                 }
+                if (WithLemmaRegistry.TryParseDeicticPhrase(words, i, out _, out int deicticConsumed))
+                {
+                    for (int d = 0; d < deicticConsumed; d++)
+                        ApplyDeictic(frame, words[i + d]);
+                    i += deicticConsumed;
+                    continue;
+                }
                 if (WithLemmaRegistry.TryParseRelationPhrase(words, i, out var rel, out int consumed))
                 {
                     frame.relation = rel;
                     i += consumed;
                     continue;
                 }
-                if (WithLemmaRegistry.IsDeictic(words[i]))
-                {
-                    frame.anchor = words[i++];
-                    continue;
-                }
                 frame.entities.Add(words[i++]);
             }
-            return frame.entities.Count > 0 || frame.anchor != null ? frame : null;
+            return frame.entities.Count > 0 || frame.anchor != null || frame.children.Count > 0 ? frame : null;
+        }
+
+        static void ApplyDeictic(LayoutPlacementFrame frame, string token)
+        {
+            string deictic = WithLemmaRegistry.CanonicalizeDeictic(token);
+            if (string.IsNullOrEmpty(frame.anchor))
+            {
+                frame.anchor = deictic;
+                return;
+            }
+
+            if (WithLemmaRegistry.TryMergeDeicticAnchor(frame.anchor, deictic, out string merged))
+            {
+                frame.anchor = merged;
+                return;
+            }
+
+            frame.children.Add(CreateDeicticSibling(frame, frame.anchor));
+            frame.anchor = deictic;
+        }
+
+        static LayoutPlacementFrame CreateDeicticSibling(LayoutPlacementFrame parent, string anchor)
+        {
+            var sibling = new LayoutPlacementFrame
+            {
+                relation = parent.relation,
+                anchor = anchor,
+                causalityLeafId = parent.causalityLeafId
+            };
+            sibling.entities.AddRange(parent.entities);
+            return sibling;
         }
     }
 }

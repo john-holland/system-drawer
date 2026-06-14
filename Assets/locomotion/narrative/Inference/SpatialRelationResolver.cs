@@ -80,10 +80,12 @@ namespace Locomotion.Narrative
 
         static Vector3 ResolveAnchorCenter(LayoutPlacementFrame frame, ResolveContext ctx)
         {
-            if (ctx.causalityPosition.HasValue && (WithLemmaRegistry.IsDeictic(frame.anchor) || frame.relation == LayoutSpatialRelation.Through))
-                return ctx.causalityPosition.Value;
-            if (ctx.playerPosition.HasValue && frame.anchor == "here")
+            if (WithLemmaRegistry.IsPlayerDeictic(frame.anchor) && ctx.playerPosition.HasValue)
                 return ctx.playerPosition.Value;
+            if (WithLemmaRegistry.IsCausalityDeictic(frame.anchor) && ctx.causalityPosition.HasValue)
+                return ctx.causalityPosition.Value;
+            if (ctx.causalityPosition.HasValue && frame.relation == LayoutSpatialRelation.Through)
+                return ctx.causalityPosition.Value;
             return ctx.defaultCenter;
         }
 

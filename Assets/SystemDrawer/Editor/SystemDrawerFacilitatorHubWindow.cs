@@ -11,6 +11,7 @@ public class SystemDrawerFacilitatorHubWindow : EditorWindow
     private SystemDrawerFacilitator _facilitator;
     private SerializedObject _so;
     private string _adHocMenuPath = "";
+    private Vector2 _scroll;
 
     private const string HubMenu = "Window/System Drawer/Facilitator Hub";
 
@@ -18,6 +19,7 @@ public class SystemDrawerFacilitatorHubWindow : EditorWindow
     public static void ShowWindow()
     {
         var win = GetWindow<SystemDrawerFacilitatorHubWindow>("SD Facilitator");
+        win.minSize = new Vector2(400f, 300f);
         win.RefreshTarget();
         win.Show();
     }
@@ -57,6 +59,7 @@ public class SystemDrawerFacilitatorHubWindow : EditorWindow
             GUILayout.Button("Create System Drawer Hub in Hierarchy", GUILayout.Height(28)))
             SystemDrawerHubSetup.CreateHierarchyHub();
 
+        _scroll = EditorGUILayout.BeginScrollView(_scroll);
         if (_facilitator != null)
         {
             if (_so != null && _so.targetObject != null)
@@ -69,6 +72,7 @@ public class SystemDrawerFacilitatorHubWindow : EditorWindow
         }
         else
             FacilitatorHubUi.DrawToolbox(null, null, ref _adHocMenuPath);
+        EditorGUILayout.EndScrollView();
     }
 }
 
@@ -124,6 +128,20 @@ internal static class FacilitatorHubUi
             }
 
             EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Validate scene services"))
+            {
+                IReadOnlyList<string> missing = SystemDrawerSceneServices.GetUnresolvedRequiredKeys(
+                    SystemDrawerServiceKeys.WeatherPhysicsManifold,
+                    SystemDrawerServiceKeys.PlanetBody,
+                    SystemDrawerServiceKeys.PlanetShellGrid,
+                    SystemDrawerServiceKeys.HierarchicalPathingSolver,
+                    SystemDrawerServiceKeys.SystemDrawerAnimator);
+                if (missing.Count == 0)
+                    Debug.Log("[SystemDrawerFacilitator] All canonical service keys registered.");
+                else
+                    Debug.LogWarning("[SystemDrawerFacilitator] Missing keys: " + string.Join(", ", missing));
+            }
         }
 
         EditorGUILayout.HelpBox(

@@ -33,6 +33,8 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Ragdoll", "Systems Matrix", "Window/System Drawer/Ragdoll/Systems Matrix"),
         new Entry("Physics", "Nervous System Impulse Viewer", "Window/System Drawer/Physics/Nervous System Impulse Viewer"),
         new Entry("Physics", "Card Game Visualizer", "Window/System Drawer/Physics/Card Game Visualizer"),
+        new Entry("Physics", "Physics Bridge Editor", "Window/System Drawer/Physics/Physics Bridge Editor"),
+        new Entry("Physics", "Aquaplane Demo Setup", "Window/System Drawer/Physics/Aquaplane Demo Setup"),
         new Entry("Audio", "Sound Cache Generator", "Window/System Drawer/Audio/Sound Cache Generator"),
         new Entry("Weather", "Weather Service Wizard", "Window/System Drawer/Weather/Service Wizard"),
         new Entry("System Tests", "Audio", "Window/System Drawer/System Tests/Audio"),
@@ -40,6 +42,8 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("System Tests", "Ragdoll Cohesion", "Window/System Drawer/System Tests/Ragdoll Cohesion"),
         new Entry("Continuum", "Continuum Library", "Window/Continuum/Continuum Library"),
         new Entry("Diagnostics", "Memory Swizzle View", "Window/System Drawer/Diagnostics/Memory Swizzle View"),
+        new Entry("Diagnostics", "Perf Trace View", "Window/System Drawer/Diagnostics/Perf Trace View"),
         new Entry("Planet", "Import Planar Scan", "Window/System Drawer/Planet/Import Planar Scan"),
+        new Entry("Planet", "Bake Composition", "Window/System Drawer/Planet/Bake Composition"),
     };
 }

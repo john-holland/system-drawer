@@ -1,6 +1,7 @@
 using Planetary.Composition;
 using Planetary.Elemental;
 using UnityEngine;
+using Weather;
 
 namespace Planetary.Tectonics
 {
@@ -26,7 +27,9 @@ namespace Planetary.Tectonics
             }
             jobProgress = 0.6f;
             var estimator = new AtmosphereCompositionEstimator();
-            var atmos = estimator.Estimate(planet, FindFirstObjectByType<global::Weather.WeatherPhysicsManifold>());
+            WeatherPhysicsManifold weatherManifold = null;
+            SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherManifold);
+            var atmos = estimator.Estimate(planet, weatherManifold);
             if (compositionProfile != null)
             {
                 planet.composition = PlanetaryCompositionBaker.Bake(

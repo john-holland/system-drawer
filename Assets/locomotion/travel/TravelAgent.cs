@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using Weather;
 
 /// <summary>
 /// Read-only snapshot of a planner / behavior node discovered under the actor hierarchy (no UnityEngine.Object refs).
@@ -69,6 +70,25 @@ public class TravelAgent : MonoBehaviour
     public bool drawTravelGizmos = true;
     [Tooltip("When multibody runs, also draw the pre-adjustment plan (magenta in scene handles).")]
     public bool drawMultibodyBasePlan = true;
+
+    [Header("Path kinematics (skier track)")]
+    [Range(0f, 1f)]
+    [Tooltip("Max fraction of total path arc length assignable to reverse samples.")]
+    public float reverseLegLimit01 = 0.5f;
+
+    [Tooltip("Read-only after rebuild: sum of segment polyline lengths.")]
+    [SerializeField] float totalPathLengthMeters;
+
+    [Tooltip("Read-only: totalPathLengthMeters * reverseLegLimit01.")]
+    [SerializeField] float reverseBudgetMeters;
+
+    public bool showVelocityTrack = true;
+    public bool showIkSamples;
+    public bool showReverseBudget = true;
+    [Range(0.5f, 10f)] public float velocityTrackSpacingMeters = 2f;
+
+    public float TotalPathLengthMeters => totalPathLengthMeters;
+    public float ReverseBudgetMeters => reverseBudgetMeters;
 
     [Header("Multibody travel")]
     public TravelAgentMultibodySettings multibody = new TravelAgentMultibodySettings();
@@ -179,9 +199,9 @@ public class TravelAgent : MonoBehaviour
     {
         cachedPlanBeforeMultibody = null;
         cachedPlan = new GenericMultiModalPathPlan();
-        HierarchicalPathingSolver solver = pathingSolverForPreview != null
-            ? pathingSolverForPreview
-            : FindAnyObjectByType<HierarchicalPathingSolver>();
+        HierarchicalPathingSolver solver = pathingSolverForPreview;
+        if (solver == null)
+            SceneServiceLookup.TryResolve("pathing.hierarchical", out solver);
 
         if (solver == null)
             return;
@@ -236,7 +256,24 @@ public class TravelAgent : MonoBehaviour
         }
 
         EnrichPlanWithRoads(cachedPlan);
+        UpdatePathLengthMetrics();
     }
+
+    void UpdatePathLengthMetrics()
+    {
+        totalPathLengthMeters = TravelPathReverseLimits.ComputeTotalPathLengthMeters(cachedPlan);
+        reverseBudgetMeters = TravelPathReverseLimits.ReverseBudgetMeters(reverseLegLimit01, totalPathLengthMeters);
+    }
+
+    /// <summary>Reset reverse limit to plan default (0.5 at ≥500 m, else 1.0).</summary>
+    public void ResetReverseLegLimitToDefault()
+    {
+        reverseLegLimit01 = TravelPathReverseLimits.ResolveDefaultReverseLegLimit01(totalPathLengthMeters);
+        reverseBudgetMeters = TravelPathReverseLimits.ReverseBudgetMeters(reverseLegLimit01, totalPathLengthMeters);
+    }
+
+    /// <summary>Editor hook to refresh computed path metrics after slider edits.</summary>
+    public void UpdatePathLengthMetricsPublic() => UpdatePathLengthMetrics();
 
     void EnrichPlanWithRoads(GenericMultiModalPathPlan plan)
     {

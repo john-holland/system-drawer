@@ -18,6 +18,40 @@ public interface IAnimationSetManagerDeferral
 }
 
 /// <summary>
+/// Layer weight and playback direction control implemented by <c>SystemDrawerAnimator</c> (SystemDrawer assembly).
+/// Keeps travel nodes in Locomotion.Runtime without an asmdef cycle.
+/// </summary>
+public interface ISystemDrawerLayerControl : IAnimationSetManagerDeferral
+{
+    void SetLayerWeight(int layerIndex, float weight);
+    float GetLayerWeight(int layerIndex);
+    void SetLayerPlayDirection(int layerIndex, int direction);
+    void SetGlobalPlayDirection(int direction);
+}
+
+/// <summary>Find <see cref="ISystemDrawerLayerControl"/> without referencing the SystemDrawer assembly.</summary>
+public static class SystemDrawerLayerControlLookup
+{
+    public static ISystemDrawerLayerControl FindInChildren(Component root, bool includeInactive = true)
+    {
+        if (root == null)
+            return null;
+
+        var behaviours = root.GetComponentsInChildren<MonoBehaviour>(includeInactive);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is ISystemDrawerLayerControl control)
+                return control;
+        }
+
+        return null;
+    }
+
+    public static ISystemDrawerLayerControl FromComponent(Component component) =>
+        component as ISystemDrawerLayerControl;
+}
+
+/// <summary>
 /// Registration surface for <see cref="AnimationBehaviorTree"/> / <see cref="IAnimationLayerReporter"/>.
 /// </summary>
 public interface ISystemDrawerAnimationRegistration

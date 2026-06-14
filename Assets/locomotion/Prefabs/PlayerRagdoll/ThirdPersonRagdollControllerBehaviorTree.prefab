@@ -1,0 +1,345 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &467927089196418098
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 587308063371682641}
+  - component: {fileID: 2287574601728342891}
+  m_Layer: 0
+  m_Name: DriveLocomotionAnimation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &587308063371682641
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 467927089196418098}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7719364662406889773}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2287574601728342891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 467927089196418098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87509dd85ef837b439a7fd54163a4c70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::DriveLocomotionAnimationNode
+  nodeType: 3
+  children: []
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  useCardEstimation: 1
+  animator: {fileID: 0}
+  speedParameter: Speed
+  movingParameter: IsMoving
+  speedScale: 0.2
+  movingSpeedThreshold: 0.15
+--- !u!1 &2052580050312491984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9144150060965674451}
+  - component: {fileID: 2408675521617613102}
+  m_Layer: 0
+  m_Name: ReadMovementInput
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9144150060965674451
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2052580050312491984}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7719364662406889773}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2408675521617613102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2052580050312491984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd1193e790e100e4f88f2d79a2e68f11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::ReadRagdollPlayerMovementInputNode
+  nodeType: 3
+  children: []
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  useCardEstimation: 1
+--- !u!1 &2515647087579851959
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5451772908941962372}
+  - component: {fileID: 1831199007337966213}
+  m_Layer: 0
+  m_Name: ApplyRagdollLocomotion
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5451772908941962372
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2515647087579851959}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7719364662406889773}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1831199007337966213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2515647087579851959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ab160b2383ed354eb2ecb949b7a6323, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::ApplyRagdollLocomotionNode
+  nodeType: 3
+  children: []
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  useCardEstimation: 1
+  facingReference: {fileID: 0}
+  cardSolver: {fileID: 0}
+  nervousSystem: {fileID: 0}
+  ragdollSystem: {fileID: 0}
+--- !u!1 &5151583938933190741
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2104288747474876126}
+  - component: {fileID: 3858653225479783574}
+  m_Layer: 0
+  m_Name: ThirdPersonCameraOrbit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2104288747474876126
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5151583938933190741}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7719364662406889773}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3858653225479783574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5151583938933190741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e4e69d428244a5429b7a0a2f3e8a872, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::ThirdPersonCameraOrbitNode
+  nodeType: 3
+  children: []
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  useCardEstimation: 1
+  followTarget: {fileID: 0}
+  pivot: {fileID: 0}
+  cameraTransform: {fileID: 0}
+--- !u!1 &8553260264177659887
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7719364662406889773}
+  - component: {fileID: 2229215772186508618}
+  - component: {fileID: 8834923592600632421}
+  - component: {fileID: 5962169304431686612}
+  m_Layer: 0
+  m_Name: ThirdPersonRagdollControllerBehaviorTree
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7719364662406889773
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8553260264177659887}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9144150060965674451}
+  - {fileID: 2104288747474876126}
+  - {fileID: 5451772908941962372}
+  - {fileID: 587308063371682641}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2229215772186508618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8553260264177659887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68d5bb52c5930b448a7217ade48e40b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::RagdollPlayerInputBuffer
+  options:
+    enableMovement: 1
+    enableMouseLook: 1
+    enableAnimations: 1
+    invertY: 0
+    mouseSensitivity: 2
+    verticalLookLimit: 80
+    moveSpeed: 5
+    sprintMultiplier: 2
+    altHeldEnablesUIMode: 1
+    uiModeHoldKey: 308
+    lockCursorOnEnable: 1
+    orbitDistance: 4
+    orbitMouseSensitivity: 2
+    minOrbitPitch: -40
+    maxOrbitPitch: 70
+    groundProbeDistance: 1.2
+    groundLayers:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    jumpImpulseStrength: 4
+--- !u!114 &8834923592600632421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8553260264177659887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7517a035263ce0242827780cbb5f52be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::BehaviorTree
+  rootNode: {fileID: 5962169304431686612}
+  currentNode: {fileID: 0}
+  lastStatus: 0
+  decisionTime: 0
+  lastDecisionTime: -999
+  nextDecisionTime: 0
+  currentGoal:
+    goalName: 
+    type: 1
+    target: {fileID: 0}
+    targetPosition: {x: 0, y: 0, z: 0}
+    targetRotation: {x: 0, y: 0, z: 0, w: 1}
+    pleaseHold: 0
+    hitLimbNames: []
+    useToolForHit: 0
+    hitTool: {fileID: 0}
+    requiresCleanup: 0
+    toolsUsed: []
+    priority: 5
+    cleanupUrgency: 1
+    validAfterNarrativeTime: -Infinity
+    validBeforeNarrativeTime: Infinity
+    requireMinCausalDepth: 0
+  resetIfNotRoot: 0
+  availableCards: []
+  sceneObjectRegistry: {fileID: 0}
+--- !u!114 &5962169304431686612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8553260264177659887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f863d8737e791de438f78769d8df1f8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::RagdollPlayerSequenceNode
+  nodeType: 3
+  children:
+  - {fileID: 2408675521617613102}
+  - {fileID: 3858653225479783574}
+  - {fileID: 1831199007337966213}
+  - {fileID: 2287574601728342891}
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  useCardEstimation: 1

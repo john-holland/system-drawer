@@ -21,6 +21,10 @@ public sealed class TravelExecutionContext
     public Vector3 transitionWorld { get; }
     public float estimatedLegTimeSec { get; }
     public PhysicalPathingMedium medium { get; }
+    public float totalPathLengthMeters { get; }
+    public float reverseBudgetMeters { get; }
+    public float reverseBudgetRemainingMeters { get; }
+    public bool inReverseTail { get; }
 
     TravelExecutionContext(
         BehaviorTree tree,
@@ -38,7 +42,11 @@ public sealed class TravelExecutionContext
         TravelLegMode toMode,
         Vector3 transitionWorld,
         float estimatedLegTimeSec,
-        PhysicalPathingMedium medium)
+        PhysicalPathingMedium medium,
+        float totalPathLengthMeters,
+        float reverseBudgetMeters,
+        float reverseBudgetRemainingMeters,
+        bool inReverseTail)
     {
         this.tree = tree;
         this.travelAgent = travelAgent;
@@ -56,6 +64,10 @@ public sealed class TravelExecutionContext
         this.transitionWorld = transitionWorld;
         this.estimatedLegTimeSec = estimatedLegTimeSec;
         this.medium = medium;
+        this.totalPathLengthMeters = totalPathLengthMeters;
+        this.reverseBudgetMeters = reverseBudgetMeters;
+        this.reverseBudgetRemainingMeters = reverseBudgetRemainingMeters;
+        this.inReverseTail = inReverseTail;
     }
 
     /// <summary>Build context for a plan leg or mode transition.</summary>
@@ -68,7 +80,9 @@ public sealed class TravelExecutionContext
         bool isTransition,
         TravelLegMode from,
         TravelLegMode to,
-        TravelAgent travelAgentOverride = null)
+        TravelAgent travelAgentOverride = null,
+        float reverseBudgetRemainingMeters = -1f,
+        bool inReverseTail = false)
     {
         TravelAgent agent = travelAgentOverride;
         if (agent == null && composite != null)
@@ -100,6 +114,15 @@ public sealed class TravelExecutionContext
         PhysicalPathingMedium med = seg != null ? seg.medium : PhysicalPathingMedium.Unspecified;
         float estTime = seg != null ? seg.estimatedTimeSec : 0f;
         Vector3 transWorld = ResolveTransitionWorld(seg);
+        float totalLen = agent != null ? agent.TotalPathLengthMeters : 0f;
+        float revBudget = agent != null ? agent.ReverseBudgetMeters : 0f;
+        float revRemaining = reverseBudgetRemainingMeters >= 0f
+            ? reverseBudgetRemainingMeters
+            : (inReverseTail && seg != null && seg.reverseLeg ? revBudget : 0f);
+        bool reverseTail = inReverseTail
+            && seg != null
+            && seg.reverseLeg
+            && TravelPathReverseLimits.AllowsReverse(agent != null ? agent.reverseLegLimit01 : 0f);
 
         return new TravelExecutionContext(
             tree,
@@ -117,7 +140,11 @@ public sealed class TravelExecutionContext
             to,
             transWorld,
             estTime,
-            med);
+            med,
+            totalLen,
+            revBudget,
+            revRemaining,
+            reverseTail);
     }
 
     static Vector3 ResolveTransitionWorld(MultiModalSegment seg)

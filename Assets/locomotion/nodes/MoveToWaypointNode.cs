@@ -27,6 +27,13 @@ public class MoveToWaypointNode : BehaviorTreeNode
     [Tooltip("Optional proxy system for impulse fallback")]
     public MonoBehaviour fallbackImpulseProxy;
 
+    [Header("Travel leg (optional)")]
+    [Tooltip("Leg mode for card selection and visualization.")]
+    public TravelLegMode travelLegMode = TravelLegMode.Walk;
+
+    [Tooltip("Physical medium tag for planners and drive bridge filtering.")]
+    public PhysicalPathingMedium physicalMedium = PhysicalPathingMedium.Unspecified;
+
     [Header("Execution Settings")]
     [Tooltip("Timeout for waypoint movement (0 = no timeout)")]
     public float timeoutSeconds = 10f;
@@ -189,8 +196,7 @@ public class MoveToWaypointNode : BehaviorTreeNode
 
         RagdollState currentState = ragdollSystem.GetCurrentState();
 
-        // Find applicable cards
-        List<GoodSection> applicableCards = cardSolver.FindApplicableCards(currentState);
+        List<GoodSection> applicableCards = FindMovementCards(currentState);
 
         if (cardSolver.IsWorldPositionAmbulationDoNotPath(waypoint))
             return false;
@@ -222,7 +228,8 @@ public class MoveToWaypointNode : BehaviorTreeNode
         // If no cards found and auto-generation enabled, generate walking card
         if (bestCard == null && useAutoWalkingCards)
         {
-            bestCard = cardSolver.GenerateWalkingCard(currentState.rootPosition, waypoint, currentState);
+            int playDirection = ResolvePlayDirection(tree);
+            bestCard = cardSolver.GenerateWalkingCard(currentState.rootPosition, waypoint, currentState, playDirection);
             if (bestCard != null)
             {
                 // Add generated card to available cards temporarily
@@ -371,5 +378,21 @@ public class MoveToWaypointNode : BehaviorTreeNode
     public override void OnExit(BehaviorTree tree)
     {
         StopExecution();
+    }
+
+    /// <summary>Override in <see cref="TravelLegDriveNode"/> to prefer drive cards.</summary>
+    protected virtual List<GoodSection> FindMovementCards(RagdollState state)
+    {
+        if (cardSolver == null || state == null)
+            return new List<GoodSection>();
+        return cardSolver.FindApplicableCards(state);
+    }
+
+    protected virtual int ResolvePlayDirection(BehaviorTree tree)
+    {
+        TravelExecutionContextProvider provider = GetComponentInParent<TravelExecutionContextProvider>();
+        if (provider != null && provider.InReverseTail)
+            return -1;
+        return 1;
     }
 }

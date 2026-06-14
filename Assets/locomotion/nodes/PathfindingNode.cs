@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Weather;
 
 /// <summary>
 /// Behavior tree node for pathfinding using hierarchical pathfinding system.
@@ -60,9 +61,7 @@ public class PathfindingNode : BehaviorTreeNode
         
         // Auto-find pathfinding solver if not assigned
         if (pathfindingSolver == null)
-        {
-            pathfindingSolver = FindAnyObjectByType<HierarchicalPathingSolver>();
-        }
+            SceneServiceLookup.TryResolve("pathing.hierarchical", out pathfindingSolver);
     }
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)

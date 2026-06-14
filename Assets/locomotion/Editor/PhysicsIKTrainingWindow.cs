@@ -694,6 +694,27 @@ public class PhysicsIKTrainingWindow : EditorWindow
         hasStoredRagdollState = false;
     }
 
+    void ApplyMobilityPreset()
+    {
+        Transform root = ragdollRigidbody != null ? ragdollRigidbody.transform.root : null;
+        if (root == null)
+            return;
+        Rigidbody[] rbs = root.GetComponentsInChildren<Rigidbody>(true);
+        Undo.SetCurrentGroupName("Mobility preset");
+        int group = Undo.GetCurrentGroup();
+        for (int i = 0; i < rbs.Length; i++)
+        {
+            if (rbs[i] == null)
+                continue;
+            Undo.RecordObject(rbs[i], "Mobility preset");
+            rbs[i].isKinematic = false;
+            rbs[i].constraints = RigidbodyConstraints.None;
+            rbs[i].collisionDetectionMode = CollisionDetectionMode.Continuous;
+            rbs[i].interpolation = RigidbodyInterpolation.Interpolate;
+        }
+        Undo.CollapseUndoOperations(group);
+    }
+
     /// <summary>Set all ragdoll rigidbodies to non-kinematic so physics/IK can move joints; store previous state.</summary>
     private void SetRagdollNonKinematicForTraining()
     {
@@ -984,6 +1005,24 @@ public class PhysicsIKTrainingWindow : EditorWindow
                 EditorUtility.SetDirty(runAsset);
         }
         ragdollRigidbody = (Rigidbody)EditorGUILayout.ObjectField("Ragdoll Capsule Rigidbody", ragdollRigidbody, typeof(Rigidbody), true);
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Mobility", EditorStyles.boldLabel);
+        if (GUILayout.Button("Mobility preset (non-kinematic, continuous, interpolate)"))
+            ApplyMobilityPreset();
+        Transform mobilityRoot = ragdollRigidbody != null ? ragdollRigidbody.transform.root : null;
+        if (mobilityRoot != null)
+        {
+            RagdollMobilityValidator.Report mobReport = RagdollMobilityValidator.Validate(mobilityRoot);
+            if (mobReport.HasWarnings)
+            {
+                foreach (string w in mobReport.warnings)
+                    EditorGUILayout.HelpBox(w, MessageType.Warning);
+            }
+            else
+                EditorGUILayout.HelpBox($"Mobility OK — {mobReport.rigidbodyCount} RBs, {mobReport.colliderCount} colliders.", MessageType.Info);
+        }
+
         actorKey = EditorGUILayout.TextField("Actor key (from AssetLoader)", actorKey);
         actorPrefabOrRoot = (GameObject)EditorGUILayout.ObjectField("Actor prefab/root (if no solver/key)", actorPrefabOrRoot, typeof(GameObject), true);
         clipKey = EditorGUILayout.TextField("Clip key (from AssetLoader, optional)", clipKey);

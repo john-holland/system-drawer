@@ -20,6 +20,12 @@ namespace Planetary.Lava
         public WeatherPhysicsManifold weatherManifold;
         public LoopEdgeMap loopEdges = new LoopEdgeMap();
 
+        void Awake()
+        {
+            if (weatherManifold == null)
+                SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherManifold);
+        }
+
         readonly List<VolcanoCandidate> _candidates = new List<VolcanoCandidate>();
         readonly HashSet<int> _reached = new HashSet<int>();
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Weather;
 
 /// <summary>
 /// Behavior-tree sequence that builds children from <see cref="GenericTraversibilityPlannerSolver"/> output.
@@ -48,7 +49,7 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
     {
         nodeType = NodeType.Sequence;
         if (pathfindingSolver == null)
-            pathfindingSolver = FindAnyObjectByType<HierarchicalPathingSolver>();
+            SceneServiceLookup.TryResolve("pathing.hierarchical", out pathfindingSolver);
     }
 
     public override void OnEnter(BehaviorTree tree)
@@ -308,22 +309,29 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
                     seg.waypoints != null && seg.waypoints.Count >= 2)
                 {
                     if (!AppendFlyingCardChildren(legNode, seg.waypoints, tree, cardSolver))
-                        AppendWaypointChain(legNode, seg.waypoints);
+                        AppendWaypointChain(legNode, seg.waypoints, seg);
                 }
                 else
-                    AppendWaypointChain(legNode, seg.waypoints);
+                    AppendWaypointChain(legNode, seg.waypoints, seg);
+                break;
+
+            case TravelLegMode.Drive:
+                AppendDriveWaypointChain(legNode, seg, tree);
                 break;
 
             default:
-                AppendWaypointChain(legNode, seg.waypoints);
+                AppendWaypointChain(legNode, seg.waypoints, seg);
                 break;
         }
     }
 
-    void AppendWaypointChain(TravelLegSequenceNode legNode, List<Vector3> path)
+    void AppendWaypointChain(TravelLegSequenceNode legNode, List<Vector3> path, MultiModalSegment seg)
     {
         if (path == null || legNode == null)
             return;
+
+        TravelLegMode mode = seg != null ? seg.mode : TravelLegMode.Walk;
+        PhysicalPathingMedium medium = seg != null ? seg.medium : PhysicalPathingMedium.Unspecified;
 
         foreach (Vector3 wp in path)
         {
@@ -332,6 +340,34 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             MoveToWaypointNode node = go.AddComponent<MoveToWaypointNode>();
             node.waypoint = wp;
             node.reachedDistance = waypointReachedDistance;
+            node.travelLegMode = mode;
+            node.physicalMedium = medium;
+            legNode.children.Add(node);
+        }
+    }
+
+    void AppendDriveWaypointChain(TravelLegSequenceNode legNode, MultiModalSegment seg, BehaviorTree tree)
+    {
+        if (seg?.waypoints == null || legNode == null)
+            return;
+
+        PhysicsCardSolver cardSolver = tree != null ? tree.GetComponentInParent<PhysicsCardSolver>() : null;
+        DrivingPhysicsCardSolver drivingSolver = tree != null ? tree.GetComponentInParent<DrivingPhysicsCardSolver>() : null;
+        HierarchicalPathingSolver pathSolver = pathfindingSolver;
+
+        foreach (Vector3 wp in seg.waypoints)
+        {
+            GameObject go = new GameObject($"DriveWaypoint_{legNode.children.Count}");
+            go.transform.SetParent(legNode.transform, worldPositionStays: false);
+            TravelLegDriveNode node = go.AddComponent<TravelLegDriveNode>();
+            node.waypoint = wp;
+            node.reachedDistance = waypointReachedDistance;
+            node.travelLegMode = TravelLegMode.Drive;
+            node.physicalMedium = seg.medium;
+            node.cardSolver = cardSolver;
+            node.drivingSolver = drivingSolver;
+            node.pathingSolver = pathSolver;
+            node.vehicleHint = seg.optionalVehicleHint != null ? seg.optionalVehicleHint : preferredVehicle;
             legNode.children.Add(node);
         }
     }

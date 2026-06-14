@@ -61,7 +61,7 @@ namespace SpatialVolumes
         void ISdfMaxVolumeHost.EnsureVolumeBuilt(bool force) => RebuildIfDirty(force);
         void ISdfMaxVolumeHost.NotifyVolumeChanged() => NotifyChanged();
 
-        void Awake() => SyncRenderComponents();
+        void Awake() => SyncRenderComponentsCore();
         public void OnEnable() => NotifyChanged();
         public void OnDisable() => NotifyChanged();
 
@@ -176,6 +176,18 @@ namespace SpatialVolumes
         }
 
         void SyncRenderComponents()
+        {
+            if (PerfTrace.IsScopeActive)
+            {
+                using (PerfTrace.Scope("SyncRenderComponents"))
+                    SyncRenderComponentsCore();
+                return;
+            }
+
+            SyncRenderComponentsCore();
+        }
+
+        void SyncRenderComponentsCore()
         {
             var staticMesh = GetComponent<SdfMaxMeshSurface>();
             var skinnedMesh = GetComponent<SdfMaxSkinnedMeshSurface>();

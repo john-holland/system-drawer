@@ -1,7 +1,9 @@
 {
   "name": "Weather.Runtime",
   "rootNamespace": "Weather",
-  "references": [],
+  "references": [
+    "SystemDrawer.PerfTrace"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

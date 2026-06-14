@@ -102,7 +102,16 @@ public class RagdollAnimationSetManager : MonoBehaviour
     /// <summary>Set reverse playback direction. Frame-backward logic can be added later.</summary>
     public void Reverse()
     {
-        playDirection = playDirection == 1 ? -1 : 1;
+        SetPlayDirection(playDirection == 1 ? -1 : 1);
+    }
+
+    /// <summary>Set playback direction (1 forward, -1 reverse).</summary>
+    public void SetPlayDirection(int direction)
+    {
+        playDirection = direction >= 0 ? 1 : -1;
+        var reverse = GetComponentInChildren<ReversePlaybackController>();
+        if (reverse != null)
+            reverse.SetPlayDirection(playDirection);
     }
 
     /// <summary>Reset playback state and tree to root; optionally clear current node and invoke OnEnter on root.</summary>

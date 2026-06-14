@@ -114,7 +114,7 @@ namespace Weather
                 cloud = FindFirstObjectByType<Cloud>();
 
             if (weatherPhysicsManifold == null)
-                weatherPhysicsManifold = FindFirstObjectByType<WeatherPhysicsManifold>();
+                SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherPhysicsManifold);
 
             if (debugLogging)
             {

@@ -175,6 +175,10 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
     public PhysicsCardSolver solver;
     public PhysicsIKTrainingCategory testCategory = PhysicsIKTrainingCategory.Locomotion;
 
+    [Header("Locomotion")]
+    [Tooltip("Optional world goal for live locomotion scoring when TravelAgent plan is absent.")]
+    public Vector3 locomotionGoalWorld;
+
     [Header("Initial Pose (IK Training Start)")]
     [Tooltip("Optional pose to apply when Start Training is clicked. Current = use existing pose; others sample a clip at time 0 and zero velocities.")]
     public IKTrainingInitialPoseMode initialPoseMode = IKTrainingInitialPoseMode.Current;

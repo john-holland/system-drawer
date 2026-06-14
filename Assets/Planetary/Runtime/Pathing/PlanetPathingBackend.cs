@@ -7,6 +7,13 @@ namespace Planetary
     {
         public int ChunksPerFace = 2;
         public float PlanetRadius = 1000f;
+        public PlanetBody Planet;
+
+        public Vector3 ResolvePlanetCenter() =>
+            Planet != null ? Planet.PlanetCenter : Vector3.zero;
+
+        public float ResolvePlanetRadius() =>
+            Planet != null ? Planet.PlanetRadius : PlanetRadius;
 
         public bool TryGetNeighborChunk(PlanetFaceId face, int cx, int cy, int dx, int dy,
             out PlanetFaceId outFace, out int outCx, out int outCy)

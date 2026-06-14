@@ -95,12 +95,33 @@ namespace Weather
         [Tooltip("Reference to Water system")]
         public Water water;
 
-        private void Awake()
+        [Header("Advection (far field)")]
+        public bool enableFarFieldAdvection = true;
+        public int advectionStride = 2;
+        public int advectionEveryNFrames = 2;
+        public Transform advectionFocus;
+        public float skipAdvectionAboveAltitudeM = 80000f;
+
+        [Header("Near field")]
+        public NearField.NearFieldWindInteractionGraph nearFieldGraph;
+
+        int _advectionFrame;
+        ManifoldCellData[] _advectionScratch;
+
+        void Awake()
         {
-            EnsureCellDataAllocated();
+            EnsureCellDataAllocatedCore();
+            if (nearFieldGraph == null)
+                nearFieldGraph = FindAnyObjectByType<NearField.NearFieldWindInteractionGraph>();
         }
 
         void EnsureCellDataAllocated()
+        {
+            using (PerfTrace.Scope("EnsureCellDataAllocated"))
+                EnsureCellDataAllocatedCore();
+        }
+
+        void EnsureCellDataAllocatedCore()
         {
             int totalCells = cellCount.x * cellCount.y * cellCount.z;
             if (totalCells <= 0)
@@ -131,10 +152,8 @@ namespace Weather
         /// </summary>
         public void ServiceUpdate(float deltaTime)
         {
-            // Aggregate data from all subsystems
+            WindStampPass();
             AggregateSubsystemData();
-
-            // Update manifold using operator splitting
             UpdateManifold(deltaTime);
         }
 
@@ -169,14 +188,85 @@ namespace Weather
             ApplyMaterialInteractions(deltaTime);
         }
 
+        /// <summary>Stamp analytic wind into cell velocities (far-field source term).</summary>
+        public void WindStampPass()
+        {
+            if (wind == null || cellData == null || cellData.Length == 0)
+                return;
+
+            EnsureCellDataAllocatedCore();
+            int stride = Mathf.Max(1, advectionStride);
+            for (int z = 0; z < cellCount.z; z += stride)
+            for (int y = 0; y < cellCount.y; y += stride)
+            for (int x = 0; x < cellCount.x; x += stride)
+            {
+                Vector3 cellCenter = CellIndexToWorldCenter(new Vector3Int(x, y, z));
+                float altitude = cellCenter.y;
+                Vector3 windVel = wind.GetWindAtPosition(cellCenter, altitude);
+                int flat = CellIndexToFlat(new Vector3Int(x, y, z));
+                if (flat < 0 || flat >= cellData.Length)
+                    continue;
+                ManifoldCellData d = cellData[flat];
+                d.velocity = windVel;
+                if (d.mode == WeatherMode.Air)
+                    d.mode = WeatherMode.Wind;
+                cellData[flat] = d;
+            }
+        }
+
+        Vector3 CellIndexToWorldCenter(Vector3Int cellIndex)
+        {
+            Vector3 t = new Vector3(
+                (cellIndex.x + 0.5f) / cellCount.x,
+                (cellIndex.y + 0.5f) / cellCount.y,
+                (cellIndex.z + 0.5f) / cellCount.z);
+            return worldBounds.min + Vector3.Scale(t, worldBounds.size);
+        }
+
         /// <summary>
         /// Advect fields using Semi-Lagrangian method
         /// </summary>
         private void AdvectFields(float deltaTime)
         {
-            // Semi-Lagrangian advection: backtrace particles through velocity field
-            // For each cell, trace back in time and sample from previous state
-            // This is a simplified placeholder - full implementation would use proper advection
+            if (!enableFarFieldAdvection || cellData == null || cellData.Length == 0 || deltaTime <= 0f)
+                return;
+
+            if (advectionFocus != null && advectionFocus.position.y > skipAdvectionAboveAltitudeM)
+                return;
+
+            _advectionFrame++;
+            if (_advectionFrame % Mathf.Max(1, advectionEveryNFrames) != 0)
+                return;
+
+            if (_advectionScratch == null || _advectionScratch.Length != cellData.Length)
+                _advectionScratch = new ManifoldCellData[cellData.Length];
+            System.Array.Copy(cellData, _advectionScratch, cellData.Length);
+
+            int stride = Mathf.Max(1, advectionStride);
+            for (int z = 0; z < cellCount.z; z += stride)
+            for (int y = 0; y < cellCount.y; y += stride)
+            for (int x = 0; x < cellCount.x; x += stride)
+            {
+                Vector3Int idx = new Vector3Int(x, y, z);
+                int flat = CellIndexToFlat(idx);
+                if (flat < 0 || flat >= cellData.Length)
+                    continue;
+
+                Vector3 world = CellIndexToWorldCenter(idx);
+                Vector3 vel = _advectionScratch[flat].velocity;
+                Vector3 back = world - vel * deltaTime;
+                ManifoldCellData sampled = SampleCellAtWorld(back, _advectionScratch);
+                cellData[flat] = sampled;
+            }
+        }
+
+        ManifoldCellData SampleCellAtWorld(Vector3 world, ManifoldCellData[] buffer)
+        {
+            Vector3Int idx = WorldToCellIndex(world);
+            int flat = CellIndexToFlat(idx);
+            if (flat < 0 || flat >= buffer.Length)
+                return new ManifoldCellData();
+            return buffer[flat];
         }
 
         /// <summary>
@@ -267,7 +357,10 @@ namespace Weather
         /// </summary>
         public Vector3 GetVelocityAtPosition(Vector3 position)
         {
-            return GetDataAtPosition(position).velocity;
+            Vector3 v = GetDataAtPosition(position).velocity;
+            if (nearFieldGraph != null)
+                v = nearFieldGraph.GetBlendedVelocity(position, v);
+            return v;
         }
 
         /// <summary>

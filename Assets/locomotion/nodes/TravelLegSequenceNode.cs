@@ -95,6 +95,11 @@ public class TravelLegSequenceNode : BehaviorTreeNode
         if (provider == null)
             return;
 
+        bool reverseTail = segment != null && segment.reverseLeg;
+        float revRemaining = reverseTail && travelAgent != null ? travelAgent.ReverseBudgetMeters : 0f;
+        provider.ReverseBudgetRemainingMeters = revRemaining;
+        provider.InReverseTail = reverseTail;
+
         TravelExecutionContext ctx = TravelExecutionContext.Build(
             tree,
             composite,
@@ -104,7 +109,14 @@ public class TravelLegSequenceNode : BehaviorTreeNode
             isTransition: false,
             from: previousLegMode,
             to: legMode,
-            travelAgent);
+            travelAgent,
+            revRemaining,
+            reverseTail);
         provider.Publish(ctx);
+
+        ReversePlaybackController reverse = travelAgent != null
+            ? travelAgent.GetComponentInChildren<ReversePlaybackController>()
+            : null;
+        reverse?.SyncFromProvider(provider);
     }
 }

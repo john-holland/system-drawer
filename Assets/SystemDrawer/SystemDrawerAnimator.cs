@@ -11,7 +11,8 @@ using UnityEngine;
 public class SystemDrawerAnimator : MonoBehaviour,
     IBehaviorTreePlaybackGate,
     IAnimationSetManagerDeferral,
-    ISystemDrawerAnimationRegistration
+    ISystemDrawerAnimationRegistration,
+    ISystemDrawerLayerControl
 {
     [Header("References")]
     [Tooltip("Ragdoll driven by animation layers; defaults to self or children.")]
@@ -39,7 +40,13 @@ public class SystemDrawerAnimator : MonoBehaviour,
     public bool showRuntimeOverlay;
 
     [Tooltip("Optional: register this animator on SystemDrawerService under this key for lookup.")]
-    public string systemDrawerRegisterKey = "";
+    public string systemDrawerRegisterKey = SystemDrawerServiceKeys.SystemDrawerAnimator;
+
+    [Header("Playback direction")]
+    [Tooltip("Default direction applied to all layers unless overridden per slot.")]
+    public int globalPlayDirection = 1;
+
+    private readonly Dictionary<AnimationBehaviorTree, int> _layerDirections = new Dictionary<AnimationBehaviorTree, int>();
 
     [Header("Animation set manager")]
     [Tooltip("When true, RagdollAnimationSetManager.Play does not switch trees (animator drives layers).")]
@@ -135,6 +142,37 @@ public class SystemDrawerAnimator : MonoBehaviour,
                 return slot.weight;
         }
         return -1f;
+    }
+
+    /// <summary>Apply playback direction to all animation layers.</summary>
+    public void SetGlobalPlayDirection(int direction)
+    {
+        globalPlayDirection = direction >= 0 ? 1 : -1;
+        if (layers == null)
+            return;
+        foreach (AnimationLayerSlot slot in layers)
+        {
+            if (slot?.animationBehaviorTree == null)
+                continue;
+            slot.playDirection = globalPlayDirection;
+            slot.animationBehaviorTree.playbackDirection = globalPlayDirection;
+        }
+    }
+
+    /// <summary>Set playback direction for a single layer index.</summary>
+    public void SetLayerPlayDirection(int layerIndex, int direction)
+    {
+        if (layers == null)
+            return;
+        int clamped = direction >= 0 ? 1 : -1;
+        foreach (AnimationLayerSlot slot in layers)
+        {
+            if (slot == null || slot.layerIndex != layerIndex || slot.animationBehaviorTree == null)
+                continue;
+            slot.playDirection = clamped;
+            slot.animationBehaviorTree.playbackDirection = clamped;
+            _layerDirections[slot.animationBehaviorTree] = clamped;
+        }
     }
 
     /// <summary>Set ordered layer indices (copied into <see cref="playOrder"/>).</summary>
@@ -244,6 +282,12 @@ public class SystemDrawerAnimator : MonoBehaviour,
             }
 
             _tickPhaseByLayerIndex[slot.layerIndex] = phase++;
+
+            if (slot.animationBehaviorTree != null)
+            {
+                int direction = slot.playDirection != 0 ? slot.playDirection : globalPlayDirection;
+                slot.animationBehaviorTree.playbackDirection = direction >= 0 ? 1 : -1;
+            }
 
             try
             {

@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-
 /// <summary>
 /// Path cost / locomotion modifier zone (ice, mud, low traction). Sampled at edge midpoints during A* and by ambulation solvers.
 /// </summary>

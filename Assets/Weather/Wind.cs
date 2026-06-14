@@ -250,16 +250,18 @@ namespace Weather
         }
 
         /// <summary>
-        /// Generate or update wind field in PhysicsManifold
+        /// Generate or update wind field in PhysicsManifold / WeatherPhysicsManifold.
         /// </summary>
         public void GenerateWindField()
         {
             if (physicsManifold != null)
             {
-                // Update physics manifold with wind data
-                // This would be implemented based on PhysicsManifold structure
-                // For now, we'll leave it as a placeholder
+                // Legacy PhysicsManifold hook — no-op until wired.
             }
+
+            var weatherManifold = FindAnyObjectByType<WeatherPhysicsManifold>();
+            if (weatherManifold != null)
+                weatherManifold.WindStampPass();
         }
 
         /// <summary>

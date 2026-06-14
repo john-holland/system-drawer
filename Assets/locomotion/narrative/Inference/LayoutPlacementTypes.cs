@@ -56,6 +56,10 @@ namespace Locomotion.Narrative
             public Vector3 size;
             public float tMin;
             public float tMax;
+
+            public Bounds4 ToBounds4() => new Bounds4(center, size, tMin, tMax);
+
+            public Bounds4AxisAlignedVolume ToVolume() => new Bounds4AxisAlignedVolume(ToBounds4());
         }
     }
 

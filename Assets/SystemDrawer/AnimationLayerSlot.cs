@@ -24,4 +24,7 @@ public class AnimationLayerSlot
 
     [Tooltip("Optional display override in inspector / overlay.")]
     public string displayName;
+
+    [Tooltip("1 = forward, -1 = reverse playback for this layer.")]
+    public int playDirection = 1;
 }

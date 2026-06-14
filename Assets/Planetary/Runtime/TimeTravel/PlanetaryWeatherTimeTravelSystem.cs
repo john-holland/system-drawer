@@ -47,19 +47,23 @@ namespace Planetary.TimeTravel
             if (frame != null)
                 ApplyFrame(frame);
             var estimator = new AtmosphereCompositionEstimator();
+            WeatherPhysicsManifold weatherManifold = null;
+            SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherManifold);
             if (planet != null)
-                estimator.Estimate(planet, FindFirstObjectByType<WeatherPhysicsManifold>());
+                estimator.Estimate(planet, weatherManifold);
             Time.timeScale = 1f;
         }
 
         WeatherTimeTravelFrame CaptureCurrent()
         {
             var est = new AtmosphereCompositionEstimator();
+            WeatherPhysicsManifold weatherManifold = null;
+            SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherManifold);
             return new WeatherTimeTravelFrame
             {
                 narrativeTime = Time.time,
                 atmosphereSnapshot = planet != null
-                    ? est.Estimate(planet, FindFirstObjectByType<WeatherPhysicsManifold>())
+                    ? est.Estimate(planet, weatherManifold)
                     : null
             };
         }
@@ -69,7 +73,17 @@ namespace Planetary.TimeTravel
             if (frame == null || planet == null)
                 return;
 
-            // Atmosphere snapshot consumed on next PlanetBody interior update when wired.
+            WeatherPhysicsManifold manifold = null;
+            SceneServiceLookup.TryResolve("weather.physicsManifold", out manifold);
+            if (manifold != null && frame.sparseManifoldDiff != null && frame.sparseManifoldDiff.Length > 0)
+            {
+                ManifoldDiffBundle bundle = ManifoldDiffCodec.Decode(frame.sparseManifoldDiff);
+                ManifoldDiffCodec.ApplyToManifold(bundle, manifold);
+            }
+
+            if (frame.atmosphereSnapshot != null && planet.interiorUpdater != null)
+                planet.interiorUpdater.SendMessage("ApplyAtmosphereSnapshot", frame.atmosphereSnapshot, SendMessageOptions.DontRequireReceiver);
+
             ApplyRoadWearSlice(frame.roadWearSnapshot);
         }
 

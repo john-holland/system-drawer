@@ -43,6 +43,72 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("through there", "through-there");
             BuiltInSynonyms.RegisterAlias("over here", "over-here");
             BuiltInSynonyms.RegisterAlias("along the road", "along-the-road");
+            BuiltInSynonyms.RegisterAlias("here here", "here-here");
+            BuiltInSynonyms.RegisterAlias("there there", "there-there");
+        }
+
+        public static string CanonicalizeDeictic(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return token;
+            return BuiltInSynonyms.CanonicalizeToken(token.Trim());
+        }
+
+        public static bool TryMergeDeicticAnchor(string current, string next, out string merged)
+        {
+            merged = null;
+            if (string.IsNullOrEmpty(current) || string.IsNullOrEmpty(next))
+                return false;
+            string a = CanonicalizeDeictic(current);
+            string b = CanonicalizeDeictic(next);
+            if (a != b)
+                return false;
+            merged = a + "-" + b;
+            return true;
+        }
+
+        public static bool TryParseDeicticPhrase(string[] tokens, int start, out string deictic, out int consumed)
+        {
+            deictic = null;
+            consumed = 0;
+            if (tokens == null || start >= tokens.Length)
+                return false;
+
+            for (int len = Math.Min(4, tokens.Length - start); len >= 1; len--)
+            {
+                var slice = new string[len];
+                Array.Copy(tokens, start, slice, 0, len);
+                string multi = BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(slice);
+                if (!string.IsNullOrEmpty(multi) && IsDeictic(multi))
+                {
+                    deictic = multi;
+                    consumed = len;
+                    return true;
+                }
+                if (len == 1 && IsDeictic(slice[0]))
+                {
+                    deictic = CanonicalizeDeictic(slice[0]);
+                    consumed = 1;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool IsPlayerDeictic(string anchor)
+        {
+            if (string.IsNullOrWhiteSpace(anchor))
+                return false;
+            string t = CanonicalizeDeictic(anchor);
+            return t == "here" || t == "here-here" || t == "over-here";
+        }
+
+        public static bool IsCausalityDeictic(string anchor)
+        {
+            if (string.IsNullOrWhiteSpace(anchor))
+                return false;
+            string t = CanonicalizeDeictic(anchor);
+            return t == "there" || t == "there-there" || t == "through-there";
         }
 
         public static bool TryParseRelation(string token, out LayoutSpatialRelation relation)
@@ -80,8 +146,9 @@ namespace Locomotion.Narrative
         {
             if (string.IsNullOrWhiteSpace(token))
                 return false;
-            string t = BuiltInSynonyms.CanonicalizeToken(token);
-            return t == "there" || t == "here" || t == "over-here" || t == "through-there";
+            string t = CanonicalizeDeictic(token);
+            return t == "there" || t == "there-there" || t == "here" || t == "here-here"
+                || t == "over-here" || t == "through-there";
         }
     }
 }

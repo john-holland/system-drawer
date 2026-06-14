@@ -12,22 +12,31 @@ namespace Roads
     {
         public RoadMeshBaker baker;
         public MeshTerrainSampler meshTerrainSampler;
-        public PlanetBody planetBody;
+
+        [Tooltip("Optional override; null resolves planet.body via SceneServiceLookup.")]
+        public PlanetBody planetBodyOverride;
+
         public PlanetaryWeatherTimeTravelSystem timeTravelSystem;
+
+        PlanetBody ResolvePlanetBody()
+        {
+            if (planetBodyOverride != null)
+                return planetBodyOverride;
+            PlanetBody resolved = null;
+            SceneServiceLookup.TryResolve("planet.body", out resolved);
+            return resolved;
+        }
 
         public void ApplyHeightStampToScene()
         {
             if (baker?.lastBakeData?.heightStamp == null)
                 return;
-            // Height stamp available via lastBakeData.heightStamp.ToTexture() for terrain shaders
             _ = baker.lastBakeData.heightStamp.ToTexture();
         }
 
         public void RebakePlanetaryComposition()
         {
-            Debug.Log("RebakePlanetaryComposition called for " + this.gameObject.name);
-            if (planetBody == null)
-                planetBody = FindAnyObjectByType<PlanetBody>();
+            PlanetBody planetBody = ResolvePlanetBody();
             if (planetBody != null)
                 planetBody.RebakeComposition();
         }

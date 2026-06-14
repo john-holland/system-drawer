@@ -4,7 +4,12 @@
     "references": [
         "SystemDrawer",
         "Locomotion.Narrative.Runtime",
-        "Locomotion.Narrative.Inference"
+        "Locomotion.Narrative.Inference",
+        "Locomotion.Runtime",
+        "Planetary",
+        "Weather.Runtime",
+        "Roads.Runtime",
+        "HierarchicalPathFinding"
     ],
     "includePlatforms": [
         "Editor"

@@ -7,7 +7,9 @@
     "HierarchicalPathFinding",
     "Generated.Runtime",
     "SystemDrawer",
-    "BedogaGenerator"
+    "BedogaGenerator",
+    "Planetary",
+    "Weather.Runtime"
   ],
   "includePlatforms": [
     "Editor"

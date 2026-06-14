@@ -81,19 +81,19 @@ public static class TimelineMultiModalPlanner
             PhysicalPathingMedium.Air);
     }
 
-/// <summary>
-/// Try to build a plan using the timeline multi-modal planner.
-/// </summary>
-/// <param name="start">The start position.</param>
-/// <param name="goal">The goal position.</param>
-/// <param name="solver">The hierarchical pathing solver.</param>
-/// <param name="timeline">The timeline options.</param>
-/// <param name="hints">The hints.</param>
-/// <param name="tryFlyMedium">The try fly medium.</param>
-/// <returns>The plan.</returns>
-/// <remarks>
-/// This method builds a plan using the timeline multi-modal planner.
-/// </remarks>
+    /// <summary>
+    /// Try to build a plan using the timeline multi-modal planner.
+    /// </summary>
+    /// <param name="start">The start position.</param>
+    /// <param name="goal">The goal position.</param>
+    /// <param name="solver">The hierarchical pathing solver.</param>
+    /// <param name="timeline">The timeline options.</param>
+    /// <param name="hints">The hints.</param>
+    /// <param name="tryFlyMedium">The try fly medium.</param>
+    /// <returns>The plan.</returns>
+    /// <remarks>
+    /// This method builds a plan using the timeline multi-modal planner.
+    /// </remarks>
     public static GenericMultiModalPathPlan TryBuildPlan(
         Vector3 start,
         Vector3 goal,
@@ -305,6 +305,9 @@ public static class TimelineMultiModalPlanner
 
             if (seg != null)
             {
+                seg.medium = PhysicalMediumVolumeIndex.ResolveSegmentMedium(wp);
+                if (seg.medium == PhysicalPathingMedium.Unspecified && mode == TravelLegMode.Fly)
+                    seg.medium = tryFlyMedium;
                 seg.estimatedTimeSec = EdgeTravelTime(PolylineLength(wp), mode, in timeline);
                 plan.segments.Add(seg);
             }
@@ -325,6 +328,15 @@ public static class TimelineMultiModalPlanner
         in PlannerTimelineOptions timeline,
         in GenericTraversibilityPlannerSolver.PlannerHints hints)
     {
+        Vector3 mid = Vector3.Lerp(u, v, 0.5f);
+        ProjectOntoPlanet(ref u);
+        ProjectOntoPlanet(ref v);
+        ProjectOntoPlanet(ref mid);
+
+        if (PhysicalMediumVolumeIndex.TryResolveMedium(mid, out PhysicalPathingMedium volMedium) &&
+            !PhysicalMediumVolumeRules.MediumAllowsMode(volMedium, mode))
+            return;
+
         if (!TryFindPathWorld(u, v, mode, solver, tryFlyMedium, out List<Vector3> path))
             return;
         float len = PolylineLength(path);
@@ -464,5 +476,14 @@ public static class TimelineMultiModalPlanner
 
         nodes.Clear();
         nodes.AddRange(kept);
+    }
+
+    static void ProjectOntoPlanet(ref Vector3 world)
+    {
+        var planet = UnityEngine.Object.FindAnyObjectByType<Planetary.PlanetBody>();
+        if (planet == null || !planet.TrySampleHeightAtWorld(world, out float height, out _))
+            return;
+        Vector3 dir = (world - planet.PlanetCenter).normalized;
+        world = planet.PlanetCenter + dir * (planet.PlanetRadius + height);
     }
 }

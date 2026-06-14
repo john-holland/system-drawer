@@ -25,11 +25,21 @@ Scene services register on [`SystemDrawerService`](Assets/SystemDrawer/SystemDra
 | `NarrativeCalendar` | [`CalendarServiceWizard`](Assets/SystemDrawer/CalendarServiceWizard.cs) | SystemDrawer | Narrative calendar asset registration |
 | `NarrativeLSTMPrompt` | [`NarrativePromptServiceWizard`](Assets/SystemDrawer/NarrativePromptServiceWizard.cs) | SystemDrawer | Local LSTM prompt interpreter rig |
 | `RagdollRoot` | [`RagdollServiceWizard`](Assets/SystemDrawer/RagdollServiceWizard.cs) | SystemDrawer | Player / ragdoll root transform |
-| `WeatherSystem` | [`WeatherServiceWizardComponent`](Assets/SystemDrawer/WeatherServiceWizardComponent.cs) | SystemDrawer | Weather system GameObject |
+| `WeatherSystem` | [`WeatherServiceWizardComponent`](Assets/SystemDrawer/WeatherServiceWizardComponent.cs) | SystemDrawer | Weather system GameObject (legacy key; see canonical keys below) |
+| `weather.system` | [`WeatherServiceWizardComponent`](Assets/SystemDrawer/WeatherServiceWizardComponent.cs) | SystemDrawer | Canonical weather system GameObject |
+| `weather.physicsManifold` | [`WeatherServiceWizardComponent`](Assets/SystemDrawer/WeatherServiceWizardComponent.cs) | SystemDrawer | [`WeatherPhysicsManifold`](Assets/Weather/WeatherPhysicsManifold.cs) scalar-field grid |
+| `PlanetSystem` | [`PlanetServiceWizardComponent`](Assets/SystemDrawer/PlanetServiceWizardComponent.cs) | SystemDrawer | Planet host GameObject (legacy key) |
+| `planet.body` | [`PlanetServiceWizardComponent`](Assets/SystemDrawer/PlanetServiceWizardComponent.cs) | Planetary | [`PlanetBody`](Assets/Planetary/Runtime/PlanetBody.cs) host |
+| `planet.shellGrid` | [`PlanetServiceWizardComponent`](Assets/SystemDrawer/PlanetServiceWizardComponent.cs) | Planetary | [`PlanetShellManifoldGrid`](Assets/Planetary/Runtime/Bridges/PlanetShellManifoldGrid.cs) |
+| `planet.physicalManifold` | [`PlanetServiceWizardComponent`](Assets/SystemDrawer/PlanetServiceWizardComponent.cs) | Planetary | Relativity / gameplay manifold overlay |
+| `pathing.hierarchical` | [`SystemDrawerFacilitator`](Assets/SystemDrawer/SystemDrawerFacilitator.cs) | Pathfinding | [`HierarchicalPathingSolver`](Assets/HierarchicalPathFinding/HierarchicalPathingSolver.cs) |
+| `animation.systemDrawerAnimator` | [`SystemDrawerAnimator`](Assets/SystemDrawer/SystemDrawerAnimator.cs) | Locomotion | Multi-layer animation coordinator |
 | `Spatial4DOrchestrator` | [`Spatial4DServiceWizard`](Assets/BedogaGenerator/Spatial4DServiceWizard.cs) | BedogaGenerator | 4D spatial generator orchestrator |
 | `USCBuildService` | [`UscBuildServiceWizard`](Assets/SystemDrawer/UscBuildServiceWizard.cs) | SystemDrawer | USC build / export integration |
 | `actor.brain` | [`BrainMessageService`](Assets/SystemDrawer/BrainMessageService.cs) | SystemDrawer | Actor brain message hub (key overridable) |
 | `ContinuumNotifications` | [`ContinuumNotificationsService`](Assets/Continuum/ContinuumNotificationsService.cs) | Continuum | Continuum push / notification bridge |
+
+**Resolver:** [`SystemDrawerSceneServices`](Assets/SystemDrawer/SystemDrawerSceneServices.cs) + key constants in [`SystemDrawerServiceKeys`](Assets/SystemDrawer/SystemDrawerServiceKeys.cs). Assemblies that cannot reference SystemDrawer directly use [`SceneServiceLookup`](Assets/Weather/SceneServiceLookup.cs) (reflection bridge in Weather.Runtime).
 
 ### Python / server services
 
@@ -50,8 +60,9 @@ This project uses a **"Light Package" mode** where third-party assets are exclud
 - **Weather System** (`Assets/Weather/`) - Weather simulation, terrain integration, portals
 - **Narrative System** (`Assets/locomotion/narrative/`) - Time management, calendar, story execution
 - **Narrative LSTM** (`Assets/locomotion/narrative/Inference/`) - Local prompt interpreter (natural language → events + 4D) and calendar summarizer (“what’s going on”)
-- **Hierarchical Pathfinding** (`Assets/HierarchicalPathFinding/`) - Spatial pathfinding system
-- **System Drawer** (`Assets/SystemDrawer/`) - Service wizards that register and wire systems (calendar, 4D, weather, **prompt**) for asset-pack and indie workflows
+- **Hierarchical Pathfinding** (`Assets/HierarchicalPathFinding/`) - Spatial pathfinding, physical-medium solvers, volume index
+- **Planetary** (`Assets/Planetary/`) - Planet body, shell manifold grid, physics bridges, curved spacetime pathing
+- **System Drawer** (`Assets/SystemDrawer/`) - Service wizards that register and wire systems (calendar, 4D, weather, **prompt**, **physics bridge**) for asset-pack and indie workflows
 
 ## Getting Started
 
@@ -134,15 +145,29 @@ If you add a new third-party asset:
 - Time-based weather integration
 - **Narrative LSTM**: train on your project’s calendar/4D data; run a local “ChatGPT-like” prompt interpreter (natural language → narrative events + 4D spatial entries) and a summarizer (calendar → short “what’s going on” text). No cloud required; ONNX + Barracuda in-editor and at runtime.
 
-### Pathfinding
-- Hierarchical spatial pathfinding
-- Integration with behavior trees
-- Card-based movement system
+### Pathfinding & travel
+
+- Hierarchical spatial pathfinding with [`HierarchicalPathingSolver`](Assets/HierarchicalPathFinding/HierarchicalPathingSolver.cs)
+- Physical-medium routing via [`PhysicalPathingSolverRegistry`](Assets/HierarchicalPathFinding/PhysicalPathingSolverRegistry.cs) and [`PhysicalMediumVolumeIndex`](Assets/HierarchicalPathFinding/PhysicalMediumVolumeIndex.cs) (medium + shell altitude band)
+- Multi-modal travel planning ([`TravelAgent`](Assets/locomotion/travel/TravelAgent.cs), [`CompositeMultiModalPathNode`](Assets/locomotion/nodes/CompositeMultiModalPathNode.cs))
+- Reverse-leg arc budget ([`TravelPathReverseLimits`](Assets/locomotion/travel/TravelPathReverseLimits.cs), [`TravelPathKinematicsProfile`](Assets/locomotion/travel/TravelPathKinematicsProfile.cs)) with playback ([`ReversePlaybackController`](Assets/locomotion/travel/ReversePlaybackController.cs))
+- Integration with behavior trees and card-based movement
+
+### Planetary physics & weather manifold
+
+- Planet-centric shell grid ([`PlanetShellManifoldGrid`](Assets/Planetary/Runtime/Bridges/PlanetShellManifoldGrid.cs)) with pole caps, longitude wrap, and altitude bands
+- Flat-grid adapter ([`PlanetShellToWeatherManifoldAdapter`](Assets/Planetary/Runtime/Bridges/PlanetShellToWeatherManifoldAdapter.cs)) stamping into [`WeatherPhysicsManifold`](Assets/Weather/WeatherPhysicsManifold.cs)
+- Composition / surface bridges ([`PlanetPhysicsManifoldBridge`](Assets/Planetary/Runtime/Bridges/PlanetPhysicsManifoldBridge.cs), [`RoadPhysicsManifoldBridge`](Assets/Roads/Runtime/RoadPhysicsManifoldBridge.cs))
+- Canonical spatiotemporal field charts ([`CanonicalSpatiotemporalField`](Assets/Planetary/Runtime/Field/CanonicalSpatiotemporalField.cs))
+- Great-circle shell pathing ([`PlanetShellPathingSolver`](Assets/Planetary/Runtime/Pathing/PlanetShellPathingSolver.cs), [`CurvedSpacetimeSd2PathingSolver`](Assets/Planetary/Runtime/Pathing/CurvedSpacetimeSd2PathingSolver.cs))
+- Scene service resolution replaces ad-hoc `FindObject` lookups (see Services catalog above)
 
 ## Tools & Utilities
 
 - **Ragdoll Fitting Wizard** - Auto-configure ragdoll components
 - **Weather Service Wizard** - Setup weather systems
+- **Physics Bridge Editor** (`Window/System Drawer/Physics/Physics Bridge Editor`) - Discover road/planet/ragdoll bridges, shell grid overlay, unresolved service keys ([`PhysicsBridgeEditorWindow`](Assets/SystemDrawer/Editor/PhysicsBridgeEditorWindow.cs))
+- **System Drawer Facilitator** - Push / validate scene service registrations ([`SystemDrawerFacilitatorHubWindow`](Assets/SystemDrawer/Editor/SystemDrawerFacilitatorHubWindow.cs))
 - **Third-Party Asset Validator** - Check required assets
 - **Animation Behavior Tree Generator** - Convert animations to behavior trees
 
@@ -182,6 +207,28 @@ When adding a new `.md` under `Assets/` or `Scripts/`, append it here (and to si
 - [Assets/locomotion/docs/TravelFormation.md](Assets/locomotion/docs/TravelFormation.md) — Travel formation
 - [Assets/locomotion/docs/PromptPlayerIdleThirdPerson.md](Assets/locomotion/docs/PromptPlayerIdleThirdPerson.md) — Third-person idle prompt
 
+**Travel pathing & reverse playback (source)**
+
+| Topic | Entry points |
+|-------|----------------|
+| Travel agent & path preview | [`TravelAgent.cs`](Assets/locomotion/travel/TravelAgent.cs) |
+| Reverse arc budget | [`TravelPathReverseLimits.cs`](Assets/locomotion/travel/TravelPathReverseLimits.cs), [`TravelPathKinematicsProfile.cs`](Assets/locomotion/travel/TravelPathKinematicsProfile.cs) |
+| Reverse animation playback | [`ReversePlaybackController.cs`](Assets/locomotion/travel/ReversePlaybackController.cs), [`SystemDrawerAnimator.cs`](Assets/SystemDrawer/SystemDrawerAnimator.cs), [`AnimationBehaviorTreeNode.cs`](Assets/locomotion/AnimationBehaviorTreeNode.cs) |
+| Leg execution & activation | [`TravelLegSequenceNode.cs`](Assets/locomotion/nodes/TravelLegSequenceNode.cs), [`ApplyTravelLegAnimationNode.cs`](Assets/locomotion/nodes/travel/ApplyTravelLegAnimationNode.cs) |
+| Planner nodes | [`CompositeMultiModalPathNode.cs`](Assets/locomotion/nodes/CompositeMultiModalPathNode.cs), [`PathfindingNode.cs`](Assets/locomotion/nodes/PathfindingNode.cs) |
+| Walking cards in reverse | [`PhysicsCardSolver.cs`](Assets/locomotion/PhysicsCardSolver.cs) (`GenerateWalkingCard`) |
+| Tests | [`ReversePlaybackControllerTests.cs`](Assets/locomotion/Tests/ReversePlaybackControllerTests.cs), [`AnimationBehaviorTreeReverseTests.cs`](Assets/locomotion/Tests/AnimationBehaviorTreeReverseTests.cs), [`TravelPathReverseLimitsTests.cs`](Assets/locomotion/Tests/TravelPathReverseLimitsTests.cs) |
+
+### Hierarchical pathfinding / physical medium
+
+**Physical pathing (source)**
+
+| Topic | Entry points |
+|-------|----------------|
+| Solver registry | [`PhysicalPathingSolverRegistry.cs`](Assets/HierarchicalPathFinding/PhysicalPathingSolverRegistry.cs) |
+| Medium + altitude resolution | [`PhysicalMediumVolumeIndex.cs`](Assets/HierarchicalPathFinding/PhysicalMediumVolumeIndex.cs), [`PhysicalMediumVolume.cs`](Assets/HierarchicalPathFinding/PhysicalMediumVolume.cs) |
+| Hierarchical coordinator | [`HierarchicalPathingSolver.cs`](Assets/HierarchicalPathFinding/HierarchicalPathingSolver.cs) |
+
 ### Weather
 
 - [Assets/Weather/weather.md](Assets/Weather/weather.md) — Weather system overview
@@ -190,10 +237,38 @@ When adding a new `.md` under `Assets/` or `Scripts/`, append it here (and to si
 ### System Drawer
 
 - [Assets/SystemDrawer/docs/MemorySwizzleView.md](Assets/SystemDrawer/docs/MemorySwizzleView.md) — Memory Swizzle treemap profiler (WinDirStat-style)
+- [Assets/SystemDrawer/docs/PerfTraceView.md](Assets/SystemDrawer/docs/PerfTraceView.md) — PerfTrace scoped timing overlay
+
+**Scene services & physics bridge (source)**
+
+| Topic | Entry points |
+|-------|----------------|
+| Canonical keys | [`SystemDrawerServiceKeys.cs`](Assets/SystemDrawer/SystemDrawerServiceKeys.cs) |
+| Resolver | [`SystemDrawerSceneServices.cs`](Assets/SystemDrawer/SystemDrawerSceneServices.cs) |
+| Cross-assembly lookup | [`SceneServiceLookup.cs`](Assets/Weather/SceneServiceLookup.cs) |
+| Facilitator push / validate | [`SystemDrawerFacilitator.cs`](Assets/SystemDrawer/SystemDrawerFacilitator.cs), [`SystemDrawerFacilitatorHubWindow.cs`](Assets/SystemDrawer/Editor/SystemDrawerFacilitatorHubWindow.cs) |
+| Planet / weather wizards | [`PlanetServiceWizardComponent.cs`](Assets/SystemDrawer/PlanetServiceWizardComponent.cs), [`WeatherServiceWizardComponent.cs`](Assets/SystemDrawer/WeatherServiceWizardComponent.cs) |
+| Physics Bridge Editor | [`PhysicsBridgeEditorWindow.cs`](Assets/SystemDrawer/Editor/PhysicsBridgeEditorWindow.cs), [`PhysicsBridgeRegistry.cs`](Assets/SystemDrawer/Editor/PhysicsBridgeRegistry.cs), [`PhysicsBridgeEditorWindow.ShellGridPanels.cs`](Assets/SystemDrawer/Editor/PhysicsBridgeEditorWindow.ShellGridPanels.cs) |
+| Tests | [`SystemDrawerSceneServicesTests.cs`](Assets/SystemDrawer/Tests/SystemDrawerSceneServicesTests.cs) |
 
 ### Planetary
 
 - [Assets/Planetary/docs/PlanetaryArchitecture.md](Assets/Planetary/docs/PlanetaryArchitecture.md) — Planet meshes, SDF planar features, relativity pathing, spaceship integration
+
+**Shell manifold & physics bridge (source)**
+
+| Topic | Entry points |
+|-------|----------------|
+| Shell grid (lat/lon/altitude) | [`PlanetShellManifoldGrid.cs`](Assets/Planetary/Runtime/Bridges/PlanetShellManifoldGrid.cs) (`ShellCellId`) |
+| Weather manifold adapter | [`PlanetShellToWeatherManifoldAdapter.cs`](Assets/Planetary/Runtime/Bridges/PlanetShellToWeatherManifoldAdapter.cs) |
+| Surface stamp bridge | [`PlanetPhysicsManifoldBridge.cs`](Assets/Planetary/Runtime/Bridges/PlanetPhysicsManifoldBridge.cs) |
+| Planet host / rebake | [`PlanetBody.cs`](Assets/Planetary/Runtime/PlanetBody.cs), [`PlanetInteriorPhysicsUpdater.cs`](Assets/Planetary/Runtime/Tectonics/PlanetInteriorPhysicsUpdater.cs) |
+| Time-travel manifold restore | [`PlanetaryWeatherTimeTravelSystem.cs`](Assets/Planetary/Runtime/TimeTravel/PlanetaryWeatherTimeTravelSystem.cs) |
+| Canonical field charts | [`CanonicalSpatiotemporalField.cs`](Assets/Planetary/Runtime/Field/CanonicalSpatiotemporalField.cs) |
+| Lava / emission manifold | [`LavaPhysicsManifold.cs`](Assets/Planetary/Runtime/Lava/LavaPhysicsManifold.cs) |
+| Great-circle pathing | [`PlanetShellPathingSolver.cs`](Assets/Planetary/Runtime/Pathing/PlanetShellPathingSolver.cs), [`CurvedSpacetimeSd2PathingSolver.cs`](Assets/Planetary/Runtime/Pathing/CurvedSpacetimeSd2PathingSolver.cs), [`PlanetPathingBackend.cs`](Assets/Planetary/Runtime/Pathing/PlanetPathingBackend.cs) |
+| Spherical coordinates | [`SphericalCoordinates.cs`](Assets/Planetary/Runtime/SphericalCoordinates.cs) |
+| Tests | [`PlanetShellManifoldGridTests.cs`](Assets/Planetary/Tests/PlanetShellManifoldGridTests.cs) |
 
 ### USC build (Unity)
 

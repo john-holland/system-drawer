@@ -94,6 +94,8 @@ public class TravelModeTransitionTests
         Assert.AreEqual(BehaviorTreeStatus.Success, s);
         Assert.AreEqual(1, TransitionExecuteCount, "Transition runs once");
 
+        Assert.IsTrue(leg1.children.Exists(c => c is TravelLegDriveNode), "Drive leg should use TravelLegDriveNode waypoints");
+
         Object.DestroyImmediate(root);
         Object.DestroyImmediate(templateGo);
     }
@@ -191,6 +193,50 @@ public class TravelModeTransitionTests
 
         Object.DestroyImmediate(root);
         Object.DestroyImmediate(captureGo);
+    }
+
+    [Test]
+    public void ApplyTravelLegAnimationNode_SetsLayerWeight_ForDriveMode()
+    {
+        var root = new GameObject("layer_root");
+        var treeGo = new GameObject("bt");
+        treeGo.transform.SetParent(root.transform);
+        var tree = treeGo.AddComponent<BehaviorTree>();
+
+        var agentGo = new GameObject("agent");
+        agentGo.transform.SetParent(root.transform);
+        var agent = agentGo.AddComponent<TravelAgent>();
+        var sdaGo = new GameObject("sda");
+        sdaGo.transform.SetParent(agentGo.transform);
+        var sda = sdaGo.AddComponent<SystemDrawerAnimator>();
+        sda.layers = new List<AnimationLayerSlot>
+        {
+            new AnimationLayerSlot { layerIndex = 0, weight = 1f },
+            new AnimationLayerSlot { layerIndex = 1, weight = 0f },
+            new AnimationLayerSlot { layerIndex = 2, weight = 0f }
+        };
+
+        var providerGo = new GameObject("provider");
+        providerGo.transform.SetParent(root.transform);
+        var provider = providerGo.AddComponent<TravelExecutionContextProvider>();
+
+        var nodeGo = new GameObject("apply_leg");
+        nodeGo.transform.SetParent(providerGo.transform);
+        var node = nodeGo.AddComponent<ApplyTravelLegAnimationNode>();
+        node.layerMap = new TravelLegModeLayerMap { walkLayerIndex = 0, driveLayerIndex = 1, flyLayerIndex = 2 };
+
+        var ctx = TravelExecutionContext.Build(
+            tree, null,
+            MultiModalSegment.FromDrive(new List<Vector3> { Vector3.zero }, null),
+            0, TravelLegMode.Walk, false, TravelLegMode.Walk, TravelLegMode.Drive, agent);
+        provider.Publish(ctx);
+
+        node.Execute(tree);
+
+        Assert.AreEqual(0f, sda.GetLayerWeight(0), 0.001f);
+        Assert.AreEqual(1f, sda.GetLayerWeight(1), 0.001f);
+
+        Object.DestroyImmediate(root);
     }
 
     sealed class ContextCaptureNode : TravelContextBehaviorTreeNode, ITravelExecutionContextConsumer

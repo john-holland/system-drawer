@@ -164,10 +164,21 @@ public static class PhysicsIKTrainingRunner
         }
         else
         {
-            // Locomotion: pathfinding + obstacle.
-            set.completionTime = 1f + (2f - 1f / power) * 0.5f + r() * 0.3f;
-            set.accuracyScore = 0.5f + r() * 0.5f;
-            set.powerUsed = power * (0.9f + r() * 0.2f);
+            if (category == PhysicsIKTrainingCategory.Locomotion &&
+                Application.isPlaying &&
+                TryScoreLocomotionLive(ragdollRb, runAsset, power, out float liveAccuracy, out float liveTime, out float livePower))
+            {
+                set.completionTime = liveTime;
+                set.accuracyScore = liveAccuracy;
+                set.powerUsed = livePower;
+            }
+            else
+            {
+                // Locomotion: pathfinding + obstacle.
+                set.completionTime = 1f + (2f - 1f / power) * 0.5f + r() * 0.3f;
+                set.accuracyScore = 0.5f + r() * 0.5f;
+                set.powerUsed = power * (0.9f + r() * 0.2f);
+            }
         }
 
         if (ragdollRb != null && isToolCategory && set.rigidbodyConstraints != 0)
@@ -175,6 +186,65 @@ public static class PhysicsIKTrainingRunner
 
         set.seed = seed;
         return set;
+    }
+
+    static bool TryScoreLocomotionLive(
+        Rigidbody ragdollRb,
+        PhysicsIKTrainingRunAsset runAsset,
+        float power,
+        out float accuracyScore,
+        out float completionTime,
+        out float powerUsed)
+    {
+        accuracyScore = 0f;
+        completionTime = 0f;
+        powerUsed = 0f;
+        if (ragdollRb == null)
+            return false;
+
+        RagdollSystem ragdoll = ragdollRb.GetComponentInParent<RagdollSystem>();
+        if (ragdoll == null)
+            return false;
+
+        Vector3 start = ragdoll.GetCurrentState().rootPosition;
+        float horizon = 0.75f;
+        float elapsed = 0f;
+        float minComY = start.y;
+
+        while (elapsed < horizon)
+        {
+            elapsed += Time.fixedDeltaTime;
+            Vector3 com = ragdoll.GetCurrentState().rootPosition;
+            minComY = Mathf.Min(minComY, com.y);
+        }
+
+        Vector3 end = ragdoll.GetCurrentState().rootPosition;
+        float displacement = Vector3.Distance(new Vector3(start.x, 0f, start.z), new Vector3(end.x, 0f, end.z));
+        float fallPenalty = start.y - minComY > 1.5f ? 0.4f : 0f;
+        float progress = 0f;
+
+        TravelAgent agent = ragdollRb.GetComponentInParent<TravelAgent>();
+        if (agent != null && agent.CachedPlan != null && !agent.CachedPlan.IsEmpty)
+        {
+            var pts = agent.CachedPlan.FlattenWaypointsForGizmos();
+            if (pts.Count > 0)
+            {
+                float total = TravelPathReverseLimits.ComputeTotalPathLengthMeters(agent.CachedPlan);
+                progress = total > 1e-4f ? Mathf.Clamp01(displacement / total) : 0f;
+            }
+        }
+        else if (runAsset != null && runAsset.locomotionGoalWorld.sqrMagnitude > 1e-4f)
+        {
+            float goalDist = Vector3.Distance(start, runAsset.locomotionGoalWorld);
+            progress = goalDist > 1e-4f
+                ? Mathf.Clamp01(1f - Vector3.Distance(end, runAsset.locomotionGoalWorld) / goalDist)
+                : 0f;
+        }
+
+        accuracyScore = Mathf.Clamp01(progress + 0.25f - fallPenalty);
+        completionTime = horizon;
+        powerUsed = power * (0.5f + displacement * 0.05f);
+        return true;
     }
 
     /// <summary>

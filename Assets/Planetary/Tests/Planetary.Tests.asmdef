@@ -5,6 +5,7 @@
         "Planetary",
         "SdfMax",
         "Weather.Runtime",
+        "Locomotion.Narrative.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

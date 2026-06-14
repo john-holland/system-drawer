@@ -1,7 +1,9 @@
 {
     "name": "SdfMax",
     "rootNamespace": "SdfMax",
-    "references": [],
+    "references": [
+        "SystemDrawer.PerfTrace"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
