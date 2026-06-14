@@ -297,6 +297,9 @@ namespace SpatialVolumes
             Changed?.Invoke(this);
         }
 
+        /// <summary>Ensure surface components match <see cref="renderMode"/> (safe in Edit Mode tests).</summary>
+        public void SyncRenderModeComponents() => SyncRenderComponentsCore();
+
 #if UNITY_EDITOR
         [ContextMenu("Auto Pick Backend")]
         void AutoPickBackend()

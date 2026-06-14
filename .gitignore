@@ -45,7 +45,12 @@ ExportedObj/
 sysinfo.txt
 
 # Unity Test Framework result files
-**/TestResults*.xml
+TestResults*
+**/TestResults*
+unity-test.log
+# Ephemeral scenes created by Unity Test Runner
+InitTestScene*.unity
+InitTestScene*.unity.meta
 
 
 # Builds

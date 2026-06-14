@@ -31,7 +31,7 @@ public sealed class PerfTraceNode
     {
         if (_mutableChildren == null || _mutableChildren.Count == 0)
         {
-            Children = Array.Empty<PerfTraceNode>();
+            Children ??= Array.Empty<PerfTraceNode>();
             return;
         }
         Children = _mutableChildren.ToArray();

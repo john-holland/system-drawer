@@ -43,17 +43,18 @@ public static class SquarifiedTreemapLayout
     {
         items.Sort((a, b) => b.Weight.CompareTo(a.Weight));
         int i = 0;
+        long remainingWeight = totalWeight;
         while (i < items.Count)
         {
             bool horizontal = area.width >= area.height;
             int rowCount = 1;
             float rowWeight = items[i].Weight;
-            float aspect = WorstAspect(rowWeight, rowCount, area, horizontal, totalWeight);
+            float aspect = WorstAspect(rowWeight, rowCount, area, horizontal, remainingWeight);
 
             for (int j = i + 1; j < items.Count; j++)
             {
                 float trialWeight = rowWeight + items[j].Weight;
-                float trialAspect = WorstAspect(trialWeight, j - i + 1, area, horizontal, totalWeight);
+                float trialAspect = WorstAspect(trialWeight, j - i + 1, area, horizontal, remainingWeight);
                 if (trialAspect <= aspect)
                 {
                     rowWeight = trialWeight;
@@ -64,7 +65,11 @@ public static class SquarifiedTreemapLayout
                     break;
             }
 
-            PlaceRow(items, i, rowCount, area, horizontal, totalWeight, out Rect remainder);
+            PlaceRow(items, i, rowCount, area, horizontal, remainingWeight, out Rect remainder);
+            long placedWeight = 0;
+            for (int k = 0; k < rowCount; k++)
+                placedWeight += items[i + k].Weight;
+            remainingWeight -= placedWeight;
             area = remainder;
             i += rowCount;
         }

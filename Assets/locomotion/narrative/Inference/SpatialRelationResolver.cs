@@ -56,10 +56,10 @@ namespace Locomotion.Narrative
 
             Vector3 anchorCenter = ResolveAnchorCenter(frame, ctx);
             Vector3 anchorSize = ctx.defaultSize.sqrMagnitude > 0 ? ctx.defaultSize : Vector3.one * 10f;
-            inst.anchorCenter = anchorCenter;
-            inst.anchorSize = anchorSize;
 
             ApplyRelationOffset(frame.relation, ref anchorCenter, anchorSize);
+            inst.anchorCenter = anchorCenter;
+            inst.anchorSize = anchorSize;
             inst.bounds4 = new LayoutPlacementInstruction.Bounds4VolumeHint
             {
                 center = anchorCenter,
@@ -74,6 +74,17 @@ namespace Locomotion.Narrative
                 inst.goalWorld = ctx.causalityPosition.Value;
             if (ctx.playerPosition.HasValue && frame.relation == LayoutSpatialRelation.Through)
                 inst.startWorld = ctx.playerPosition.Value;
+
+            // "roads … there" may bind causality anchor without an explicit Through relation token.
+            if (IsRoadEntity(entity)
+                && WithLemmaRegistry.IsCausalityDeictic(frame.anchor)
+                && ctx.causalityPosition.HasValue)
+            {
+                inst.requiresPathSolve = true;
+                inst.goalWorld = ctx.causalityPosition.Value;
+                if (ctx.playerPosition.HasValue)
+                    inst.startWorld = ctx.playerPosition.Value;
+            }
 
             return inst;
         }

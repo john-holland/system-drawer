@@ -35,6 +35,7 @@
   <Project Path="SystemDrawer.Tests.csproj" />
   <Project Path="SystemDrawer.Editor.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />
+  <Project Path="Locomotion.Audio.Editor.csproj" />
   <Project Path="Generated.Tests.csproj" />
   <Project Path="Roads.Editor.csproj" />
   <Project Path="Weather.Tests.csproj" />

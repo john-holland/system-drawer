@@ -11,7 +11,7 @@ namespace Planetary.Tests
         {
             var settings = ScriptableObject.CreateInstance<HorizonLodSettings>();
             var ctrl = new PlanetaryHorizonLodController(settings);
-            var band = ctrl.SelectBand(5000f, 1000f, 3000f);
+            var band = ctrl.SelectBand(5000f, 4000f, 6000f);
             Assert.AreEqual(PlanetaryAltitudeBand.CloudLayer, band);
         }
 

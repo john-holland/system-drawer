@@ -143,7 +143,9 @@ namespace Planetary.Bridges
 
             float latNorm = (sc.LatitudeDeg + 90f) / 180f;
             int latBin = Mathf.Clamp(Mathf.FloorToInt(latNorm * latCount), 1, latCount - 2);
-            int lonBin = WrapLonBin(Mathf.FloorToInt((sc.LongitudeDeg + 180f) / 360f * lonCount));
+            float lon360 = Mathf.Repeat(sc.LongitudeDeg, 360f);
+            float halfLonCell = 180f / lonCount;
+            int lonBin = WrapLonBin(Mathf.FloorToInt((lon360 + halfLonCell) / 360f * lonCount));
             int altBand = ResolveAltitudeBand(sc.Radius);
             id = new ShellCellId(latBin, lonBin, altBand, isPoleCap: false);
             return true;
@@ -163,7 +165,9 @@ namespace Planetary.Bridges
             }
 
             float latDegMid = (id.LatBin + 0.5f) / latCount * 180f - 90f;
-            float lonDegMid = (id.LonBin + 0.5f) / lonCount * 360f - 180f;
+            float halfLonCell = 180f / lonCount;
+            float lon360Mid = (id.LonBin + 0.5f) * 360f / lonCount - halfLonCell;
+            float lonDegMid = lon360Mid <= 180f ? lon360Mid : lon360Mid - 360f;
             return new SphericalCoordinates(latDegMid, lonDegMid, radius)
                 .ToWorldPosition(planet.PlanetCenter, planet.StablePoleAxis, planet.PrimeMeridianOffsetDeg);
         }

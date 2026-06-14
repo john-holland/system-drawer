@@ -9,8 +9,10 @@ public class SystemDrawerSceneServicesTests
     public void SetUp()
     {
         _serviceGo = new GameObject("SystemDrawerServiceTest");
-        _serviceGo.AddComponent<SystemDrawerService>();
+        _service = _serviceGo.AddComponent<SystemDrawerService>();
     }
+
+    SystemDrawerService _service;
 
     [TearDown]
     public void TearDown()
@@ -23,7 +25,7 @@ public class SystemDrawerSceneServicesTests
     public void TryResolve_ReturnsRegisteredObject()
     {
         var target = new GameObject("Planet");
-        SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.PlanetBody, target);
+        _service.Register(SystemDrawerServiceKeys.PlanetBody, target);
 
         Assert.IsTrue(SystemDrawerSceneServices.TryResolve(SystemDrawerServiceKeys.PlanetBody, out GameObject resolved));
         Assert.AreEqual(target, resolved);
@@ -33,7 +35,7 @@ public class SystemDrawerSceneServicesTests
     public void TryResolve_RejectsTypeMismatch()
     {
         var target = new GameObject("Planet");
-        SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.PlanetBody, target);
+        _service.Register(SystemDrawerServiceKeys.PlanetBody, target);
 
         Assert.IsFalse(SystemDrawerSceneServices.TryResolve(SystemDrawerServiceKeys.PlanetBody, out Transform _));
     }

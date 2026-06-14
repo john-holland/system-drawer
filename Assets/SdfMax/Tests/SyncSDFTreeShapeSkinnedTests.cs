@@ -49,6 +49,7 @@ namespace SdfMax.Tests
             provider.renderMode = SdfMaxRenderMode.SkinnedMesh;
             provider.SyncSDFTreeShape = true;
             provider.notifyOnTransformChange = true;
+            provider.SyncRenderModeComponents();
 
             var skinned = _go.GetComponent<SdfMaxSkinnedMeshSurface>();
             skinned.rootBone = _go.transform;

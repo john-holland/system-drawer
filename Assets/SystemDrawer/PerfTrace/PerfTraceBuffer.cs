@@ -269,5 +269,9 @@ public sealed class PerfTraceBuffer
     {
         Stack.Clear();
         _nodeBudget = _settings.maxNodesPerSession;
+        lock (_sessionLock)
+        {
+            _completed.Clear();
+        }
     }
 }

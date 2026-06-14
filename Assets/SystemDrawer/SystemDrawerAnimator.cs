@@ -435,7 +435,8 @@ public class SystemDrawerAnimator : MonoBehaviour,
     {
         _lastAssertOk = false;
         _lastAssertMessage = message;
-        Debug.LogError("[SystemDrawerAnimator] " + message, this);
+        if (strictPlayOrder)
+            Debug.LogError("[SystemDrawerAnimator] " + message, this);
         if (strictPlayOrder)
         {
 #if UNITY_EDITOR

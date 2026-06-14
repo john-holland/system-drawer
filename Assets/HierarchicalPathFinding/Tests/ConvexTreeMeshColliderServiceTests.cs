@@ -12,15 +12,23 @@ public class ConvexTreeMeshColliderServiceTests
         ConvexTreeMeshColliderService.InvalidateAll();
 
         _go = new GameObject("ConvexTreeMeshColliderServiceTests_Helper");
-        Object.DestroyImmediate(_go.GetComponent<Collider>());
-
-        var mf = _go.GetComponent<MeshFilter>();
-        Assert.IsNotNull(mf);
-        Assert.IsNotNull(mf.sharedMesh);
+        var mf = _go.AddComponent<MeshFilter>();
+        mf.sharedMesh = CreateTestMesh();
 
         _mc = _go.AddComponent<MeshCollider>();
         _mc.sharedMesh = mf.sharedMesh;
         _mc.convex = true;
+    }
+
+    static Mesh CreateTestMesh()
+    {
+        var mesh = new Mesh
+        {
+            vertices = new[] { Vector3.zero, Vector3.right, Vector3.up },
+            triangles = new[] { 0, 1, 2 }
+        };
+        mesh.RecalculateBounds();
+        return mesh;
     }
 
     [TearDown]

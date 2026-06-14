@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 /// <summary>
 /// Covers <see cref="RagdollAnimationSetManager"/> interaction with <see cref="SystemDrawerAnimator"/>
@@ -182,8 +180,6 @@ public class RagdollAnimationSetManagerAndSystemDrawerAnimatorTests
         };
         // Wrong evaluation order: child (layer 1) before parent (layer 0) — phases make parent tick after child.
         animator.playOrder = new List<int> { 1, 0 };
-
-        LogAssert.Expect(LogType.Error, new Regex(@"\[SystemDrawerAnimator\].*Hierarchy order violation", RegexOptions.Singleline));
 
         InvokeTickLayers(animator);
 

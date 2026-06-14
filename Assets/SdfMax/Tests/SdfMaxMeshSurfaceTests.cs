@@ -34,6 +34,7 @@ namespace SdfMax.Tests
             provider.profile = profile;
             provider.renderMode = SdfMaxRenderMode.StaticMesh;
             provider.SyncSDFTreeShape = true;
+            provider.SyncRenderModeComponents();
 
             var surface = _go.GetComponent<SdfMaxMeshSurface>();
             Assert.IsNotNull(surface);
@@ -59,6 +60,7 @@ namespace SdfMax.Tests
             provider.profile = profile;
             provider.renderMode = SdfMaxRenderMode.StaticMesh;
             provider.SyncSDFTreeShape = true;
+            provider.SyncRenderModeComponents();
 
             var surface = _go.GetComponent<SdfMaxMeshSurface>();
             surface.RebuildSurfaceMesh();
