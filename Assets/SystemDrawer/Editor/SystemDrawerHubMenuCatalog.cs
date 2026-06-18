@@ -43,7 +43,12 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Continuum", "Continuum Library", "Window/Continuum/Continuum Library"),
         new Entry("Diagnostics", "Memory Swizzle View", "Window/System Drawer/Diagnostics/Memory Swizzle View"),
         new Entry("Diagnostics", "Perf Trace View", "Window/System Drawer/Diagnostics/Perf Trace View"),
+        new Entry("Diagnostics", "Perform GC Pass", "Window/System Drawer/Diagnostics/Perform GC Pass"),
         new Entry("Planet", "Import Planar Scan", "Window/System Drawer/Planet/Import Planar Scan"),
         new Entry("Planet", "Bake Composition", "Window/System Drawer/Planet/Bake Composition"),
+        new Entry("Networking", "Dedicated Server Window", "Window/System Drawer/Networking/Dedicated Server Window"),
+        new Entry("Networking", "Create Main Menu Ragdoll", "Window/System Drawer/Networking/Create Main Menu Ragdoll"),
+        new Entry("Networking", "Update Main Menu Network Requirements", "Window/System Drawer/Networking/Update Main Menu for Network Requirements"),
+        new Entry("Networking", "Copy Dedicated Server Launch Args", "Window/System Drawer/Networking/Copy Dedicated Server Launch Args"),
     };
 }

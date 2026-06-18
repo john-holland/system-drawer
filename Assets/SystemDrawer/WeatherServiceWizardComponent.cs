@@ -33,6 +33,7 @@ public class WeatherServiceWizardComponent : MonoBehaviour
             SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.WeatherSystemLegacy, weatherSystemObject);
             SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.WeatherSystem, weatherSystemObject);
             RegisterWeatherManifold();
+            RegisterWeatherExecutor();
         }
     }
 
@@ -44,6 +45,7 @@ public class WeatherServiceWizardComponent : MonoBehaviour
             SystemDrawerService.Instance.Unregister(SystemDrawerServiceKeys.WeatherSystemLegacy);
             SystemDrawerService.Instance.Unregister(SystemDrawerServiceKeys.WeatherSystem);
             SystemDrawerService.Instance.Unregister(SystemDrawerServiceKeys.WeatherPhysicsManifold);
+            SystemDrawerService.Instance.Unregister(SystemDrawerServiceKeys.WeatherExecutor);
         }
     }
 
@@ -56,6 +58,20 @@ public class WeatherServiceWizardComponent : MonoBehaviour
             if (mb != null && mb.GetType().Name == "WeatherPhysicsManifold")
             {
                 SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.WeatherPhysicsManifold, mb);
+                break;
+            }
+        }
+    }
+
+    void RegisterWeatherExecutor()
+    {
+        if (weatherSystemObject == null || SystemDrawerService.Instance == null)
+            return;
+        foreach (MonoBehaviour mb in weatherSystemObject.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (mb != null && mb.GetType().Name == "WeatherExecutorService")
+            {
+                SystemDrawerService.Instance.Register(SystemDrawerServiceKeys.WeatherExecutor, mb);
                 break;
             }
         }

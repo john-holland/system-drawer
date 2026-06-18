@@ -68,6 +68,7 @@ namespace SpatialVolumes
         void OnValidate()
         {
             SyncColliderReference();
+            SyncRenderComponentsCore();
             WarnIfBothSurfaceRenderers();
             RequestRenderSync();
             RefreshSurfaceMeshVersion();
@@ -207,11 +208,7 @@ namespace SpatialVolumes
                     break;
                 case SdfMaxRenderMode.SkinnedMesh:
                     if (staticMesh != null)
-                    {
                         staticMesh.enabled = false;
-                        DestroyRenderComponent<MeshRenderer>();
-                        DestroyRenderComponent<MeshFilter>();
-                    }
                     if (skinnedMesh == null)
                         skinnedMesh = gameObject.AddComponent<SdfMaxSkinnedMeshSurface>();
                     skinnedMesh.enabled = true;

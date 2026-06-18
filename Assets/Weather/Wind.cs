@@ -69,12 +69,19 @@ namespace Weather
         [Range(3, 20)]
         public int arrowCount = 10;
 
+        WeatherPhysicsManifold _cachedWeatherManifold;
+
         private void Awake()
         {
             if (autoGenerateAltitudeLevels)
             {
                 GenerateDefaultAltitudeLevels();
             }
+
+            if (_cachedWeatherManifold == null)
+                SceneServiceLookup.TryResolve("weather.physicsManifold", out _cachedWeatherManifold);
+            if (_cachedWeatherManifold == null)
+                _cachedWeatherManifold = FindAnyObjectByType<WeatherPhysicsManifold>();
         }
 
         /// <summary>
@@ -88,8 +95,7 @@ namespace Weather
                 UpdateWindVariation(deltaTime);
             }
 
-            // Generate/update wind field
-            GenerateWindField();
+            // Wind field stamping is owned by WeatherPhysicsManifold.ServiceUpdate (avoids double pass).
         }
 
         /// <summary>
@@ -250,7 +256,7 @@ namespace Weather
         }
 
         /// <summary>
-        /// Generate or update wind field in PhysicsManifold / WeatherPhysicsManifold.
+        /// Legacy hook for external callers. Stamping runs in WeatherPhysicsManifold.ServiceUpdate.
         /// </summary>
         public void GenerateWindField()
         {
@@ -258,10 +264,6 @@ namespace Weather
             {
                 // Legacy PhysicsManifold hook — no-op until wired.
             }
-
-            var weatherManifold = FindAnyObjectByType<WeatherPhysicsManifold>();
-            if (weatherManifold != null)
-                weatherManifold.WindStampPass();
         }
 
         /// <summary>

@@ -45,6 +45,25 @@ namespace Locomotion.Narrative
                 _ => ""
             };
         }
+
+        public static NarrativeValue FromObject(object value)
+        {
+            if (value == null)
+                return new NarrativeValue { type = NarrativeValueType.None };
+            if (value is bool b)
+                return new NarrativeValue { type = NarrativeValueType.Bool, boolValue = b };
+            if (value is int i)
+                return new NarrativeValue { type = NarrativeValueType.Int, intValue = i };
+            if (value is float f)
+                return new NarrativeValue { type = NarrativeValueType.Float, floatValue = f };
+            if (value is double d)
+                return new NarrativeValue { type = NarrativeValueType.Float, floatValue = (float)d };
+            if (value is string s)
+                return new NarrativeValue { type = NarrativeValueType.String, stringValue = s };
+            if (value is Vector3 v)
+                return new NarrativeValue { type = NarrativeValueType.Vector3, vector3Value = v };
+            return new NarrativeValue { type = NarrativeValueType.String, stringValue = value.ToString() };
+        }
     }
 }
 

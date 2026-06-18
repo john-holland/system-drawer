@@ -18,6 +18,12 @@ namespace Locomotion.Narrative
         [Tooltip("True to enable, false to disable")]
         public bool enable = true;
 
+        [NonSerialized] object _targetNode;
+        [NonSerialized] bool _previousEnabled;
+        [NonSerialized] bool _hasPrevious;
+
+        public override bool SupportsUndo => true;
+
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
             if (!contingency.Evaluate(ctx))
@@ -75,10 +81,15 @@ namespace Locomotion.Narrative
                     object node = getNodeMethod.Invoke(behaviorTree, new object[] { nodeKey });
                     if (node != null)
                     {
-                        // Set enabled property
                         var enabledProp = nodeType.GetProperty("enabled");
                         if (enabledProp != null && enabledProp.CanWrite)
                         {
+                            if (!_hasPrevious)
+                            {
+                                _previousEnabled = enabledProp.GetValue(node) is bool prev && prev;
+                                _hasPrevious = true;
+                            }
+                            _targetNode = node;
                             enabledProp.SetValue(node, enable);
                             return BehaviorTreeStatus.Success;
                         }
@@ -93,6 +104,12 @@ namespace Locomotion.Narrative
                     var enabledProp = nodeType.GetProperty("enabled");
                     if (enabledProp != null && enabledProp.CanWrite)
                     {
+                        if (!_hasPrevious)
+                        {
+                            _previousEnabled = enabledProp.GetValue(node) is bool prev && prev;
+                            _hasPrevious = true;
+                        }
+                        _targetNode = node;
                         enabledProp.SetValue(node, enable);
                         return BehaviorTreeStatus.Success;
                     }
@@ -101,6 +118,21 @@ namespace Locomotion.Narrative
 
             Debug.LogWarning($"[NarrativeEnableNodeAction] Could not find or enable/disable node: {nodeKey}");
             return BehaviorTreeStatus.Failure;
+        }
+
+        public override void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (!_hasPrevious || _targetNode == null)
+                return;
+            var nodeType = System.Type.GetType("BehaviorTreeNode, Locomotion.Runtime")
+                ?? System.Type.GetType("BehaviorTreeNode, Assembly-CSharp");
+            if (nodeType == null)
+                return;
+            var enabledProp = nodeType.GetProperty("enabled");
+            if (enabledProp != null && enabledProp.CanWrite)
+                enabledProp.SetValue(_targetNode, _previousEnabled);
+            _hasPrevious = false;
+            _targetNode = null;
         }
     }
 }

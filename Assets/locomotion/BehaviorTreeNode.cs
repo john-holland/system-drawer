@@ -24,6 +24,11 @@ public abstract class BehaviorTreeNode : MonoBehaviour
     [Tooltip("Actual measured duration (runtime)")]
     public float actualDuration = 0f;
 
+    [Header("Pre-Exec Reset")]
+    public bool captureStateBeforeExec;
+    public GameObject[] associatedObjects;
+    public MonoBehaviour[] stateCaptureBehaviours;
+
     [Tooltip("Use card-based duration estimation")]
     public bool useCardEstimation = true;
 
@@ -55,6 +60,9 @@ public abstract class BehaviorTreeNode : MonoBehaviour
     }
 
     public virtual void OnEnter(BehaviorTree tree) { }
+
+    public virtual void CaptureBeforeExec(BehaviorTree tree) { }
+
     public virtual void OnExit(BehaviorTree tree) { }
     public virtual void OnUpdate(BehaviorTree tree) { }
 

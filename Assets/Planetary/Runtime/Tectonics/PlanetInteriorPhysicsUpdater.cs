@@ -40,5 +40,16 @@ namespace Planetary.Tectonics
             }
             jobProgress = 1f;
         }
+
+        public void ApplyAtmosphereSnapshot(AtmosphereRegressionProfile snapshot)
+        {
+            if (snapshot == null || compositionProfile == null || planet == null)
+                return;
+            planet.composition = PlanetaryCompositionBaker.Bake(
+                planet, planet.planarBase, planet.solverProfile, compositionProfile, snapshot, plateSolver?.plates);
+            planet.RebakeComposition();
+            if (planet.sdfLodRenderer != null)
+                planet.sdfLodRenderer.Rebake();
+        }
     }
 }

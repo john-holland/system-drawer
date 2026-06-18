@@ -118,3 +118,21 @@ Calendar events with **spatiotemporalVolume** are placed in **SpatialGenerator4D
 - **tMin / tMax**: Narrative seconds since 2025-01-01 00:00 UTC. Use `NarrativeCalendarMath.DateTimeToSeconds(dt)` to convert a NarrativeDateTime to seconds, and `NarrativeCalendarMath.SecondsToNarrativeDateTime(t)` to convert back.  
 - **Player position**: Set NarrativeScheduler’s **positionKeys** (list; default includes `"player"`) and ensure each key is bound in the executor’s NarrativeBindings. An event triggers when any of those keys resolves to a GameObject inside the event’s spatiotemporal volume. Events can override with **positionKeys** on the event.  
 - **Causal links**: Stored on the NarrativeCalendarAsset under "4D Causal Links"; fromEventId enables toEventId.
+
+---
+
+## Multiplayer tree descriptors (Networking)
+
+When using [`NetworkTreeRegistry`](../SystemDrawer/Networking/NetworkTreeRegistry.cs) with [`ServerOrchestrator`](../SystemDrawer/Networking/ServerOrchestrator.cs), attach metadata per 4D slice:
+
+| Field | Use |
+|-------|-----|
+| `TreeId` | Stable id (matches generator or BT root name) |
+| `Dimension` | `Spatial3D` or `Spatial4D` |
+| `TransmitPolicy` | `LocalOnly`, `ServerAuthoritative`, or `PeerTransferable` |
+| `CausalityLeafPrefix` | Leaf id prefix from [`CausalityHistory2D`](Spatial4DGatewayDtos.cs) (e.g. `S3.O2.1`) |
+| `StreamForOwnership` | TCP pre-warm when client enters server LOD radius |
+
+Register on the server after scene generators resolve. Lockstep join runs [`CausalityFamilyAudit`](../SystemDrawer/Networking/CausalityFamilyAudit.cs) before UDP decisions are accepted.
+
+See [`NetworkingArchitecture.md`](../SystemDrawer/docs/NetworkingArchitecture.md).

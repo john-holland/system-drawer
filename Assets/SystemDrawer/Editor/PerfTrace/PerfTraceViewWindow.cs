@@ -122,6 +122,9 @@ public class PerfTraceViewWindow : EditorWindow
             PerfTraceMemoryCorrelator.CaptureCorrelatedMemorySnapshot(_loadedSession);
         GUI.enabled = true;
 
+        if (GUILayout.Button("Perform GC Pass", GUILayout.Width(120)))
+            DiagnosticsGcPass.PerformGcPass();
+
         GUILayout.FlexibleSpace();
         long total = _root != null ? _root.TotalTicks : 0;
         EditorGUILayout.LabelField(PerfTraceFormat.Ms(total), EditorStyles.boldLabel, GUILayout.Width(100));

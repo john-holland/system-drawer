@@ -97,10 +97,18 @@ namespace Weather
 
         [Header("Advection (far field)")]
         public bool enableFarFieldAdvection = true;
-        public int advectionStride = 2;
-        public int advectionEveryNFrames = 2;
+        public int advectionStride = 4;
+        public int advectionEveryNFrames = 4;
         public Transform advectionFocus;
         public float skipAdvectionAboveAltitudeM = 80000f;
+
+        [Header("Egg LOD")]
+        [Tooltip("When true, far-field advection only runs inside active egg bounds.")]
+        public bool useEggLodMode = true;
+
+        bool _eggLodActive;
+        Bounds _activeEggBounds;
+        bool _hasActiveEggBounds;
 
         [Header("Near field")]
         public NearField.NearFieldWindInteractionGraph nearFieldGraph;
@@ -152,9 +160,28 @@ namespace Weather
         /// </summary>
         public void ServiceUpdate(float deltaTime)
         {
-            WindStampPass();
-            AggregateSubsystemData();
-            UpdateManifold(deltaTime);
+            using (PerfTrace.Scope("WeatherPhysicsManifold.ServiceUpdate"))
+            {
+                WindStampPass();
+                AggregateSubsystemData();
+                UpdateManifold(deltaTime);
+            }
+        }
+
+        public void SetEggLodActive(bool active, Bounds eggBounds)
+        {
+            _eggLodActive = active;
+            _hasActiveEggBounds = active;
+            _activeEggBounds = eggBounds;
+        }
+
+        public void ServiceUpdateInBounds(float deltaTime, Bounds bounds)
+        {
+            using (PerfTrace.Scope("WeatherPhysicsManifold.ServiceUpdateInBounds"))
+            {
+                WindStampPassInBounds(bounds);
+                AdvectFieldsInBounds(deltaTime, bounds);
+            }
         }
 
         /// <summary>
@@ -171,47 +198,72 @@ namespace Weather
         /// </summary>
         private void UpdateManifold(float deltaTime)
         {
-            // Operator splitting update scheme:
-            // 1. Advection (Semi-Lagrangian)
+            if (useEggLodMode && _eggLodActive)
+                return;
+
             AdvectFields(deltaTime);
-
-            // 2. Pressure Projection (Implicit pressure-Poisson solver)
             ProjectPressure(deltaTime);
-
-            // 3. Diffusion (Implicit viscosity)
             DiffuseFields(deltaTime);
-
-            // 4. Forces (External forces: wind, gravity, blocking objects)
             ApplyForces(deltaTime);
-
-            // 5. Material Interactions (Apply material-specific effects)
             ApplyMaterialInteractions(deltaTime);
         }
 
         /// <summary>Stamp analytic wind into cell velocities (far-field source term).</summary>
         public void WindStampPass()
         {
-            if (wind == null || cellData == null || cellData.Length == 0)
-                return;
-
-            EnsureCellDataAllocatedCore();
-            int stride = Mathf.Max(1, advectionStride);
-            for (int z = 0; z < cellCount.z; z += stride)
-            for (int y = 0; y < cellCount.y; y += stride)
-            for (int x = 0; x < cellCount.x; x += stride)
+            if (_eggLodActive && _hasActiveEggBounds)
             {
-                Vector3 cellCenter = CellIndexToWorldCenter(new Vector3Int(x, y, z));
-                float altitude = cellCenter.y;
-                Vector3 windVel = wind.GetWindAtPosition(cellCenter, altitude);
-                int flat = CellIndexToFlat(new Vector3Int(x, y, z));
-                if (flat < 0 || flat >= cellData.Length)
-                    continue;
-                ManifoldCellData d = cellData[flat];
-                d.velocity = windVel;
-                if (d.mode == WeatherMode.Air)
-                    d.mode = WeatherMode.Wind;
-                cellData[flat] = d;
+                WindStampPassInBounds(_activeEggBounds);
+                return;
             }
+            WindStampPassInBounds(worldBounds);
+        }
+
+        public void WindStampPassInBounds(Bounds bounds)
+        {
+            using (PerfTrace.Scope("WindStampPass"))
+            {
+                if (wind == null || cellData == null || cellData.Length == 0)
+                    return;
+
+                EnsureCellDataAllocatedCore();
+                int stride = Mathf.Max(1, advectionStride);
+                IterateCellsInBounds(bounds, stride, (x, y, z) =>
+                {
+                    Vector3 cellCenter = CellIndexToWorldCenter(new Vector3Int(x, y, z));
+                    float altitude = cellCenter.y;
+                    Vector3 windVel = wind.GetWindAtPosition(cellCenter, altitude);
+                    int flat = CellIndexToFlat(new Vector3Int(x, y, z));
+                    if (flat < 0 || flat >= cellData.Length)
+                        return;
+                    ManifoldCellData d = cellData[flat];
+                    d.velocity = windVel;
+                    if (d.mode == WeatherMode.Air)
+                        d.mode = WeatherMode.Wind;
+                    cellData[flat] = d;
+                });
+            }
+        }
+
+        delegate void CellIterator(int x, int y, int z);
+
+        void IterateCellsInBounds(Bounds bounds, int stride, CellIterator iterator)
+        {
+            Vector3Int minCell = WorldToCellIndex(bounds.min);
+            Vector3Int maxCell = WorldToCellIndex(bounds.max);
+            minCell = new Vector3Int(
+                Mathf.Max(0, minCell.x),
+                Mathf.Max(0, minCell.y),
+                Mathf.Max(0, minCell.z));
+            maxCell = new Vector3Int(
+                Mathf.Min(cellCount.x - 1, maxCell.x),
+                Mathf.Min(cellCount.y - 1, maxCell.y),
+                Mathf.Min(cellCount.z - 1, maxCell.z));
+
+            for (int z = minCell.z; z <= maxCell.z; z += stride)
+            for (int y = minCell.y; y <= maxCell.y; y += stride)
+            for (int x = minCell.x; x <= maxCell.x; x += stride)
+                iterator(x, y, z);
         }
 
         Vector3 CellIndexToWorldCenter(Vector3Int cellIndex)
@@ -223,40 +275,59 @@ namespace Weather
             return worldBounds.min + Vector3.Scale(t, worldBounds.size);
         }
 
-        /// <summary>
-        /// Advect fields using Semi-Lagrangian method
-        /// </summary>
         private void AdvectFields(float deltaTime)
         {
-            if (!enableFarFieldAdvection || cellData == null || cellData.Length == 0 || deltaTime <= 0f)
-                return;
+            AdvectFieldsInBounds(deltaTime, worldBounds);
+        }
 
-            if (advectionFocus != null && advectionFocus.position.y > skipAdvectionAboveAltitudeM)
-                return;
-
-            _advectionFrame++;
-            if (_advectionFrame % Mathf.Max(1, advectionEveryNFrames) != 0)
-                return;
-
-            if (_advectionScratch == null || _advectionScratch.Length != cellData.Length)
-                _advectionScratch = new ManifoldCellData[cellData.Length];
-            System.Array.Copy(cellData, _advectionScratch, cellData.Length);
-
-            int stride = Mathf.Max(1, advectionStride);
-            for (int z = 0; z < cellCount.z; z += stride)
-            for (int y = 0; y < cellCount.y; y += stride)
-            for (int x = 0; x < cellCount.x; x += stride)
+        public void AdvectFieldsInBounds(float deltaTime, Bounds bounds)
+        {
+            using (PerfTrace.Scope("AdvectFields"))
             {
-                Vector3Int idx = new Vector3Int(x, y, z);
-                int flat = CellIndexToFlat(idx);
-                if (flat < 0 || flat >= cellData.Length)
-                    continue;
+                if (!enableFarFieldAdvection || cellData == null || cellData.Length == 0 || deltaTime <= 0f)
+                    return;
 
-                Vector3 world = CellIndexToWorldCenter(idx);
-                Vector3 vel = _advectionScratch[flat].velocity;
-                Vector3 back = world - vel * deltaTime;
-                ManifoldCellData sampled = SampleCellAtWorld(back, _advectionScratch);
-                cellData[flat] = sampled;
+                if (useEggLodMode && !_eggLodActive)
+                    return;
+
+                if (advectionFocus != null && advectionFocus.position.y > skipAdvectionAboveAltitudeM)
+                    return;
+
+                _advectionFrame++;
+                if (_advectionFrame % Mathf.Max(1, advectionEveryNFrames) != 0)
+                    return;
+
+                int stride = Mathf.Max(1, advectionStride);
+
+                if (_advectionScratch == null || _advectionScratch.Length != cellData.Length)
+                    _advectionScratch = new ManifoldCellData[cellData.Length];
+
+                if (_hasActiveEggBounds && _eggLodActive)
+                {
+                    IterateCellsInBounds(bounds, stride, (x, y, z) =>
+                    {
+                        int flat = CellIndexToFlat(new Vector3Int(x, y, z));
+                        if (flat >= 0 && flat < cellData.Length)
+                            _advectionScratch[flat] = cellData[flat];
+                    });
+                }
+                else
+                {
+                    System.Array.Copy(cellData, _advectionScratch, cellData.Length);
+                }
+
+                IterateCellsInBounds(bounds, stride, (x, y, z) =>
+                {
+                    Vector3Int idx = new Vector3Int(x, y, z);
+                    int flat = CellIndexToFlat(idx);
+                    if (flat < 0 || flat >= cellData.Length)
+                        return;
+
+                    Vector3 world = CellIndexToWorldCenter(idx);
+                    Vector3 vel = _advectionScratch[flat].velocity;
+                    Vector3 back = world - vel * deltaTime;
+                    cellData[flat] = SampleCellAtWorld(back, _advectionScratch);
+                });
             }
         }
 

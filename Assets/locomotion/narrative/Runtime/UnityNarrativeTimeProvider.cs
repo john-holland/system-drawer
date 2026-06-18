@@ -31,6 +31,18 @@ namespace Locomotion.Narrative
             double narrativeSeconds = elapsed * narrativeSecondsPerUnitySecond;
             return startDateTime.AddSeconds(narrativeSeconds);
         }
+
+        public void SetSimulationTime(NarrativeDateTime target)
+        {
+            float t = useUnscaledTime ? Time.unscaledTime : Time.time;
+            double targetSeconds = NarrativeCalendarMath.DateTimeToSeconds(target);
+            double startSeconds = NarrativeCalendarMath.DateTimeToSeconds(startDateTime);
+            double elapsedNarrative = targetSeconds - startSeconds;
+            double elapsedUnity = narrativeSecondsPerUnitySecond > 0d
+                ? elapsedNarrative / narrativeSecondsPerUnitySecond
+                : 0d;
+            startUnityTime = t - (float)elapsedUnity;
+        }
     }
 }
 

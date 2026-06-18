@@ -98,6 +98,9 @@ public class MemorySwizzleViewWindow : EditorWindow
         if (GUILayout.Button("Refresh", GUILayout.Width(70)))
             RefreshData();
 
+        if (GUILayout.Button("Perform GC Pass", GUILayout.Width(120)))
+            DiagnosticsGcPass.PerformGcPass();
+
         EditorGUILayout.LabelField("|", GUILayout.Width(10));
         if (GUILayout.Button("Perf Trace View", GUILayout.Width(110)))
             DiagnosticsWindowLauncher.TryOpenPerfTrace();

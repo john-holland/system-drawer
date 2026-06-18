@@ -18,6 +18,11 @@ namespace Locomotion.Narrative
         [Tooltip("Parent node name/ID to append to (empty = root)")]
         public string parentNodeKey = "";
 
+        [NonSerialized] object _parentNode;
+        [NonSerialized] int _insertIndex = -1;
+
+        public override bool SupportsUndo => true;
+
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
             if (!contingency.Evaluate(ctx))
@@ -112,6 +117,8 @@ namespace Locomotion.Narrative
                     if (children != null)
                     {
                         children.Add(nodeToAppend);
+                        _parentNode = parentNode;
+                        _insertIndex = children.Count - 1;
                         return BehaviorTreeStatus.Success;
                     }
                 }
@@ -119,6 +126,25 @@ namespace Locomotion.Narrative
 
             Debug.LogWarning("[NarrativeAppendNodeAction] Could not append node");
             return BehaviorTreeStatus.Failure;
+        }
+
+        public override void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (_parentNode == null || _insertIndex < 0)
+                return;
+            var nodeType = System.Type.GetType("BehaviorTreeNode, Locomotion.Runtime")
+                ?? System.Type.GetType("BehaviorTreeNode, Assembly-CSharp");
+            if (nodeType == null)
+                return;
+            var childrenProp = nodeType.GetProperty("children") ?? nodeType.GetProperty("childNodes");
+            if (childrenProp == null)
+                return;
+            var children = childrenProp.GetValue(_parentNode) as System.Collections.IList;
+            if (children == null || _insertIndex >= children.Count)
+                return;
+            children.RemoveAt(_insertIndex);
+            _parentNode = null;
+            _insertIndex = -1;
         }
     }
 }

@@ -144,6 +144,16 @@ namespace Weather
             };
         }
 
+        private void OnEnable()
+        {
+            WeatherEventRegistry.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            WeatherEventRegistry.Unregister(this);
+        }
+
         private void Start()
         {
             // Auto-activate on start if enabled

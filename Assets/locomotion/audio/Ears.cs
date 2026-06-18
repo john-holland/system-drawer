@@ -44,7 +44,11 @@ namespace Locomotion.Audio
         // Cached reflection data to avoid repeated lookups
         private static System.Type cachedSensoryDataType = null;
         private static System.Reflection.ConstructorInfo cachedSensoryDataConstructor = null;
+        private static System.Type cachedImpulseDataType = null;
+        private static System.Reflection.ConstructorInfo cachedImpulseDataConstructor = null;
+        private static System.Type cachedImpulseTypeEnum = null;
         private static bool sensoryDataTypeLookupFailed = false;
+        private static bool impulseDataTypeLookupFailed = false;
 
         /// <summary>
         /// Helper method to set property using reflection.
@@ -262,49 +266,8 @@ namespace Locomotion.Audio
                     }
                 }
 
-                // Create ImpulseData using reflection
-                var impulseDataType = System.Type.GetType("ImpulseData, Locomotion.Runtime");
-                if (impulseDataType == null)
-                {
-                    impulseDataType = System.Type.GetType("ImpulseData, Assembly-CSharp");
-                }
-                
-                object impulse = null;
-                if (impulseDataType != null)
-                {
-                    // Get ImpulseType enum value
-                    var impulseTypeEnum = System.Type.GetType("ImpulseType, Locomotion.Runtime");
-                    if (impulseTypeEnum == null)
-                    {
-                        impulseTypeEnum = System.Type.GetType("ImpulseType, Assembly-CSharp");
-                    }
-                    object sensoryImpulseType = null;
-                    if (impulseTypeEnum != null)
-                    {
-                        sensoryImpulseType = System.Enum.Parse(impulseTypeEnum, "Sensory");
-                    }
-                    
-                    // Create ImpulseData using constructor
-                    var constructor = impulseDataType.GetConstructor(new System.Type[] 
-                    { 
-                        impulseTypeEnum ?? typeof(int), 
-                        typeof(string), 
-                        typeof(string), 
-                        typeof(object), 
-                        typeof(int) 
-                    });
-                    if (constructor != null)
-                    {
-                        impulse = constructor.Invoke(new object[] 
-                        { 
-                            sensoryImpulseType ?? 0, 
-                            "Ears", 
-                            "NervousSystem", 
-                            sensory, 
-                            impulsePriority 
-                        });
-                    }
-                }
+                // Create ImpulseData using cached reflection
+                object impulse = CreateImpulseData(sensory);
 
                 // Use reflection to call SendImpulseUp (to avoid Runtime dependency)
                 if (nervousSystem != null && impulse != null)
@@ -316,6 +279,48 @@ namespace Locomotion.Audio
                     }
                 }
             }
+        }
+
+        object CreateImpulseData(object sensory)
+        {
+            if (cachedImpulseDataConstructor == null && !impulseDataTypeLookupFailed)
+            {
+                cachedImpulseDataType = System.Type.GetType("ImpulseData, Locomotion.Runtime")
+                    ?? System.Type.GetType("ImpulseData, Assembly-CSharp");
+                cachedImpulseTypeEnum = System.Type.GetType("ImpulseType, Locomotion.Runtime")
+                    ?? System.Type.GetType("ImpulseType, Assembly-CSharp");
+
+                if (cachedImpulseDataType != null)
+                {
+                    cachedImpulseDataConstructor = cachedImpulseDataType.GetConstructor(new System.Type[]
+                    {
+                        cachedImpulseTypeEnum ?? typeof(int),
+                        typeof(string),
+                        typeof(string),
+                        typeof(object),
+                        typeof(int)
+                    });
+                }
+
+                if (cachedImpulseDataConstructor == null)
+                    impulseDataTypeLookupFailed = true;
+            }
+
+            if (cachedImpulseDataConstructor == null)
+                return null;
+
+            object sensoryImpulseType = cachedImpulseTypeEnum != null
+                ? System.Enum.Parse(cachedImpulseTypeEnum, "Sensory")
+                : 0;
+
+            return cachedImpulseDataConstructor.Invoke(new object[]
+            {
+                sensoryImpulseType ?? 0,
+                "Ears",
+                "NervousSystem",
+                sensory,
+                impulsePriority
+            });
         }
 
         private void ScanAudioSources()

@@ -58,6 +58,11 @@ namespace Locomotion.Narrative
         [Tooltip("Stack of narrative dates with fun info")]
         public List<NarrativeGuestBookEntry> guestBook = new List<NarrativeGuestBookEntry>();
 
+        [Header("Pre-Exec Reset")]
+        public bool captureStateBeforeExec;
+        public string[] associatedBindingKeys;
+        public bool restoreOnRewind = true;
+
         /// <summary>
         /// Manually allows reentry (sets attended = false).
         /// </summary>

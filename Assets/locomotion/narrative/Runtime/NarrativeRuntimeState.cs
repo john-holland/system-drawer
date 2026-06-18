@@ -10,7 +10,7 @@ namespace Locomotion.Narrative
     [Serializable]
     public class NarrativeRuntimeState
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
 
         // Scheduling
         public List<string> triggeredEventIds = new List<string>();
@@ -22,6 +22,7 @@ namespace Locomotion.Narrative
         // Best-effort cursor (MVP): sequence of node ids and child indices.
         public List<string> nodeStack = new List<string>();
         public List<int> childIndexStack = new List<int>();
+
+        public List<NarrativeExecutionLedgerEntry> executionLedger = new List<NarrativeExecutionLedgerEntry>();
     }
 }
-

@@ -1,8 +1,8 @@
 {
     "name": "Planetary",
     "rootNamespace": "Planetary",
-    "references": [
-        "SdfMax",
+  "references": [
+    "SdfMax",
         "HierarchicalPathFinding",
         "Weather.Runtime",
         "SystemDrawer.PerfTrace"

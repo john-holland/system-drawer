@@ -38,6 +38,15 @@ Scene services register on [`SystemDrawerService`](Assets/SystemDrawer/SystemDra
 | `USCBuildService` | [`UscBuildServiceWizard`](Assets/SystemDrawer/UscBuildServiceWizard.cs) | SystemDrawer | USC build / export integration |
 | `actor.brain` | [`BrainMessageService`](Assets/SystemDrawer/BrainMessageService.cs) | SystemDrawer | Actor brain message hub (key overridable) |
 | `ContinuumNotifications` | [`ContinuumNotificationsService`](Assets/Continuum/ContinuumNotificationsService.cs) | Continuum | Continuum push / notification bridge |
+| `network.clientOrchestrator` | [`ClientOrchestrator`](Assets/SystemDrawer/Networking/ClientOrchestrator.cs) | Networking | Scene client singleton (TCP/UDP, mode selection) |
+| `network.serverOrchestrator` | [`ServerOrchestrator`](Assets/SystemDrawer/Networking/ServerOrchestrator.cs) | Networking | Game server / SP loopback host |
+| `network.serverMode` | [`ServerOrchestrator`](Assets/SystemDrawer/Networking/ServerOrchestrator.cs) | Networking | Active `NetworkServerMode` registry object |
+| `network.lobbyServer` | [`LobbyServerHost`](Assets/SystemDrawer/Networking/LobbyServerHost.cs) via server | Networking | Optional lobby registration/list TCP service |
+| `menu.ragdoll` | [`MenuRagdollServiceWizard`](Assets/SystemDrawer/Networking/MenuRagdollServiceWizard.cs) | Networking | Main menu event tree (no Brain) |
+
+**Networking modes:** `SinglePlayer` (local loopback server), `AuthoritativePeerToPeer` (ownership + causality tree streaming), `ClassicLockstep` (UDP decisions + audit). See [`NetworkingArchitecture.md`](Assets/SystemDrawer/docs/NetworkingArchitecture.md).
+
+**Dedicated server CLI:** `-ds -m p2p -p 7777 --host-lobby --lobby-port 7780 --lobby-name "Session"` (also `--no-lobby`, `--bind-address`).
 
 **Resolver:** [`SystemDrawerSceneServices`](Assets/SystemDrawer/SystemDrawerSceneServices.cs) + key constants in [`SystemDrawerServiceKeys`](Assets/SystemDrawer/SystemDrawerServiceKeys.cs). Assemblies that cannot reference SystemDrawer directly use [`SceneServiceLookup`](Assets/Weather/SceneServiceLookup.cs) (reflection bridge in Weather.Runtime).
 

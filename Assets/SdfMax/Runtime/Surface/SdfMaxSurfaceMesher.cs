@@ -24,6 +24,19 @@ namespace SdfMax
             int buildVersion,
             bool recalculateNormals)
         {
+            return Build(evaluator, localBounds, localToWorld, isoLevel, gridRes, buildVersion, recalculateNormals, null);
+        }
+
+        public static SdfMaxSurfaceMeshData Build(
+            SdfMaxEvaluator evaluator,
+            Bounds localBounds,
+            Matrix4x4 localToWorld,
+            float isoLevel,
+            int gridRes,
+            int buildVersion,
+            bool recalculateNormals,
+            SdfMaxSurfaceMeshDebugReport report)
+        {
             var result = new SdfMaxSurfaceMeshData { BuildVersion = buildVersion, LocalBounds = localBounds };
             if (evaluator == null)
                 return result;
@@ -42,18 +55,29 @@ namespace SdfMax
                 localBounds.size.z / (nz - 1));
 
             Matrix4x4 worldFromLocal = localToWorld;
+            float fieldMin = float.PositiveInfinity;
+            float fieldMax = float.NegativeInfinity;
+            int insideCount = 0;
             for (int z = 0; z < nz; z++)
             for (int y = 0; y < ny; y++)
             for (int x = 0; x < nx; x++)
             {
                 Vector3 localP = origin + new Vector3(x * step.x, y * step.y, z * step.z);
                 Vector3 worldP = worldFromLocal.MultiplyPoint3x4(localP);
-                field[Index(x, y, z, nx, ny)] = evaluator.Sample(worldP, 0f);
+                float sample = evaluator.Sample(worldP, 0f);
+                field[Index(x, y, z, nx, ny)] = sample;
+                if (sample < fieldMin) fieldMin = sample;
+                if (sample > fieldMax) fieldMax = sample;
+                if (sample < isoLevel)
+                    insideCount++;
             }
 
             var verts = new List<Vector3>(count * 2);
             var tris = new List<int>(count * 6);
             var vertMap = new Dictionary<long, int>(count * 2);
+            int faceQuadsX = 0;
+            int faceQuadsY = 0;
+            int faceQuadsZ = 0;
 
             for (int z = 0; z < nz - 1; z++)
             for (int y = 0; y < ny - 1; y++)
@@ -77,13 +101,21 @@ namespace SdfMax
                 bool b011 = v011 < isoLevel;
                 bool b111 = v111 < isoLevel;
 
-                TryFaceX(verts, tris, vertMap, origin, step, x, y, z, b000, b100, b010, b110, b001, b101, b011, b111);
-                TryFaceY(verts, tris, vertMap, origin, step, x, y, z, b000, b100, b010, b110, b001, b101, b011, b111);
-                TryFaceZ(verts, tris, vertMap, origin, step, x, y, z, b000, b100, b010, b110, b001, b101, b011, b111);
+                if (TryFaceX(verts, tris, vertMap, origin, step, x, y, z, b000, b100, b010, b110, b001, b101, b011, b111))
+                    faceQuadsX++;
+                if (TryFaceY(verts, tris, vertMap, origin, step, x, y, z, b000, b100, b010, b110, b001, b101, b011, b111))
+                    faceQuadsY++;
+                if (TryFaceZ(verts, tris, vertMap, origin, step, x, y, z, b000, b100, b010, b110, b001, b101, b011, b111))
+                    faceQuadsZ++;
             }
 
             if (verts.Count == 0)
+            {
+                if (report != null)
+                    PopulateDebugReport(report, evaluator, localBounds, localToWorld, isoLevel, nx, ny, nz, origin, step, field,
+                        fieldMin, fieldMax, insideCount, faceQuadsX, faceQuadsY, faceQuadsZ, null, null, null);
                 return result;
+            }
 
             result.Vertices = verts.ToArray();
             result.Triangles = tris.ToArray();
@@ -94,49 +126,223 @@ namespace SdfMax
                 ComputeNormals(result.Vertices, result.Triangles, result.Normals);
             }
 
+            if (report != null)
+            {
+                PopulateDebugReport(report, evaluator, localBounds, localToWorld, isoLevel, nx, ny, nz, origin, step, field,
+                    fieldMin, fieldMax, insideCount, faceQuadsX, faceQuadsY, faceQuadsZ,
+                    result.Vertices, result.Triangles, result.Normals);
+            }
+
             return result;
         }
 
-        static void TryFaceX(List<Vector3> verts, List<int> tris, Dictionary<long, int> map,
+        static void PopulateDebugReport(
+            SdfMaxSurfaceMeshDebugReport report,
+            SdfMaxEvaluator evaluator,
+            Bounds localBounds,
+            Matrix4x4 localToWorld,
+            float isoLevel,
+            int nx,
+            int ny,
+            int nz,
+            Vector3 origin,
+            Vector3 step,
+            float[] field,
+            float fieldMin,
+            float fieldMax,
+            int insideCount,
+            int faceQuadsX,
+            int faceQuadsY,
+            int faceQuadsZ,
+            Vector3[] meshVerts,
+            int[] meshTris,
+            Vector3[] meshNormals)
+        {
+            report.LocalBounds = localBounds;
+            report.LocalToWorld = localToWorld;
+            report.IsoLevel = isoLevel;
+            report.GridResX = nx;
+            report.GridResY = ny;
+            report.GridResZ = nz;
+            report.InsideCount = insideCount;
+            report.OutsideCount = nx * ny * nz - insideCount;
+            report.FieldMin = fieldMin;
+            report.FieldMax = fieldMax;
+            report.FaceQuadsX = faceQuadsX;
+            report.FaceQuadsY = faceQuadsY;
+            report.FaceQuadsZ = faceQuadsZ;
+
+            report.ColumnProbes = BuildColumnProbes(field, nx, ny, nz, isoLevel);
+            report.GridSamples = BuildGridSampleSubset(field, nx, ny, nz, origin, step, localToWorld, isoLevel);
+            if (meshVerts == null)
+            {
+                report.MeshVertexCount = 0;
+                report.MeshTriangleCount = 0;
+                report.VertexSamples = System.Array.Empty<SdfMaxSurfaceMeshDebugReport.VertexSample>();
+                return;
+            }
+
+            report.MeshVertexCount = meshVerts.Length;
+            report.MeshTriangleCount = meshTris != null ? meshTris.Length : 0;
+            float rMin = float.PositiveInfinity;
+            float rMax = float.NegativeInfinity;
+            float rSum = 0f;
+            for (int i = 0; i < meshVerts.Length; i++)
+            {
+                Vector3 world = localToWorld.MultiplyPoint3x4(meshVerts[i]);
+                float r = Vector3.Distance(world, report.ReferenceCenter);
+                rMin = Mathf.Min(rMin, r);
+                rMax = Mathf.Max(rMax, r);
+                rSum += r;
+            }
+            report.VertexRadiusMin = rMin;
+            report.VertexRadiusMax = rMax;
+            report.VertexRadiusAvg = meshVerts.Length > 0 ? rSum / meshVerts.Length : 0f;
+            report.VertexSamples = BuildVertexSampleSubset(evaluator, localToWorld, meshVerts, meshNormals, report.ReferenceCenter);
+        }
+
+        static SdfMaxSurfaceMeshDebugReport.ColumnProbe[] BuildColumnProbes(float[] field, int nx, int ny, int nz, float isoLevel)
+        {
+            int[] probeX = { nx / 2, 0, nx - 1, nx / 4, (3 * nx) / 4 };
+            int[] probeZ = { nz / 2, 0, nz - 1, nz / 4, (3 * nz) / 4 };
+            var probes = new SdfMaxSurfaceMeshDebugReport.ColumnProbe[probeX.Length];
+            for (int i = 0; i < probeX.Length; i++)
+            {
+                int x = Mathf.Clamp(probeX[i], 0, nx - 1);
+                int z = Mathf.Clamp(probeZ[i], 0, nz - 1);
+                float yMin = field[Index(x, 0, z, nx, ny)];
+                float yMid = field[Index(x, ny / 2, z, nx, ny)];
+                float yMax = field[Index(x, ny - 1, z, nx, ny)];
+                probes[i] = new SdfMaxSurfaceMeshDebugReport.ColumnProbe
+                {
+                    GridX = x,
+                    GridZ = z,
+                    FieldMinY = yMin,
+                    FieldMidY = yMid,
+                    FieldMaxY = yMax,
+                    VariesWithY = Mathf.Abs(yMin - yMid) > 1e-4f || Mathf.Abs(yMid - yMax) > 1e-4f
+                };
+            }
+            return probes;
+        }
+
+        static SdfMaxSurfaceMeshDebugReport.GridSample[] BuildGridSampleSubset(
+            float[] field,
+            int nx,
+            int ny,
+            int nz,
+            Vector3 origin,
+            Vector3 step,
+            Matrix4x4 localToWorld,
+            float isoLevel)
+        {
+            var picks = new (int x, int y, int z)[]
+            {
+                (nx / 2, ny / 2, nz / 2),
+                (0, ny / 2, nz / 2),
+                (nx - 1, ny / 2, nz / 2),
+                (nx / 2, 0, nz / 2),
+                (nx / 2, ny - 1, nz / 2),
+                (nx / 2, ny / 2, 0),
+                (nx / 2, ny / 2, nz - 1),
+                (0, 0, 0),
+                (nx - 1, ny - 1, nz - 1)
+            };
+            var samples = new SdfMaxSurfaceMeshDebugReport.GridSample[picks.Length];
+            for (int i = 0; i < picks.Length; i++)
+            {
+                int x = picks[i].x;
+                int y = picks[i].y;
+                int z = picks[i].z;
+                Vector3 localP = origin + new Vector3(x * step.x, y * step.y, z * step.z);
+                float f = field[Index(x, y, z, nx, ny)];
+                samples[i] = new SdfMaxSurfaceMeshDebugReport.GridSample
+                {
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    LocalPos = localP,
+                    WorldPos = localToWorld.MultiplyPoint3x4(localP),
+                    Field = f,
+                    Inside = f < isoLevel
+                };
+            }
+            return samples;
+        }
+
+        static SdfMaxSurfaceMeshDebugReport.VertexSample[] BuildVertexSampleSubset(
+            SdfMaxEvaluator evaluator,
+            Matrix4x4 localToWorld,
+            Vector3[] meshVerts,
+            Vector3[] meshNormals,
+            Vector3 referenceCenter)
+        {
+            if (meshVerts == null || meshVerts.Length == 0)
+                return System.Array.Empty<SdfMaxSurfaceMeshDebugReport.VertexSample>();
+
+            int count = Mathf.Min(12, meshVerts.Length);
+            var samples = new SdfMaxSurfaceMeshDebugReport.VertexSample[count];
+            for (int i = 0; i < count; i++)
+            {
+                int idx = (i * meshVerts.Length) / count;
+                Vector3 local = meshVerts[idx];
+                Vector3 world = localToWorld.MultiplyPoint3x4(local);
+                samples[i] = new SdfMaxSurfaceMeshDebugReport.VertexSample
+                {
+                    Index = idx,
+                    LocalPos = local,
+                    WorldPos = world,
+                    FieldAtWorld = evaluator != null ? evaluator.Sample(world, 0f) : 0f,
+                    RadialDistance = Vector3.Distance(world, referenceCenter),
+                    Normal = meshNormals != null && idx < meshNormals.Length ? meshNormals[idx] : Vector3.zero
+                };
+            }
+            return samples;
+        }
+
+        static bool TryFaceX(List<Vector3> verts, List<int> tris, Dictionary<long, int> map,
             Vector3 origin, Vector3 step, int x, int y, int z,
             bool b000, bool b100, bool b010, bool b110, bool b001, bool b101, bool b011, bool b111)
         {
             if (b000 == b100)
-                return;
+                return false;
             int x1 = x + 1;
             Vector3 p0 = origin + new Vector3(x1 * step.x, y * step.y, z * step.z);
             Vector3 p1 = origin + new Vector3(x1 * step.x, (y + 1) * step.y, z * step.z);
             Vector3 p2 = origin + new Vector3(x1 * step.x, (y + 1) * step.y, (z + 1) * step.z);
             Vector3 p3 = origin + new Vector3(x1 * step.x, y * step.y, (z + 1) * step.z);
             AddQuad(verts, tris, map, p0, p1, p2, p3, !b100);
+            return true;
         }
 
-        static void TryFaceY(List<Vector3> verts, List<int> tris, Dictionary<long, int> map,
+        static bool TryFaceY(List<Vector3> verts, List<int> tris, Dictionary<long, int> map,
             Vector3 origin, Vector3 step, int x, int y, int z,
             bool b000, bool b100, bool b010, bool b110, bool b001, bool b101, bool b011, bool b111)
         {
             if (b000 == b010)
-                return;
+                return false;
             int y1 = y + 1;
             Vector3 p0 = origin + new Vector3(x * step.x, y1 * step.y, z * step.z);
             Vector3 p1 = origin + new Vector3((x + 1) * step.x, y1 * step.y, z * step.z);
             Vector3 p2 = origin + new Vector3((x + 1) * step.x, y1 * step.y, (z + 1) * step.z);
             Vector3 p3 = origin + new Vector3(x * step.x, y1 * step.y, (z + 1) * step.z);
             AddQuad(verts, tris, map, p0, p1, p2, p3, !b010);
+            return true;
         }
 
-        static void TryFaceZ(List<Vector3> verts, List<int> tris, Dictionary<long, int> map,
+        static bool TryFaceZ(List<Vector3> verts, List<int> tris, Dictionary<long, int> map,
             Vector3 origin, Vector3 step, int x, int y, int z,
             bool b000, bool b100, bool b010, bool b110, bool b001, bool b101, bool b011, bool b111)
         {
             if (b000 == b001)
-                return;
+                return false;
             int z1 = z + 1;
             Vector3 p0 = origin + new Vector3(x * step.x, y * step.y, z1 * step.z);
             Vector3 p1 = origin + new Vector3((x + 1) * step.x, y * step.y, z1 * step.z);
             Vector3 p2 = origin + new Vector3((x + 1) * step.x, (y + 1) * step.y, z1 * step.z);
             Vector3 p3 = origin + new Vector3(x * step.x, (y + 1) * step.y, z1 * step.z);
             AddQuad(verts, tris, map, p0, p1, p2, p3, !b001);
+            return true;
         }
 
         static void AddQuad(List<Vector3> verts, List<int> tris, Dictionary<long, int> map,

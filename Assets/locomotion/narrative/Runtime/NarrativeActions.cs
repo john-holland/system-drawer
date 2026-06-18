@@ -41,10 +41,11 @@ namespace Locomotion.Narrative
     {
         public NarrativeContingency contingency = new NarrativeContingency();
 
-        /// <summary>
-        /// Execute one step of this action. Return Running to continue across frames.
-        /// </summary>
+        public virtual bool SupportsUndo => false;
+
         public abstract BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state);
+
+        public virtual void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state) { }
     }
 
     [Serializable]
@@ -55,6 +56,10 @@ namespace Locomotion.Narrative
         public Vector3 localPosition;
         public Vector3 localEulerAngles;
         public bool worldSpace = false;
+
+        [NonSerialized] GameObject _spawnedInstance;
+
+        public override bool SupportsUndo => true;
 
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
@@ -72,6 +77,7 @@ namespace Locomotion.Narrative
             }
 
             var instance = UnityEngine.Object.Instantiate(prefab, parent);
+            _spawnedInstance = instance;
             if (instance != null)
             {
                 if (worldSpace)
@@ -88,6 +94,15 @@ namespace Locomotion.Narrative
 
             return BehaviorTreeStatus.Success;
         }
+
+        public override void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (_spawnedInstance != null)
+            {
+                UnityEngine.Object.Destroy(_spawnedInstance);
+                _spawnedInstance = null;
+            }
+        }
     }
 
     [Serializable]
@@ -98,6 +113,11 @@ namespace Locomotion.Narrative
         public string memberName;
         public NarrativeValue value;
 
+        [NonSerialized] NarrativeValue _previousValue;
+        [NonSerialized] bool _hasPrevious;
+
+        public override bool SupportsUndo => true;
+
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
             if (!contingency.Evaluate(ctx))
@@ -106,8 +126,24 @@ namespace Locomotion.Narrative
             if (!ctx.TryResolveGameObject(targetKey, out var go) || go == null)
                 return BehaviorTreeStatus.Failure;
 
+            if (!_hasPrevious)
+            {
+                _previousValue = NarrativeValue.FromObject(
+                    NarrativeReflection.TryGetMemberValue(go, componentTypeName, memberName));
+                _hasPrevious = true;
+            }
+
             bool ok = NarrativeReflection.TrySetMemberValue(go, componentTypeName, memberName, value);
             return ok ? BehaviorTreeStatus.Success : BehaviorTreeStatus.Failure;
+        }
+
+        public override void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (!_hasPrevious)
+                return;
+            if (ctx.TryResolveGameObject(targetKey, out var go) && go != null)
+                NarrativeReflection.TrySetMemberValue(go, componentTypeName, memberName, _previousValue);
+            _hasPrevious = false;
         }
     }
 
@@ -252,6 +288,8 @@ namespace Locomotion.Narrative
 
         [NonSerialized] private bool started;
 
+        public override bool SupportsUndo => true;
+
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
             if (!contingency.Evaluate(ctx))
@@ -309,8 +347,25 @@ namespace Locomotion.Narrative
 
             return BehaviorTreeStatus.Failure;
         }
-    }
 
+        public override void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            started = false;
+            if (!ctx.TryResolveGameObject(actorKey, out var go) || go == null)
+                return;
+            var behaviorTreeType = System.Type.GetType("BehaviorTree, Locomotion.Runtime")
+                ?? System.Type.GetType("BehaviorTree, Assembly-CSharp");
+            if (behaviorTreeType == null)
+                return;
+            var bt = go.GetComponent(behaviorTreeType);
+            if (bt == null)
+                return;
+            var rootProp = behaviorTreeType.GetProperty("rootNode");
+            var currentProp = behaviorTreeType.GetProperty("currentNode");
+            if (rootProp != null && currentProp != null)
+                currentProp.SetValue(bt, rootProp.GetValue(bt));
+        }
+    }
     /// <summary>
     /// Resolve two actor keys to <see cref="Brain"/> components and dispatch a <see cref="ThoughtData"/> message.
     /// </summary>

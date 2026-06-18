@@ -1,0 +1,19 @@
+{
+    "name": "SystemDrawer.Networking",
+    "rootNamespace": "",
+    "references": [
+        "SystemDrawer",
+        "BedogaGenerator",
+        "Locomotion.Narrative.Runtime",
+        "Weather.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

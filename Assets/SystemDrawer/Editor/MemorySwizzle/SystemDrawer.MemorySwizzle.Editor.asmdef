@@ -4,7 +4,10 @@
     "references": [
         "SystemDrawer.MemorySwizzle",
         "SystemDrawer",
+        "SystemDrawer.PerfTrace",
         "Locomotion.Runtime",
+        "Locomotion.Audio",
+        "Weather.Runtime",
         "Unity.MemoryProfiler",
         "Unity.MemoryProfiler.Editor",
         "Unity.EditorCoroutines.Editor"

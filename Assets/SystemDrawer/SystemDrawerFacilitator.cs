@@ -28,6 +28,10 @@ public class SystemDrawerFacilitator : MonoBehaviour
     [Tooltip("Assign a Bedoga Spatial4DServiceWizard reference (avoid typed field to prevent asmdef cycle).")]
     [SerializeField] private Object spatial4DServiceWizard;
 
+    [Header("Networking (assign wizards; loose Object avoids asmdef cycle)")]
+    [SerializeField] private Object networkServiceWizard;
+    [SerializeField] private Object menuRagdollServiceWizard;
+
     public SystemDrawerService Service => service;
 
     /// <summary>Resolve configured or scene <see cref="SystemDrawerService"/>.</summary>
@@ -72,6 +76,22 @@ public class SystemDrawerFacilitator : MonoBehaviour
                 }
             }
         }
+        if (networkServiceWizard == null)
+            networkServiceWizard = FindChildWizardByTypeName("NetworkServiceWizard");
+        if (menuRagdollServiceWizard == null)
+            menuRagdollServiceWizard = FindChildWizardByTypeName("MenuRagdollServiceWizard");
+    }
+
+    Object FindChildWizardByTypeName(string typeName)
+    {
+        var all = GetComponentsInChildren<MonoBehaviour>(true);
+        for (var i = 0; i < all.Length; i++)
+        {
+            var mb = all[i];
+            if (mb != null && mb.GetType().Name == typeName)
+                return mb;
+        }
+        return null;
     }
 
     /// <summary>Call each wizard's <see cref="TryCompleteFromService"/> plus reflection for Spatial loose ref.</summary>
@@ -89,6 +109,10 @@ public class SystemDrawerFacilitator : MonoBehaviour
         if (weatherWizard != null && weatherWizard.TryCompleteFromService())
             n++;
         if (planetWizard != null && planetWizard.TryCompleteFromService())
+            n++;
+        if (networkServiceWizard != null && TryLooseTryComplete(networkServiceWizard))
+            n++;
+        if (menuRagdollServiceWizard != null && TryLooseTryComplete(menuRagdollServiceWizard))
             n++;
         if (TrySpatialLooseTryComplete())
             n++;
@@ -160,6 +184,8 @@ public class SystemDrawerFacilitator : MonoBehaviour
         }
 
         count += TryRegisterSpatialLooseInternal(svc, spatial4DServiceWizard);
+        count += TryLooseRegisterAll(svc, networkServiceWizard);
+        count += TryLooseRegisterMenuRagdoll(svc, menuRagdollServiceWizard);
 
         HierarchicalPathingSolver pathing = FindAnyObjectByType<HierarchicalPathingSolver>();
         if (pathing != null)
@@ -169,6 +195,43 @@ public class SystemDrawerFacilitator : MonoBehaviour
         }
 
         return count;
+    }
+
+    private bool TryLooseTryComplete(Object loose)
+    {
+        if (loose is not MonoBehaviour mb)
+            return false;
+        var m = mb.GetType().GetMethod("TryCompleteFromService", BindingFlags.Public | BindingFlags.Instance);
+        if (m == null)
+            return false;
+        var r = m.Invoke(mb, null);
+        return r is bool b && b;
+    }
+
+    static int TryLooseRegisterAll(SystemDrawerService svc, Object loose)
+    {
+        if (loose is not MonoBehaviour mb)
+            return 0;
+        var m = mb.GetType().GetMethod("RegisterAll", BindingFlags.Public | BindingFlags.Instance);
+        if (m == null)
+            return 0;
+        m.Invoke(mb, null);
+        return 1;
+    }
+
+    static int TryLooseRegisterMenuRagdoll(SystemDrawerService svc, Object loose)
+    {
+        if (loose is not MonoBehaviour mb)
+            return 0;
+        const BindingFlags bf = BindingFlags.Public | BindingFlags.Instance;
+        var menuField = mb.GetType().GetField("menuRagdoll", bf);
+        if (menuField == null)
+            return 0;
+        var menu = menuField.GetValue(mb) as Object;
+        if (menu == null)
+            return 0;
+        svc.Register(SystemDrawerServiceKeys.MenuRagdoll, menu);
+        return 1;
     }
 
     private bool TrySpatialLooseTryComplete()

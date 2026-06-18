@@ -12,7 +12,7 @@ namespace Planetary.Tests
             var go = new GameObject("planet");
             var body = go.AddComponent<PlanetBody>();
             var cloudGo = new GameObject("cloud");
-            var cloud = cloudGo.AddComponent<Weather.Cloud>();
+            var cloud = cloudGo.AddComponent<global::Weather.Cloud>();
             cloud.altitude = new Vector2(800f, 2500f);
             var est = new AtmosphereCompositionEstimator();
             var profile = est.Estimate(body, null);

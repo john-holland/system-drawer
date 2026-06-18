@@ -52,6 +52,7 @@ public class BehaviorTree : MonoBehaviour
     // References
     private PhysicsCardSolver cardSolver;
     private NervousSystem nervousSystem;
+    private BehaviorTreeNode _lastCapturedNode;
 
     private void Awake()
     {
@@ -81,7 +82,14 @@ public class BehaviorTree : MonoBehaviour
             currentNode = rootNode;
         }
 
-        BehaviorTreeNode execNode = rootNode;
+        BehaviorTreeNode execNode = currentNode ?? rootNode;
+        if (execNode != null && execNode != _lastCapturedNode)
+        {
+            execNode.CaptureBeforeExec(this);
+            BehaviorTreePreExecCapture.TryCapture(execNode);
+            execNode.OnEnter(this);
+            _lastCapturedNode = execNode;
+        }
         currentNode = execNode;
 
         if (!execNode.Predicate(this))

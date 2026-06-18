@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using Weather.Executor;
 
 namespace Weather
 {
@@ -36,6 +36,12 @@ namespace Weather
         [Tooltip("Update rate (0 = every frame)")]
         public float updateInterval = 0f;
 
+        [Header("Egg LOD")]
+        [Tooltip("Delegate advection to player egg zones via WeatherExecutorService.")]
+        public bool useEggLodManifolds = true;
+
+        public WeatherExecutorService weatherExecutor;
+
         [Header("Debug")]
         [Tooltip("Enable debug logging")]
         public bool debugLogging = false;
@@ -68,6 +74,11 @@ namespace Weather
             {
                 FindSubsystems();
             }
+
+            if (weatherExecutor == null)
+                weatherExecutor = GetComponent<WeatherExecutorService>() ?? FindAnyObjectByType<WeatherExecutorService>();
+            if (weatherExecutor != null && weatherExecutor.weatherSystem == null)
+                weatherExecutor.weatherSystem = this;
         }
 
         private void Start()
@@ -84,11 +95,18 @@ namespace Weather
                     return;
             }
 
-            // Collect events (in case new ones were added)
-            CollectWeatherEvents();
+            // Refresh registry-backed events only when empty (scene-placed events self-register).
+            if (weatherEvents.Count == 0)
+                CollectWeatherEvents();
 
-            // Execute service update
-            ServiceUpdate(Time.deltaTime);
+            if (useEggLodManifolds && weatherExecutor != null)
+            {
+                weatherExecutor.TickClient(Time.deltaTime);
+            }
+            else
+            {
+                ServiceUpdate(Time.deltaTime);
+            }
 
             lastUpdateTime = Time.time;
         }
@@ -116,6 +134,9 @@ namespace Weather
             if (weatherPhysicsManifold == null)
                 SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherPhysicsManifold);
 
+            if (weatherExecutor == null)
+                weatherExecutor = GetComponent<WeatherExecutorService>() ?? FindAnyObjectByType<WeatherExecutorService>();
+
             if (debugLogging)
             {
                 Debug.Log($"[WeatherSystem] Found subsystems: " +
@@ -133,13 +154,25 @@ namespace Weather
         /// </summary>
         public void CollectWeatherEvents()
         {
-            weatherEvents.Clear();
-            weatherEvents.AddRange(FindObjectsByType<WeatherEvent>(FindObjectsSortMode.None));
-
-            if (debugLogging)
+            using (PerfTrace.Scope("CollectWeatherEvents"))
             {
-                Debug.Log($"[WeatherSystem] Collected {weatherEvents.Count} weather events");
+                weatherEvents.Clear();
+                WeatherEventRegistry.CopyTo(weatherEvents);
+                if (weatherEvents.Count == 0)
+                    weatherEvents.AddRange(FindObjectsByType<WeatherEvent>(FindObjectsSortMode.None));
+
+                if (debugLogging)
+                {
+                    Debug.Log($"[WeatherSystem] Collected {weatherEvents.Count} weather events");
+                }
             }
+        }
+
+        public void RegisterWeatherEvent(WeatherEvent weatherEvent)
+        {
+            if (weatherEvent == null || weatherEvents.Contains(weatherEvent))
+                return;
+            weatherEvents.Add(weatherEvent);
         }
 
         /// <summary>
@@ -147,48 +180,35 @@ namespace Weather
         /// </summary>
         public void ServiceUpdate(float deltaTime)
         {
-            // Process weather events first
-            ProcessWeatherEvents();
+            ServiceUpdateSubsystems(deltaTime, skipManifold: false);
+        }
 
-            // Service update order (as specified in weather.md):
-            // 1. Meteorology (sets boundary conditions, stages weather events, controls cloud movements)
-            if (meteorology != null)
+        public void ServiceUpdateSubsystems(float deltaTime, bool skipManifold)
+        {
+            using (PerfTrace.Scope("WeatherSystem.ServiceUpdate"))
             {
-                meteorology.ServiceUpdate(deltaTime);
-            }
+                ProcessWeatherEvents();
 
-            // 2. Wind (generates wind field vectors, affects clouds, precipitation, physics objects)
-            if (wind != null)
-            {
-                wind.ServiceUpdate(deltaTime);
-            }
+                if (meteorology != null)
+                    meteorology.ServiceUpdate(deltaTime);
 
-            // 3. Precipitation (rain/snow rendering, phase changes, accumulation tracking)
-            if (precipitation != null)
-            {
-                precipitation.ServiceUpdate(deltaTime);
-            }
+                if (wind != null)
+                    wind.ServiceUpdate(deltaTime);
 
-            // 4. Water (water body management, height maps, flow calculations)
-            if (water != null)
-            {
-                water.ServiceUpdate(deltaTime);
-            }
+                if (precipitation != null)
+                    precipitation.ServiceUpdate(deltaTime);
 
-            // 5. Cloud (visual representation, pressure system integration, meteorology linking)
-            if (cloud != null)
-            {
-                cloud.ServiceUpdate(deltaTime);
-            }
+                if (water != null)
+                    water.ServiceUpdate(deltaTime);
 
-            // 6. WeatherPhysicsManifold (final state aggregation for shaders, spatial tree updates)
-            if (weatherPhysicsManifold != null)
-            {
-                weatherPhysicsManifold.ServiceUpdate(deltaTime);
-            }
+                if (cloud != null)
+                    cloud.ServiceUpdate(deltaTime);
 
-            // Update current weather state
-            UpdateWeatherState();
+                if (!skipManifold && weatherPhysicsManifold != null)
+                    weatherPhysicsManifold.ServiceUpdate(deltaTime);
+
+                UpdateWeatherState();
+            }
         }
 
         /// <summary>
@@ -311,6 +331,21 @@ namespace Weather
         public List<WeatherEvent> GetWeatherEvents()
         {
             return new List<WeatherEvent>(weatherEvents);
+        }
+
+        public bool TryQueryWeatherAt(Vector3 world, out ManifoldCellData data)
+        {
+            if (weatherExecutor != null && weatherExecutor.TryQueryWeatherAt(world, out data))
+                return true;
+
+            if (weatherPhysicsManifold != null)
+            {
+                data = weatherPhysicsManifold.GetDataAtPosition(world);
+                return true;
+            }
+
+            data = default;
+            return false;
         }
     }
 }

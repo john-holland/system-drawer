@@ -202,6 +202,14 @@ namespace Locomotion.Audio
                 registeredEars.Remove(ear);
         }
 
+        /// <summary>Clears transmission and source-list caches (diagnostics / manual GC pass).</summary>
+        public void ClearTransmissionCache()
+        {
+            cache.Clear();
+            cachedSources.Clear();
+            lastSourceScanTime = -999f;
+        }
+
         public struct AudioPathResult
         {
             public float transmission;      // 0..1 (higher = clearer)
