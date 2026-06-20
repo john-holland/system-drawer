@@ -27,6 +27,9 @@ public interface ISystemDrawerLayerControl : IAnimationSetManagerDeferral
     float GetLayerWeight(int layerIndex);
     void SetLayerPlayDirection(int layerIndex, int direction);
     void SetGlobalPlayDirection(int direction);
+    void SetLayerPlaybackMode(int layerIndex, AnimationLayerPlaybackMode mode);
+    AnimationLayerPlaybackMode GetLayerPlaybackMode(int layerIndex);
+    void SetPlaybackModeForBehaviorTree(AnimationBehaviorTree tree, AnimationLayerPlaybackMode mode);
 }
 
 /// <summary>Find <see cref="ISystemDrawerLayerControl"/> without referencing the SystemDrawer assembly.</summary>

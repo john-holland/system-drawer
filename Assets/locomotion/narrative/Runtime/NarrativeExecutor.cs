@@ -292,13 +292,16 @@ namespace Locomotion.Narrative
             if (!node.action.SupportsUndo && !node.captureStateBeforeExec)
                 return;
             float narrativeTime = clock != null ? NarrativeCalendarMath.DateTimeToSeconds(clock.Now) : 0f;
-            runtimeState.executionLedger.Add(new NarrativeExecutionLedgerEntry
+            var ledgerEntry = new NarrativeExecutionLedgerEntry
             {
                 time = narrativeTime,
                 eventId = activeEvent.id,
                 nodeId = node.id,
                 actionTypeName = node.action.GetType().Name
-            });
+            };
+            if (node.action is SpawnPrefabAction spa && spa.LastSpawnedInstanceId != 0)
+                ledgerEntry.undoTargetInstanceId = spa.LastSpawnedInstanceId;
+            runtimeState.executionLedger.Add(ledgerEntry);
         }
 
         public bool TryUndoLedgerEntry(NarrativeExecutionLedgerEntry entry, NarrativeExecutionContext undoCtx)
@@ -309,6 +312,8 @@ namespace Locomotion.Narrative
             var node = evt?.tree?.root != null ? FindNodeById(evt.tree.root, entry.nodeId) : null;
             if (node is NarrativeActionNode actionNode && actionNode.action != null && actionNode.action.SupportsUndo)
             {
+                if (actionNode.action is SpawnPrefabAction spa && entry.undoTargetInstanceId != 0)
+                    spa.RestoreUndoInstanceId(entry.undoTargetInstanceId);
                 actionNode.action.Undo(undoCtx, runtimeState);
                 return true;
             }

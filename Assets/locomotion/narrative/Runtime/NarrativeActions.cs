@@ -58,8 +58,17 @@ namespace Locomotion.Narrative
         public bool worldSpace = false;
 
         [NonSerialized] GameObject _spawnedInstance;
+        [NonSerialized] int _spawnedInstanceId;
 
         public override bool SupportsUndo => true;
+
+        internal int LastSpawnedInstanceId => _spawnedInstanceId;
+
+        internal void RestoreUndoInstanceId(int instanceId)
+        {
+            if (_spawnedInstanceId == 0 && instanceId != 0)
+                _spawnedInstanceId = instanceId;
+        }
 
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
@@ -69,26 +78,20 @@ namespace Locomotion.Narrative
             if (prefab == null)
                 return BehaviorTreeStatus.Failure;
 
-            Transform parent = null;
-            if (!string.IsNullOrWhiteSpace(parentKey) && ctx.TryResolveObject(parentKey, out var obj))
-            {
-                if (obj is GameObject go) parent = go.transform;
-                else if (obj is Component c) parent = c.transform;
-            }
-
+            var parent = ResolveParent(ctx);
             var instance = UnityEngine.Object.Instantiate(prefab, parent);
-            _spawnedInstance = instance;
-            if (instance != null)
+            TrackSpawnedInstance(instance, parent);
+            if (_spawnedInstance != null)
             {
                 if (worldSpace)
                 {
-                    instance.transform.position = localPosition;
-                    instance.transform.rotation = Quaternion.Euler(localEulerAngles);
+                    _spawnedInstance.transform.position = localPosition;
+                    _spawnedInstance.transform.rotation = Quaternion.Euler(localEulerAngles);
                 }
                 else
                 {
-                    instance.transform.localPosition = localPosition;
-                    instance.transform.localRotation = Quaternion.Euler(localEulerAngles);
+                    _spawnedInstance.transform.localPosition = localPosition;
+                    _spawnedInstance.transform.localRotation = Quaternion.Euler(localEulerAngles);
                 }
             }
 
@@ -97,11 +100,90 @@ namespace Locomotion.Narrative
 
         public override void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
+            var instance = ResolveTrackedInstance(ctx);
+            if (instance == null)
+                return;
+            // Rewind/undo must remove the instance synchronously (Destroy is end-of-frame).
+            UnityEngine.Object.DestroyImmediate(instance);
+            _spawnedInstance = null;
+            _spawnedInstanceId = 0;
+        }
+
+        static Transform ResolveParent(NarrativeExecutionContext ctx, string key)
+        {
+            if (string.IsNullOrWhiteSpace(key) || !ctx.TryResolveObject(key, out var obj))
+                return null;
+            if (obj is GameObject go)
+                return go.transform;
+            if (obj is Component c)
+                return c.transform;
+            return null;
+        }
+
+        Transform ResolveParent(NarrativeExecutionContext ctx) => ResolveParent(ctx, parentKey);
+
+        void TrackSpawnedInstance(GameObject instance, Transform parent)
+        {
+            if (instance == null || instance == prefab)
+                instance = FindSpawnedClone(parent);
+            else if (!IsSpawnClone(instance))
+                instance = FindSpawnedClone(parent) ?? instance;
+            _spawnedInstance = instance;
+            _spawnedInstanceId = instance != null ? instance.GetInstanceID() : 0;
+        }
+
+        GameObject ResolveTrackedInstance(NarrativeExecutionContext ctx)
+        {
             if (_spawnedInstance != null)
+                return _spawnedInstance;
+            if (_spawnedInstanceId != 0)
             {
-                UnityEngine.Object.Destroy(_spawnedInstance);
-                _spawnedInstance = null;
+                var byId = FindByInstanceId(_spawnedInstanceId);
+                if (byId != null)
+                    return byId;
             }
+            return FindSpawnedClone(ResolveParent(ctx));
+        }
+
+        bool IsSpawnClone(GameObject candidate) =>
+            candidate != null && prefab != null && candidate.name == prefab.name + "(Clone)";
+
+        GameObject FindSpawnedClone(Transform parent)
+        {
+            if (prefab == null)
+                return null;
+
+            string cloneName = prefab.name + "(Clone)";
+            if (parent != null)
+            {
+                for (int i = 0; i < parent.childCount; i++)
+                {
+                    var child = parent.GetChild(i).gameObject;
+                    if (child.name == cloneName)
+                        return child;
+                }
+                return null;
+            }
+
+            foreach (var go in UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+            {
+                if (go != null && go != prefab && go.name == cloneName)
+                    return go;
+            }
+
+            return null;
+        }
+
+        static GameObject FindByInstanceId(int instanceId)
+        {
+            if (instanceId == 0)
+                return null;
+            foreach (var go in UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+            {
+                if (go != null && go.GetInstanceID() == instanceId)
+                    return go;
+            }
+            return null;
         }
     }
 
@@ -367,20 +449,20 @@ namespace Locomotion.Narrative
         }
     }
     /// <summary>
-    /// Resolve two actor keys to <see cref="Brain"/> components and dispatch a <see cref="ThoughtData"/> message.
+    /// Resolve two actor keys to brain components and dispatch a thought message via Locomotion.Runtime.
     /// </summary>
     [Serializable]
     public class SendThoughtAction : NarrativeActionSpec
     {
         public string senderKey;
         public string receiverKey;
-        public ThoughtType thoughtType = ThoughtType.Decision;
+        public NarrativeThoughtType thoughtType = NarrativeThoughtType.Decision;
 
         [Tooltip("Used when thoughtType is Decision.")]
-        public DecisionThoughtPayload decisionPayload = new DecisionThoughtPayload();
+        public NarrativeDecisionThoughtPayload decisionPayload = new NarrativeDecisionThoughtPayload();
 
         [Tooltip("Used when thoughtType is Query.")]
-        public QueryThoughtPayload queryPayload = new QueryThoughtPayload();
+        public NarrativeQueryThoughtPayload queryPayload = new NarrativeQueryThoughtPayload();
 
         public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
         {
@@ -394,33 +476,39 @@ namespace Locomotion.Narrative
             if (!ctx.TryResolveGameObject(receiverKey, out var rgo) || rgo == null)
                 return BehaviorTreeStatus.Failure;
 
-            var senderBrain = sgo.GetComponent<Brain>();
-            var recvBrain = rgo.GetComponent<Brain>();
-            if (senderBrain == null || recvBrain == null)
-                return BehaviorTreeStatus.Failure;
-
             object payload = BuildPayload();
-            var td = new ThoughtData(senderBrain, recvBrain, thoughtType, payload);
-            senderBrain.SendThought(recvBrain, td);
+            if (!TryDispatchThought(sgo, rgo, (int)thoughtType, payload))
+                return BehaviorTreeStatus.Failure;
             return BehaviorTreeStatus.Success;
+        }
+
+        static bool TryDispatchThought(GameObject sender, GameObject receiver, int thoughtTypeOrdinal, object payload)
+        {
+            var dispatchType = System.Type.GetType("LocomotionThoughtDispatch, Locomotion.Runtime");
+            var method = dispatchType?.GetMethod(
+                "TrySendThought",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (method == null)
+                return false;
+            return (bool)method.Invoke(null, new object[] { sender, receiver, thoughtTypeOrdinal, payload });
         }
 
         private object BuildPayload()
         {
             switch (thoughtType)
             {
-                case ThoughtType.Decision:
-                    return decisionPayload ?? new DecisionThoughtPayload();
-                case ThoughtType.Query:
+                case NarrativeThoughtType.Decision:
+                    return decisionPayload ?? new NarrativeDecisionThoughtPayload();
+                case NarrativeThoughtType.Query:
                     if (queryPayload == null || string.IsNullOrEmpty(queryPayload.queryId))
-                        return new QueryThoughtPayload { queryId = Guid.NewGuid().ToString("N"), channels = QueryChannel.All };
+                        return new NarrativeQueryThoughtPayload { queryId = Guid.NewGuid().ToString("N"), channels = NarrativeQueryChannel.All };
                     return queryPayload;
-                case ThoughtType.Alert:
-                    return new AlertThoughtPayload();
-                case ThoughtType.BehaviorTree:
-                    return new BehaviorTreeThoughtPayload();
-                case ThoughtType.RequestPrune:
-                    return new RequestPruneThoughtPayload();
+                case NarrativeThoughtType.Alert:
+                    return new NarrativeAlertThoughtPayload();
+                case NarrativeThoughtType.BehaviorTree:
+                    return new NarrativeBehaviorTreeThoughtPayload();
+                case NarrativeThoughtType.RequestPrune:
+                    return new NarrativeRequestPruneThoughtPayload();
                 default:
                     return null;
             }

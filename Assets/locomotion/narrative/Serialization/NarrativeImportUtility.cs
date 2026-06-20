@@ -271,21 +271,23 @@ namespace Locomotion.Narrative.Serialization
                     var tagParts = string.IsNullOrWhiteSpace(dto.brainSemanticTagsCsv)
                         ? Array.Empty<string>()
                         : dto.brainSemanticTagsCsv.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    var decisionImp = new DecisionThoughtPayload
+                    var decisionImp = new NarrativeDecisionThoughtPayload
                     {
                         proposedGoalName = dto.brainDecisionGoalName,
                         conviction = dto.brainDecisionConviction,
                         semanticTags = tagParts
                     };
-                    QueryThoughtPayload qpImp = new QueryThoughtPayload();
+                    NarrativeQueryThoughtPayload qpImp = new NarrativeQueryThoughtPayload();
                     if (!string.IsNullOrEmpty(dto.brainQueryId))
                     {
                         qpImp.queryId = dto.brainQueryId;
-                        qpImp.channels = dto.brainQueryChannels >= 0 ? (QueryChannel)dto.brainQueryChannels : QueryChannel.All;
+                        qpImp.channels = dto.brainQueryChannels >= 0
+                            ? (NarrativeQueryChannel)dto.brainQueryChannels
+                            : NarrativeQueryChannel.All;
                     }
 
-                    if (!Enum.TryParse(dto.brainThoughtType, out ThoughtType ttImp))
-                        ttImp = ThoughtType.Decision;
+                    if (!Enum.TryParse(dto.brainThoughtType, out NarrativeThoughtType ttImp))
+                        ttImp = NarrativeThoughtType.Decision;
 
                     a = new SendThoughtAction
                     {

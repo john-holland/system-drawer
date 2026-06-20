@@ -42,8 +42,8 @@ public class SpatialGenerator : SpatialGeneratorBase
     public List<SGBehaviorTreeEmptySpace> emptySpaceMarkers = new List<SGBehaviorTreeEmptySpace>();
 
     [Header("Layout placement")]
-    [Tooltip("Optional. Parsed with-expr frames from prompt interpreter.")]
-    public LayoutPlacementFrame layoutPlacementRoot;
+    [Tooltip("Runtime-only. Parsed with-expr root from prompt interpreter (not saved on disk — avoids serialization depth errors).")]
+    [NonSerialized] public LayoutPlacementFrame layoutPlacementRoot;
     [Tooltip("When true, path/scene replacement waits for causality/BT gate.")]
     public bool requirePathReplacementGate = false;
 

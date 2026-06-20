@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
+using System.Reflection;
 using UnityEditor;
 
 /// <summary>
@@ -89,11 +90,52 @@ public static class DeepLinkHandler
             {
                 ContinuumEpisodesWindow.ShowWindow();
             }
+            else if (window.IndexOf("Lemma", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                var entryId = ParseJsonString(json, "entryId");
+                OpenLemmaPropertiesWindow(entryId);
+            }
         }
         catch (Exception ex)
         {
             UnityEngine.Debug.LogWarning($"[DeepLinkHandler] Parse error: {ex.Message}");
         }
+    }
+
+    static void OpenLemmaPropertiesWindow(string entryId)
+    {
+        var windowType = Type.GetType("VocabularyLemmaPropertyEditorWindow, Continuum.Editor");
+        if (windowType == null)
+        {
+            UnityEngine.Debug.LogWarning("[DeepLinkHandler] Continuum.Editor assembly not found; cannot open Lemma Properties.");
+            return;
+        }
+
+        var open = windowType.GetMethod("OpenWithEntryId", BindingFlags.Public | BindingFlags.Static);
+        if (open == null)
+        {
+            UnityEngine.Debug.LogWarning("[DeepLinkHandler] OpenWithEntryId not found on VocabularyLemmaPropertyEditorWindow.");
+            return;
+        }
+
+        open.Invoke(null, new object[] { entryId ?? "" });
+    }
+
+    static string ParseJsonString(string json, string key)
+    {
+        var token = "\"" + key + "\"";
+        if (!json.Contains(token))
+            return "";
+        var start = json.IndexOf(token, StringComparison.Ordinal);
+        var valStart = json.IndexOf(':', start) + 1;
+        while (valStart < json.Length && (json[valStart] == ' ' || json[valStart] == '"'))
+            valStart++;
+        if (valStart > 0 && valStart < json.Length && json[valStart - 1] == '"')
+            valStart--;
+        var valEnd = json.IndexOf('"', valStart + 1);
+        if (valEnd > valStart)
+            return json.Substring(valStart + 1, valEnd - valStart - 1).Trim();
+        return "";
     }
 }
 #endif

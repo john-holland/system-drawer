@@ -31,17 +31,40 @@ public class TravelAgent : MonoBehaviour
     public BaseAmbulatingActor ambulatingActor;
 
     [Header("Composition (no animation duplication)")]
+    [Tooltip("Ragdoll animation sets composed into path segments (referenced, not duplicated on TravelAgent).")]
     public RagdollAnimationSetManager ragdollAnimationSetManager;
+
+    [Tooltip("When true, travel mode transitions prefer Non-IK kinematic playback when policy resolves.")]
+    public bool preferNonIkPlayback;
+
+    [Tooltip("Optional vehicle actor for vehicle-specific modality and path hints.")]
     public VehicleActor hintVehicle;
 
     [Header("Preview / solver inputs")]
+    [Tooltip("Hierarchical pathing solver used when rebuilding the cached multi-modal preview plan.")]
     public HierarchicalPathingSolver pathingSolverForPreview;
+
+    [Tooltip("World-space start position for preview plan rebuild and solver query origin.")]
     public Vector3 previewStartWorld;
+
+    [Tooltip("World-space goal the traversibility planner aims for during preview.")]
     public Vector3 previewGoalWorld;
-    [Range(0f, 1f)] public float requireAsset01 = 0.5f;
-    [Range(0f, 1f)] public float requireType01 = 0.5f;
+
+    [Range(0f, 1f)]
+    [Tooltip("Planner bias toward tool/asset segments (0 = prefer acrobatics, 1 = prefer tools).")]
+    public float requireAsset01 = 0.5f;
+
+    [Range(0f, 1f)]
+    [Tooltip("Secondary modality mix bias used by timeline and traversibility scoring.")]
+    public float requireType01 = 0.5f;
+
+    [Tooltip("GoodSection cards offered as tool modality candidates for preview planning.")]
     public List<GoodSection> toolSectionsForPreview = new List<GoodSection>();
+
+    [Tooltip("GoodSection cards offered as acrobatics modality candidates for preview planning.")]
     public List<GoodSection> acrobaticsSectionsForPreview = new List<GoodSection>();
+
+    [Tooltip("How authoring-row positions are interpreted (world, narrative volume, or Continuum asset ref).")]
     public TravelCoordinateMode coordinateMode = TravelCoordinateMode.World;
 
     [Header("Spatial authoring (Bedoga / Continuum-friendly)")]
@@ -57,16 +80,23 @@ public class TravelAgent : MonoBehaviour
     [Header("Road network (optional)")]
     [Tooltip("Assign a GameObject with Roads.RoadNetwork (resolved at runtime to avoid asmdef cycle).")]
     public MonoBehaviour roadNetwork;
+
+    [Tooltip("Optional binding that maps road network segments to travel authoring and wear snapshots.")]
     public RoadTravelBinding roadTravelBinding;
 
     [Header("Preview navigation (editor)")]
+    [Tooltip("Scene-view zoom target when using Zoom to fit or stepping segments.")]
     public TravelPreviewFitMode previewFitMode = TravelPreviewFitMode.EntirePath;
+
+    [Tooltip("Active plan segment index for preview stepping and segment-only framing.")]
     public int previewSegmentIndex;
 
     [Header("Travel script (editor authoring)")]
+    [Tooltip("Ordered travel script: coordinates, planner hints, narrative nodes, and spatial nodes.")]
     public List<TravelAuthoringRow> authoringRows = new List<TravelAuthoringRow>();
 
     [Header("Gizmos")]
+    [Tooltip("Draw cached travel path, segments, and kinematic overlays in the Scene view.")]
     public bool drawTravelGizmos = true;
     [Tooltip("When multibody runs, also draw the pre-adjustment plan (magenta in scene handles).")]
     public bool drawMultibodyBasePlan = true;
@@ -82,15 +112,24 @@ public class TravelAgent : MonoBehaviour
     [Tooltip("Read-only: totalPathLengthMeters * reverseLegLimit01.")]
     [SerializeField] float reverseBudgetMeters;
 
+    [Tooltip("Draw speed-colored tick marks along the path in the Scene view.")]
     public bool showVelocityTrack = true;
+
+    [Tooltip("Draw IK solve sample points on path gizmos.")]
     public bool showIkSamples;
+
+    [Tooltip("Highlight how much of the reverse budget the path consumes.")]
     public bool showReverseBudget = true;
-    [Range(0.5f, 10f)] public float velocityTrackSpacingMeters = 2f;
+
+    [Range(0.5f, 10f)]
+    [Tooltip("Spacing between velocity track tick marks along the path (meters).")]
+    public float velocityTrackSpacingMeters = 2f;
 
     public float TotalPathLengthMeters => totalPathLengthMeters;
     public float ReverseBudgetMeters => reverseBudgetMeters;
 
     [Header("Multibody travel")]
+    [Tooltip("Convoy spacing, peer avoidance, and formation offsets applied after the base planner path.")]
     public TravelAgentMultibodySettings multibody = new TravelAgentMultibodySettings();
 
     [Header("Multibody formation (optional)")]

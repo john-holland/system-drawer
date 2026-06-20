@@ -3,7 +3,6 @@
   "rootNamespace": "Locomotion.Narrative",
   "references": [
     "Locomotion.Audio",
-    "Locomotion.Runtime",
     "HierarchicalPathFinding",
     "Planetary"
   ],

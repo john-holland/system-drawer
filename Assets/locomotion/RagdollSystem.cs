@@ -29,6 +29,9 @@ public class RagdollSystem : MonoBehaviour
     [Tooltip("How to blend procedural and keyframe animations")]
     public AnimationBlendMode animationBlendMode = AnimationBlendMode.FullRagdoll;
 
+    [Tooltip("When true, muscle/card actuation is suppressed (Non-IK kinematic playback).")]
+    public bool suppressMotorActuation;
+
     [Header("Animation Tree")]
     [Tooltip("Animation tree (multiple roots). Ragdoll stores animations as children of animationContainer or by reference.")]
     public AnimationBehaviorTree animationTree;
@@ -123,6 +126,8 @@ public class RagdollSystem : MonoBehaviour
     /// </summary>
     public void ActivateMuscleGroup(string groupName, float activation)
     {
+        if (suppressMotorActuation)
+            return;
         if (muscleGroupDict.TryGetValue(groupName, out MuscleGroup group))
         {
             group.ActivateGroup(Mathf.Clamp01(activation));

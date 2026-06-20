@@ -71,8 +71,8 @@ public class BrainThoughtPipelineTests
         {
             senderKey = "s",
             receiverKey = "r",
-            thoughtType = ThoughtType.Decision,
-            decisionPayload = new DecisionThoughtPayload { proposedGoalName = "Sit", conviction = 1f }
+            thoughtType = NarrativeThoughtType.Decision,
+            decisionPayload = new NarrativeDecisionThoughtPayload { proposedGoalName = "Sit", conviction = 1f }
         };
 
         var state = new NarrativeRuntimeState();

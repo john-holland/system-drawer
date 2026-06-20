@@ -23,6 +23,21 @@ Tree inclusion for clause-level audio: an AST node belongs to a clause if the no
 - `GET /api/episode-script/<id>/screenplay?language=...` – screenplay output (blocks with dialogue/SFX and audio refs)
 - `POST /api/episodes/<episode_id>/extract-screenplay-work-orders` – body `{ episodeScriptId? }` – extract work orders from script_speech_audio and script_sound_effects (dialogue and SFX tasks)
 
+### Lemma library
+
+Web UI: `/lemma-library` (browse, create, bulk import, localization search).
+
+- `GET /api/thesaurus/entries` – merged built-in + custom lemma search (`q`, `language`, `pos`, `source`, `propertyKey`, `entryId`)
+- `POST /api/thesaurus/entries` – create single lemma
+- `POST /api/thesaurus/entries/import` – bulk CSV/TSV upload
+- `GET /api/thesaurus/clauses` – global clause search
+- `GET /api/thesaurus/localization-view` – localization-focused combined view
+- `POST /api/thesaurus/parse-properties` – parse `{P:...}` default property strings
+
+Built-in vocabulary JSON: `continuum_api/data/builtin_vocabulary.json` (export via Unity **Continuum → Export Built-in Vocabulary JSON**).
+
+Apply `continuum_lemma_library_schema.sql` for `prefab-id` property spec and indexes.
+
 ## Run
 
 Set continuum.db path (or place `continuum.db` in repo root):

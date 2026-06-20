@@ -2,7 +2,8 @@
     "name": "Continuum.Editor",
     "rootNamespace": "",
     "references": [
-        "Continuum.Runtime"
+        "Continuum.Runtime",
+        "Locomotion.Narrative.Runtime"
     ],
     "includePlatforms": [
         "Editor"

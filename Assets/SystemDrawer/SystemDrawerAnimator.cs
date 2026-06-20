@@ -47,6 +47,7 @@ public class SystemDrawerAnimator : MonoBehaviour,
     public int globalPlayDirection = 1;
 
     private readonly Dictionary<AnimationBehaviorTree, int> _layerDirections = new Dictionary<AnimationBehaviorTree, int>();
+    private readonly NonIkRagdollAnimator _nonIkAnimator = new NonIkRagdollAnimator();
 
     [Header("Animation set manager")]
     [Tooltip("When true, RagdollAnimationSetManager.Play does not switch trees (animator drives layers).")]
@@ -87,6 +88,7 @@ public class SystemDrawerAnimator : MonoBehaviour,
 
     private void OnDisable()
     {
+        _nonIkAnimator.Stop();
         if (!string.IsNullOrWhiteSpace(systemDrawerRegisterKey) && SystemDrawerService.Instance != null)
             SystemDrawerService.Instance.Unregister(systemDrawerRegisterKey.Trim());
     }
@@ -172,6 +174,48 @@ public class SystemDrawerAnimator : MonoBehaviour,
             slot.playDirection = clamped;
             slot.animationBehaviorTree.playbackDirection = clamped;
             _layerDirections[slot.animationBehaviorTree] = clamped;
+        }
+    }
+
+    public void SetLayerPlaybackMode(int layerIndex, AnimationLayerPlaybackMode mode)
+    {
+        if (layers == null)
+            return;
+        foreach (AnimationLayerSlot slot in layers)
+        {
+            if (slot == null || slot.layerIndex != layerIndex)
+                continue;
+            if (slot.playbackMode == AnimationLayerPlaybackMode.NonIkKinematic &&
+                mode != AnimationLayerPlaybackMode.NonIkKinematic)
+                _nonIkAnimator.Stop();
+            slot.playbackMode = mode;
+        }
+    }
+
+    public AnimationLayerPlaybackMode GetLayerPlaybackMode(int layerIndex)
+    {
+        if (layers == null)
+            return AnimationLayerPlaybackMode.PhysicsCards;
+        foreach (AnimationLayerSlot slot in layers)
+        {
+            if (slot != null && slot.layerIndex == layerIndex)
+                return slot.playbackMode;
+        }
+        return AnimationLayerPlaybackMode.PhysicsCards;
+    }
+
+    public void SetPlaybackModeForBehaviorTree(AnimationBehaviorTree tree, AnimationLayerPlaybackMode mode)
+    {
+        if (layers == null || tree == null)
+            return;
+        foreach (AnimationLayerSlot slot in layers)
+        {
+            if (slot?.animationBehaviorTree != tree)
+                continue;
+            if (slot.playbackMode == AnimationLayerPlaybackMode.NonIkKinematic &&
+                mode != AnimationLayerPlaybackMode.NonIkKinematic)
+                _nonIkAnimator.Stop();
+            slot.playbackMode = mode;
         }
     }
 
@@ -270,11 +314,35 @@ public class SystemDrawerAnimator : MonoBehaviour,
 
             if (slot.weight <= weightEpsilon)
             {
+                if (slot.playbackMode == AnimationLayerPlaybackMode.NonIkKinematic && _nonIkAnimator.IsPlaying)
+                    _nonIkAnimator.Stop();
                 _snapshots.Add(BuildSnapshot(slot, null, 0f));
                 continue;
             }
 
             BehaviorTree gen = slot.animationBehaviorTree.generatedTree;
+
+            if (slot.playbackMode == AnimationLayerPlaybackMode.NonIkKinematic && ragdollSystem != null)
+            {
+                _tickPhaseByLayerIndex[slot.layerIndex] = phase++;
+                if (!_nonIkAnimator.IsPlaying && slot.animationBehaviorTree != null)
+                {
+                    ABTClipConfig cfg = slot.animationBehaviorTree.GetActiveConfiguration();
+                    if (cfg?.clip != null)
+                    {
+                        int dir = slot.playDirection != 0 ? slot.playDirection : globalPlayDirection;
+                        _nonIkAnimator.Play(ragdollSystem, cfg.clip, dir);
+                    }
+                }
+                _nonIkAnimator.TickLayer(ragdollSystem, slot, Time.deltaTime);
+                float normTime = _nonIkAnimator.IsPlaying ? 0f : 0f;
+                _snapshots.Add(BuildSnapshot(slot, gen != null ? gen.currentNode : null, slot.weight, normTime));
+                continue;
+            }
+
+            if (_nonIkAnimator.IsPlaying)
+                _nonIkAnimator.Stop();
+
             if (gen == null)
             {
                 _snapshots.Add(BuildSnapshot(slot, null, slot.weight));
@@ -310,6 +378,8 @@ public class SystemDrawerAnimator : MonoBehaviour,
     {
         if (ragdollSystem == null || slot.additiveMuscleGroups == null || slot.additiveMuscleGroups.Count == 0)
             return;
+        if (slot.playbackMode == AnimationLayerPlaybackMode.NonIkKinematic)
+            return;
         float w = Mathf.Clamp01(slot.weight);
         foreach (string groupName in slot.additiveMuscleGroups)
         {
@@ -319,7 +389,7 @@ public class SystemDrawerAnimator : MonoBehaviour,
         }
     }
 
-    private AnimationPlaybackSnapshot BuildSnapshot(AnimationLayerSlot slot, BehaviorTreeNode node, float weight)
+    private AnimationPlaybackSnapshot BuildSnapshot(AnimationLayerSlot slot, BehaviorTreeNode node, float weight, float normalizedTime = 0f)
     {
         var abt = slot.animationBehaviorTree;
         int id = abt != null && _instanceIds.TryGetValue(abt, out int iid) ? iid : -1;
@@ -333,8 +403,9 @@ public class SystemDrawerAnimator : MonoBehaviour,
             activeNodeName = node != null ? node.gameObject.name : "(none)",
             weight = weight,
             layerIndex = slot.layerIndex,
-            normalizedTime = 0f,
-            registeredInstanceId = id
+            normalizedTime = normalizedTime,
+            registeredInstanceId = id,
+            playbackMode = slot.playbackMode
         };
     }
 

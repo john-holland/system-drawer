@@ -13,7 +13,71 @@ MonoBehaviour:
   m_Name: NewPrompt 1
   m_EditorClassIdentifier: Locomotion.Narrative.Runtime::Locomotion.Narrative.NarrativePromptAsset
   key: prompt_639139083716782956
-  originalText: The thing about turning.
+  originalText: 'The thing about turning.
+
+    
+
+    The date is 1996. The location
+    is rockport maine.
+
+    
+
+    The player is in their driveway staring at the
+    sky, it is 5 minutes to sunset.
+
+    
+
+    The player idles.
+
+    
+
+    The
+    player walks to the car.
+
+    
+
+    The player gets into the car.
+
+    
+
+    The
+    player drives to the beach. If the player gets too far away from the path, the
+    scenario restarts.
+
+    
+
+    The player sees a guide path to show them where
+    to go.
+
+    
+
+    The player parks in the glowing parking spot.
+
+    
+
+    The
+    player takes a picture of the sunset, on disposeable camera:
+
+    right click
+    to focus the camera
+
+    left click to take a picture
+
+    The player has to
+    scroll the wheel to get a new picture. The player has 17 photos.
+
+    
+
+    The
+    player gets back into the car.
+
+    
+
+    The player drives home. The same
+    path appears, but if they get too far away, they are back at the beach, however
+    it is later and later (10 minutes each time).
+
+'
   proceduralText: 
   synonyms: []
   allowedVocabularyVersion: 

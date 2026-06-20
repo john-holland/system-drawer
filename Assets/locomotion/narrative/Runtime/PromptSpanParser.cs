@@ -57,6 +57,53 @@ namespace Locomotion.Narrative
     public static class PromptSpanParser
     {
         const string Open = "{P:";
+        const string DoubleOpen = "{{P:";
+
+        /// <summary>Text with all placeholder spans removed (for LSTM / plain-text consumers).</summary>
+        public static string StripForLSTM(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text ?? "";
+            var segments = Parse(text);
+            var sb = new StringBuilder();
+            foreach (PromptSegment s in segments)
+            {
+                if (!s.isPlaceholder)
+                    sb.Append(s.textRun ?? "");
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>Read bool param from a placeholder segment.</summary>
+        public static bool TryGetBoolParam(PromptSegment segment, string key, out bool value)
+        {
+            value = false;
+            if (segment == null || !segment.isPlaceholder || segment.placeholderParams == null ||
+                !segment.placeholderParams.TryGetValue(key, out string raw))
+                return false;
+            return TryParseBoolParam(raw, out value);
+        }
+
+        public static bool TryParseBoolParam(string raw, out bool value)
+        {
+            value = false;
+            if (string.IsNullOrWhiteSpace(raw))
+                return false;
+            raw = raw.Trim();
+            if (raw == "1" || raw.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                raw.Equals("yes", StringComparison.OrdinalIgnoreCase))
+            {
+                value = true;
+                return true;
+            }
+            if (raw == "0" || raw.Equals("false", StringComparison.OrdinalIgnoreCase) ||
+                raw.Equals("no", StringComparison.OrdinalIgnoreCase))
+            {
+                value = false;
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>Split <paramref name="text"/> into ordered segments (covers entire string).</summary>
         public static List<PromptSegment> Parse(string text)
@@ -67,7 +114,7 @@ namespace Locomotion.Narrative
             int i = 0;
             while (i < text.Length)
             {
-                int open = text.IndexOf(Open, i, StringComparison.Ordinal);
+                int open = FindNextOpen(text, i, out bool isDouble);
                 if (open < 0)
                 {
                     if (i < text.Length)
@@ -78,19 +125,22 @@ namespace Locomotion.Narrative
                 if (open > i)
                     segments.Add(PromptSegment.TextRun(text, i, open - i));
 
-                int innerStart = open + Open.Length;
-                int close = text.IndexOf('}', innerStart);
-                if (close < 0)
+                int innerStart = open + (isDouble ? DoubleOpen.Length : Open.Length);
+                int closeBrace = FindMatchingClose(text, innerStart, isDouble);
+                if (closeBrace < 0)
                 {
                     segments.Add(PromptSegment.TextRun(text, open, text.Length - open));
                     break;
                 }
 
-                string inner = text.Substring(innerStart, close - innerStart);
-                ParseInner(inner, out string name, out Dictionary<string, string> pars);
-                int spanLen = close - open + 1;
+                int innerLength = isDouble
+                    ? closeBrace - 1 - innerStart
+                    : closeBrace - innerStart;
+                string inner = text.Substring(innerStart, innerLength);
+                ParseInner(inner, isDouble, out string name, out Dictionary<string, string> pars);
+                int spanLen = closeBrace - open + 1;
                 segments.Add(PromptSegment.Placeholder(open, spanLen, name, pars));
-                i = close + 1;
+                i = closeBrace + 1;
             }
 
             return segments;
@@ -148,7 +198,30 @@ namespace Locomotion.Narrative
             return sb.ToString();
         }
 
-        static void ParseInner(string inner, out string name, out Dictionary<string, string> parameters)
+        static int FindNextOpen(string text, int start, out bool isDouble)
+        {
+            isDouble = false;
+            int single = text.IndexOf(Open, start, StringComparison.Ordinal);
+            int dbl = text.IndexOf(DoubleOpen, start, StringComparison.Ordinal);
+            if (single < 0 && dbl < 0)
+                return -1;
+            if (dbl >= 0 && (single < 0 || dbl <= single))
+            {
+                isDouble = true;
+                return dbl;
+            }
+            return single;
+        }
+
+        static int FindMatchingClose(string text, int innerStart, bool isDouble)
+        {
+            if (!isDouble)
+                return text.IndexOf('}', innerStart);
+            int idx = text.IndexOf("}}", innerStart, StringComparison.Ordinal);
+            return idx >= 0 ? idx + 1 : -1;
+        }
+
+        static void ParseInner(string inner, bool isDoubleBrace, out string name, out Dictionary<string, string> parameters)
         {
             name = "";
             parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -163,7 +236,7 @@ namespace Locomotion.Narrative
             int idx = 0;
             if (!firstIsKv)
             {
-                name = parts[0].Trim();
+                name = UnquoteName(parts[0].Trim(), isDoubleBrace);
                 idx = 1;
             }
 
@@ -179,5 +252,18 @@ namespace Locomotion.Narrative
                     parameters[k] = v;
             }
         }
+
+        static string UnquoteName(string raw, bool isDoubleBrace)
+        {
+            if (!isDoubleBrace || string.IsNullOrEmpty(raw))
+                return raw ?? "";
+            raw = raw.Trim();
+            if (raw.Length >= 2 && raw[0] == '"' && raw[raw.Length - 1] == '"')
+                return raw.Substring(1, raw.Length - 2);
+            return raw;
+        }
+
+        static void ParseInner(string inner, out string name, out Dictionary<string, string> parameters) =>
+            ParseInner(inner, false, out name, out parameters);
     }
 }

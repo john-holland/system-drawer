@@ -13,6 +13,7 @@ namespace Locomotion.Narrative
         public string nodeId;
         public string storeKey;
         public string actionTypeName;
+        public int undoTargetInstanceId;
     }
 
     [Serializable]

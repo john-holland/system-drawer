@@ -109,4 +109,20 @@ public class VocabularyBuiltInEditModeTests
         Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(fp));
         Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(tp));
     }
+
+    [Test]
+    public void JsonExport_MatchesRegistryCount()
+    {
+        var path = VocabularyBuiltInJsonExporter.Export();
+        Assert.IsTrue(System.IO.File.Exists(path), path);
+        var json = System.IO.File.ReadAllText(path);
+        var idCount = 0;
+        var idx = 0;
+        while ((idx = json.IndexOf("\"id\":", idx, System.StringComparison.Ordinal)) >= 0)
+        {
+            idCount++;
+            idx += 5;
+        }
+        Assert.AreEqual(VocabularyBuiltInRegistry.Count, idCount);
+    }
 }

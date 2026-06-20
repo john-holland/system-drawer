@@ -56,4 +56,22 @@ public class PromptSpanParserTests
         // Replace 2 chars at index 2: "cd" -> "XYZ", leaves "ef"
         Assert.AreEqual("abXYZef", PromptSpanParser.ReplaceRange(t, 2, 2, "XYZ"));
     }
+
+    [Test]
+    public void Parse_DoubleBrace_QuotedName()
+    {
+        string s = "walk {{P:\"player walks\"|non-ik-animation=true}} here";
+        var seg = PromptSpanParser.Parse(s);
+        Assert.IsTrue(seg.Exists(x => x.isPlaceholder && x.placeholderName == "player walks"));
+        PromptSegment ph = seg.Find(x => x.isPlaceholder);
+        Assert.IsNotNull(ph);
+        Assert.IsTrue(PromptSpanParser.TryGetBoolParam(ph, "non-ik-animation", out bool v) && v);
+    }
+
+    [Test]
+    public void StripForLSTM_RemovesPlaceholders()
+    {
+        string s = "a {P:x|k=v} b";
+        Assert.AreEqual("a  b", PromptSpanParser.StripForLSTM(s));
+    }
 }

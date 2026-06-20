@@ -5,7 +5,9 @@
     "Weather.Runtime",
     "HierarchicalPathFinding",
     "Locomotion.Audio",
-    "Planetary"
+    "Planetary",
+    "Continuum.Runtime",
+    "Locomotion.Narrative.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -5,15 +5,11 @@ using UnityEngine.Networking;
 
 /// <summary>
 /// Fetches Continuum notifications at startup and logs unread ones as warnings.
-/// Registers with SystemDrawerService under "ContinuumNotifications".
 /// </summary>
 public class ContinuumNotificationsService : MonoBehaviour
 {
     private void Start()
     {
-        var svc = SystemDrawerService.FindInScene();
-        if (svc != null)
-            svc.Register("ContinuumNotifications", this);
         StartCoroutine(FetchAndLogNotifications());
     }
 
@@ -36,7 +32,18 @@ public class ContinuumNotificationsService : MonoBehaviour
                     foreach (var n in resp.items)
                     {
                         if (string.IsNullOrEmpty(n.readAt))
-                            Debug.LogWarning($"[Continuuum] {n.message}");
+                {
+                    var label = n.type switch
+                    {
+                        "review_approved" => "[Review approved]",
+                        "review_denied" => "[Review denied]",
+                        "change_list_submitted" => "[Change list submitted]",
+                        "comment_delete_requested" => "[Delete requested]",
+                        "comment_delete_approved" => "[Delete approved]",
+                        _ => "[Continuum]"
+                    };
+                    Debug.LogWarning($"{label} {n.message}");
+                }
                     }
                 }
             }

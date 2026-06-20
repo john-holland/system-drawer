@@ -38,7 +38,7 @@ public class NarrativeRewindTests
         var ctx = new NarrativeExecutionContext(null, bindings, null);
         var state = new NarrativeRuntimeState();
 
-        Assert.AreEqual(BehaviorTreeStatus.Success, action.Execute(ctx, state));
+        Assert.AreEqual((int)Locomotion.Narrative.BehaviorTreeStatus.Success, (int)action.Execute(ctx, state));
 
         bool hadClone = false;
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))

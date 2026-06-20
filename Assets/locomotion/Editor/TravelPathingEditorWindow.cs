@@ -7,6 +7,97 @@ using UnityEngine;
 /// </summary>
 public class TravelPathingEditorWindow : EditorWindow
 {
+    static class Tips
+    {
+        public static readonly GUIContent TravelingActors = new GUIContent(
+            "Traveling actors",
+            "Every TravelAgent in the open scene. Click a name to select it in the hierarchy and edit its path here.");
+
+        public static readonly GUIContent SpatialGenerator = new GUIContent(
+            "Spatial Generator",
+            "Bedoga SpatialGenerator or 4D orchestrator. When assigned with raw locations disabled, preview coordinates come from the generator workflow.");
+
+        public static readonly GUIContent TravelScriptRows = new GUIContent(
+            "Travel script (authoring rows)",
+            "Ordered waypoints and bindings: coordinates, planner hints, narrative nodes, and Bedoga spatial nodes.");
+
+        public static readonly GUIContent SaveRowChanges = new GUIContent(
+            "Save row changes",
+            "Persist authoring-row edits on this TravelAgent to disk.");
+
+        public static readonly GUIContent RevertRowChanges = new GUIContent(
+            "Revert row changes",
+            "Discard unsaved row edits and restore the last saved snapshot.");
+
+        public static readonly GUIContent UnsavedEdits = new GUIContent(
+            "(unsaved row edits)",
+            "Authoring rows differ from the last Save. Rebuild preview still uses current values; Save writes them to the asset.");
+
+        public static readonly GUIContent AddHint = new GUIContent(
+            "Add Hint",
+            "Append a planner hint row — a lightweight landmark that biases routing without binding a full narrative node.");
+
+        public static readonly GUIContent AddNode = new GUIContent(
+            "Add Node",
+            "Append a narrative or behavior-tree node reference row.");
+
+        public static readonly GUIContent AddSpatialNode = new GUIContent(
+            "Add Spatial Node",
+            "Append a Bedoga spatial-generator node binding row.");
+
+        public static readonly GUIContent ReverseLegLimit = new GUIContent(
+            "Reverse leg limit",
+            "Maximum share of total path arc length allowed for reverse or backtracking samples (skier-track kinematics).");
+
+        public static readonly GUIContent ResetReverseDefault = new GUIContent(
+            "Reset reverse to default",
+            "Restore the limit to 100% for paths under 500 m, otherwise 50%.");
+
+        public static readonly GUIContent ShowVelocityTrack = new GUIContent(
+            "Show velocity track",
+            "Draw speed-colored tick marks along the cached path in the Scene view.");
+
+        public static readonly GUIContent ShowIkSamples = new GUIContent(
+            "Show IK samples",
+            "Draw IK solve sample points on path gizmos.");
+
+        public static readonly GUIContent ShowReverseBudget = new GUIContent(
+            "Show reverse budget",
+            "Highlight reverse-budget consumption along the path in the Scene view.");
+
+        public static readonly GUIContent TrackSpacing = new GUIContent(
+            "Track spacing (m)",
+            "Distance between velocity-track tick marks along the path.");
+
+        public static readonly GUIContent RebuildPreview = new GUIContent(
+            "Rebuild preview",
+            "Run traversibility and multibody solvers, refresh cached plan gizmos, and update path metrics.");
+
+        public static readonly GUIContent ZoomToFit = new GUIContent(
+            "Zoom to fit",
+            "Frame the Scene view to the entire path or the current segment, per Preview fit mode.");
+
+        public static readonly GUIContent PreviousSegment = new GUIContent(
+            "Previous segment",
+            "Step to the prior plan segment and reframe the Scene view.");
+
+        public static readonly GUIContent NextSegment = new GUIContent(
+            "Next segment",
+            "Step to the next plan segment and reframe the Scene view.");
+
+        public static readonly GUIContent RefreshDiscovery = new GUIContent(
+            "Refresh discovery list",
+            "Scan the actor hierarchy for BehaviorTreeNode components (editor snapshot, not per-frame).");
+
+        public static readonly GUIContent Discovery = new GUIContent(
+            "Discovery",
+            "Behavior-tree nodes found under the actor root on the last refresh.");
+
+        public static readonly GUIContent LockedCoordinatesHelp = new GUIContent(
+            "",
+            "Preview start, goal, and coordinate mode are driven by the assigned spatial generator workflow.");
+    }
+
     TravelAgent focusedAgent;
     Vector2 scrollActors;
     Vector2 scrollMain;
@@ -20,12 +111,14 @@ public class TravelPathingEditorWindow : EditorWindow
     [MenuItem("Window/System Drawer/Travel/Pathing Editor", false, 150)]
     public static void ShowWindow()
     {
-        GetWindow<TravelPathingEditorWindow>("Travel Pathing");
+        var window = GetWindow<TravelPathingEditorWindow>("Travel Pathing");
+        window.titleContent = new GUIContent("Travel Pathing", "Author multi-modal travel paths, preview plans, and manage authoring rows.");
     }
 
     public static void Open(TravelAgent agent)
     {
         TravelPathingEditorWindow w = GetWindow<TravelPathingEditorWindow>("Travel Pathing");
+        w.titleContent = new GUIContent("Travel Pathing", "Author multi-modal travel paths, preview plans, and manage authoring rows.");
         w.FocusTravelAgent(agent);
     }
 
@@ -168,7 +261,7 @@ public class TravelPathingEditorWindow : EditorWindow
     {
         TravelAgent[] agents = FindObjectsByType<TravelAgent>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
-        EditorGUILayout.LabelField("Traveling actors", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(Tips.TravelingActors, EditorStyles.boldLabel);
         float actorListHeight = Mathf.Min(130f, 24f + Mathf.Max(agents.Length, 1) * 22f);
         scrollActors = EditorGUILayout.BeginScrollView(scrollActors, GUILayout.Height(actorListHeight));
         foreach (TravelAgent ta in agents)
@@ -177,7 +270,7 @@ public class TravelPathingEditorWindow : EditorWindow
                 continue;
             EditorGUILayout.BeginHorizontal();
             GUIStyle style = focusedAgent == ta ? EditorStyles.boldLabel : EditorStyles.label;
-            if (GUILayout.Button(ta.gameObject.name, style))
+            if (GUILayout.Button(new GUIContent(ta.gameObject.name, "Focus this TravelAgent for path authoring and preview."), style))
             {
                 Selection.activeGameObject = ta.gameObject;
                 EditorGUIUtility.PingObject(ta.gameObject);
@@ -205,12 +298,14 @@ public class TravelPathingEditorWindow : EditorWindow
         float scrollHeight = Mathf.Max(120f, position.height - actorListHeight - chromeAboveMainScroll);
         scrollMain = EditorGUILayout.BeginScrollView(scrollMain, GUILayout.Height(scrollHeight));
 
-        EditorGUILayout.LabelField("Authoring — " + focusedAgent.name, EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(
+            new GUIContent("Authoring — " + focusedAgent.name, "Preview inputs, travel script, path kinematics, and Scene-view tools for the focused TravelAgent."),
+            EditorStyles.boldLabel);
 
         SerializedProperty spatialProp = serializedAgent.FindProperty("spatialGeneratorSlot");
         EditorGUI.BeginChangeCheck();
         Object spatialObj = EditorGUILayout.ObjectField(
-            "Spatial Generator",
+            Tips.SpatialGenerator,
             spatialProp.objectReferenceValue,
             typeof(SpatialGeneratorBase),
             true);
@@ -232,8 +327,13 @@ public class TravelPathingEditorWindow : EditorWindow
         EditorGUILayout.PropertyField(serializedAgent.FindProperty("coordinateMode"));
         EditorGUI.EndDisabledGroup();
 
+        if (lockCoords)
+            EditorGUILayout.HelpBox(Tips.LockedCoordinatesHelp.tooltip, MessageType.None);
+
         if (staticSeed.boolValue && spatialProp.objectReferenceValue != null)
-            EditorGUILayout.HelpBox("Static generator seed: preview coordinates enabled for seed authoring.", MessageType.None);
+            EditorGUILayout.HelpBox(
+                "Static generator seed: preview coordinates enabled for seed authoring.",
+                MessageType.None);
 
         EditorGUILayout.PropertyField(serializedAgent.FindProperty("pathingSolverForPreview"));
         EditorGUILayout.PropertyField(serializedAgent.FindProperty("ragdollAnimationSetManager"));
@@ -253,7 +353,7 @@ public class TravelPathingEditorWindow : EditorWindow
         if (EditorGUI.EndChangeCheck())
             ScheduleRebuild(focusedAgent);
 
-        EditorGUILayout.LabelField("Travel script (authoring rows)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(Tips.TravelScriptRows, EditorStyles.boldLabel);
         SerializedProperty rows = serializedAgent.FindProperty("authoringRows");
         EditorGUILayout.PropertyField(rows, true);
 
@@ -263,18 +363,18 @@ public class TravelPathingEditorWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         using (new EditorGUI.DisabledScope(!AuthoringRowsDirty))
         {
-            if (GUILayout.Button("Save row changes", GUILayout.Height(22)))
+            if (GUILayout.Button(Tips.SaveRowChanges, GUILayout.Height(22)))
                 SaveAuthoringRows();
-            if (GUILayout.Button("Revert row changes", GUILayout.Height(22)))
+            if (GUILayout.Button(Tips.RevertRowChanges, GUILayout.Height(22)))
                 RevertAuthoringRows();
         }
 
         if (AuthoringRowsDirty)
-            GUILayout.Label("(unsaved row edits)", EditorStyles.miniLabel);
+            GUILayout.Label(Tips.UnsavedEdits, EditorStyles.miniLabel);
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Add Hint"))
+        if (GUILayout.Button(Tips.AddHint))
         {
             Undo.RecordObject(focusedAgent, "Add travel authoring row");
             focusedAgent.authoringRows.Add(new TravelAuthoringRow { kind = TravelAuthoringRowKind.Hint });
@@ -283,7 +383,7 @@ public class TravelPathingEditorWindow : EditorWindow
             serializedAgent.Update();
         }
 
-        if (GUILayout.Button("Add Node"))
+        if (GUILayout.Button(Tips.AddNode))
         {
             Undo.RecordObject(focusedAgent, "Add travel authoring row");
             focusedAgent.authoringRows.Add(new TravelAuthoringRow { kind = TravelAuthoringRowKind.Node });
@@ -292,7 +392,7 @@ public class TravelPathingEditorWindow : EditorWindow
             serializedAgent.Update();
         }
 
-        if (GUILayout.Button("Add Spatial Node"))
+        if (GUILayout.Button(Tips.AddSpatialNode))
         {
             Undo.RecordObject(focusedAgent, "Add travel authoring row");
             focusedAgent.authoringRows.Add(new TravelAuthoringRow { kind = TravelAuthoringRowKind.SpatialNode });
@@ -304,9 +404,11 @@ public class TravelPathingEditorWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Path kinematics", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(
+            new GUIContent("Path kinematics", "Skier-track limits and Scene-view overlays for the cached path."),
+            EditorStyles.boldLabel);
         EditorGUI.BeginChangeCheck();
-        float revLimit = EditorGUILayout.Slider("Reverse leg limit", focusedAgent.reverseLegLimit01, 0f, 1f);
+        float revLimit = EditorGUILayout.Slider(Tips.ReverseLegLimit, focusedAgent.reverseLegLimit01, 0f, 1f);
         if (EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(focusedAgent, "Reverse leg limit");
@@ -316,11 +418,13 @@ public class TravelPathingEditorWindow : EditorWindow
         }
 
         EditorGUILayout.LabelField(
-            TravelPathReverseLimits.FormatDistanceLabel(focusedAgent.ReverseBudgetMeters, focusedAgent.TotalPathLengthMeters),
+            new GUIContent(
+                TravelPathReverseLimits.FormatDistanceLabel(focusedAgent.ReverseBudgetMeters, focusedAgent.TotalPathLengthMeters),
+                "Reverse budget meters allowed versus total cached path length."),
             EditorStyles.miniLabel);
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Reset reverse to default"))
+        if (GUILayout.Button(Tips.ResetReverseDefault))
         {
             Undo.RecordObject(focusedAgent, "Reset reverse limit");
             focusedAgent.ResetReverseLegLimitToDefault();
@@ -328,52 +432,58 @@ public class TravelPathingEditorWindow : EditorWindow
         }
         EditorGUILayout.EndHorizontal();
 
-        focusedAgent.showVelocityTrack = EditorGUILayout.Toggle("Show velocity track", focusedAgent.showVelocityTrack);
-        focusedAgent.showIkSamples = EditorGUILayout.Toggle("Show IK samples", focusedAgent.showIkSamples);
-        focusedAgent.showReverseBudget = EditorGUILayout.Toggle("Show reverse budget", focusedAgent.showReverseBudget);
+        focusedAgent.showVelocityTrack = EditorGUILayout.Toggle(Tips.ShowVelocityTrack, focusedAgent.showVelocityTrack);
+        focusedAgent.showIkSamples = EditorGUILayout.Toggle(Tips.ShowIkSamples, focusedAgent.showIkSamples);
+        focusedAgent.showReverseBudget = EditorGUILayout.Toggle(Tips.ShowReverseBudget, focusedAgent.showReverseBudget);
         focusedAgent.velocityTrackSpacingMeters = EditorGUILayout.Slider(
-            "Track spacing (m)", focusedAgent.velocityTrackSpacingMeters, 0.5f, 10f);
+            Tips.TrackSpacing, focusedAgent.velocityTrackSpacingMeters, 0.5f, 10f);
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(
+            new GUIContent("Preview", "Rebuild, frame, and step through the cached multi-modal plan in the Scene view."),
+            EditorStyles.boldLabel);
         serializedAgent.Update();
         EditorGUILayout.PropertyField(serializedAgent.FindProperty("previewFitMode"));
         EditorGUILayout.PropertyField(serializedAgent.FindProperty("previewSegmentIndex"));
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Rebuild preview"))
+        if (GUILayout.Button(Tips.RebuildPreview))
         {
             focusedAgent.RebuildCachedPlan();
             EditorUtility.SetDirty(focusedAgent);
             SceneView.RepaintAll();
         }
 
-        if (GUILayout.Button("Zoom to fit"))
+        if (GUILayout.Button(Tips.ZoomToFit))
             ZoomToFit(focusedAgent);
 
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Previous segment"))
+        if (GUILayout.Button(Tips.PreviousSegment))
             StepSegment(focusedAgent, -1);
-        if (GUILayout.Button("Next segment"))
+        if (GUILayout.Button(Tips.NextSegment))
             StepSegment(focusedAgent, 1);
         EditorGUILayout.EndHorizontal();
 
-        if (GUILayout.Button("Refresh discovery list"))
+        if (GUILayout.Button(Tips.RefreshDiscovery))
         {
             focusedAgent.RefreshDiscoveredNodes();
             EditorUtility.SetDirty(focusedAgent);
         }
 
-        EditorGUILayout.LabelField("Discovery", EditorStyles.miniBoldLabel);
+        EditorGUILayout.LabelField(Tips.Discovery, EditorStyles.miniBoldLabel);
         IReadOnlyList<TravelDiscoveredNodeInfo> nodes = focusedAgent.DiscoveredNodes;
         if (nodes == null || nodes.Count == 0)
             EditorGUILayout.HelpBox("No cached discovery. Click Refresh discovery list.", MessageType.None);
         else
         {
             foreach (TravelDiscoveredNodeInfo info in nodes)
-                EditorGUILayout.LabelField($"{info.nodeTypeName}: {info.hierarchyPath}", EditorStyles.wordWrappedMiniLabel);
+            {
+                EditorGUILayout.LabelField(
+                    new GUIContent($"{info.nodeTypeName}: {info.hierarchyPath}", info.serializedSummary),
+                    EditorStyles.wordWrappedMiniLabel);
+            }
         }
 
         serializedAgent.ApplyModifiedProperties();

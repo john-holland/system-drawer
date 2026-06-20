@@ -26,7 +26,44 @@ except ImportError:
     cave_hierarchy_adapter = None
     herb_garden = None
 
-app = Flask(__name__)
+try:
+    from continuum_api.localization_routes import archive_review_comments_on_deny, register_localization_routes
+except ImportError:
+    from localization_routes import archive_review_comments_on_deny, register_localization_routes
+
+try:
+    from continuum_api.lemma_routes import register_lemma_routes
+except ImportError:
+    from lemma_routes import register_lemma_routes
+
+app = Flask(__name__, static_folder=str(Path(__file__).resolve().parent / "static"), static_url_path="/static")
+
+DEV_CORS_ORIGINS = {
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+}
+
+
+def _apply_cors_headers(response):
+    origin = request.headers.get("Origin")
+    if origin in DEV_CORS_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-User-ID, X-Admin"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        response.headers["Access-Control-Max-Age"] = "86400"
+    return response
+
+
+@app.before_request
+def handle_cors_preflight():
+    if request.method != "OPTIONS":
+        return None
+    origin = request.headers.get("Origin", "")
+    if origin not in DEV_CORS_ORIGINS:
+        return None
+    return _apply_cors_headers(Response(status=204))
 
 # Audit: log API access; user from X-User-ID, admin from X-Admin
 AUDIT_ENABLED = os.environ.get("CONTINUUM_AUDIT", "1").lower() in ("1", "true", "yes")
@@ -49,6 +86,7 @@ def before_audit():
 
 @app.after_request
 def after_audit(response):
+    response = _apply_cors_headers(response)
     if not AUDIT_ENABLED:
         return response
     path = request.path
@@ -260,6 +298,40 @@ def get_episode_script(episode_id: str):
             "language": row["language"],
             "createdAt": row["created_at"],
         }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/episode-script/<episode_id>", methods=["PUT"])
+def put_episode_script(episode_id: str):
+    """Create or update episode_script for episode_id. Body: scriptText, language (default en)."""
+    body = request.get_json() or {}
+    script_text = body.get("scriptText", "")
+    language = body.get("language", "en")
+    now = __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    try:
+        conn = get_conn()
+        cur = conn.execute(
+            "SELECT id FROM episode_script WHERE episode_id = ? LIMIT 1",
+            (episode_id,),
+        )
+        row = cur.fetchone()
+        if row:
+            conn.execute(
+                "UPDATE episode_script SET script_text = ?, language = ? WHERE id = ?",
+                (script_text, language, row["id"]),
+            )
+            script_id = row["id"]
+        else:
+            script_id = str(uuid.uuid4())
+            conn.execute(
+                """INSERT INTO episode_script (id, episode_id, script_ref, script_text, language, created_at)
+                   VALUES (?, ?, NULL, ?, ?, ?)""",
+                (script_id, episode_id, script_text, language, now),
+            )
+        conn.commit()
+        conn.close()
+        return jsonify({"id": script_id, "episodeId": episode_id}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1072,6 +1144,10 @@ def _create_notification(conn, user_id: str, ntype: str, message: str, draft_id=
     return nid
 
 
+register_localization_routes(app, get_conn, _get_current_user, _create_notification, _is_admin)
+register_lemma_routes(app, get_conn)
+
+
 def _is_approved_to_commit(conn, user_id: str) -> bool:
     """True if user is in approved_user or is admin."""
     if _is_admin():
@@ -1219,10 +1295,27 @@ def update_review(review_id: str):
             cur = conn.execute("SELECT reviewee_user_id FROM reviewer WHERE id = ?", (review_id,))
             reviewee = cur.fetchone()["reviewee_user_id"]
             _create_notification(
-                conn, reviewee, "approved",
+                conn, reviewee, "review_approved",
                 "Your draft has been approved by a reviewer",
                 draft_id=row["draft_episode_id"], review_id=review_id,
             )
+        elif status == "request_changes":
+            cur = conn.execute("SELECT reviewee_user_id FROM reviewer WHERE id = ?", (review_id,))
+            reviewee = cur.fetchone()["reviewee_user_id"]
+            _create_notification(
+                conn, reviewee, "review_denied",
+                "Reviewer requested changes on your draft",
+                draft_id=row["draft_episode_id"], review_id=review_id,
+            )
+            try:
+                script_row = conn.execute(
+                    "SELECT script_text FROM draft_episode_script WHERE draft_episode_id = ? ORDER BY updated_at DESC LIMIT 1",
+                    (row["draft_episode_id"],),
+                ).fetchone()
+                script_text = script_row["script_text"] if script_row else ""
+                archive_review_comments_on_deny(conn, review_id, script_text or "")
+            except Exception:
+                pass
         conn.commit()
         conn.close()
         return jsonify({"ok": True}), 200
@@ -1292,11 +1385,24 @@ def add_review_comment(review_id: str):
         if row["committed_at"]:
             conn.close()
             return jsonify({"error": "cannot add comment after commit"}), 409
+        try:
+            conn.execute("ALTER TABLE reviewer_comments ADD COLUMN review_cycle INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        rev_cycle_row = conn.execute("SELECT review_cycle FROM reviewer WHERE id = ?", (review_id,)).fetchone()
+        review_cycle = int(rev_cycle_row["review_cycle"] or 0) if rev_cycle_row else 0
+        existing = conn.execute(
+            "SELECT COUNT(*) AS c FROM reviewer_comments WHERE reviewer_id = ? AND review_cycle = ?",
+            (review_id, review_cycle),
+        ).fetchone()
+        if existing and existing["c"] > 0:
+            conn.close()
+            return jsonify({"error": "one comment per review cycle; use Approve or Deny"}), 409
         cid = str(uuid.uuid4())
         now = __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         conn.execute(
-            "INSERT INTO reviewer_comments (id, reviewer_id, script_ref, text_selection_start, text_selection_end, comment_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (cid, review_id, script_ref, text_selection_start, text_selection_end, comment_text, now),
+            "INSERT INTO reviewer_comments (id, reviewer_id, script_ref, text_selection_start, text_selection_end, comment_text, review_cycle, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (cid, review_id, script_ref, text_selection_start, text_selection_end, comment_text, review_cycle, now),
         )
         _create_notification(
             conn, row["reviewee_user_id"], "comment",
@@ -1334,6 +1440,71 @@ def update_review_comment(review_id: str, comment_id: str):
         if row["committed_at"]:
             conn.close()
             return jsonify({"error": "cannot edit comment after commit"}), 409
+        if body.get("requestDelete"):
+            now = __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            conn.execute(
+                "UPDATE reviewer_comments SET delete_requested_at = ?, delete_requested_by = ? WHERE id = ? AND reviewer_id = ?",
+                (now, user_id, comment_id, review_id),
+            )
+            cur = conn.execute(
+                "SELECT r.reviewee_user_id, r.reviewer_user_id, r.draft_episode_id FROM reviewer r WHERE r.id = ?",
+                (review_id,),
+            )
+            rev = cur.fetchone()
+            if rev:
+                other = rev["reviewee_user_id"] if user_id == rev["reviewer_user_id"] else rev["reviewer_user_id"]
+                _create_notification(
+                    conn, other, "comment_delete_requested",
+                    "Comment delete requested on draft review",
+                    draft_id=rev["draft_episode_id"], review_id=review_id,
+                )
+            conn.commit()
+            conn.close()
+            return jsonify({"ok": True}), 200
+        if body.get("approveDelete"):
+            try:
+                from continuum_api.localization_routes import build_previously_on
+            except ImportError:
+                from localization_routes import build_previously_on
+            cur = conn.execute(
+                "SELECT * FROM reviewer_comments WHERE id = ? AND reviewer_id = ?",
+                (comment_id, review_id),
+            )
+            cmt = cur.fetchone()
+            if cmt:
+                cdict = dict(cmt)
+                now = __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                prev = build_previously_on(cdict)
+                conn.execute(
+                    """INSERT INTO reviewer_comments_archive (
+                        id, reviewer_id, original_comment_id, comment_text, previously_on,
+                        text_selection_start, text_selection_end, property_key, review_cycle, archived_at, archived_reason
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'delete_approved')""",
+                    (
+                        str(uuid.uuid4()), review_id, cdict["id"], cdict["comment_text"], prev,
+                        cdict["text_selection_start"], cdict["text_selection_end"], cdict.get("property_key"),
+                        cdict.get("review_cycle") or 0, now,
+                    ),
+                )
+                conn.execute("DELETE FROM reviewer_comments WHERE id = ?", (comment_id,))
+                req_by = cdict.get("delete_requested_by")
+                if req_by:
+                    _create_notification(
+                        conn, req_by, "comment_delete_approved",
+                        "Comment delete approved",
+                        review_id=review_id,
+                    )
+            conn.commit()
+            conn.close()
+            return jsonify({"ok": True}), 200
+        if body.get("denyDelete"):
+            conn.execute(
+                "UPDATE reviewer_comments SET delete_requested_at = NULL, delete_requested_by = NULL WHERE id = ? AND reviewer_id = ?",
+                (comment_id, review_id),
+            )
+            conn.commit()
+            conn.close()
+            return jsonify({"ok": True}), 200
         if "commentText" in body and body["commentText"] is None:
             conn.execute("DELETE FROM reviewer_comments WHERE id = ? AND reviewer_id = ?", (comment_id, review_id))
         else:
@@ -1789,10 +1960,15 @@ def import_xliff():
         return jsonify({"error": str(e)}), 500
 
 
-def _write_deeplink_file(window: str, episode_id: str) -> str:
+def _write_deeplink_file(window: str, episode_id: str = "", entry_id: str = "") -> str:
     path = os.environ.get("CONTINUUM_DEEPLINK_PATH", os.path.expanduser("~/.continuum-deeplink.json"))
+    payload = {"window": window}
+    if episode_id:
+        payload["episodeId"] = episode_id
+    if entry_id:
+        payload["entryId"] = entry_id
     with open(path, "w") as f:
-        json.dump({"window": window, "episodeId": episode_id}, f)
+        json.dump(payload, f)
     return path
 
 
@@ -1802,8 +1978,9 @@ def write_deeplink():
     body = request.get_json() or {}
     window = body.get("window", "")
     episode_id = body.get("episodeId", "")
+    entry_id = body.get("entryId", "")
     try:
-        path = _write_deeplink_file(window, episode_id)
+        path = _write_deeplink_file(window, episode_id, entry_id)
         return jsonify({"ok": True, "path": path}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1940,8 +2117,9 @@ def write_deeplink_get():
     """Write deeplink file via GET (for clickable links). Query: window, episodeId."""
     window = request.args.get("window", "")
     episode_id = request.args.get("episodeId", "")
+    entry_id = request.args.get("entryId", "")
     try:
-        path = _write_deeplink_file(window, episode_id)
+        path = _write_deeplink_file(window, episode_id, entry_id)
         return Response(f"Deeplink written to {path}. Open Unity Editor.", status=200, mimetype="text/plain")
     except Exception as e:
         return jsonify({"error": str(e)}), 500

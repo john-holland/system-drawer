@@ -2,7 +2,6 @@
     "name": "Continuum.Runtime",
     "rootNamespace": "",
     "references": [
-        "SystemDrawer",
         "Unity.Newtonsoft.Json"
     ],
     "includePlatforms": [],

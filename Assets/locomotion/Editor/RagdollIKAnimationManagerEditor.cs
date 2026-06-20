@@ -147,6 +147,65 @@ public class RagdollIKAnimationManagerEditor : Editor
         Debug.Log($"[RagdollIKAnimationManager] Discovered {toAdd.Count} animations from {sourceLabel} ({folderPath}). Total: {manager.availableAnimations.Count}");
     }
 
+    /// <summary>Append a catalog entry from an existing animation tree. Returns new index or -1.</summary>
+    public static int AddAnimationSetFromTree(RagdollIKAnimationManager manager, AnimationBehaviorTree tree, string displayName = null)
+    {
+        if (manager == null || tree == null)
+            return -1;
+
+        if (manager.availableAnimations == null)
+            manager.availableAnimations = new List<RagdollAnimationSet>();
+
+        foreach (RagdollAnimationSet existing in manager.availableAnimations)
+        {
+            if (existing?.animationTree == tree)
+                return manager.availableAnimations.IndexOf(existing);
+        }
+
+        string label = displayName;
+        if (string.IsNullOrEmpty(label))
+        {
+            ABTClipConfig config = tree.GetActiveConfiguration();
+            if (!string.IsNullOrEmpty(config?.displayName))
+                label = config.displayName;
+            else if (tree.animationClip != null)
+                label = tree.animationClip.name;
+            else
+                label = tree.name;
+        }
+
+        var set = new RagdollAnimationSet
+        {
+            displayName = label,
+            animationTree = tree
+        };
+
+        Undo.RecordObject(manager, "Add animation set");
+        manager.availableAnimations.Add(set);
+        EditorUtility.SetDirty(manager);
+        return manager.availableAnimations.Count - 1;
+    }
+
+    /// <summary>Append a catalog entry from a clip (creates ABT prefab when needed). Returns new index or -1.</summary>
+    public static int AddAnimationSetFromClip(RagdollIKAnimationManager manager, AnimationClip clip, string outputDir = null)
+    {
+        if (manager == null || clip == null)
+            return -1;
+
+        string clipPath = AssetDatabase.GetAssetPath(clip);
+        if (string.IsNullOrEmpty(outputDir))
+        {
+            string parent = Path.GetDirectoryName(clipPath)?.Replace("\\", "/");
+            outputDir = string.IsNullOrEmpty(parent) ? "Assets" : EnsureDiscoveredFolder(parent);
+        }
+
+        AnimationBehaviorTree tree = FindOrCreateAnimationBehaviorTreePrefab(clip, outputDir);
+        if (tree == null)
+            return -1;
+
+        return AddAnimationSetFromTree(manager, tree, clip.name);
+    }
+
     private static string EnsureDiscoveredFolder(string parentFolder)
     {
         var discoveredPath = parentFolder + "/" + DiscoveredSubfolder;

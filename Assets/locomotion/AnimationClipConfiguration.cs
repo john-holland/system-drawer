@@ -49,6 +49,10 @@ public class ABTClipConfig
     [Tooltip("Frames that were dropped/trimmed (for recovery)")]
     public List<AnimationFrame> droppedFrames = new List<AnimationFrame>();
 
+    [Header("Playback policy")]
+    [Tooltip("When true, prefer Non-IK kinematic sampling for this clip.")]
+    public bool nonIkAnimation;
+
     /// <summary>
     /// Create a configuration with default values from the given clip.
     /// </summary>

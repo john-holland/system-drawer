@@ -43,6 +43,19 @@ public sealed class ApplyTravelLegAnimationNode : TravelContextBehaviorTreeNode,
         animator.SetLayerWeight(layerMap.walkLayerIndex, activeLayer == layerMap.walkLayerIndex ? weight : 0f);
         animator.SetLayerWeight(layerMap.driveLayerIndex, activeLayer == layerMap.driveLayerIndex ? weight : 0f);
         animator.SetLayerWeight(layerMap.flyLayerIndex, activeLayer == layerMap.flyLayerIndex ? weight : 0f);
+
+        if (ctx.animationSetManager != null)
+        {
+            int setIndex = ResolveSetIndexForMode(ctx.animationSetManager, ctx.legMode);
+            if (setIndex >= 0)
+            {
+                RagdollAnimationSet set = ctx.animationSetManager.animationSets[setIndex];
+                ABTClipConfig cfg = set?.animationTree?.GetActiveConfiguration();
+                bool preferNonIk = AnimationPlaybackPolicyApplicator.ResolveForTravelContext(ctx, set, cfg);
+                AnimationPlaybackPolicyApplicator.ApplyToAnimatorLayers(animator, set, preferNonIk, layerMap, ctx.legMode);
+            }
+        }
+
         return BehaviorTreeStatus.Success;
     }
 
@@ -62,5 +75,22 @@ public sealed class ApplyTravelLegAnimationNode : TravelContextBehaviorTreeNode,
         if (tree != null)
             return SystemDrawerLayerControlLookup.FindInChildren(tree);
         return null;
+    }
+
+    static int ResolveSetIndexForMode(RagdollAnimationSetManager mgr, TravelLegMode mode)
+    {
+        if (mgr?.animationSets == null)
+            return -1;
+
+        string token = mode.ToString();
+        for (int i = 0; i < mgr.animationSets.Count; i++)
+        {
+            RagdollAnimationSet set = mgr.animationSets[i];
+            if (set?.displayName != null &&
+                set.displayName.IndexOf(token, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                return i;
+        }
+
+        return mode == TravelLegMode.Walk ? 0 : -1;
     }
 }

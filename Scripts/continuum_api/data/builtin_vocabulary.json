@@ -1,0 +1,1086 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/det/a",
+      "term": "a",
+      "posTag": "determiner",
+      "languageCode": "en",
+      "builtInCategory": "Article",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/across",
+      "term": "across",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/along",
+      "term": "along",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/along_the_road",
+      "term": "along-the-road",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/although",
+      "term": "although",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/det/an",
+      "term": "an",
+      "posTag": "determiner",
+      "languageCode": "en",
+      "builtInCategory": "Article",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/and",
+      "term": "and",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/around",
+      "term": "around",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/at",
+      "term": "at",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/back",
+      "term": "back",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "gateway",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/because",
+      "term": "because",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/between",
+      "term": "between",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/boolean",
+      "term": "boolean",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "primitive"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/boundary",
+      "term": "boundary",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/bounds",
+      "term": "bounds",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "unity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/building",
+      "term": "building",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/buildings",
+      "term": "buildings",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/but",
+      "term": "but",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/by",
+      "term": "by",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/center",
+      "term": "center",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "gateway",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/color",
+      "term": "color",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "unity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/connect",
+      "term": "connect",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/door",
+      "term": "door",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/east",
+      "term": "east",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "cardinal"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/effect",
+      "term": "effect",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/else",
+      "term": "else",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/first_person",
+      "term": "first-person",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "controller",
+        "spatial",
+        "player"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/float",
+      "term": "float",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "primitive"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/forward",
+      "term": "forward",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "gateway",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/from",
+      "term": "from",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/go",
+      "term": "go",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/guid",
+      "term": "guid",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "identity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/here",
+      "term": "here",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "deictic"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/here_here",
+      "term": "here-here",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "deictic"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/highway",
+      "term": "highway",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/if",
+      "term": "if",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/in",
+      "term": "in",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/in_front_of",
+      "term": "in-front-of",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/inside",
+      "term": "inside",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/integer",
+      "term": "integer",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "primitive"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/left_of",
+      "term": "left-of",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/move",
+      "term": "move",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/near",
+      "term": "near",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/nor",
+      "term": "nor",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/north",
+      "term": "north",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "cardinal"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/adv/not",
+      "term": "not",
+      "posTag": "adverb",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/null",
+      "term": "null",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "primitive"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/number",
+      "term": "number",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "primitive"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/object",
+      "term": "object",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/on",
+      "term": "on",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/open",
+      "term": "open",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/or",
+      "term": "or",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/outside",
+      "term": "outside",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/over_here",
+      "term": "over-here",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/path",
+      "term": "path",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/pause",
+      "term": "pause",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "gateway",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/place",
+      "term": "place",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/player",
+      "term": "player",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "controller",
+        "spatial",
+        "player",
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/quaternion",
+      "term": "quaternion",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "unity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/rect",
+      "term": "rect",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "unity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/region",
+      "term": "region",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/right_of",
+      "term": "right-of",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/road",
+      "term": "road",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/roads",
+      "term": "roads",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/run",
+      "term": "run",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/scene",
+      "term": "scene",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/set",
+      "term": "set",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/slice",
+      "term": "slice",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/so",
+      "term": "so",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/source",
+      "term": "source",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/south",
+      "term": "south",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "cardinal"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/street",
+      "term": "street",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/string",
+      "term": "string",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "primitive"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/take",
+      "term": "take",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/target",
+      "term": "target",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/det/that",
+      "term": "that",
+      "posTag": "determiner",
+      "languageCode": "en",
+      "builtInCategory": "Determiner",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/det/the",
+      "term": "the",
+      "posTag": "determiner",
+      "languageCode": "en",
+      "builtInCategory": "Article",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/then",
+      "term": "then",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/there",
+      "term": "there",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "deictic"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/there_there",
+      "term": "there-there",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "deictic"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/therefore",
+      "term": "therefore",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/det/these",
+      "term": "these",
+      "posTag": "determiner",
+      "languageCode": "en",
+      "builtInCategory": "Determiner",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/third_person",
+      "term": "third-person",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "controller",
+        "spatial",
+        "player"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/det/this",
+      "term": "this",
+      "posTag": "determiner",
+      "languageCode": "en",
+      "builtInCategory": "Determiner",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/det/those",
+      "term": "those",
+      "posTag": "determiner",
+      "languageCode": "en",
+      "builtInCategory": "Determiner",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/through",
+      "term": "through",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/through_there",
+      "term": "through-there",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/time",
+      "term": "time",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/time",
+      "term": "time",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "time"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/to",
+      "term": "to",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/to_the_left_of",
+      "term": "to-the-left-of",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/to_the_right_of",
+      "term": "to-the-right-of",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/town_hall",
+      "term": "town-hall",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world",
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/unless",
+      "term": "unless",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/uri",
+      "term": "uri",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "identity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/verb/use",
+      "term": "use",
+      "posTag": "verb",
+      "languageCode": "en",
+      "builtInCategory": "Action",
+      "tags": []
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/uuid",
+      "term": "uuid",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "identity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/vector2",
+      "term": "vector2",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "unity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/vector3",
+      "term": "vector3",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "unity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/literal/vector4",
+      "term": "vector4",
+      "posTag": "type_name",
+      "languageCode": "en",
+      "builtInCategory": "LiteralType",
+      "tags": [
+        "literal",
+        "unity"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/volume",
+      "term": "volume",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/west",
+      "term": "west",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "SpatialGateway",
+      "tags": [
+        "spatial",
+        "cardinal"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/when",
+      "term": "when",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/while",
+      "term": "while",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/prep/with",
+      "term": "with",
+      "posTag": "preposition",
+      "languageCode": "en",
+      "builtInCategory": "Preposition",
+      "tags": [
+        "spatial"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/noun/world",
+      "term": "world",
+      "posTag": "noun",
+      "languageCode": "en",
+      "builtInCategory": "Subject",
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "urn:unity:continuum:builtin:v1:/en/conj/yet",
+      "term": "yet",
+      "posTag": "conjunction",
+      "languageCode": "en",
+      "builtInCategory": "DiscourseCausality",
+      "tags": [
+        "causality"
+      ]
+    }
+  ]
+}

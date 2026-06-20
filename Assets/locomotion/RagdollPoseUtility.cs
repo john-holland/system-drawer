@@ -18,14 +18,26 @@ public static class RagdollPoseUtility
             return;
         if (time < 0f || time > clip.length)
             time = Mathf.Clamp(time, 0f, clip.length);
+
+        GameObject root = ragdollSystem.ragdollRoot.gameObject;
+        if (!CanSampleClip(root, clip))
+            return;
+
         try
         {
-            clip.SampleAnimation(ragdollSystem.ragdollRoot.gameObject, time);
+            clip.SampleAnimation(root, time);
         }
         catch (System.Exception e)
         {
             Debug.LogWarning($"[RagdollPoseUtility] SampleAnimation failed: {e.Message}");
         }
+    }
+
+    static bool CanSampleClip(GameObject root, AnimationClip clip)
+    {
+        if (clip.legacy)
+            return true;
+        return root.GetComponent<Animator>() != null;
     }
 
     /// <summary>
@@ -40,7 +52,7 @@ public static class RagdollPoseUtility
         if (rbs == null) return;
         for (int i = 0; i < rbs.Length; i++)
         {
-            if (rbs[i] != null)
+            if (rbs[i] != null && !rbs[i].isKinematic)
             {
                 rbs[i].linearVelocity = Vector3.zero;
                 rbs[i].angularVelocity = Vector3.zero;

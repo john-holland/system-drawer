@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Script Output</title>
+  <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
+  <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; max-width: 1200px; }
+    label { margin-right: 8px; }
+    input { min-width: 280px; padding: 6px 8px; }
+    button { margin-right: 8px; padding: 6px 12px; cursor: pointer; }
+    #status { color: #666; font-size: 14px; margin: 8px 0; }
+    #editor-host { margin-top: 12px; min-height: 400px; border: 1px solid #ccc; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Script Output</h1>
+  <p id="mode-hint">Load a draft or episode script from the Continuum API.</p>
+  <div>
+    <label>Draft ID <input id="draft-id" placeholder="draft episode uuid" /></label>
+    <label>Episode ID <input id="episode-id" placeholder="episode uuid" /></label>
+    <button id="load-btn">Load</button>
+    <button id="save-btn">Save</button>
+  </div>
+  <div id="status"></div>
+  <div id="editor-host"></div>
+  <script>
+    const API = '/api';
+
+    let scriptSnapshot = '';
+    let editorInst = null;
+    let loadMode = 'draft'; // 'draft' | 'episode'
+    let activeId = '';
+
+    function setStatus(msg, isError) {
+      const el = document.getElementById('status');
+      el.textContent = msg || '';
+      el.style.color = isError ? '#c00' : '#666';
+    }
+
+    async function api(path, opts) {
+      const res = await fetch(API + path, {
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': 'anonymous',
+          ...(opts?.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText || 'Request failed');
+      return data;
+    }
+
+    function readQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      const draftId = params.get('draftId') || params.get('draft_id');
+      const episodeId = params.get('episodeId') || params.get('episode_id');
+      if (draftId) {
+        document.getElementById('draft-id').value = draftId;
+        loadMode = 'draft';
+        activeId = draftId;
+      }
+      if (episodeId) {
+        document.getElementById('episode-id').value = episodeId;
+        loadMode = 'episode';
+        activeId = episodeId;
+      }
+      if (draftId && episodeId) loadMode = 'draft';
+    }
+
+    async function loadScript() {
+      const draftId = document.getElementById('draft-id').value.trim();
+      const episodeId = document.getElementById('episode-id').value.trim();
+      setStatus('Loading…');
+      try {
+        if (draftId) {
+          loadMode = 'draft';
+          activeId = draftId;
+          const data = await api(`/drafts/episodes/${draftId}/script`);
+          scriptSnapshot = data.scriptText || '';
+          mountEditor(draftId, scriptSnapshot);
+          setStatus(`Loaded draft script (${data.language || 'en'})`);
+          return;
+        }
+        if (episodeId) {
+          loadMode = 'episode';
+          activeId = episodeId;
+          const data = await api(`/episode-script/${episodeId}`);
+          if (!data || !data.scriptText) {
+            setStatus('No script for this episode yet — start typing and Save to create one.', false);
+            scriptSnapshot = '';
+            mountEditor(episodeId, '');
+            return;
+          }
+          scriptSnapshot = data.scriptText || '';
+          mountEditor(episodeId, scriptSnapshot);
+          setStatus(`Loaded episode script (${data.language || 'en'})`);
+          return;
+        }
+        setStatus('Enter a Draft ID or Episode ID', true);
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
+
+    function mountEditor(id, text) {
+      editorInst = ContinuumScriptEditor.mount(document.getElementById('editor-host'), {
+        scriptText: text,
+        draftId: loadMode === 'draft' ? id : undefined,
+        mode: 'edit',
+      });
+    }
+
+    async function saveScript() {
+      if (!activeId) {
+        setStatus('Load a script first', true);
+        return;
+      }
+      const newText = ContinuumScriptEditor.getValue(editorInst);
+      try {
+        if (loadMode === 'draft') {
+          const editRes = await api(`/scripts/${activeId}/apply-edit`, {
+            method: 'POST',
+            body: JSON.stringify({ oldText: scriptSnapshot, newText }),
+          });
+          ContinuumChangeListModal.open(editRes.changeListId, editRes, {
+            onSave: async (clId) => {
+              await api(`/drafts/episodes/${activeId}/script`, {
+                method: 'PUT',
+                body: JSON.stringify({ scriptText: newText }),
+              });
+              await api(`/localization/change-lists/${clId}/save`, { method: 'POST', body: '{}' });
+              scriptSnapshot = newText;
+              setStatus('Draft saved');
+            },
+            onSubmit: async (clId) => {
+              await api(`/localization/change-lists/${clId}/submit-for-review`, { method: 'POST', body: '{}' });
+            },
+          });
+        } else {
+          await api(`/episode-script/${activeId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ scriptText: newText }),
+          });
+          scriptSnapshot = newText;
+          setStatus('Episode script saved');
+        }
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
+
+    document.getElementById('load-btn').onclick = loadScript;
+    document.getElementById('save-btn').onclick = saveScript;
+
+    readQueryParams();
+    if (activeId) loadScript();
+  </script>
+</body>
+</html>

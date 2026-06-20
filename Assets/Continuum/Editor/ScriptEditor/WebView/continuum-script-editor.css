@@ -1,0 +1,6 @@
+.ace-prompt-placeholder { border-bottom: 1px dotted #06c !important; position: absolute; }
+.ace-loc-clause { border-bottom: 1px dotted #393 !important; position: absolute; }
+.ace-review-comment { border-bottom: 1px dotted #c60 !important; position: absolute; }
+#review-script-ace { border: 1px solid #ccc; min-height: 200px; }
+.old-comments { margin-top: 16px; border-top: 1px solid #ddd; padding-top: 8px; }
+.old-comments summary { cursor: pointer; font-weight: 600; }

@@ -1,0 +1,3 @@
+word,description,synonyms,language,part of speech,prefab id,default properties
+ladder,a climbable object,steps|rungs,en,noun,usc-doc-123,{P:ladder|non-ik-animation=false}
+custom-verb,example verb entry,,en,verb,,

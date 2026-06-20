@@ -25,6 +25,8 @@ public sealed class TravelExecutionContext
     public float reverseBudgetMeters { get; }
     public float reverseBudgetRemainingMeters { get; }
     public bool inReverseTail { get; }
+    public AnimationPlaybackPolicyContext policyContext { get; }
+    public string activePhrase { get; }
 
     TravelExecutionContext(
         BehaviorTree tree,
@@ -46,7 +48,9 @@ public sealed class TravelExecutionContext
         float totalPathLengthMeters,
         float reverseBudgetMeters,
         float reverseBudgetRemainingMeters,
-        bool inReverseTail)
+        bool inReverseTail,
+        AnimationPlaybackPolicyContext policyContext,
+        string activePhrase)
     {
         this.tree = tree;
         this.travelAgent = travelAgent;
@@ -68,6 +72,8 @@ public sealed class TravelExecutionContext
         this.reverseBudgetMeters = reverseBudgetMeters;
         this.reverseBudgetRemainingMeters = reverseBudgetRemainingMeters;
         this.inReverseTail = inReverseTail;
+        this.policyContext = policyContext;
+        this.activePhrase = activePhrase ?? "";
     }
 
     /// <summary>Build context for a plan leg or mode transition.</summary>
@@ -124,6 +130,11 @@ public sealed class TravelExecutionContext
             && seg.reverseLeg
             && TravelPathReverseLimits.AllowsReverse(agent != null ? agent.reverseLegLimit01 : 0f);
 
+        AnimationPlaybackPolicyContext policy = agent != null
+            ? agent.GetComponent<AnimationPlaybackPolicyContext>() ?? agent.GetComponentInChildren<AnimationPlaybackPolicyContext>()
+            : null;
+        string activePhrase = TravelPlaybackPolicyHelper.ResolveActivePhrase(agent, segIndex, policy);
+
         return new TravelExecutionContext(
             tree,
             agent,
@@ -144,7 +155,9 @@ public sealed class TravelExecutionContext
             totalLen,
             revBudget,
             revRemaining,
-            reverseTail);
+            reverseTail,
+            policy,
+            activePhrase);
     }
 
     static Vector3 ResolveTransitionWorld(MultiModalSegment seg)

@@ -58,7 +58,13 @@ public sealed class ApplyTravelModeTransitionNode : TravelContextBehaviorTreeNod
         {
             int setIndex = ResolveSetIndexForMode(ctx.animationSetManager, ctx.toMode);
             if (setIndex >= 0)
+            {
+                RagdollAnimationSet set = ctx.animationSetManager.animationSets[setIndex];
+                ABTClipConfig cfg = set?.animationTree?.GetActiveConfiguration();
+                bool preferNonIk = AnimationPlaybackPolicyApplicator.ResolveForTravelContext(ctx, set, cfg);
+                AnimationPlaybackPolicyApplicator.ApplyToAnimatorLayers(animator, set, preferNonIk, layerMap, ctx.toMode);
                 ctx.animationSetManager.Play(setIndex);
+            }
         }
 
         _applied = true;

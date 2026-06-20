@@ -8,6 +8,7 @@ namespace Locomotion.Narrative
     public static class WithLayoutExprParser
     {
         static bool _synonymsRegistered;
+        const int MaxParseDepth = 8;
 
         public static bool TryParse(string text, out LayoutPlacementFrame root)
         {
@@ -39,11 +40,13 @@ namespace Locomotion.Narrative
         {
             var tokens = TokenizeSExpr(text);
             int i = 0;
-            return ParseSExprList(tokens, ref i);
+            return ParseSExprList(tokens, ref i, 0);
         }
 
-        static LayoutPlacementFrame ParseSExprList(List<string> tokens, ref int i)
+        static LayoutPlacementFrame ParseSExprList(List<string> tokens, ref int i, int depth)
         {
+            if (depth > MaxParseDepth)
+                return null;
             if (i >= tokens.Count || tokens[i] != "(")
                 return null;
             i++;
@@ -62,7 +65,7 @@ namespace Locomotion.Narrative
             {
                 if (tokens[i] == "(")
                 {
-                    var child = ParseSExprList(tokens, ref i);
+                    var child = ParseSExprList(tokens, ref i, depth + 1);
                     if (child != null)
                         frame.children.Add(child);
                 }
@@ -129,6 +132,8 @@ namespace Locomotion.Narrative
                 if (words[i] == "with")
                 {
                     i++;
+                    if (CountDepth(root) >= MaxParseDepth)
+                        break;
                     var child = ParseEnglishWithClause(words, ref i);
                     if (child != null)
                         root.children.Add(child);
@@ -178,6 +183,16 @@ namespace Locomotion.Narrative
             return root;
         }
 
+        static int CountDepth(LayoutPlacementFrame frame)
+        {
+            if (frame == null || frame.children == null || frame.children.Count == 0)
+                return 1;
+            int max = 1;
+            foreach (var child in frame.children)
+                max = System.Math.Max(max, 1 + CountDepth(child));
+            return max;
+        }
+
         static LayoutPlacementFrame ParseEnglishWithClause(string[] words, ref int i)
         {
             var frame = new LayoutPlacementFrame { relation = LayoutSpatialRelation.None };
@@ -220,6 +235,12 @@ namespace Locomotion.Narrative
             if (WithLemmaRegistry.TryMergeDeicticAnchor(frame.anchor, deictic, out string merged))
             {
                 frame.anchor = merged;
+                return;
+            }
+
+            if (CountDepth(frame) >= MaxParseDepth)
+            {
+                frame.anchor = deictic;
                 return;
             }
 

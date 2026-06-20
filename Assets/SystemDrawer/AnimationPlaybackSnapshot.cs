@@ -13,6 +13,7 @@ public struct AnimationPlaybackSnapshot
     public int layerIndex;
     public float normalizedTime;
     public int registeredInstanceId;
+    public AnimationLayerPlaybackMode playbackMode;
 
     public static AnimationPlaybackSnapshot Empty =>
         new AnimationPlaybackSnapshot
@@ -22,6 +23,7 @@ public struct AnimationPlaybackSnapshot
             weight = 0f,
             layerIndex = -1,
             normalizedTime = 0f,
-            registeredInstanceId = -1
+            registeredInstanceId = -1,
+            playbackMode = AnimationLayerPlaybackMode.PhysicsCards
         };
 }

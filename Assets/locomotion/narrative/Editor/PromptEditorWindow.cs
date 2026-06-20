@@ -435,8 +435,24 @@ namespace Locomotion.Narrative.EditorTools
 
             if (GUILayout.Button("Add parameter"))
             {
-                _editKeys.Add("key");
+                _editKeys.Add(SuggestPropertyKey());
                 _editVals.Add("");
+            }
+
+            if (GUILayout.Button("Add known property (from catalog)"))
+            {
+                var catalog = Resources.Load<LocalizationPropertySpecCatalog>("LocalizationPropertySpecCatalog");
+                if (catalog?.specs != null && catalog.specs.Count > 0 && catalog.specs[0] != null)
+                {
+                    var spec = catalog.specs[0];
+                    _editKeys.Add(spec.key);
+                    _editVals.Add(spec.defaultValue ?? "false");
+                }
+                else
+                {
+                    _editKeys.Add("non-ik-animation");
+                    _editVals.Add("false");
+                }
             }
 
             EditorGUI.EndChangeCheck();
@@ -465,6 +481,8 @@ namespace Locomotion.Narrative.EditorTools
 
             return d;
         }
+
+        static string SuggestPropertyKey() => "non-ik-animation";
 
         void CreateRegistryAsset()
         {

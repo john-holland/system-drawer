@@ -4,6 +4,25 @@ using UnityEngine;
 [CustomEditor(typeof(TravelAgent))]
 public class TravelAgentEditor : Editor
 {
+    static class Tips
+    {
+        public static readonly GUIContent RefreshDiscoveredNodes = new GUIContent(
+            "Refresh discovered nodes",
+            "Scan the actor hierarchy for BehaviorTreeNode components and cache snapshots for the Pathing Editor.");
+
+        public static readonly GUIContent RebuildPreviewPlan = new GUIContent(
+            "Rebuild preview plan",
+            "Run traversibility and multibody solvers and refresh cached path gizmos in the Scene view.");
+
+        public static readonly GUIContent OpenPathingEditor = new GUIContent(
+            "Open Pathing Editor",
+            "Open the Travel Pathing window focused on this TravelAgent.");
+
+        public static readonly GUIContent Multibody = new GUIContent(
+            "Multibody",
+            "Convoy spacing, formation offsets, and peer avoidance applied after the base planner path.");
+    }
+
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
@@ -11,13 +30,13 @@ public class TravelAgentEditor : Editor
         var ta = (TravelAgent)target;
 
         EditorGUILayout.Space();
-        if (GUILayout.Button("Refresh discovered nodes"))
+        if (GUILayout.Button(Tips.RefreshDiscoveredNodes))
         {
             ta.RefreshDiscoveredNodes();
             EditorUtility.SetDirty(ta);
         }
 
-        if (GUILayout.Button("Rebuild preview plan"))
+        if (GUILayout.Button(Tips.RebuildPreviewPlan))
         {
             ta.RebuildCachedPlan();
             EditorUtility.SetDirty(ta);
@@ -25,12 +44,12 @@ public class TravelAgentEditor : Editor
         }
 
         EditorGUILayout.Space(4);
-        EditorGUILayout.LabelField("Multibody", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(Tips.Multibody, EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "When Multibody travel is enabled, rebuild runs TravelMultibodyPathAdjuster against peers (optionally limited to the same multibodyFormationGroupId) and dynamic colliders. With a formation asset + non-empty group id, waypoints are offset first (wrap rows default Back).",
             MessageType.None);
 
-        if (GUILayout.Button("Open Pathing Editor"))
+        if (GUILayout.Button(Tips.OpenPathingEditor))
             TravelPathingEditorWindow.Open(ta);
 
         if (ta.DiscoveredNodes != null && ta.DiscoveredNodes.Count > 0)

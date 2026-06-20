@@ -62,8 +62,8 @@ namespace Locomotion.Narrative
         public List<InterpretedEventBinding> lastBindings = new List<InterpretedEventBinding>();
         [Tooltip("(GENERATE) requests parsed from last prompt (read-only).")]
         public List<GenerationRequest> lastGenerationRequests = new List<GenerationRequest>();
-        [Tooltip("Last parsed with-expr layout root (read-only).")]
-        public LayoutPlacementFrame lastLayoutRoot;
+        [Tooltip("Last parsed with-expr layout root (read-only, runtime — not serialized).")]
+        [NonSerialized] public LayoutPlacementFrame lastLayoutRoot;
         [Tooltip("Resolved layout instructions from last interpret (read-only).")]
         public List<LayoutPlacementInstruction> lastLayoutInstructions = new List<LayoutPlacementInstruction>();
 
@@ -164,6 +164,7 @@ namespace Locomotion.Narrative
             result.generationRequests.AddRange(lastGenerationRequests);
             _resultByAsset[asset.GetInstanceID()] = result;
             ApplyLayoutFromText(activeText);
+            AnimationPlaybackPolicyBridge.ApplyFromInterpret(this, asset);
             return lastInterpretedEvents;
         }
 
@@ -201,6 +202,7 @@ namespace Locomotion.Narrative
                 OrmFillService.FillFromRegistry(lastInterpretedEvents, sceneObjectRegistry, null, lastBindings);
             }
             ApplyLayoutFromText(prompt);
+            AnimationPlaybackPolicyBridge.ApplyFromInterpret(this, prompt);
 #if UNITY_EDITOR
             InterpretCompleted?.Invoke(this);
 #endif

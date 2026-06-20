@@ -5,6 +5,7 @@
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
     "Locomotion.Runtime",
+    "Continuum.Runtime",
     "HierarchicalPathFinding",
     "SystemDrawer",
     "Weather.Runtime"

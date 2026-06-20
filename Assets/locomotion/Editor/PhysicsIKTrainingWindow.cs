@@ -13,10 +13,70 @@ using UnityEditor.SceneManagement;
 /// </summary>
 public class PhysicsIKTrainingWindow : EditorWindow
 {
+    static class Tips
+    {
+        public static readonly GUIContent LoadPreviewActor = new GUIContent(
+            "Load actor into preview scene",
+            "Isolate the ragdoll in a lit preview scene for training and orbit camera.");
+
+        public static readonly GUIContent AnimationSetManager = new GUIContent(
+            "Animation Set Manager",
+            "Playback manager synced from training selection. Auto-filled from the ragdoll when a solver is assigned.");
+
+        public static readonly GUIContent TrainingPreset = new GUIContent(
+            "Training preset",
+            "Quick-select one animation set from the catalog. Hover options for category, pose, clip, and blend details.");
+
+        public static readonly GUIContent ApplyPreset = new GUIContent(
+            "Apply preset",
+            "Copy animation tree, test category, and initial pose from the selected preset into training fields.");
+
+        public static readonly GUIContent AnimationsToTrain = new GUIContent(
+            "Animations to train",
+            "Multi-select sets for Train all. Checkbox grid stays authoritative for batch training.");
+
+        public static readonly GUIContent DiscoverFromPrefab = new GUIContent(
+            "Discover from actor prefab directory",
+            "Scan the actor prefab folder for AnimationClips and append new catalog entries.");
+
+        public static readonly GUIContent AddAnimation = new GUIContent(
+            "Add animation",
+            "Pick an Animation Behavior Tree or Animation Clip to append to the catalog.");
+
+        public static readonly GUIContent AnimationTree = new GUIContent(
+            "Animation Tree",
+            "Behavior tree used for the current training run when no IK Animation Manager is present.");
+
+        public static readonly GUIContent Solver = new GUIContent(
+            "Physics Card Solver",
+            "IK solver on the ragdoll actor used for weight sweeps and scenario runs.");
+
+        public static readonly GUIContent RunAsset = new GUIContent(
+            "Run Asset (save target)",
+            "ScriptableObject that receives trained weight sets and scenario configuration.");
+
+        public static readonly GUIContent TestCategory = new GUIContent(
+            "Test Category",
+            "Training scenario type (Locomotion, ToolUse, Throw, etc.). Presets can override this from clip config.");
+    }
+
+    enum AddAnimationPickerMode
+    {
+        None,
+        BehaviorTree,
+        AnimationClip
+    }
+
     [SerializeField] private AnimationBehaviorTree animationTree;
     [SerializeField] private PhysicsCardSolver solver;
     [SerializeField] private PhysicsIKTrainingRunAsset runAsset;
     [SerializeField] private PhysicsIKTrainingCategory testCategory = PhysicsIKTrainingCategory.Locomotion;
+
+    [SerializeField] private RagdollAnimationSetManager animationSetManager;
+    [SerializeField] private int selectedPresetIndex;
+    [SerializeField] private int addAnimationPickerControlId;
+    AddAnimationPickerMode addAnimationPickerMode = AddAnimationPickerMode.None;
+    RagdollIKAnimationManager addAnimationPickerManager;
 
     [SerializeField] private Rigidbody ragdollRigidbody;
     [SerializeField] private bool includeFrozenAxisRuns = true;
@@ -241,6 +301,108 @@ public class PhysicsIKTrainingWindow : EditorWindow
         var manager = rs.GetComponent<RagdollIKAnimationManager>();
         if (manager != null) return manager;
         return rs.GetComponentInChildren<RagdollIKAnimationManager>();
+    }
+
+    RagdollAnimationSetManager GetAnimationSetManager(RagdollIKAnimationManager ikManager)
+    {
+        if (animationSetManager != null)
+            return animationSetManager;
+        if (ikManager != null && ikManager.animationSetManager != null)
+            return ikManager.animationSetManager;
+
+        var effSolver = GetEffectiveSolver();
+        if (effSolver == null)
+            return null;
+        var rs = effSolver.GetComponent<RagdollSystem>();
+        if (rs == null)
+            return null;
+        var manager = rs.GetComponent<RagdollAnimationSetManager>();
+        if (manager != null)
+            return manager;
+        return rs.GetComponentInChildren<RagdollAnimationSetManager>();
+    }
+
+    void ApplySelectedPreset(RagdollIKAnimationManager ikManager, IkAnimationTrainingPresetEntry entry)
+    {
+        if (entry.set == null)
+            return;
+
+        IkAnimationTrainingPresetCatalog.ApplyToTraining(ref animationTree, ref testCategory, runAsset, entry.set);
+
+        if (ikManager != null)
+        {
+            ikManager.SetSelectedIndices(new List<int> { entry.catalogIndex });
+            ikManager.SyncSelectionToSetManagerAndHierarchy();
+            EditorUtility.SetDirty(ikManager);
+        }
+
+        if (runAsset != null)
+            EditorUtility.SetDirty(runAsset);
+    }
+
+    void DrawAnimationPresetDropdown(RagdollIKAnimationManager ikManager, IReadOnlyList<RagdollAnimationSet> available)
+    {
+        List<IkAnimationTrainingPresetEntry> presets = IkAnimationTrainingPresetCatalog.Build(available);
+        if (presets.Count == 0)
+        {
+            EditorGUILayout.HelpBox("No animation presets in catalog. Use Add animation or Discover.", MessageType.Info);
+            return;
+        }
+
+        selectedPresetIndex = Mathf.Clamp(selectedPresetIndex, 0, presets.Count - 1);
+        var labels = new GUIContent[presets.Count];
+        for (int i = 0; i < presets.Count; i++)
+            labels[i] = new GUIContent(presets[i].label, presets[i].detail);
+
+        EditorGUI.BeginChangeCheck();
+        int newIndex = EditorGUILayout.Popup(Tips.TrainingPreset, selectedPresetIndex, labels);
+        if (EditorGUI.EndChangeCheck())
+            selectedPresetIndex = newIndex;
+
+        IkAnimationTrainingPresetEntry entry = presets[selectedPresetIndex];
+        EditorGUILayout.HelpBox(entry.detail, MessageType.None);
+
+        if (GUILayout.Button(Tips.ApplyPreset))
+            ApplySelectedPreset(ikManager, entry);
+    }
+
+    void HandleAddAnimationPicker()
+    {
+        if (addAnimationPickerMode == AddAnimationPickerMode.None)
+            return;
+        if (EditorGUIUtility.GetObjectPickerControlID() != addAnimationPickerControlId)
+            return;
+        if (Event.current.commandName != "ObjectSelectorClosed")
+            return;
+
+        UnityEngine.Object picked = EditorGUIUtility.GetObjectPickerObject();
+        RagdollIKAnimationManager manager = addAnimationPickerManager;
+        AddAnimationPickerMode mode = addAnimationPickerMode;
+        addAnimationPickerMode = AddAnimationPickerMode.None;
+        addAnimationPickerManager = null;
+
+        if (picked == null || manager == null)
+            return;
+
+        int newIndex = -1;
+        if (mode == AddAnimationPickerMode.BehaviorTree && picked is AnimationBehaviorTree tree)
+            newIndex = RagdollIKAnimationManagerEditor.AddAnimationSetFromTree(manager, tree);
+        else if (mode == AddAnimationPickerMode.AnimationClip && picked is AnimationClip clip)
+            newIndex = RagdollIKAnimationManagerEditor.AddAnimationSetFromClip(manager, clip);
+
+        if (newIndex >= 0)
+            selectedPresetIndex = newIndex;
+
+        Repaint();
+    }
+
+    void BeginAddAnimationPicker(RagdollIKAnimationManager ikManager, AddAnimationPickerMode mode)
+    {
+        addAnimationPickerManager = ikManager;
+        addAnimationPickerMode = mode;
+        addAnimationPickerControlId = GUIUtility.GetControlID(FocusType.Passive);
+        System.Type pickerType = mode == AddAnimationPickerMode.BehaviorTree ? typeof(AnimationBehaviorTree) : typeof(AnimationClip);
+        EditorGUIUtility.ShowObjectPicker<UnityEngine.Object>(null, false, "t:" + pickerType.Name, addAnimationPickerControlId);
     }
 
     private void EnsurePreviewScene()
@@ -715,6 +877,30 @@ public class PhysicsIKTrainingWindow : EditorWindow
         Undo.CollapseUndoOperations(group);
     }
 
+    void PrintMobilityWarningsToConsole()
+    {
+        Rigidbody rb = GetEffectiveRagdollRigidbody();
+        if (rb == null)
+        {
+            Debug.LogWarning("[IK Training] Assign a ragdoll rigidbody before running mobility checks.");
+            return;
+        }
+
+        RagdollMobilityValidator.Report report = RagdollMobilityValidator.Validate(rb.transform.root);
+        string rootName = rb.transform.root.name;
+        if (!report.HasWarnings)
+        {
+            Debug.Log(
+                $"[IK Training] Mobility OK for '{rootName}' — {report.rigidbodyCount} rigidbodies, " +
+                $"{report.colliderCount} colliders, ground={(report.hasGround ? "yes" : "no")}.");
+            return;
+        }
+
+        Debug.LogWarning($"[IK Training] Mobility check for '{rootName}': {report.warnings.Count} warning(s).");
+        foreach (string warning in report.warnings)
+            Debug.LogWarning($"[IK Training]   {warning}");
+    }
+
     /// <summary>Set all ragdoll rigidbodies to non-kinematic so physics/IK can move joints; store previous state.</summary>
     private void SetRagdollNonKinematicForTraining()
     {
@@ -867,6 +1053,8 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
     private void OnGUI()
     {
+        HandleAddAnimationPicker();
+
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
         EditorGUILayout.LabelField("IK Animation Training", EditorStyles.boldLabel);
@@ -878,7 +1066,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
         EditorGUILayout.LabelField("Setup", EditorStyles.boldLabel);
         bool prevMode = usePreviewSceneActor;
-        usePreviewSceneActor = EditorGUILayout.Toggle("Load actor into preview scene", usePreviewSceneActor);
+        usePreviewSceneActor = EditorGUILayout.Toggle(Tips.LoadPreviewActor, usePreviewSceneActor);
         if (prevMode != usePreviewSceneActor)
         {
             if (usePreviewSceneActor)
@@ -897,10 +1085,32 @@ public class PhysicsIKTrainingWindow : EditorWindow
             DestroyPreviewInstance();
 
         RagdollIKAnimationManager ikManager = GetIKAnimationManager();
+        RagdollAnimationSetManager resolvedSetManager = GetAnimationSetManager(ikManager);
+        EditorGUI.BeginChangeCheck();
+        animationSetManager = (RagdollAnimationSetManager)EditorGUILayout.ObjectField(
+            Tips.AnimationSetManager,
+            animationSetManager,
+            typeof(RagdollAnimationSetManager),
+            true);
+        if (EditorGUI.EndChangeCheck())
+            Repaint();
+
+        RagdollAnimationSetManager activeSetManager = animationSetManager != null ? animationSetManager : resolvedSetManager;
+        if (animationSetManager == null && resolvedSetManager != null)
+            EditorGUILayout.LabelField($"Auto-resolved: {resolvedSetManager.name}", EditorStyles.miniLabel);
+        if (activeSetManager != null)
+        {
+            int activeCount = activeSetManager.animationSets != null ? activeSetManager.animationSets.Count : 0;
+            EditorGUILayout.LabelField($"{activeCount} active set(s) on manager", EditorStyles.miniLabel);
+        }
+
         if (ikManager != null)
         {
-            EditorGUILayout.LabelField("Animations to train", EditorStyles.boldLabel);
             var available = ikManager.GetAvailableAnimations();
+            DrawAnimationPresetDropdown(ikManager, available);
+
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField(Tips.AnimationsToTrain, EditorStyles.boldLabel);
             var selected = ikManager.GetSelectedIndices();
             const int gridColumns = 3;
             int count = available != null ? available.Count : 0;
@@ -961,13 +1171,22 @@ public class PhysicsIKTrainingWindow : EditorWindow
             var actorPrefab = GetActorPrefabForDiscovery();
             EditorGUILayout.BeginHorizontal();
             GUI.enabled = actorPrefab != null;
-            if (GUILayout.Button("Discover from actor prefab directory", GUILayout.Width(220)))
+            if (GUILayout.Button(Tips.DiscoverFromPrefab, GUILayout.Width(220)))
             {
                 RagdollIKAnimationManagerEditor.DiscoverFromPrefab(ikManager, actorPrefab);
                 if (ikManager is UnityEngine.Object obj)
                     EditorUtility.SetDirty(obj);
             }
             GUI.enabled = true;
+            if (GUILayout.Button(Tips.AddAnimation, GUILayout.Width(120)))
+            {
+                var menu = new GenericMenu();
+                menu.AddItem(new GUIContent("Animation Behavior Tree"), false,
+                    () => BeginAddAnimationPicker(ikManager, AddAnimationPickerMode.BehaviorTree));
+                menu.AddItem(new GUIContent("Animation Clip"), false,
+                    () => BeginAddAnimationPicker(ikManager, AddAnimationPickerMode.AnimationClip));
+                menu.ShowAsContext();
+            }
             if (actorPrefab == null)
                 EditorGUILayout.LabelField("(Assign Actor prefab or Actor key)", EditorStyles.miniLabel);
             EditorGUILayout.EndHorizontal();
@@ -977,15 +1196,15 @@ public class PhysicsIKTrainingWindow : EditorWindow
         }
         else
         {
-            animationTree = (AnimationBehaviorTree)EditorGUILayout.ObjectField("Animation Tree", animationTree, typeof(AnimationBehaviorTree), true);
+            animationTree = (AnimationBehaviorTree)EditorGUILayout.ObjectField(Tips.AnimationTree, animationTree, typeof(AnimationBehaviorTree), true);
             EditorGUILayout.HelpBox("Add RagdollIKAnimationManager to the ragdoll (same GameObject as RagdollSystem) to use the animation checkbox grid.", MessageType.None);
         }
         EditorGUI.BeginChangeCheck();
-        solver = (PhysicsCardSolver)EditorGUILayout.ObjectField("Physics Card Solver", solver, typeof(PhysicsCardSolver), true);
+        solver = (PhysicsCardSolver)EditorGUILayout.ObjectField(Tips.Solver, solver, typeof(PhysicsCardSolver), true);
         if (EditorGUI.EndChangeCheck() && usePreviewSceneActor)
             EnsurePreviewInstance();
-        runAsset = (PhysicsIKTrainingRunAsset)EditorGUILayout.ObjectField("Run Asset (save target)", runAsset, typeof(PhysicsIKTrainingRunAsset), false);
-        testCategory = (PhysicsIKTrainingCategory)EditorGUILayout.EnumPopup("Test Category", testCategory);
+        runAsset = (PhysicsIKTrainingRunAsset)EditorGUILayout.ObjectField(Tips.RunAsset, runAsset, typeof(PhysicsIKTrainingRunAsset), false);
+        testCategory = (PhysicsIKTrainingCategory)EditorGUILayout.EnumPopup(Tips.TestCategory, testCategory);
         if (runAsset != null)
         {
             EditorGUILayout.Space(2);
@@ -1008,9 +1227,14 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Mobility", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Mobility preset (non-kinematic, continuous, interpolate)"))
             ApplyMobilityPreset();
-        Transform mobilityRoot = ragdollRigidbody != null ? ragdollRigidbody.transform.root : null;
+        if (GUILayout.Button("Print warnings to Console"))
+            PrintMobilityWarningsToConsole();
+        EditorGUILayout.EndHorizontal();
+        Rigidbody effectiveRb = GetEffectiveRagdollRigidbody();
+        Transform mobilityRoot = effectiveRb != null ? effectiveRb.transform.root : null;
         if (mobilityRoot != null)
         {
             RagdollMobilityValidator.Report mobReport = RagdollMobilityValidator.Validate(mobilityRoot);

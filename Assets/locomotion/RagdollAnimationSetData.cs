@@ -47,4 +47,7 @@ public class RagdollAnimationSet
 
     [Tooltip("Optional: behavior tree override when this set uses a different generated tree than animationTree.generatedTree")]
     public BehaviorTree behaviorTreeOverride;
+
+    [Tooltip("When true, SystemDrawerAnimator may route this set through Non-IK kinematic playback.")]
+    public bool preferNonIkPlayback;
 }

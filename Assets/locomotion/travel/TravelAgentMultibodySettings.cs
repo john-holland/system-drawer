@@ -18,6 +18,7 @@ public class TravelAgentMultibodySettings
     [Tooltip("Higher = tighter convoy (smaller exclusion radius). Lower = assume others need more berth.")]
     public float confidence01 = 0.7f;
 
+    [Tooltip("How this agent paces relative to cohort peers along the shared route.")]
     public TravelPaceMode paceMode = TravelPaceMode.Keep;
 
     [Tooltip("When false, near the final target we inflate clearance from static grid obstacles (e.g. park short of a pole instead of grazing it).")]
@@ -44,6 +45,7 @@ public class TravelAgentMultibodySettings
     public float approachRadius = 6f;
 
     [Range(1, 12)]
+    [Tooltip("Iterations of lateral relaxation when resolving convoy overlaps along the path.")]
     public int relaxationIterations = 4;
 
     [Min(1f)]

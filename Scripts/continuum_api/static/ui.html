@@ -32,6 +32,9 @@
     .script-viewer { border: 1px solid #ccc; padding: 12px; min-height: 120px; font-family: monospace; white-space: pre-wrap; user-select: text; }
     .comment-form { margin-top: 12px; }
   </style>
+  <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
+  <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
 </head>
 <body>
   <header>
@@ -39,6 +42,7 @@
       <a href="#" data-route="">Home</a>
       <a href="#review" data-route="review">Review</a>
       <a href="#herb-garden" data-route="herb-garden">Herb Garden</a>
+      <a href="/lemma-library">Lemma Library</a>
     </nav>
     <div>
       <label>User ID <input id="user-id" placeholder="anonymous" style="max-width:120px"></label>
@@ -175,13 +179,14 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         badge.style.display = (data.unreadCount || 0) > 0 ? 'inline' : 'none';
         const panel = document.getElementById('notif-panel');
         panel.innerHTML = (data.items || []).map(n => `
-          <div class="notif-item ${n.readAt ? '' : 'unread'}" data-id="${n.id}">
-            ${n.message} <small>${n.createdAt}</small>
+          <div class="notif-item ${n.readAt ? '' : 'unread'}" data-id="${n.id}" data-review-id="${n.reviewId || ''}">
+            <strong>${n.type || 'notice'}</strong>: ${n.message} <small>${n.createdAt}</small>
           </div>
         `).join('') || '<div class="notif-item">No notifications</div>';
         panel.querySelectorAll('.notif-item[data-id]').forEach(el => {
           el.onclick = async () => {
             await apiFetch(`/notifications/${el.dataset.id}/read`, { method: 'POST' });
+            if (el.dataset.reviewId) window.location.hash = 'review';
             loadNotifications();
           };
         });
@@ -201,7 +206,7 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       (data.items || []).forEach(ep => {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${ep.title}</td><td><code>${ep.id}</code></td><td>${ep.engine}</td><td>${ep.scenePath || '—'}</td>
-          <td><a href="${scriptOutputBase}/script?episodeId=${ep.id}">Script</a></td>`;
+          <td><a href="${scriptOutputBase}/?episodeId=${ep.id}">Script</a></td>`;
         tbody.appendChild(tr);
       });
     }
@@ -301,49 +306,44 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
     }
 
     async function showReviewDetail(reviewId, draftId, committed) {
-      const [reviewRes, commentsRes, scriptRes] = await Promise.all([
-        apiFetch(`/reviews/${reviewId}`).catch(() => ({})),
+      const [commentsRes, archiveRes, scriptRes, bindingsRes] = await Promise.all([
         apiFetch(`/reviews/${reviewId}/comments`),
+        apiFetch(`/reviews/${reviewId}/comments/archive`).catch(() => ({ ok: false })),
         apiFetch(`/drafts/episodes/${draftId}/script`),
+        apiFetch(`/thesaurus/clause-bindings?draftEpisodeId=${draftId}`).catch(() => ({ ok: false })),
       ]);
       const comments = (await commentsRes.json()).items || [];
+      const archived = archiveRes.ok ? ((await archiveRes.json()).items || []) : [];
       const scriptData = await scriptRes.ok ? scriptRes.json() : { scriptText: '' };
       const scriptText = scriptData.scriptText || '';
+      const bindings = bindingsRes.ok ? ((await bindingsRes.json()).items || []) : [];
 
       const detail = document.getElementById('review-detail');
       const canEdit = !committed;
+      const hasComment = comments.length > 0;
       detail.innerHTML = `
-        <div class="script-viewer" id="review-script">${escapeHtml(scriptText)}</div>
+        <div id="review-script-ace"></div>
         ${canEdit ? `<p><strong>Status:</strong> <select id="review-status">
           <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="request_changes">Request changes</option>
+          <option value="approved">Approve</option>
+          <option value="request_changes">Deny</option>
         </select> <button id="save-status">Save status</button></p>
-        <div class="comment-form">
-          <label>Add comment <textarea id="new-comment" rows="2"></textarea></label>
-          <label>Selection start <input type="number" id="sel-start" placeholder="0"></label>
-          <label>Selection end <input type="number" id="sel-end" placeholder="0"></label>
+        ${!hasComment ? `<div class="comment-form">
+          <label>Add comment (one per review cycle) <textarea id="new-comment" rows="2"></textarea></label>
           <button id="add-comment">Add comment</button>
-        </div>` : '<p><em>Committed – no edits allowed</em></p>'}
-        <h3>Comments</h3>
+        </div>` : '<p><em>Comment posted this cycle — use Approve or Deny for further feedback.</em></p>'}` : '<p><em>Committed – no edits allowed</em></p>'}
+        <h3>Comments — current cycle</h3>
         <ul id="review-comments-list"></ul>
+        <details class="old-comments"><summary>Old comments (${archived.length})</summary>
+          <ul id="review-comments-archive"></ul>
+        </details>
       `;
-      const scriptEl = document.getElementById('review-script');
-      scriptEl.addEventListener('mouseup', () => {
-        const sel = window.getSelection();
-        if (sel.rangeCount === 0) return;
-        try {
-          const range = sel.getRangeAt(0);
-          const pre = document.createRange();
-          pre.setStart(scriptEl, 0);
-          pre.setEnd(range.startContainer, range.startOffset);
-          const start = pre.toString().length;
-          const end = start + range.toString().length;
-          const selStart = document.getElementById('sel-start');
-          const selEnd = document.getElementById('sel-end');
-          if (selStart) selStart.value = start;
-          if (selEnd) selEnd.value = end;
-        } catch (_) {}
+
+      const editorInst = ContinuumScriptEditor.mount(document.getElementById('review-script-ace'), {
+        mode: committed ? 'review' : 'edit',
+        draftId, reviewId, scriptText, committed,
+        clauseBindings: bindings,
+        reviewComments: comments,
       });
 
       const statusSelect = detail.querySelector('#review-status');
@@ -352,7 +352,6 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         const revData = await revRes.json();
         const rev = (revData.items || []).find(x => x.id === reviewId);
         if (rev) statusSelect.value = rev.status;
-
         detail.querySelector('#save-status').onclick = async () => {
           await apiFetch(`/reviews/${reviewId}`, { method: 'PATCH', body: JSON.stringify({ status: statusSelect.value }) });
           loadReviewData();
@@ -363,23 +362,56 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       if (addBtn) addBtn.onclick = async () => {
         const text = document.getElementById('new-comment').value.trim();
         if (!text) return;
-        await apiFetch(`/reviews/${reviewId}/comments`, {
+        const sel = ContinuumScriptEditor.getSelection(editorInst);
+        const res = await apiFetch(`/reviews/${reviewId}/comments`, {
           method: 'POST',
           body: JSON.stringify({
             commentText: text,
             scriptRef: scriptData.id,
-            textSelectionStart: parseInt(document.getElementById('sel-start').value) || null,
-            textSelectionEnd: parseInt(document.getElementById('sel-end').value) || null,
+            textSelectionStart: sel.charStart,
+            textSelectionEnd: sel.charEnd,
           }),
         });
-        document.getElementById('new-comment').value = '';
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          alert(j.error || 'Could not add comment');
+          return;
+        }
         showReviewDetail(reviewId, draftId, committed);
       };
 
       const commentsList = detail.querySelector('#review-comments-list');
-      commentsList.innerHTML = comments.map(c =>
-        `<li>${escapeHtml(c.commentText)} (${c.textSelectionStart}-${c.textSelectionEnd})</li>`
-      ).join('');
+      commentsList.innerHTML = comments.map(c => `
+        <li>${escapeHtml(c.commentText)} (${c.textSelectionStart}-${c.textSelectionEnd})
+          ${c.deleteRequestedAt ? ' <em>Delete pending</em>' : ''}
+          <button class="req-del" data-cid="${c.id}">Request delete</button>
+          ${c.deleteRequestedAt ? `<button class="appr-del" data-cid="${c.id}">Approve delete</button> <button class="deny-del" data-cid="${c.id}">Deny delete</button>` : ''}
+        </li>`).join('') || '<li><em>None</em></li>';
+
+      commentsList.querySelectorAll('.req-del').forEach(btn => {
+        btn.onclick = async () => {
+          await apiFetch(`/reviews/${reviewId}/comments/${btn.dataset.cid}`, { method: 'PATCH', body: JSON.stringify({ requestDelete: true }) });
+          showReviewDetail(reviewId, draftId, committed);
+        };
+      });
+      commentsList.querySelectorAll('.appr-del').forEach(btn => {
+        btn.onclick = async () => {
+          await apiFetch(`/reviews/${reviewId}/comments/${btn.dataset.cid}`, { method: 'PATCH', body: JSON.stringify({ approveDelete: true }) });
+          showReviewDetail(reviewId, draftId, committed);
+        };
+      });
+      commentsList.querySelectorAll('.deny-del').forEach(btn => {
+        btn.onclick = async () => {
+          await apiFetch(`/reviews/${reviewId}/comments/${btn.dataset.cid}`, { method: 'PATCH', body: JSON.stringify({ denyDelete: true }) });
+          showReviewDetail(reviewId, draftId, committed);
+        };
+      });
+
+      const archiveList = detail.querySelector('#review-comments-archive');
+      archiveList.innerHTML = archived.map(c =>
+        `<li><strong>${escapeHtml(c.previouslyOn || '')}</strong> — ${escapeHtml(c.commentText)} <small>(cycle ${c.reviewCycle})</small></li>`
+      ).join('') || '<li><em>None</em></li>';
+
       detail.dataset.reviewId = reviewId;
       detail.dataset.draftId = draftId;
     }
