@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
   <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
+  <script src="/static/shared/continuum-clause-selector/continuum-clause-selector.js"></script>
 </head>
 <body>
   <header>
@@ -306,23 +307,46 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
     }
 
     async function showReviewDetail(reviewId, draftId, committed) {
-      const [commentsRes, archiveRes, scriptRes, bindingsRes] = await Promise.all([
+      const [commentsRes, archiveRes, scriptRes, bindingsRes, clRes] = await Promise.all([
         apiFetch(`/reviews/${reviewId}/comments`),
         apiFetch(`/reviews/${reviewId}/comments/archive`).catch(() => ({ ok: false })),
         apiFetch(`/drafts/episodes/${draftId}/script`),
         apiFetch(`/thesaurus/clause-bindings?draftEpisodeId=${draftId}`).catch(() => ({ ok: false })),
+        apiFetch(`/localization/change-lists?draftEpisodeId=${draftId}`).catch(() => ({ ok: false })),
       ]);
       const comments = (await commentsRes.json()).items || [];
       const archived = archiveRes.ok ? ((await archiveRes.json()).items || []) : [];
       const scriptData = await scriptRes.ok ? scriptRes.json() : { scriptText: '' };
       const scriptText = scriptData.scriptText || '';
-      const bindings = bindingsRes.ok ? ((await bindingsRes.json()).items || []) : [];
+      let bindings = bindingsRes.ok ? ((await bindingsRes.json()).items || []) : [];
+      const changeList = clRes.ok ? await clRes.json() : null;
+
+      async function refreshBindings() {
+        const br = await apiFetch(`/thesaurus/clause-bindings?draftEpisodeId=${draftId}`);
+        bindings = br.ok ? ((await br.json()).items || []) : [];
+        if (editorInst) {
+          editorInst.options.clauseBindings = bindings;
+          ContinuumScriptEditor.renderOverlays(editorInst, editorInst.options);
+        }
+      }
 
       const detail = document.getElementById('review-detail');
       const canEdit = !committed;
       const hasComment = comments.length > 0;
+      const clItems = (changeList && changeList.items) || [];
+      const clRequired = clItems.filter(i => i.severity === 'required');
+      const clWarnings = clItems.filter(i => i.severity !== 'required');
       detail.innerHTML = `
         <div id="review-script-ace"></div>
+        ${changeList && changeList.id ? `
+        <div id="review-change-list" style="margin-top:12px;padding:12px;border:1px solid #ddd;border-radius:4px">
+          <h3>Change list <small>(${changeList.workflowStatus || 'in_progress'}, rev ${changeList.revision || 0})</small></h3>
+          <p style="font-size:13px;color:#666">${changeList.id}</p>
+          <h4>Required</h4>
+          <ul id="cl-required-list">${clRequired.map(i => `<li><label><input type="checkbox" data-id="${i.id}" ${i.userAcknowledged ? 'checked' : ''}/> ${escapeHtml(i.description || i.itemType)}</label></li>`).join('') || '<li><em>None</em></li>'}</ul>
+          <details><summary>Warnings (${clWarnings.length})</summary><ul>${clWarnings.map(i => `<li>${escapeHtml(i.description || '')}</li>`).join('') || '<li>None</li>'}</ul></details>
+          ${canEdit ? '<button id="cl-save-btn">Save change list</button> <button id="cl-submit-btn">Submit for review</button>' : ''}
+        </div>` : ''}
         ${canEdit ? `<p><strong>Status:</strong> <select id="review-status">
           <option value="pending">Pending</option>
           <option value="approved">Approve</option>
@@ -344,7 +368,43 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         draftId, reviewId, scriptText, committed,
         clauseBindings: bindings,
         reviewComments: comments,
+        onBindingsChanged: refreshBindings,
       });
+
+      const clSaveBtn = detail.querySelector('#cl-save-btn');
+      if (clSaveBtn && changeList && changeList.id) {
+        clSaveBtn.onclick = async () => {
+          const items = [...clRequired, ...clWarnings].map(i => {
+            const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
+            return { id: i.id, userAcknowledged: cb ? cb.checked : !!i.userAcknowledged };
+          }).filter(i => i.id);
+          await apiFetch(`/localization/change-lists/${changeList.id}/save`, {
+            method: 'POST',
+            body: JSON.stringify({ items }),
+          });
+          alert('Change list saved');
+        };
+        const clSubmitBtn = detail.querySelector('#cl-submit-btn');
+        if (clSubmitBtn) {
+          clSubmitBtn.onclick = async () => {
+            const unchecked = clRequired.filter(i => {
+              const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
+              return cb ? !cb.checked : !i.userAcknowledged;
+            });
+            if (unchecked.length) { alert('Acknowledge all required items before submit'); return; }
+            const items = clRequired.map(i => {
+              const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
+              return { id: i.id, userAcknowledged: cb ? cb.checked : true };
+            });
+            await apiFetch(`/localization/change-lists/${changeList.id}/save`, {
+              method: 'POST',
+              body: JSON.stringify({ items }),
+            });
+            await apiFetch(`/localization/change-lists/${changeList.id}/submit-for-review`, { method: 'POST', body: '{}' });
+            loadReviewData();
+          };
+        }
+      }
 
       const statusSelect = detail.querySelector('#review-status');
       if (statusSelect) {

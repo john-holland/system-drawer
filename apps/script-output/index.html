@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
   <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
+  <script src="/static/shared/continuum-clause-selector/continuum-clause-selector.js"></script>
   <style>
     body { font-family: system-ui, sans-serif; margin: 16px; max-width: 1200px; }
     label { margin-right: 8px; }
@@ -34,6 +35,24 @@
     let editorInst = null;
     let loadMode = 'draft'; // 'draft' | 'episode'
     let activeId = '';
+    let clauseBindings = [];
+
+    function changeListSaveBody(data) {
+      const items = [...(data?.required || []), ...(data?.warnings || [])]
+        .filter(i => i && i.id)
+        .map(i => ({ id: i.id, userAcknowledged: !!i.userAcknowledged }));
+      return JSON.stringify({ items });
+    }
+
+    async function loadClauseBindings(draftId) {
+      if (!draftId) { clauseBindings = []; return; }
+      try {
+        const data = await api(`/thesaurus/clause-bindings?draftEpisodeId=${encodeURIComponent(draftId)}`);
+        clauseBindings = data.items || [];
+      } catch (_) {
+        clauseBindings = [];
+      }
+    }
 
     function setStatus(msg, isError) {
       const el = document.getElementById('status');
@@ -82,6 +101,7 @@
           activeId = draftId;
           const data = await api(`/drafts/episodes/${draftId}/script`);
           scriptSnapshot = data.scriptText || '';
+          await loadClauseBindings(draftId);
           mountEditor(draftId, scriptSnapshot);
           setStatus(`Loaded draft script (${data.language || 'en'})`);
           return;
@@ -112,6 +132,14 @@
         scriptText: text,
         draftId: loadMode === 'draft' ? id : undefined,
         mode: 'edit',
+        clauseBindings,
+        onBindingsChanged: async () => {
+          if (loadMode === 'draft') await loadClauseBindings(activeId);
+          if (editorInst) {
+            editorInst.options.clauseBindings = clauseBindings;
+            ContinuumScriptEditor.renderOverlays(editorInst, editorInst.options);
+          }
+        },
       });
     }
 
@@ -128,17 +156,30 @@
             body: JSON.stringify({ oldText: scriptSnapshot, newText }),
           });
           ContinuumChangeListModal.open(editRes.changeListId, editRes, {
-            onSave: async (clId) => {
+            onSave: async (clId, clData) => {
               await api(`/drafts/episodes/${activeId}/script`, {
                 method: 'PUT',
                 body: JSON.stringify({ scriptText: newText }),
               });
-              await api(`/localization/change-lists/${clId}/save`, { method: 'POST', body: '{}' });
+              await api(`/localization/change-lists/${clId}/save`, {
+                method: 'POST',
+                body: changeListSaveBody(clData),
+              });
               scriptSnapshot = newText;
+              await loadClauseBindings(activeId);
+              if (editorInst) {
+                editorInst.options.clauseBindings = clauseBindings;
+                ContinuumScriptEditor.renderOverlays(editorInst, editorInst.options);
+              }
               setStatus('Draft saved');
             },
-            onSubmit: async (clId) => {
+            onSubmit: async (clId, clData) => {
+              await api(`/localization/change-lists/${clId}/save`, {
+                method: 'POST',
+                body: changeListSaveBody(clData),
+              });
               await api(`/localization/change-lists/${clId}/submit-for-review`, { method: 'POST', body: '{}' });
+              setStatus('Submitted for review');
             },
           });
         } else {

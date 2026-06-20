@@ -182,6 +182,29 @@ public sealed class AnimationPlaybackPolicyContext : MonoBehaviour
         return false;
     }
 
+    /// <summary>Resolve bool via prompt → clause → lemma properties → spec default.</summary>
+    public bool GetEffectiveBool(string propertyKey, string specDefault = "false", bool skipPromptAndClause = false)
+    {
+        if (!skipPromptAndClause)
+        {
+            if (TryGetLemmaBoolForActivePhrase(propertyKey, out bool phraseLemma))
+                return phraseLemma;
+            return AnimationPlaybackPolicyResolver.ResolveEffectiveBool(
+                propertyKey,
+                GetSegmentsForActivePhrase(),
+                GetBindingsForActivePhrase(),
+                lemmaProperties,
+                specDefault);
+        }
+
+        return AnimationPlaybackPolicyResolver.ResolveEffectiveBool(
+            propertyKey,
+            Array.Empty<PromptSegment>(),
+            Array.Empty<LocalizationClauseBindingRecord>(),
+            lemmaProperties,
+            specDefault);
+    }
+
     static bool PhraseMatchesPlaceholder(string phrase, string placeholderName)
     {
         if (string.IsNullOrEmpty(phrase) || string.IsNullOrEmpty(placeholderName))

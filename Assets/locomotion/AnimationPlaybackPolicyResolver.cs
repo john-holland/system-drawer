@@ -112,4 +112,52 @@ public static class AnimationPlaybackPolicyResolver
         }
         return false;
     }
+
+    /// <summary>Resolve bool: prompt → clause property binding → lemma entry property → default.</summary>
+    public static bool ResolveEffectiveBool(
+        string propertyKey,
+        IReadOnlyList<PromptSegment> promptSegments,
+        IReadOnlyList<LocalizationClauseBindingRecord> clauseBindings,
+        IReadOnlyList<ThesaurusEntryPropertyRecord> lemmaProperties,
+        string specDefault,
+        int charStart = -1,
+        int charEnd = -1)
+    {
+        if (TryGetBoolFromPrompt(promptSegments, propertyKey, out bool fromPrompt))
+            return fromPrompt;
+
+        if (clauseBindings != null)
+        {
+            foreach (var b in clauseBindings)
+            {
+                if (b == null || !string.Equals(b.propertyKey, propertyKey, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                var kind = b.bindingKind ?? LocalizationBindingKinds.Property;
+                if (kind != LocalizationBindingKinds.Property && kind != LocalizationBindingKinds.Localization)
+                    continue;
+                if (charStart >= 0 && charEnd > charStart)
+                {
+                    if (b.charEnd <= charStart || b.charStart >= charEnd)
+                        continue;
+                }
+                if (TryParseBool(b.propertyValue, out bool v))
+                    return v;
+            }
+        }
+
+        if (lemmaProperties != null)
+        {
+            foreach (var p in lemmaProperties)
+            {
+                if (p != null && string.Equals(p.propertyKey, propertyKey, StringComparison.OrdinalIgnoreCase) &&
+                    TryParseBool(p.propertyValue, out bool v))
+                    return v;
+            }
+        }
+
+        if (TryParseBool(specDefault, out bool fromDefault))
+            return fromDefault;
+
+        return false;
+    }
 }

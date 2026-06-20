@@ -53,9 +53,27 @@ public static class FareySpanUtility
         return den > 0;
     }
 
-    /// <summary>Stub: returns document root until AST char-to-Farey bridge is wired.</summary>
+    /// <summary>Map char range to Farey interval (proportional to document root when no AST).</summary>
     public static FareySpanRecord CharRangeToFareySpan(string scriptText, int charStart, int charEnd)
     {
-        return FareySpanRecord.Root;
+        int n = string.IsNullOrEmpty(scriptText) ? 1 : scriptText.Length;
+        charStart = Math.Max(0, Math.Min(charStart, n));
+        charEnd = Math.Max(charStart, Math.Min(charEnd, n));
+        if (n <= 0)
+            return FareySpanRecord.Root;
+
+        int Gcd(int a, int b)
+        {
+            while (b != 0) { int t = b; b = a % b; a = t; }
+            return Math.Max(a, 1);
+        }
+
+        int ln = charStart;
+        int ld = n;
+        int rn = charEnd;
+        int rd = n;
+        int g1 = Gcd(ln, ld);
+        int g2 = Gcd(rn, rd);
+        return new FareySpanRecord { ln = ln / g1, ld = ld / g1, rn = rn / g2, rd = rd / g2 };
     }
 }

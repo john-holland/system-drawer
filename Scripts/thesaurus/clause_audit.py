@@ -1,8 +1,10 @@
-"""Clause audit helpers — Farey containment wrappers."""
+"""Clause audit helpers — Farey containment and char-to-Farey mapping."""
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+import math
+from fractions import Fraction
+from typing import Any, Iterable, List, Optional, Sequence, Tuple
 
 
 def farey_contains(outer: Tuple[int, int, int, int], inner: Tuple[int, int, int, int]) -> bool:
@@ -18,6 +20,82 @@ def farey_contains(outer: Tuple[int, int, int, int], inner: Tuple[int, int, int,
     return i_left >= o_left - 1e-12 and i_right <= o_right + 1e-12
 
 
-def char_to_farey_stub(_script_text: str, char_start: int, char_end: int) -> Tuple[int, int, int, int]:
-    """Stub: map char range to document root until AST bridge wired."""
-    return (0, 1, 1, 1)
+def _farey_tuple(node: dict) -> Tuple[int, int, int, int]:
+    return (
+        int(node.get("farey_left_num") or node.get("fareyLeftNum") or 0),
+        int(node.get("farey_left_den") or node.get("fareyLeftDen") or 1),
+        int(node.get("farey_right_num") or node.get("fareyRightNum") or 1),
+        int(node.get("farey_right_den") or node.get("fareyRightDen") or 1),
+    )
+
+
+def char_to_farey(
+    script_text: str,
+    char_start: int,
+    char_end: int,
+    ast_nodes: Optional[Sequence[dict]] = None,
+) -> Tuple[int, int, int, int]:
+    """Map char range to Farey interval; prefer smallest containing AST node when available."""
+    n = max(len(script_text or ""), 1)
+    cs = max(0, min(int(char_start), n))
+    ce = max(cs, min(int(char_end), n))
+    left = Fraction(cs, n)
+    right = Fraction(ce, n)
+    ln, ld = left.numerator, left.denominator
+    rn, rd = right.numerator, right.denominator
+
+    if ast_nodes:
+        best: Optional[Tuple[int, int, int, int]] = None
+        best_width = float("inf")
+        for node in ast_nodes:
+            ft = _farey_tuple(node)
+            if farey_contains(ft, (ln, ld, rn, rd)):
+                width = ft[2] / ft[3] - ft[0] / ft[1]
+                if width < best_width:
+                    best_width = width
+                    best = ft
+        if best:
+            return best
+
+    g1 = math.gcd(ln, ld)
+    g2 = math.gcd(rn, rd)
+    return (ln // g1, ld // g1, rn // g2, rd // g2)
+
+
+def char_to_farey_stub(script_text: str, char_start: int, char_end: int) -> Tuple[int, int, int, int]:
+    """Backward-compatible alias."""
+    return char_to_farey(script_text, char_start, char_end, None)
+
+
+def resolve_effective_properties(
+    property_key: str,
+    clause_bindings: Iterable[dict],
+    entry_properties: dict,
+    spec_defaults: dict,
+    char_start: Optional[int] = None,
+    char_end: Optional[int] = None,
+    prompt_value: Optional[str] = None,
+) -> Optional[str]:
+    """Resolution: prompt inline → clause property binding → entry property → spec default."""
+    if prompt_value is not None:
+        return prompt_value
+
+    for b in clause_bindings or []:
+        kind = b.get("binding_kind") or b.get("bindingKind") or ""
+        pk = b.get("property_key") or b.get("propertyKey") or ""
+        if kind not in ("property", "localization") or pk != property_key:
+            continue
+        if char_start is not None and char_end is not None:
+            bs = int(b.get("char_start") or b.get("charStart") or 0)
+            be = int(b.get("char_end") or b.get("charEnd") or 0)
+            if be <= char_start or bs >= char_end:
+                continue
+        return b.get("property_value") or b.get("propertyValue")
+
+    if property_key in entry_properties:
+        return entry_properties[property_key]
+
+    if property_key in spec_defaults:
+        return spec_defaults[property_key]
+
+    return None

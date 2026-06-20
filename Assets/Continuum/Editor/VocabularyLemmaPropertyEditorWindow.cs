@@ -15,6 +15,10 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
 
     LocalizationPropertySpecCatalog _catalog;
     string _entryId = "";
+    string _clauseDraftId = "";
+    int _clauseCharStart;
+    int _clauseCharEnd;
+    string _clauseSelection = "";
     ThesaurusEntryPropertyRecord[] _properties = Array.Empty<ThesaurusEntryPropertyRecord>();
     bool _nonIkAnimation;
     Vector2 _scroll;
@@ -57,6 +61,19 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         if (GUILayout.Button("Save"))
             SaveProperties();
         EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space(6);
+        EditorGUILayout.LabelField("Clause context (optional)", EditorStyles.boldLabel);
+        _clauseDraftId = EditorGUILayout.TextField("Draft episode ID", _clauseDraftId);
+        EditorGUILayout.BeginHorizontal();
+        _clauseCharStart = EditorGUILayout.IntField("Char start", _clauseCharStart);
+        _clauseCharEnd = EditorGUILayout.IntField("Char end", _clauseCharEnd);
+        EditorGUILayout.EndHorizontal();
+        _clauseSelection = EditorGUILayout.TextField("Selection text", _clauseSelection);
+        GUI.enabled = !string.IsNullOrEmpty(_entryId) && !string.IsNullOrEmpty(_clauseDraftId) && _clauseCharEnd > _clauseCharStart;
+        if (GUILayout.Button("Attach entry to clause span"))
+            _ = AttachEntryToClauseAsync();
+        GUI.enabled = true;
 
         _scroll = EditorGUILayout.BeginScrollView(_scroll);
         if (_catalog?.specs != null)
@@ -112,6 +129,31 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         var client = ContinuumEditorLocalizationClient.Instance;
         await client.PutEntryPropertyAsync(_entryId, LocalizationPropertyKeys.NonIkAnimation, _nonIkAnimation ? "true" : "false");
         await LoadPropertiesAsync();
+    }
+
+    async Task AttachEntryToClauseAsync()
+    {
+        var draft = await ContinuumEditorLocalizationClient.Instance.GetDraftScriptAsync(_clauseDraftId);
+        string scriptText = draft?.scriptText ?? "";
+        var farey = FareySpanUtility.CharRangeToFareySpan(scriptText, _clauseCharStart, _clauseCharEnd);
+        var clauseRef = new ClauseRefRecord
+        {
+            charStart = _clauseCharStart,
+            charEnd = _clauseCharEnd,
+            selectionText = _clauseSelection,
+            entryId = _entryId,
+            fareyLeftNum = farey.ln,
+            fareyLeftDen = farey.ld,
+            fareyRightNum = farey.rn,
+            fareyRightDen = farey.rd,
+        };
+        await ContinuumEditorLocalizationClient.Instance.PostClauseBindingAsync(
+            clauseRef,
+            LocalizationBindingKinds.Lemma,
+            "entry-id",
+            _entryId,
+            scriptText);
+        EditorUtility.DisplayDialog("Lemma Properties", "Lemma attached to clause span.", "OK");
     }
 
     void PushToRuntime()

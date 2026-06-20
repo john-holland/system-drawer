@@ -27,26 +27,36 @@ public static class AnimationPlaybackPolicyApplicator
                 ctx.segmentIndex);
         }
 
-        bool travelPrefer = ctx.travelAgent != null && ctx.travelAgent.preferNonIkPlayback;
-
         if (policy != null &&
             policy.TryGetLemmaBoolForActivePhrase(AnimationPlaybackPolicyResolver.NonIkAnimationKey, out bool fromLemma))
             return fromLemma;
 
-        IReadOnlyList<PromptSegment> segments = policy != null
-            ? policy.GetSegmentsForActivePhrase()
-            : Array.Empty<PromptSegment>();
-        IReadOnlyList<LocalizationClauseBindingRecord> bindings = policy != null
-            ? policy.GetBindingsForActivePhrase()
-            : null;
+        if (policy != null)
+        {
+            IReadOnlyList<PromptSegment> segments = policy.GetSegmentsForActivePhrase();
+            IReadOnlyList<LocalizationClauseBindingRecord> bindings = policy.GetBindingsForActivePhrase();
+            if (AnimationPlaybackPolicyResolver.TryGetBoolFromPrompt(segments, AnimationPlaybackPolicyResolver.NonIkAnimationKey, out bool fromPrompt))
+                return fromPrompt;
+            if (bindings != null)
+            {
+                foreach (var b in bindings)
+                {
+                    if (b != null &&
+                        string.Equals(b.propertyKey, AnimationPlaybackPolicyResolver.NonIkAnimationKey, StringComparison.OrdinalIgnoreCase) &&
+                        AnimationPlaybackPolicyResolver.TryParseBool(b.propertyValue, out bool clauseVal))
+                        return clauseVal;
+                }
+            }
+            if (policy.GetEffectiveBool(AnimationPlaybackPolicyResolver.NonIkAnimationKey, "false", skipPromptAndClause: true))
+                return true;
+        }
 
-        return AnimationPlaybackPolicyResolver.ResolveNonIkForActivePhrase(
-            ctx.activePhrase,
-            segments,
-            bindings,
-            clipConfig,
-            set,
-            travelPrefer);
+        bool travelPrefer = ctx.travelAgent != null && ctx.travelAgent.preferNonIkPlayback;
+        if (clipConfig != null && clipConfig.nonIkAnimation)
+            return true;
+        if (set != null && set.preferNonIkPlayback)
+            return true;
+        return travelPrefer;
     }
 
     public static void ApplyToAnimatorLayers(

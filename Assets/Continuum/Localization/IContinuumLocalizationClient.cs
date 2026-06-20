@@ -9,7 +9,9 @@ public interface IContinuumLocalizationClient
     Task<ScriptApplyEditResult> ApplyScriptEditAsync(string draftEpisodeId, string oldText, string newText, CancellationToken ct = default);
     Task<LocalizationChangeListRecord> GetChangeListAsync(string changeListId, CancellationToken ct = default);
     Task AcknowledgeChangeListItemAsync(string itemId, CancellationToken ct = default);
-    Task SaveChangeListAsync(string changeListId, CancellationToken ct = default);
+    Task SaveChangeListAsync(string changeListId, LocalizationChangeListItemRecord[] items = null, CancellationToken ct = default);
+    Task<LocalizationChangeListDetailRecord> GetActiveChangeListForDraftAsync(string draftEpisodeId, CancellationToken ct = default);
+    Task<LocalizationClauseBindingRecord> PostClauseBindingAsync(ClauseRefRecord clauseRef, string bindingKind, string propertyKey, string propertyValue, string scriptText, CancellationToken ct = default);
     Task SubmitChangeListForReviewAsync(string changeListId, CancellationToken ct = default);
     Task<ReviewerCommentArchiveRecord[]> GetArchivedReviewCommentsAsync(string reviewId, CancellationToken ct = default);
     Task RequestCommentDeleteAsync(string reviewId, string commentId, CancellationToken ct = default);

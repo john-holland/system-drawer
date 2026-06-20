@@ -45,8 +45,63 @@ public sealed class ContinuumLocalizationClient : IContinuumLocalizationClient, 
     public Task AcknowledgeChangeListItemAsync(string itemId, CancellationToken ct = default) =>
         PatchJson($"/api/localization/change-list-items/{Uri.EscapeDataString(itemId ?? "")}", "{\"userAcknowledged\":true}", ct);
 
-    public Task SaveChangeListAsync(string changeListId, CancellationToken ct = default) =>
-        PostJson($"/api/localization/change-lists/{Uri.EscapeDataString(changeListId ?? "")}/save", "{}", ct);
+    public async Task<LocalizationChangeListDetailRecord> GetActiveChangeListForDraftAsync(string draftEpisodeId, CancellationToken ct = default)
+    {
+        string json = await GetRaw($"/api/localization/change-lists?draftEpisodeId={Uri.EscapeDataString(draftEpisodeId ?? "")}", ct);
+        if (string.IsNullOrEmpty(json))
+            return null;
+        var detail = JsonUtility.FromJson<LocalizationChangeListDetailRecord>(json);
+        return string.IsNullOrEmpty(detail?.id) ? null : detail;
+    }
+
+    public async Task SaveChangeListAsync(string changeListId, LocalizationChangeListItemRecord[] items = null, CancellationToken ct = default)
+    {
+        var payload = new SaveChangeListBody { items = BuildSaveItems(items) };
+        await PostJson($"/api/localization/change-lists/{Uri.EscapeDataString(changeListId ?? "")}/save", JsonUtility.ToJson(payload), ct);
+    }
+
+    public async Task<LocalizationClauseBindingRecord> PostClauseBindingAsync(
+        ClauseRefRecord clauseRef,
+        string bindingKind,
+        string propertyKey,
+        string propertyValue,
+        string scriptText,
+        CancellationToken ct = default)
+    {
+        var body = JsonUtility.ToJson(new PostClauseBindingBody
+        {
+            bindingKind = bindingKind,
+            propertyKey = propertyKey,
+            propertyValue = propertyValue,
+            scriptText = scriptText ?? "",
+            charStart = clauseRef?.charStart ?? 0,
+            charEnd = clauseRef?.charEnd ?? 0,
+            selectionText = clauseRef?.selectionText ?? "",
+            fareyLeftNum = clauseRef?.fareyLeftNum ?? 0,
+            fareyLeftDen = clauseRef?.fareyLeftDen ?? 1,
+            fareyRightNum = clauseRef?.fareyRightNum ?? 1,
+            fareyRightDen = clauseRef?.fareyRightDen ?? 1,
+            draftScriptId = clauseRef?.draftScriptId ?? "",
+            entryId = clauseRef?.entryId ?? "",
+            astNodeId = clauseRef?.astNodeId ?? "",
+        });
+        string json = await PostJson("/api/thesaurus/clause-bindings", body, ct);
+        return string.IsNullOrEmpty(json) ? null : JsonUtility.FromJson<LocalizationClauseBindingRecord>(json);
+    }
+
+    static SaveChangeListItem[] BuildSaveItems(LocalizationChangeListItemRecord[] items)
+    {
+        if (items == null || items.Length == 0)
+            return Array.Empty<SaveChangeListItem>();
+        var list = new System.Collections.Generic.List<SaveChangeListItem>();
+        foreach (var item in items)
+        {
+            if (item == null || string.IsNullOrEmpty(item.id))
+                continue;
+            list.Add(new SaveChangeListItem { id = item.id, userAcknowledged = item.userAcknowledged });
+        }
+        return list.ToArray();
+    }
 
     public Task SubmitChangeListForReviewAsync(string changeListId, CancellationToken ct = default) =>
         PostJson($"/api/localization/change-lists/{Uri.EscapeDataString(changeListId ?? "")}/submit-for-review", "{}", ct);
@@ -217,5 +272,30 @@ public sealed class ContinuumLocalizationClient : IContinuumLocalizationClient, 
     class JsonArrayWrapper<T>
     {
         public T[] items;
+    }
+
+    [Serializable]
+    class SaveChangeListBody { public SaveChangeListItem[] items; }
+
+    [Serializable]
+    class SaveChangeListItem { public string id; public bool userAcknowledged; }
+
+    [Serializable]
+    class PostClauseBindingBody
+    {
+        public string bindingKind;
+        public string propertyKey;
+        public string propertyValue;
+        public string scriptText;
+        public int charStart;
+        public int charEnd;
+        public string selectionText;
+        public int fareyLeftNum;
+        public int fareyLeftDen;
+        public int fareyRightNum;
+        public int fareyRightDen;
+        public string draftScriptId;
+        public string entryId;
+        public string astNodeId;
     }
 }

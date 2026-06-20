@@ -16,6 +16,7 @@ public sealed class LocalizationClauseBindingRecord
     public string propertyKey;
     public string propertyValue;
     public string bindingKind;
+    public string entryId;
     public string astNodeId;
     public string promptPlaceholderName;
     public string createdAt;

@@ -1107,6 +1107,14 @@ def put_draft_script(draft_id: str):
     min_thesaurus_version = body.get("minThesaurusVersion")
     try:
         conn = get_conn()
+        try:
+            from continuum_api.localization_helpers import draft_blocks_author_edit
+        except ImportError:
+            from localization_helpers import draft_blocks_author_edit
+        blocked = draft_blocks_author_edit(conn, draft_id)
+        if blocked:
+            conn.close()
+            return jsonify({"error": f"draft change list is {blocked}; withdraw before editing"}), 409
         cur = conn.execute(
             "SELECT id FROM draft_episode_script WHERE draft_episode_id = ? AND language = ?",
             (draft_id, language),
@@ -1299,6 +1307,11 @@ def update_review(review_id: str):
                 "Your draft has been approved by a reviewer",
                 draft_id=row["draft_episode_id"], review_id=review_id,
             )
+            try:
+                from continuum_api.localization_helpers import advance_change_list_on_review_approve
+            except ImportError:
+                from localization_helpers import advance_change_list_on_review_approve
+            advance_change_list_on_review_approve(conn, row["draft_episode_id"])
         elif status == "request_changes":
             cur = conn.execute("SELECT reviewee_user_id FROM reviewer WHERE id = ?", (review_id,))
             reviewee = cur.fetchone()["reviewee_user_id"]
@@ -2127,6 +2140,9 @@ def write_deeplink_get():
 
 def main():
     import argparse
+    import threading
+    import time
+
     p = argparse.ArgumentParser(description="Continuum API for episode script and thesaurus")
     p.add_argument("--port", type=int, default=5050)
     p.add_argument("--host", default="127.0.0.1")
@@ -2134,6 +2150,23 @@ def main():
     args = p.parse_args()
     if args.db:
         os.environ["CONTINUUM_DB"] = args.db
+
+    if os.environ.get("CONTINUUM_SUBMIT_CRON", "").strip() in ("1", "true", "yes"):
+        def _cron_loop():
+            from submit_scheduler import process_submitted
+
+            while True:
+                try:
+                    conn = sqlite3.connect(os.environ.get("CONTINUUM_DB", "continuum.db"))
+                    conn.row_factory = sqlite3.Row
+                    process_submitted(conn)
+                    conn.close()
+                except Exception as ex:
+                    print(f"[submit-cron] {ex}", flush=True)
+                time.sleep(60)
+
+        threading.Thread(target=_cron_loop, daemon=True, name="continuum-submit-cron").start()
+
     app.run(host=args.host, port=args.port, debug=True)
 
 

@@ -43,9 +43,66 @@ public sealed class ContinuumEditorLocalizationClient : IContinuumLocalizationCl
             "{\"userAcknowledged\":true}", ct);
     }
 
-    public async Task SaveChangeListAsync(string changeListId, CancellationToken ct = default)
+    public async Task<LocalizationChangeListDetailRecord> GetActiveChangeListForDraftAsync(string draftEpisodeId, CancellationToken ct = default)
     {
-        await ContinuumEditorApiClient.RequestAsync("POST", $"/api/localization/change-lists/{Uri.EscapeDataString(changeListId ?? "")}/save", "{}", ct);
+        var r = await ContinuumEditorApiClient.RequestAsync("GET",
+            $"/api/localization/change-lists?draftEpisodeId={Uri.EscapeDataString(draftEpisodeId ?? "")}", null, ct);
+        if (!r.success || string.IsNullOrEmpty(r.json))
+            return null;
+        var detail = JsonUtility.FromJson<LocalizationChangeListDetailRecord>(r.json);
+        return string.IsNullOrEmpty(detail?.id) ? null : detail;
+    }
+
+    public async Task SaveChangeListAsync(string changeListId, LocalizationChangeListItemRecord[] items = null, CancellationToken ct = default)
+    {
+        var payload = new SaveChangeListBody { items = BuildSaveItems(items) };
+        var body = JsonUtility.ToJson(payload);
+        await ContinuumEditorApiClient.RequestAsync("POST", $"/api/localization/change-lists/{Uri.EscapeDataString(changeListId ?? "")}/save", body, ct);
+    }
+
+    public async Task<LocalizationClauseBindingRecord> PostClauseBindingAsync(
+        ClauseRefRecord clauseRef,
+        string bindingKind,
+        string propertyKey,
+        string propertyValue,
+        string scriptText,
+        CancellationToken ct = default)
+    {
+        var body = JsonUtility.ToJson(new PostClauseBindingBody
+        {
+            bindingKind = bindingKind,
+            propertyKey = propertyKey,
+            propertyValue = propertyValue,
+            scriptText = scriptText ?? "",
+            charStart = clauseRef?.charStart ?? 0,
+            charEnd = clauseRef?.charEnd ?? 0,
+            selectionText = clauseRef?.selectionText ?? "",
+            fareyLeftNum = clauseRef?.fareyLeftNum ?? 0,
+            fareyLeftDen = clauseRef?.fareyLeftDen ?? 1,
+            fareyRightNum = clauseRef?.fareyRightNum ?? 1,
+            fareyRightDen = clauseRef?.fareyRightDen ?? 1,
+            draftScriptId = clauseRef?.draftScriptId ?? "",
+            entryId = clauseRef?.entryId ?? "",
+            astNodeId = clauseRef?.astNodeId ?? "",
+        });
+        var r = await ContinuumEditorApiClient.RequestAsync("POST", "/api/thesaurus/clause-bindings", body, ct);
+        if (!r.success || string.IsNullOrEmpty(r.json))
+            return null;
+        return JsonUtility.FromJson<LocalizationClauseBindingRecord>(r.json);
+    }
+
+    static SaveChangeListItem[] BuildSaveItems(LocalizationChangeListItemRecord[] items)
+    {
+        if (items == null || items.Length == 0)
+            return System.Array.Empty<SaveChangeListItem>();
+        var list = new System.Collections.Generic.List<SaveChangeListItem>();
+        foreach (var item in items)
+        {
+            if (item == null || string.IsNullOrEmpty(item.id))
+                continue;
+            list.Add(new SaveChangeListItem { id = item.id, userAcknowledged = item.userAcknowledged });
+        }
+        return list.ToArray();
     }
 
     public async Task SubmitChangeListForReviewAsync(string changeListId, CancellationToken ct = default)
@@ -136,6 +193,28 @@ public sealed class ContinuumEditorLocalizationClient : IContinuumLocalizationCl
     class EntryPropertyBody { public string entryId; public string propertyKey; public string propertyValue; }
     [Serializable]
     class JsonArrayWrapper<T> { public T[] items; }
+    [Serializable]
+    class SaveChangeListBody { public SaveChangeListItem[] items; }
+    [Serializable]
+    class SaveChangeListItem { public string id; public bool userAcknowledged; }
+    [Serializable]
+    class PostClauseBindingBody
+    {
+        public string bindingKind;
+        public string propertyKey;
+        public string propertyValue;
+        public string scriptText;
+        public int charStart;
+        public int charEnd;
+        public string selectionText;
+        public int fareyLeftNum;
+        public int fareyLeftDen;
+        public int fareyRightNum;
+        public int fareyRightDen;
+        public string draftScriptId;
+        public string entryId;
+        public string astNodeId;
+    }
 }
 
 #endif

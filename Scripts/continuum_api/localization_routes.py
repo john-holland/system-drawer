@@ -9,7 +9,33 @@ from typing import Callable
 
 from flask import jsonify, request
 
-from thesaurus.script_edit_diff import DiffItem, audit_edit
+from thesaurus.clause_ref import BINDING_KINDS
+from thesaurus.script_edit_diff import audit_edit
+
+try:
+    from continuum_api.localization_helpers import (
+        advance_change_list_on_review_approve,
+        binding_row,
+        draft_blocks_author_edit,
+        effective_properties_for_span,
+        ensure_clause_binding_columns,
+        get_active_change_list,
+        merge_change_list,
+        resolve_clause_ref_farey,
+        validate_property_value,
+    )
+except ImportError:
+    from localization_helpers import (
+        advance_change_list_on_review_approve,
+        binding_row,
+        draft_blocks_author_edit,
+        effective_properties_for_span,
+        ensure_clause_binding_columns,
+        get_active_change_list,
+        merge_change_list,
+        resolve_clause_ref_farey,
+        validate_property_value,
+    )
 
 GetConn = Callable[[], sqlite3.Connection]
 GetUser = Callable[[], str]
@@ -46,7 +72,7 @@ def build_previously_on(comment: dict, script_text: str = "") -> str:
     if pk:
         snippet = ""
         if script_text and ts is not None and te is not None and te > ts:
-            snippet = script_text[int(ts): int(te)][:40]
+            snippet = script_text[int(ts) : int(te)][:40]
         return f'property: {pk} on "{snippet}"'
     if script_text and ts is not None and te is not None and te > ts:
         return f'selection: "{script_text[int(ts): int(te)][:80]}"'
@@ -63,11 +89,18 @@ def register_localization_routes(
 ) -> None:
     @app.route("/api/thesaurus/property-specs", methods=["GET"])
     def list_property_specs():
+        key = request.args.get("key")
         try:
             conn = get_conn()
-            cur = conn.execute(
-                "SELECT key, value_type, allowed_values_json, default_value, description FROM localization_property_specs ORDER BY key"
-            )
+            if key:
+                cur = conn.execute(
+                    "SELECT key, value_type, allowed_values_json, default_value, description FROM localization_property_specs WHERE key = ?",
+                    (key,),
+                )
+            else:
+                cur = conn.execute(
+                    "SELECT key, value_type, allowed_values_json, default_value, description FROM localization_property_specs ORDER BY key"
+                )
             items = [
                 {
                     "key": r["key"],
@@ -120,6 +153,10 @@ def register_localization_routes(
             return jsonify({"error": "entryId and propertyKey required"}), 400
         try:
             conn = get_conn()
+            err = validate_property_value(conn, property_key, property_value)
+            if err:
+                conn.close()
+                return jsonify({"error": err}), 400
             conn.execute(
                 """INSERT INTO thesaurus_entry_properties (entry_id, property_key, property_value)
                    VALUES (?, ?, ?)
@@ -154,8 +191,11 @@ def register_localization_routes(
     def list_clause_bindings():
         draft_episode_id = request.args.get("draftEpisodeId")
         draft_script_id = request.args.get("draftScriptId")
+        entry_id = request.args.get("entryId")
+        binding_kind = request.args.get("bindingKind")
         try:
             conn = get_conn()
+            ensure_clause_binding_columns(conn)
             if draft_episode_id:
                 cur = conn.execute(
                     """SELECT b.* FROM localization_clause_bindings b
@@ -168,20 +208,61 @@ def register_localization_routes(
                     "SELECT * FROM localization_clause_bindings WHERE draft_script_id = ?",
                     (draft_script_id,),
                 )
+            elif entry_id:
+                cur = conn.execute(
+                    "SELECT * FROM localization_clause_bindings WHERE entry_id = ?",
+                    (entry_id,),
+                )
             else:
                 conn.close()
                 return jsonify({"items": []}), 200
-            items = [_binding_row(r) for r in cur.fetchall()]
+            items = [binding_row(r) for r in cur.fetchall()]
+            if binding_kind:
+                items = [i for i in items if i.get("bindingKind") == binding_kind]
             conn.close()
             return jsonify({"items": items}), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/thesaurus/clauses/effective", methods=["GET"])
+    def get_effective_clause_properties():
+        draft_episode_id = request.args.get("draftEpisodeId")
+        char_start = request.args.get("charStart", type=int)
+        char_end = request.args.get("charEnd", type=int)
+        if not draft_episode_id or char_start is None or char_end is None:
+            return jsonify({"error": "draftEpisodeId, charStart, charEnd required"}), 400
+        try:
+            conn = get_conn()
+            ensure_clause_binding_columns(conn)
+            props = effective_properties_for_span(conn, draft_episode_id, char_start, char_end)
+            conn.close()
+            return jsonify({"properties": props}), 200
         except sqlite3.OperationalError as e:
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/thesaurus/clause-bindings", methods=["POST"])
     def create_clause_binding():
         body = request.get_json() or {}
+        binding_kind = body.get("bindingKind", "property")
+        if binding_kind not in BINDING_KINDS:
+            return jsonify({"error": f"bindingKind must be one of {sorted(BINDING_KINDS)}"}), 400
+        property_key = body.get("propertyKey", "")
+        property_value = body.get("propertyValue", "")
+        if binding_kind == "property" and property_key:
+            try:
+                conn = get_conn()
+                ensure_clause_binding_columns(conn)
+                err = validate_property_value(conn, property_key, property_value)
+                conn.close()
+                if err:
+                    return jsonify({"error": err}), 400
+            except sqlite3.OperationalError as e:
+                return jsonify({"error": str(e)}), 500
         try:
             conn = get_conn()
+            ensure_clause_binding_columns(conn)
+            script_text = body.get("scriptText", "")
+            ref = resolve_clause_ref_farey(conn, body, script_text)
             bid = str(uuid.uuid4())
             now = _now()
             conn.execute(
@@ -189,31 +270,106 @@ def register_localization_routes(
                     id, episode_script_id, draft_script_id,
                     farey_left_num, farey_left_den, farey_right_num, farey_right_den,
                     char_start, char_end, selection_text, property_key, property_value,
-                    binding_kind, ast_node_id, prompt_placeholder_name, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    binding_kind, ast_node_id, prompt_placeholder_name, entry_id, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     bid,
-                    body.get("episodeScriptId"),
-                    body.get("draftScriptId"),
-                    body.get("fareyLeftNum", 0),
-                    body.get("fareyLeftDen", 1),
-                    body.get("fareyRightNum", 1),
-                    body.get("fareyRightDen", 1),
-                    body.get("charStart", 0),
-                    body.get("charEnd", 0),
-                    body.get("selectionText", ""),
-                    body.get("propertyKey", ""),
-                    body.get("propertyValue", ""),
-                    body.get("bindingKind", "lemma"),
-                    body.get("astNodeId"),
+                    ref.episode_script_id or body.get("episodeScriptId"),
+                    ref.draft_script_id or body.get("draftScriptId"),
+                    ref.farey_left_num,
+                    ref.farey_left_den,
+                    ref.farey_right_num,
+                    ref.farey_right_den,
+                    ref.char_start,
+                    ref.char_end,
+                    ref.selection_text or body.get("selectionText", ""),
+                    property_key,
+                    property_value,
+                    binding_kind,
+                    ref.ast_node_id or body.get("astNodeId"),
                     body.get("promptPlaceholderName"),
+                    ref.entry_id or body.get("entryId"),
                     now,
                     now,
                 ),
             )
             conn.commit()
             conn.close()
-            return jsonify({"id": bid}), 201
+            return jsonify({"id": bid, "clauseRef": ref.to_api()}), 201
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/thesaurus/clause-bindings/<binding_id>", methods=["PATCH"])
+    def patch_clause_binding(binding_id: str):
+        body = request.get_json() or {}
+        try:
+            conn = get_conn()
+            ensure_clause_binding_columns(conn)
+            pk = body.get("propertyKey")
+            pv = body.get("propertyValue")
+            if pk is not None and pv is not None:
+                err = validate_property_value(conn, pk, pv)
+                if err:
+                    conn.close()
+                    return jsonify({"error": err}), 400
+            sets = []
+            params = []
+            for field, col in (
+                ("propertyKey", "property_key"),
+                ("propertyValue", "property_value"),
+                ("bindingKind", "binding_kind"),
+                ("entryId", "entry_id"),
+                ("charStart", "char_start"),
+                ("charEnd", "char_end"),
+                ("selectionText", "selection_text"),
+            ):
+                if field in body:
+                    sets.append(f"{col} = ?")
+                    params.append(body[field])
+            if sets:
+                sets.append("updated_at = ?")
+                params.append(_now())
+                params.append(binding_id)
+                conn.execute(
+                    f"UPDATE localization_clause_bindings SET {', '.join(sets)} WHERE id = ?",
+                    params,
+                )
+            conn.commit()
+            conn.close()
+            return jsonify({"ok": True}), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/thesaurus/clause-bindings/<binding_id>", methods=["DELETE"])
+    def delete_clause_binding(binding_id: str):
+        try:
+            conn = get_conn()
+            conn.execute("DELETE FROM localization_clause_bindings WHERE id = ?", (binding_id,))
+            conn.commit()
+            conn.close()
+            return jsonify({"ok": True}), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/localization/change-lists", methods=["GET"])
+    def list_change_lists_by_draft():
+        draft_episode_id = request.args.get("draftEpisodeId")
+        if not draft_episode_id:
+            return jsonify({"error": "draftEpisodeId required"}), 400
+        try:
+            conn = get_conn()
+            row = get_active_change_list(conn, draft_episode_id)
+            if not row:
+                conn.close()
+                return jsonify({"item": None}), 200
+            items_cur = conn.execute(
+                """SELECT * FROM localization_change_list_items
+                   WHERE change_list_id = ? AND superseded_at IS NULL ORDER BY sort_order""",
+                (row["id"],),
+            )
+            items = [_change_item_row(r) for r in items_cur.fetchall()]
+            conn.close()
+            return jsonify({**_change_list_row(row), "items": items}), 200
         except sqlite3.OperationalError as e:
             return jsonify({"error": str(e)}), 500
 
@@ -225,9 +381,13 @@ def register_localization_routes(
         try:
             conn = get_conn()
             _ensure_review_columns(conn)
+            blocked = draft_blocks_author_edit(conn, draft_id)
+            if blocked:
+                conn.close()
+                return jsonify({"error": f"draft change list is {blocked}; withdraw before editing"}), 409
             bindings = _load_bindings_for_draft(conn, draft_id)
             required, warnings, updated = audit_edit(old_text, new_text, bindings)
-            change_list_id, revision = _merge_change_list(conn, draft_id, required, warnings)
+            cl_id, revision, req_out, warn_out = merge_change_list(conn, draft_id, required, warnings)
             for b in updated:
                 conn.execute(
                     "UPDATE localization_clause_bindings SET char_start = ?, char_end = ?, updated_at = ? WHERE id = ?",
@@ -237,10 +397,10 @@ def register_localization_routes(
             conn.close()
             return jsonify(
                 {
-                    "changeListId": change_list_id,
+                    "changeListId": cl_id,
                     "revision": revision,
-                    "required": [_diff_item(d) for d in required],
-                    "warnings": [_diff_item(d) for d in warnings],
+                    "required": req_out,
+                    "warnings": warn_out,
                 }
             ), 200
         except sqlite3.OperationalError as e:
@@ -271,6 +431,16 @@ def register_localization_routes(
         body = request.get_json() or {}
         try:
             conn = get_conn()
+            row = conn.execute(
+                "SELECT workflow_status FROM localization_change_lists WHERE id = ?",
+                (change_list_id,),
+            ).fetchone()
+            if not row:
+                conn.close()
+                return jsonify({"error": "not found"}), 404
+            if row["workflow_status"] == "in_review":
+                conn.close()
+                return jsonify({"error": "cannot save while in_review; withdraw first"}), 409
             now = _now()
             for item in body.get("items") or []:
                 if item.get("id"):
@@ -279,7 +449,7 @@ def register_localization_routes(
                         (1 if item.get("userAcknowledged") else 0, item["id"], change_list_id),
                     )
             conn.execute(
-                "UPDATE localization_change_lists SET last_saved_at = ?, updated_at = ?, workflow_status = 'in_progress' WHERE id = ?",
+                "UPDATE localization_change_lists SET last_saved_at = ?, updated_at = ? WHERE id = ? AND workflow_status IN ('new', 'in_progress')",
                 (now, now, change_list_id),
             )
             conn.commit()
@@ -340,6 +510,25 @@ def register_localization_routes(
             conn.commit()
             conn.close()
             return jsonify({"ok": True}), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/localization/change-lists/<change_list_id>/reviewers", methods=["POST"])
+    def assign_change_list_reviewer(change_list_id: str):
+        body = request.get_json() or {}
+        user_id = body.get("userId")
+        if not user_id:
+            return jsonify({"error": "userId required"}), 400
+        try:
+            conn = get_conn()
+            conn.execute(
+                """INSERT OR IGNORE INTO localization_change_list_reviewers (change_list_id, user_id, role)
+                   VALUES (?, ?, ?)""",
+                (change_list_id, user_id, body.get("role", "reviewer")),
+            )
+            conn.commit()
+            conn.close()
+            return jsonify({"ok": True}), 201
         except sqlite3.OperationalError as e:
             return jsonify({"error": str(e)}), 500
 
@@ -432,6 +621,7 @@ def archive_review_comments_on_deny(conn, review_id: str, script_text: str = "")
 
 
 def _load_bindings_for_draft(conn, draft_id: str) -> list:
+    ensure_clause_binding_columns(conn)
     cur = conn.execute(
         """SELECT b.* FROM localization_clause_bindings b
            JOIN draft_episode_script s ON s.id = b.draft_script_id
@@ -439,83 +629,6 @@ def _load_bindings_for_draft(conn, draft_id: str) -> list:
         (draft_id,),
     )
     return [dict(r) for r in cur.fetchall()]
-
-
-def _merge_change_list(conn, draft_id: str, required: list, warnings: list) -> tuple:
-    now = _now()
-    cur = conn.execute(
-        """SELECT id, revision FROM localization_change_lists
-           WHERE draft_episode_id = ? AND workflow_status IN ('new', 'in_progress')
-           ORDER BY created_at DESC LIMIT 1""",
-        (draft_id,),
-    )
-    row = cur.fetchone()
-    if row:
-        cl_id = row["id"]
-        revision = int(row["revision"] or 0) + 1
-        conn.execute(
-            "UPDATE localization_change_lists SET revision = ?, last_saved_at = ?, updated_at = ?, workflow_status = 'in_progress' WHERE id = ?",
-            (revision, now, now, cl_id),
-        )
-    else:
-        cl_id = str(uuid.uuid4())
-        topic_id = str(uuid.uuid4())
-        revision = 0
-        conn.execute(
-            "INSERT INTO comment_topics (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)",
-            (topic_id, f"Change list {draft_id}", now, now),
-        )
-        conn.execute(
-            """INSERT INTO localization_change_lists (
-                id, draft_episode_id, comment_topic_id, workflow_status, revision, created_at, updated_at, last_saved_at
-            ) VALUES (?, ?, ?, 'in_progress', 0, ?, ?, ?)""",
-            (cl_id, draft_id, topic_id, now, now, now),
-        )
-
-    sort = 0
-    for item in required + warnings:
-        conn.execute(
-            """INSERT INTO localization_change_list_items (
-                id, change_list_id, sort_order, severity, item_type, binding_id, description,
-                old_char_start, old_char_end, new_char_start, new_char_end, auto_applied, user_acknowledged, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                str(uuid.uuid4()),
-                cl_id,
-                sort,
-                item.severity,
-                item.item_type,
-                item.binding_id,
-                item.description,
-                item.old_char_start,
-                item.old_char_end,
-                item.new_char_start,
-                item.new_char_end,
-                1 if item.auto_applied else 0,
-                1 if item.auto_applied else 0,
-                now,
-            ),
-        )
-        sort += 1
-    return cl_id, revision
-
-
-def _binding_row(r) -> dict:
-    return {
-        "id": r["id"],
-        "episodeScriptId": r["episode_script_id"],
-        "draftScriptId": r["draft_script_id"],
-        "fareyLeftNum": r["farey_left_num"],
-        "fareyLeftDen": r["farey_left_den"],
-        "fareyRightNum": r["farey_right_num"],
-        "fareyRightDen": r["farey_right_den"],
-        "charStart": r["char_start"],
-        "charEnd": r["char_end"],
-        "selectionText": r["selection_text"],
-        "propertyKey": r["property_key"],
-        "propertyValue": r["property_value"],
-        "bindingKind": r["binding_kind"],
-    }
 
 
 def _change_list_row(r) -> dict:
@@ -546,19 +659,4 @@ def _change_item_row(r) -> dict:
         "newCharEnd": r["new_char_end"],
         "autoApplied": bool(r["auto_applied"]),
         "userAcknowledged": bool(r["user_acknowledged"]),
-    }
-
-
-def _diff_item(d: DiffItem) -> dict:
-    return {
-        "severity": d.severity,
-        "itemType": d.item_type,
-        "description": d.description,
-        "bindingId": d.binding_id,
-        "oldCharStart": d.old_char_start,
-        "oldCharEnd": d.old_char_end,
-        "newCharStart": d.new_char_start,
-        "newCharEnd": d.new_char_end,
-        "autoApplied": d.auto_applied,
-        "userAcknowledged": d.auto_applied,
     }

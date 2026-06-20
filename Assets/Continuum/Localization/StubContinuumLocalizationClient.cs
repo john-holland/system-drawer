@@ -29,7 +29,18 @@ public sealed class StubContinuumLocalizationClient : IContinuumLocalizationClie
 
     public Task AcknowledgeChangeListItemAsync(string itemId, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task SaveChangeListAsync(string changeListId, CancellationToken ct = default) => Task.CompletedTask;
+    public Task SaveChangeListAsync(string changeListId, LocalizationChangeListItemRecord[] items = null, CancellationToken ct = default) => Task.CompletedTask;
+
+    public Task<LocalizationChangeListDetailRecord> GetActiveChangeListForDraftAsync(string draftEpisodeId, CancellationToken ct = default) =>
+        Task.FromResult<LocalizationChangeListDetailRecord>(null);
+
+    public Task<LocalizationClauseBindingRecord> PostClauseBindingAsync(
+        ClauseRefRecord clauseRef,
+        string bindingKind,
+        string propertyKey,
+        string propertyValue,
+        string scriptText,
+        CancellationToken ct = default) => Task.FromResult<LocalizationClauseBindingRecord>(null);
 
     public Task SubmitChangeListForReviewAsync(string changeListId, CancellationToken ct = default) => Task.CompletedTask;
 

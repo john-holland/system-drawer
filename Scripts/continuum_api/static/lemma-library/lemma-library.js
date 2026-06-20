@@ -130,6 +130,8 @@
         chips[1].textContent = row.propertyValue || '';
         if (row.lemmaId) {
           el.onclick = () => { location.hash = 'entry/' + encodeURIComponent(row.lemmaId); route(); };
+        } else if (row.draftEpisodeId) {
+          el.title = `Draft ${row.draftEpisodeId} [${row.charStart}, ${row.charEnd})`;
         }
         container.appendChild(el);
       });
@@ -152,6 +154,35 @@
   async function loadLocalization() {
     const q = document.getElementById('loc-search-q')?.value || '';
     const propertyKey = document.getElementById('loc-filter-key')?.value || '';
+    const draftId = document.getElementById('loc-filter-draft')?.value?.trim() || '';
+    if (draftId) {
+      const params = new URLSearchParams({ draftEpisodeId: draftId });
+      if (propertyKey) params.set('bindingKind', 'localization');
+      const data = await api('/api/thesaurus/clause-bindings?' + params);
+      locRows = (data.items || []).map(b => ({
+        lemmaTerm: b.selectionText,
+        selectionText: b.selectionText,
+        propertyKey: b.propertyKey || b.bindingKind,
+        propertyValue: b.propertyValue,
+        lemmaId: b.entryId,
+        kind: b.bindingKind,
+        draftEpisodeId: draftId,
+        charStart: b.charStart,
+        charEnd: b.charEnd,
+      }));
+      if (q) {
+        const ql = q.toLowerCase();
+        locRows = locRows.filter(r =>
+          (r.selectionText || '').toLowerCase().includes(ql) ||
+          (r.propertyKey || '').toLowerCase().includes(ql) ||
+          (r.propertyValue || '').toLowerCase().includes(ql));
+      }
+      if (propertyKey) {
+        locRows = locRows.filter(r => (r.propertyKey || '').includes(propertyKey));
+      }
+      renderLocList();
+      return;
+    }
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (propertyKey) params.set('propertyKey', propertyKey);

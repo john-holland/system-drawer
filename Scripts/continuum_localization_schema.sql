@@ -40,9 +40,11 @@ CREATE TABLE IF NOT EXISTS localization_clause_bindings (
     binding_kind TEXT NOT NULL DEFAULT 'lemma',
     ast_node_id TEXT REFERENCES thesaurus_ast_nodes(id) ON DELETE SET NULL,
     prompt_placeholder_name TEXT,
+    entry_id TEXT REFERENCES thesaurus_entries(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_clause_bindings_entry ON localization_clause_bindings(entry_id);
 CREATE INDEX IF NOT EXISTS idx_clause_bindings_script ON localization_clause_bindings(episode_script_id);
 CREATE INDEX IF NOT EXISTS idx_clause_bindings_draft ON localization_clause_bindings(draft_script_id);
 CREATE INDEX IF NOT EXISTS idx_clause_bindings_farey ON localization_clause_bindings(

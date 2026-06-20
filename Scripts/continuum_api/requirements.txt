@@ -1,1 +1,2 @@
 Flask>=3.0
+croniter>=2.0

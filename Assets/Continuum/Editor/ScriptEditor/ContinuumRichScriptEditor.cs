@@ -28,6 +28,14 @@ public sealed class ContinuumRichScriptEditor
 
     public (int charStart, int charEnd, string selectedText) GetSelection()
     {
+        var te = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+        if (te != null && !string.IsNullOrEmpty(_text))
+        {
+            int start = Mathf.Clamp(Mathf.Min(te.selectIndex, te.cursorIndex), 0, _text.Length);
+            int end = Mathf.Clamp(Mathf.Max(te.selectIndex, te.cursorIndex), 0, _text.Length);
+            if (end > start)
+                return (start, end, _text.Substring(start, end - start));
+        }
         return (0, 0, "");
     }
 

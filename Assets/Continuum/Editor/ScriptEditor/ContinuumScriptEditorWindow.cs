@@ -61,6 +61,7 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
         DrawSidePanel();
         EditorGUILayout.EndHorizontal();
         ContinuumChangeListModal.DrawModal();
+        ContinuumClauseAttachDialog.DrawModal();
     }
 
     void DrawToolbar()
@@ -75,6 +76,9 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
             SaveDraft();
         if (GUILayout.Button("Apply edit", EditorStyles.toolbarButton, GUILayout.Width(70)))
             ApplyEdit();
+        GUI.enabled = !_readOnly && !string.IsNullOrEmpty(_draftId);
+        if (GUILayout.Button("Attach clause", EditorStyles.toolbarButton, GUILayout.Width(90)))
+            OpenAttachClauseDialog();
         GUI.enabled = true;
         if (GUILayout.Button("Submit CL", EditorStyles.toolbarButton, GUILayout.Width(70)))
             SubmitChangeList();
@@ -133,15 +137,95 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
 
     async void LoadDraft()
     {
-        if (string.IsNullOrEmpty(_draftId)) return;
+        if (string.IsNullOrEmpty(_draftId) && string.IsNullOrEmpty(_reviewId)) return;
+        if (!string.IsNullOrEmpty(_reviewId))
+            await LoadReviewOrDraft();
+        else
+            await LoadDraftOnly();
+    }
+
+    async Task LoadDraftOnly()
+    {
         var draft = await ContinuumEditorLocalizationClient.Instance.GetDraftScriptAsync(_draftId);
         _loadedText = draft?.scriptText ?? "";
         _originalText = _loadedText;
         _bindings = await ContinuumEditorLocalizationClient.Instance.GetClauseBindingsAsync(_draftId);
         _readOnly = false;
+        await RefreshChangeListFromDraft();
         _webHost?.Dispose();
         _webHost = null;
         ContinuumNotificationConsoleSink.Log("editor", $"Loaded draft {_draftId}");
+        Repaint();
+    }
+
+    async Task LoadReviewOrDraft()
+    {
+        if (string.IsNullOrEmpty(_draftId) && !string.IsNullOrEmpty(_reviewId))
+        {
+            var rev = await ContinuumEditorLocalizationClient.Instance.CallRawAsync("GET", $"/api/reviews/{Uri.EscapeDataString(_reviewId)}", null);
+            if (rev.success && !string.IsNullOrEmpty(rev.json))
+            {
+                var wrapper = JsonUtility.FromJson<ReviewDraftWrapper>(rev.json);
+                if (!string.IsNullOrEmpty(wrapper?.draftEpisodeId))
+                    _draftId = wrapper.draftEpisodeId;
+            }
+        }
+        if (string.IsNullOrEmpty(_draftId)) return;
+        var draft = await ContinuumEditorLocalizationClient.Instance.GetDraftScriptAsync(_draftId);
+        _loadedText = draft?.scriptText ?? "";
+        _originalText = _loadedText;
+        _bindings = await ContinuumEditorLocalizationClient.Instance.GetClauseBindingsAsync(_draftId);
+        var cl = await ContinuumEditorLocalizationClient.Instance.GetActiveChangeListForDraftAsync(_draftId);
+        _changeListId = cl?.id ?? _changeListId;
+        _readOnly = cl != null && (cl.workflowStatus == "in_review" || cl.workflowStatus == "submitted");
+        if (cl?.items != null && cl.items.Length > 0)
+            SplitChangeListItems(cl.items, out _cachedRequired, out _cachedWarnings);
+        _webHost?.Dispose();
+        _webHost = null;
+        ContinuumNotificationConsoleSink.Log("editor", $"Loaded review {_reviewId} draft {_draftId}");
+        Repaint();
+    }
+
+    async Task RefreshChangeListFromDraft()
+    {
+        if (string.IsNullOrEmpty(_draftId)) return;
+        var cl = await ContinuumEditorLocalizationClient.Instance.GetActiveChangeListForDraftAsync(_draftId);
+        _changeListId = cl?.id ?? "";
+        if (cl?.items != null && cl.items.Length > 0)
+            SplitChangeListItems(cl.items, out _cachedRequired, out _cachedWarnings);
+    }
+
+    void OpenAttachClauseDialog()
+    {
+        if (_readOnly || string.IsNullOrEmpty(_draftId)) return;
+        if (_specs == null || _specs.Length == 0)
+            RefreshSpecs();
+        var (start, end, text) = _richEditor.GetSelection();
+        if (end <= start)
+        {
+            EditorUtility.DisplayDialog("Attach clause", "Select text in the script editor first.", "OK");
+            return;
+        }
+        var farey = FareySpanUtility.CharRangeToFareySpan(_loadedText, start, end);
+        var clauseRef = new ClauseRefRecord
+        {
+            charStart = start,
+            charEnd = end,
+            selectionText = text,
+            fareyLeftNum = farey.ln,
+            fareyLeftDen = farey.ld,
+            fareyRightNum = farey.rn,
+            fareyRightDen = farey.rd,
+        };
+        ContinuumClauseAttachDialog.Open(clauseRef, _loadedText, _specs, AttachClauseAsync);
+    }
+
+    async Task AttachClauseAsync(ClauseRefRecord clauseRef, string bindingKind, string propertyKey, string propertyValue, string scriptText)
+    {
+        await ContinuumEditorLocalizationClient.Instance.PostClauseBindingAsync(
+            clauseRef, bindingKind, propertyKey, propertyValue, scriptText);
+        _bindings = await ContinuumEditorLocalizationClient.Instance.GetClauseBindingsAsync(_draftId);
+        ContinuumNotificationConsoleSink.Log("attach", $"Attached {bindingKind} {propertyKey}");
         Repaint();
     }
 
@@ -200,11 +284,25 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
 
     async void OnChangeListSave(string id, LocalizationChangeListRecord data)
     {
-        await ContinuumEditorLocalizationClient.Instance.SaveChangeListAsync(id);
+        var items = MergeChangeListItems(_cachedRequired, _cachedWarnings);
+        await ContinuumEditorLocalizationClient.Instance.SaveChangeListAsync(id, items);
         await ContinuumEditorLocalizationClient.Instance.PutDraftScriptAsync(_draftId, _loadedText);
         _originalText = _loadedText;
         ContinuumNotificationConsoleSink.Log("save", $"Change list saved {id}");
     }
+
+    static LocalizationChangeListItemRecord[] MergeChangeListItems(
+        LocalizationChangeListItemRecord[] required,
+        LocalizationChangeListItemRecord[] warnings)
+    {
+        var list = new List<LocalizationChangeListItemRecord>();
+        if (required != null) list.AddRange(required);
+        if (warnings != null) list.AddRange(warnings);
+        return list.ToArray();
+    }
+
+    [Serializable]
+    class ReviewDraftWrapper { public string draftEpisodeId; }
 
     async void OnChangeListSubmit(string id)
     {
