@@ -2,7 +2,7 @@
   "name": "Locomotion.Tests",
   "rootNamespace": "",
   "references": [
-    "BedogaGenerator",
+    "BedogaPlacement",
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
     "Locomotion.Runtime",

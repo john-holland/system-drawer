@@ -2,8 +2,10 @@
     "name": "BedogaGenerator",
     "rootNamespace": "",
     "references": [
+        "BedogaPlacement",
         "Locomotion.Narrative.Inference",
         "Locomotion.Narrative.Runtime",
+        "Locomotion.Runtime",
         "HierarchicalPathFinding",
         "SystemDrawer",
         "Planetary",

@@ -11,9 +11,9 @@ public class TerminalPlacementSolverTests
         var bounds = new Bounds(Vector3.zero, new Vector3(20f, 4f, 20f));
         var cfg = new PlacementSlotConfig
         {
-            fitX = SGBehaviorTreeNode.FitX.Center,
-            fitY = SGBehaviorTreeNode.FitY.Center,
-            fitZ = SGBehaviorTreeNode.FitZ.Center
+            fitX = PlacementFitX.Center,
+            fitY = PlacementFitY.Center,
+            fitZ = PlacementFitZ.Center
         };
         Assert.IsTrue(PlacementSlotConfig.ComputeSlotCenter3D(
             bounds, new Vector3(4f, 2f, 4f), new Vector3(2f, 1f, 2f), 0, cfg, out Vector3 center));

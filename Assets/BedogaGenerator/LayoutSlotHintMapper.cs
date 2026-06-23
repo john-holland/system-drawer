@@ -22,24 +22,24 @@ public static class LayoutSlotHintMapper
         return SGBehaviorTreeNode.PlacementMode.In;
     }
 
-    static SGBehaviorTreeNode.FitX ToFitX(LayoutFitAxis a) => a switch
+    static PlacementFitX ToFitX(LayoutFitAxis a) => a switch
     {
-        LayoutFitAxis.Left => SGBehaviorTreeNode.FitX.Left,
-        LayoutFitAxis.Right => SGBehaviorTreeNode.FitX.Right,
-        _ => SGBehaviorTreeNode.FitX.Center
+        LayoutFitAxis.Left => PlacementFitX.Left,
+        LayoutFitAxis.Right => PlacementFitX.Right,
+        _ => PlacementFitX.Center
     };
 
-    static SGBehaviorTreeNode.FitY ToFitY(LayoutFitAxis a) => a switch
+    static PlacementFitY ToFitY(LayoutFitAxis a) => a switch
     {
-        LayoutFitAxis.Down => SGBehaviorTreeNode.FitY.Down,
-        LayoutFitAxis.Up => SGBehaviorTreeNode.FitY.Up,
-        _ => SGBehaviorTreeNode.FitY.Center
+        LayoutFitAxis.Down => PlacementFitY.Down,
+        LayoutFitAxis.Up => PlacementFitY.Up,
+        _ => PlacementFitY.Center
     };
 
-    static SGBehaviorTreeNode.FitZ ToFitZ(LayoutFitAxis a) => a switch
+    static PlacementFitZ ToFitZ(LayoutFitAxis a) => a switch
     {
-        LayoutFitAxis.Backward => SGBehaviorTreeNode.FitZ.Backward,
-        LayoutFitAxis.Forward => SGBehaviorTreeNode.FitZ.Forward,
-        _ => SGBehaviorTreeNode.FitZ.Center
+        LayoutFitAxis.Backward => PlacementFitZ.Backward,
+        LayoutFitAxis.Forward => PlacementFitZ.Forward,
+        _ => PlacementFitZ.Center
     };
 }

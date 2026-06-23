@@ -636,13 +636,13 @@ public class SpatialGenerator : SpatialGeneratorBase
             {
                 SGQuadTreeSolver quadSolver = treeSolver as SGQuadTreeSolver;
                 if (quadSolver != null)
-                    result = quadSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers, placementIndex, PlacementSlotConfig.FromNode(node));
+                    result = quadSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers, placementIndex, PlacementSlotConfigBridge.FromNode(node));
             }
             else
             {
                 SGOctTreeSolver octSolver = treeSolver as SGOctTreeSolver;
                 if (octSolver != null)
-                    result = octSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers, placementIndex, PlacementSlotConfig.FromNode(node));
+                    result = octSolver.FindAvailableSpace(node.minSpace, node.maxSpace, node.optimalSpace, emptySpaceMarkers, placementIndex, PlacementSlotConfigBridge.FromNode(node));
             }
             if (result.HasValue)
                 nextRootPlacementIndex++;
@@ -1796,7 +1796,7 @@ public class SpatialGenerator : SpatialGeneratorBase
             if (containerForGizmo != null)
                 rootForGizmo = containerForGizmo.GetRootNode();
         }
-        PlacementSlotConfig? gizmoConfig = rootForGizmo != null ? PlacementSlotConfig.FromNode(rootForGizmo) : (PlacementSlotConfig?)null;
+        PlacementSlotConfig? gizmoConfig = rootForGizmo != null ? PlacementSlotConfigBridge.FromNode(rootForGizmo) : (PlacementSlotConfig?)null;
         List<Bounds> slots = null;
         if (mode == GenerationMode.ThreeDimensional)
         {

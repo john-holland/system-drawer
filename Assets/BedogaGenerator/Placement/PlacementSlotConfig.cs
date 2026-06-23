@@ -3,25 +3,11 @@ using UnityEngine;
 /// <summary>Config for placement slot layout: per-axis fit (center/left/right etc.) and stack/wrap direction. Used by oct/quad solvers.</summary>
 public struct PlacementSlotConfig
 {
-    public SGBehaviorTreeNode.FitX fitX;
-    public SGBehaviorTreeNode.FitY fitY;
-    public SGBehaviorTreeNode.FitZ fitZ;
-    public SGBehaviorTreeNode.AxisDirection stackDirection;
-    public SGBehaviorTreeNode.AxisDirection wrapDirection;
-
-    public static PlacementSlotConfig FromNode(SGBehaviorTreeNode node)
-    {
-        if (node == null)
-            return default;
-        return new PlacementSlotConfig
-        {
-            fitX = node.fitX,
-            fitY = node.fitY,
-            fitZ = node.fitZ,
-            stackDirection = node.stackDirection,
-            wrapDirection = node.wrapDirection
-        };
-    }
+    public PlacementFitX fitX;
+    public PlacementFitY fitY;
+    public PlacementFitZ fitZ;
+    public PlacementAxisDirection stackDirection;
+    public PlacementAxisDirection wrapDirection;
 
     public static bool ComputeSlotCenter3D(
         Bounds searchBounds,
@@ -47,7 +33,6 @@ public struct PlacementSlotConfig
 
         if (!config.HasValue)
         {
-            // Legacy: slot 0 = center, slots 1..N = row-major from min
             if (slot == 0)
             {
                 center = searchBounds.center;
@@ -76,7 +61,6 @@ public struct PlacementSlotConfig
         }
 
         var c = config.Value;
-        // Slot 0: anchor from fit (Center = center, Left/Down/Backward = min+halfOpt, Right/Up/Forward = max-halfOpt)
         if (slot == 0)
         {
             center = new Vector3(
@@ -113,75 +97,77 @@ public struct PlacementSlotConfig
         return true;
     }
 
-    private static int AxisFromDirection(SGBehaviorTreeNode.AxisDirection d)
+    static int AxisFromDirection(PlacementAxisDirection d)
     {
         switch (d)
         {
-            case SGBehaviorTreeNode.AxisDirection.PosX:
-            case SGBehaviorTreeNode.AxisDirection.NegX: return 0;
-            case SGBehaviorTreeNode.AxisDirection.PosY:
-            case SGBehaviorTreeNode.AxisDirection.NegY: return 1;
+            case PlacementAxisDirection.PosX:
+            case PlacementAxisDirection.NegX: return 0;
+            case PlacementAxisDirection.PosY:
+            case PlacementAxisDirection.NegY: return 1;
             default: return 2;
         }
     }
 
-    private static float SlotZeroAnchorX(Bounds b, SGBehaviorTreeNode.FitX fit, float halfOpt)
+    static float SlotZeroAnchorX(Bounds b, PlacementFitX fit, float halfOpt)
     {
         switch (fit)
         {
-            case SGBehaviorTreeNode.FitX.Left: return b.min.x + halfOpt;
-            case SGBehaviorTreeNode.FitX.Right: return b.max.x - halfOpt;
+            case PlacementFitX.Left: return b.min.x + halfOpt;
+            case PlacementFitX.Right: return b.max.x - halfOpt;
             default: return b.center.x;
         }
     }
-    private static float SlotZeroAnchorY(Bounds b, SGBehaviorTreeNode.FitY fit, float halfOpt)
+
+    static float SlotZeroAnchorY(Bounds b, PlacementFitY fit, float halfOpt)
     {
         switch (fit)
         {
-            case SGBehaviorTreeNode.FitY.Down: return b.min.y + halfOpt;
-            case SGBehaviorTreeNode.FitY.Up: return b.max.y - halfOpt;
+            case PlacementFitY.Down: return b.min.y + halfOpt;
+            case PlacementFitY.Up: return b.max.y - halfOpt;
             default: return b.center.y;
         }
     }
-    private static float SlotZeroAnchorZ(Bounds b, SGBehaviorTreeNode.FitZ fit, float halfOpt)
+
+    static float SlotZeroAnchorZ(Bounds b, PlacementFitZ fit, float halfOpt)
     {
         switch (fit)
         {
-            case SGBehaviorTreeNode.FitZ.Backward: return b.min.z + halfOpt;
-            case SGBehaviorTreeNode.FitZ.Forward: return b.max.z - halfOpt;
+            case PlacementFitZ.Backward: return b.min.z + halfOpt;
+            case PlacementFitZ.Forward: return b.max.z - halfOpt;
             default: return b.center.z;
         }
     }
 
-    private static float AnchorX(Bounds b, SGBehaviorTreeNode.FitX fit, int num, int i, float step, float stepUnused, float halfOpt)
+    static float AnchorX(Bounds b, PlacementFitX fit, int num, int i, float step, float stepUnused, float halfOpt)
     {
         if (num == 0) num = 1;
         switch (fit)
         {
-            case SGBehaviorTreeNode.FitX.Left: return b.min.x + halfOpt + i * step;
-            case SGBehaviorTreeNode.FitX.Right: return b.max.x - halfOpt - i * step;
+            case PlacementFitX.Left: return b.min.x + halfOpt + i * step;
+            case PlacementFitX.Right: return b.max.x - halfOpt - i * step;
             default: return b.center.x - (num - 1) * step * 0.5f + halfOpt + i * step;
         }
     }
 
-    private static float AnchorY(Bounds b, SGBehaviorTreeNode.FitY fit, int num, int i, float step, float stepUnused, float halfOpt)
+    static float AnchorY(Bounds b, PlacementFitY fit, int num, int i, float step, float stepUnused, float halfOpt)
     {
         if (num == 0) num = 1;
         switch (fit)
         {
-            case SGBehaviorTreeNode.FitY.Down: return b.min.y + halfOpt + i * step;
-            case SGBehaviorTreeNode.FitY.Up: return b.max.y - halfOpt - i * step;
+            case PlacementFitY.Down: return b.min.y + halfOpt + i * step;
+            case PlacementFitY.Up: return b.max.y - halfOpt - i * step;
             default: return b.center.y - (num - 1) * step * 0.5f + halfOpt + i * step;
         }
     }
 
-    private static float AnchorZ(Bounds b, SGBehaviorTreeNode.FitZ fit, int num, int i, float step, float stepUnused, float halfOpt)
+    static float AnchorZ(Bounds b, PlacementFitZ fit, int num, int i, float step, float stepUnused, float halfOpt)
     {
         if (num == 0) num = 1;
         switch (fit)
         {
-            case SGBehaviorTreeNode.FitZ.Backward: return b.min.z + halfOpt + i * step;
-            case SGBehaviorTreeNode.FitZ.Forward: return b.max.z - halfOpt - i * step;
+            case PlacementFitZ.Backward: return b.min.z + halfOpt + i * step;
+            case PlacementFitZ.Forward: return b.max.z - halfOpt - i * step;
             default: return b.center.z - (num - 1) * step * 0.5f + halfOpt + i * step;
         }
     }
@@ -237,7 +223,6 @@ public struct PlacementSlotConfig
             return true;
         }
 
-        // 2D: stack and wrap are the two axes (0=X, 1=Y). Determine which is first/second from stackDirection/wrapDirection.
         int stackAxis = AxisFromDirection(c.stackDirection);
         int wrapAxis = AxisFromDirection(c.wrapDirection);
         if (stackAxis == 2) stackAxis = 0;

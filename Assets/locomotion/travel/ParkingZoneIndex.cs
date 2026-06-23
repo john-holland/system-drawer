@@ -54,8 +54,8 @@ public static class ParkingZoneIndex
         return result;
     }
 
-    public static List<ParkingZoneVolume> QueryNearGoal(Vector3 goalHint, float radius)
+    public static List<ParkingZoneVolume> QueryNearGoal(Vector3 goalHint, float radius, TravelLegMode? legFilter = null)
     {
-        return QueryNear(goalHint, radius);
+        return QueryNear(goalHint, radius, legFilter);
     }
 }

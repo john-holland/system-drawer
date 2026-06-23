@@ -2,7 +2,7 @@
   "name": "Locomotion.Runtime",
   "rootNamespace": "",
   "references": [
-    "BedogaGenerator",
+    "BedogaPlacement",
     "Weather.Runtime",
     "HierarchicalPathFinding",
     "Locomotion.Audio",

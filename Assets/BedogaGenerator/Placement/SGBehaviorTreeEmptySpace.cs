@@ -27,43 +27,30 @@ public class SGBehaviorTreeEmptySpace : MonoBehaviour
     {
         if (meshType == MeshType.Base)
         {
-            // Try to get bounds from colliders or renderers (these are already in world space)
             BoxCollider boxCollider = GetComponent<BoxCollider>();
             if (boxCollider != null)
-            {
-                return boxCollider.bounds; // Already world space
-            }
+                return boxCollider.bounds;
             
             MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
             if (meshRenderer != null)
-            {
-                return meshRenderer.bounds; // Already world space
-            }
+                return meshRenderer.bounds;
             
-            // Default: use transform scale
-            // Use lossyScale to account for parent transforms (world space scale)
             Vector3 size = transform.lossyScale;
             return new Bounds(transform.position, size);
         }
-        else // Box
-        {
-            // Use explicit box size, transformed to world space
-            // Multiply by lossyScale to account for parent transforms
-            Vector3 worldSize = new Vector3(
-                boxSize.x * transform.lossyScale.x,
-                boxSize.y * transform.lossyScale.y,
-                boxSize.z * transform.lossyScale.z
-            );
-            return new Bounds(transform.position, worldSize);
-        }
+
+        Vector3 worldSize = new Vector3(
+            boxSize.x * transform.lossyScale.x,
+            boxSize.y * transform.lossyScale.y,
+            boxSize.z * transform.lossyScale.z
+        );
+        return new Bounds(transform.position, worldSize);
     }
     
     void OnDrawGizmos()
     {
         if (!showGizmo)
-        {
             return;
-        }
         
         Gizmos.color = gizmoColor;
         Bounds bounds = GetBounds();
@@ -73,11 +60,8 @@ public class SGBehaviorTreeEmptySpace : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         if (!showGizmo)
-        {
             return;
-        }
         
-        // Draw more prominently when selected
         Gizmos.color = new Color(gizmoColor.r, gizmoColor.g, gizmoColor.b, 1f);
         Bounds bounds = GetBounds();
         Gizmos.DrawWireCube(bounds.center, bounds.size);

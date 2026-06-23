@@ -116,7 +116,7 @@ public sealed class ChainedGravitySampleProvider : IGravitySampleProvider
             terrains = pathingSolver.fitToTerrains.ToArray();
 
         var unity = new UnityGravityProvider();
-        var terrain = terrains != null && terrains.Length > 0
+        IGravitySampleProvider terrain = terrains != null && terrains.Length > 0
             ? new TerrainNormalGravityProvider(terrains)
             : unity;
 

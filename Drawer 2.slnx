@@ -45,6 +45,7 @@
   <Project Path="Generated.Tests.csproj" />
   <Project Path="Roads.Editor.csproj" />
   <Project Path="SystemDrawer.PerfTrace.Editor.Tests.csproj" />
+  <Project Path="BedogaPlacement.csproj" />
   <Project Path="Continuum.Telecom.Editor.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.Editor.Tests.csproj" />
   <Project Path="HierarchicalPathFinding.Tests.csproj" />

@@ -17,11 +17,11 @@ public sealed class ParkingZoneVolume : MonoBehaviour
     public TerminalSurfaceKind terminalSurfaceKind = TerminalSurfaceKind.GroundPad;
 
     [Header("Slot layout (Bedoga fit)")]
-    public SGBehaviorTreeNode.FitX fitX = SGBehaviorTreeNode.FitX.Center;
-    public SGBehaviorTreeNode.FitY fitY = SGBehaviorTreeNode.FitY.Center;
-    public SGBehaviorTreeNode.FitZ fitZ = SGBehaviorTreeNode.FitZ.Center;
-    public SGBehaviorTreeNode.AxisDirection stackDirection = SGBehaviorTreeNode.AxisDirection.PosX;
-    public SGBehaviorTreeNode.AxisDirection wrapDirection = SGBehaviorTreeNode.AxisDirection.PosZ;
+    public PlacementFitX fitX = PlacementFitX.Center;
+    public PlacementFitY fitY = PlacementFitY.Center;
+    public PlacementFitZ fitZ = PlacementFitZ.Center;
+    public PlacementAxisDirection stackDirection = PlacementAxisDirection.PosX;
+    public PlacementAxisDirection wrapDirection = PlacementAxisDirection.PosZ;
 
     [Header("Allowed terminal legs")]
     public List<TravelLegMode> allowedTerminalLegs = new List<TravelLegMode>();
