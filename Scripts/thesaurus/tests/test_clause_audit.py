@@ -2,7 +2,7 @@
 
 import unittest
 
-from thesaurus.clause_audit import char_to_farey, farey_contains, resolve_effective_properties
+from thesaurus.clause_audit import char_to_farey, farey_contains, farey_to_char, resolve_effective_properties
 
 
 class ClauseAuditTests(unittest.TestCase):
@@ -16,6 +16,13 @@ class ClauseAuditTests(unittest.TestCase):
         outer = (0, 1, 1, 1)
         inner = (1, 4, 1, 2)
         self.assertTrue(farey_contains(outer, inner))
+
+    def test_farey_to_char_round_trip(self):
+        text = "abcdefghij"
+        cs, ce = 2, 5
+        ln, ld, rn, rd = char_to_farey(text, cs, ce)
+        back_cs, back_ce = farey_to_char(text, ln, ld, rn, rd)
+        self.assertEqual((back_cs, back_ce), (cs, ce))
 
     def test_resolve_precedence_prompt_over_clause(self):
         bindings = [{"property_key": "non-ik-animation", "property_value": "false", "binding_kind": "property"}]

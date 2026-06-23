@@ -1,6 +1,7 @@
 ﻿<Solution>
   <Project Path="Locomotion.Runtime.csproj" />
   <Project Path="Weather.Runtime.csproj" />
+  <Project Path="Continuum.Runtime.csproj" />
   <Project Path="Locomotion.Editor.csproj" />
   <Project Path="Planetary.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
@@ -19,7 +20,6 @@
   <Project Path="Roads.Runtime.csproj" />
   <Project Path="Planetary.Tests.csproj" />
   <Project Path="Generated.Runtime.csproj" />
-  <Project Path="Continuum.Runtime.csproj" />
   <Project Path="Continuum.Editor.csproj" />
   <Project Path="Locomotion.Audio.csproj" />
   <Project Path="SystemDrawer.csproj" />
@@ -45,6 +45,7 @@
   <Project Path="Generated.Tests.csproj" />
   <Project Path="Roads.Editor.csproj" />
   <Project Path="SystemDrawer.PerfTrace.Editor.Tests.csproj" />
+  <Project Path="Continuum.Telecom.Editor.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.Editor.Tests.csproj" />
   <Project Path="HierarchicalPathFinding.Tests.csproj" />
   <Project Path="HierarchicalPathFinding.Editor.csproj" />

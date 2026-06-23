@@ -142,6 +142,9 @@ public class TravelAgent : MonoBehaviour
     [Header("Timeline planner (optional)")]
     public PlannerTimelineOptions plannerTimelineOptions = PlannerTimelineOptions.DefaultLegacy();
 
+    [Header("Terminal placement (Park/Land/Moor/…)")]
+    public PlannerTerminalOptions plannerTerminalOptions = PlannerTerminalOptions.Disabled;
+
     [Tooltip("Optional extra landmark positions merged into the timeline chord graph (world space).")]
     public List<Vector3> timelineExtraLandmarks = new List<Vector3>();
 
@@ -275,6 +278,24 @@ public class TravelAgent : MonoBehaviour
         {
             cachedPlan = built ?? new GenericMultiModalPathPlan();
             return;
+        }
+
+        if (plannerTerminalOptions.enableTerminalLeg && ambulatingActor != null
+            && ActorPhysicalCentroid.TryBuildProfile(ambulatingActor, out ActorPhysicalProfile profile))
+        {
+            built = GenericTraversibilityPlannerSolver.AppendTerminalLegIfEnabled(
+                built,
+                previewStartWorld,
+                previewGoalWorld,
+                solver,
+                profile,
+                in plannerTerminalOptions);
+
+            MultiModalSegment last = built.segments != null && built.segments.Count > 0
+                ? built.segments[built.segments.Count - 1]
+                : null;
+            if (last != null && last.HasTerminalPayload && multibody != null)
+                multibody.finalTargetWorld = last.terminalCentroidWorld;
         }
 
         Vector3 actorWorld = Application.isPlaying ? ResolveMultibodyActorWorld() : previewStartWorld;

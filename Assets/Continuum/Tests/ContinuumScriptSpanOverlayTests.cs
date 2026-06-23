@@ -17,6 +17,29 @@ public class ContinuumScriptSpanOverlayTests
     }
 
     [Test]
+    public void Build_ResolvesClauseSpanFromFareyWhenCharCacheEmpty()
+    {
+        const string text = "abcdefghij";
+        var bindings = new[]
+        {
+            new LocalizationClauseBindingRecord
+            {
+                charStart = 0,
+                charEnd = 0,
+                fareyLeftNum = 1,
+                fareyLeftDen = 5,
+                fareyRightNum = 1,
+                fareyRightDen = 2,
+                propertyKey = "lemma",
+            }
+        };
+        var spans = ContinuumScriptSpanOverlayModel.Build(text, bindings, null);
+        var clause = spans.Find(s => s.kind == ContinuumScriptSpanOverlayModel.SpanKind.Clause);
+        Assert.AreEqual(2, clause.charStart);
+        Assert.AreEqual(5, clause.charEnd);
+    }
+
+    [Test]
     public void SpanOverlayPainter_MultilineRects_SplitOnNewline()
     {
         const string text = "abc\ndef";

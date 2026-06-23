@@ -11,7 +11,14 @@ public enum TravelLegMode
     Fly,
     Drive,
     ToolBridge,
-    Acrobatics
+    Acrobatics,
+    Park,
+    Land,
+    LandWater,
+    Moor,
+    ParkWater,
+    Beach,
+    Dock
 }
 
 /// <summary>
@@ -42,6 +49,22 @@ public class MultiModalSegment
 
     [Tooltip("When true, allocate this leg into the reverse budget when building kinematics profile.")]
     public bool reverseLeg;
+
+    [Header("Terminal placement (Park/Land/Moor/…)")]
+    public Bounds terminalSlotBounds;
+    public Vector3 terminalCentroidWorld;
+    public Vector3 terminalUpWorld = Vector3.up;
+    public Vector3 terminalSurfaceNormal = Vector3.up;
+    public float terminalWaterSurfaceY = float.NaN;
+    public float terminalPlaningSpeed;
+    public WaterHoldPolicy terminalHoldPolicy = WaterHoldPolicy.Park;
+    public int terminalSlotIndex;
+    public PlacementSlotConfig placementSlotConfig;
+    [NonSerialized] public ParkingZoneVolume parkingZoneRef;
+    public float terminalScore;
+
+    public bool HasTerminalPayload =>
+        TravelLegModeExtensions.IsTerminalLeg(mode) && terminalCentroidWorld.sqrMagnitude > 1e-8f;
 
     public static MultiModalSegment FromWalk(List<Vector3> path)
     {
@@ -93,6 +116,54 @@ public class MultiModalSegment
         return s;
     }
 
+    public static MultiModalSegment FromTerminal(
+        TravelLegMode terminalMode,
+        List<Vector3> path,
+        Vector3 centroidWorld,
+        PhysicalPathingMedium medium = PhysicalPathingMedium.Unspecified)
+    {
+        if (medium == PhysicalPathingMedium.Unspecified)
+            medium = TravelLegModeExtensions.DefaultMedium(terminalMode);
+        return new MultiModalSegment
+        {
+            mode = terminalMode,
+            waypoints = path != null ? new List<Vector3>(path) : new List<Vector3>(),
+            segmentEnd = centroidWorld,
+            terminalCentroidWorld = centroidWorld,
+            medium = medium,
+            terminalHoldPolicy = TravelLegModeExtensions.DefaultHoldPolicy(terminalMode),
+        };
+    }
+
+    public static MultiModalSegment FromPark(List<Vector3> path, Vector3 centroid) =>
+        FromTerminal(TravelLegMode.Park, path, centroid, PhysicalPathingMedium.Ground);
+
+    public static MultiModalSegment FromLand(List<Vector3> path, Vector3 centroid) =>
+        FromTerminal(TravelLegMode.Land, path, centroid, PhysicalPathingMedium.Ground);
+
+    public static MultiModalSegment FromLandWater(List<Vector3> path, Vector3 centroid) =>
+        FromTerminal(TravelLegMode.LandWater, path, centroid, PhysicalPathingMedium.Water);
+
+    public static MultiModalSegment FromMoor(List<Vector3> path, Vector3 centroid)
+    {
+        var s = FromTerminal(TravelLegMode.Moor, path, centroid, PhysicalPathingMedium.Water);
+        s.terminalHoldPolicy = WaterHoldPolicy.Anchor;
+        return s;
+    }
+
+    public static MultiModalSegment FromParkWater(List<Vector3> path, Vector3 centroid)
+    {
+        var s = FromTerminal(TravelLegMode.ParkWater, path, centroid, PhysicalPathingMedium.Water);
+        s.terminalHoldPolicy = WaterHoldPolicy.Park;
+        return s;
+    }
+
+    public static MultiModalSegment FromBeach(List<Vector3> path, Vector3 centroid) =>
+        FromTerminal(TravelLegMode.Beach, path, centroid, PhysicalPathingMedium.Ground);
+
+    public static MultiModalSegment FromDock(List<Vector3> path, Vector3 centroid) =>
+        FromTerminal(TravelLegMode.Dock, path, centroid, PhysicalPathingMedium.Space);
+
     /// <summary>Deep copy of waypoint list; shallow refs for card/tools.</summary>
     public MultiModalSegment CloneShallowRefs()
     {
@@ -107,7 +178,18 @@ public class MultiModalSegment
             roadSegmentId = roadSegmentId,
             distanceAlongStart = distanceAlongStart,
             distanceAlongEnd = distanceAlongEnd,
-            reverseLeg = reverseLeg
+            reverseLeg = reverseLeg,
+            terminalSlotBounds = terminalSlotBounds,
+            terminalCentroidWorld = terminalCentroidWorld,
+            terminalUpWorld = terminalUpWorld,
+            terminalSurfaceNormal = terminalSurfaceNormal,
+            terminalWaterSurfaceY = terminalWaterSurfaceY,
+            terminalPlaningSpeed = terminalPlaningSpeed,
+            terminalHoldPolicy = terminalHoldPolicy,
+            terminalSlotIndex = terminalSlotIndex,
+            placementSlotConfig = placementSlotConfig,
+            parkingZoneRef = parkingZoneRef,
+            terminalScore = terminalScore,
         };
         if (waypoints != null)
             copy.waypoints = new List<Vector3>(waypoints);

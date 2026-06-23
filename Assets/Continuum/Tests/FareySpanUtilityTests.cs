@@ -33,4 +33,14 @@ public class FareySpanUtilityTests
         Assert.AreEqual(0, span.ln);
         Assert.AreEqual(1, span.rn);
     }
+
+    [Test]
+    public void FareySpanToCharRange_RoundTripsProportionalSpan()
+    {
+        const string text = "abcdefghij";
+        var span = FareySpanUtility.CharRangeToFareySpan(text, 2, 5);
+        FareySpanUtility.FareySpanToCharRange(text, span, out int charStart, out int charEnd);
+        Assert.AreEqual(2, charStart);
+        Assert.AreEqual(5, charEnd);
+    }
 }

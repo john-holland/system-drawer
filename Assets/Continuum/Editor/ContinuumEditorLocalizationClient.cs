@@ -82,6 +82,7 @@ public sealed class ContinuumEditorLocalizationClient : IContinuumLocalizationCl
             fareyRightNum = clauseRef?.fareyRightNum ?? 1,
             fareyRightDen = clauseRef?.fareyRightDen ?? 1,
             draftScriptId = clauseRef?.draftScriptId ?? "",
+            draftEpisodeId = clauseRef?.draftEpisodeId ?? "",
             entryId = clauseRef?.entryId ?? "",
             astNodeId = clauseRef?.astNodeId ?? "",
         });
@@ -177,6 +178,36 @@ public sealed class ContinuumEditorLocalizationClient : IContinuumLocalizationCl
     public Task<ApiCallResult> CallRawAsync(string method, string path, string body, CancellationToken ct = default) =>
         ContinuumEditorApiClient.RequestAsync(method, path, body, ct);
 
+    public async Task<bool> PostComponentBlueprintAsync(string entryId, ComponentMetadataPayloadDto payload, CancellationToken ct = default)
+    {
+        if (payload == null || string.IsNullOrEmpty(entryId))
+            return false;
+        payload.entryId = entryId;
+        payload.source = "blueprint";
+        var body = JsonUtility.ToJson(payload);
+        var r = await ContinuumEditorApiClient.RequestAsync(
+            "POST",
+            $"/api/thesaurus/entries/{Uri.EscapeDataString(entryId)}/component-blueprint",
+            body,
+            ct);
+        return r.success;
+    }
+
+    public async Task<bool> PostComponentReportAsync(string entryId, ComponentMetadataPayloadDto payload, CancellationToken ct = default)
+    {
+        if (payload == null || string.IsNullOrEmpty(entryId))
+            return false;
+        payload.entryId = entryId;
+        payload.source = "runtime";
+        var body = JsonUtility.ToJson(payload);
+        var r = await ContinuumEditorApiClient.RequestAsync(
+            "POST",
+            $"/api/thesaurus/entries/{Uri.EscapeDataString(entryId)}/component-reports",
+            body,
+            ct);
+        return r.success;
+    }
+
     static T[] ParseItems<T>(string json) where T : class
     {
         if (string.IsNullOrEmpty(json))
@@ -212,6 +243,7 @@ public sealed class ContinuumEditorLocalizationClient : IContinuumLocalizationCl
         public int fareyRightNum;
         public int fareyRightDen;
         public string draftScriptId;
+        public string draftEpisodeId;
         public string entryId;
         public string astNodeId;
     }

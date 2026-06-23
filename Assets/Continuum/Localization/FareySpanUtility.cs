@@ -76,4 +76,19 @@ public static class FareySpanUtility
         int g2 = Gcd(rn, rd);
         return new FareySpanRecord { ln = ln / g1, ld = ld / g1, rn = rn / g2, rd = rd / g2 };
     }
+
+    /// <summary>Map Farey interval back to char range using proportional document root.</summary>
+    public static void FareySpanToCharRange(string scriptText, FareySpanRecord span, out int charStart, out int charEnd)
+    {
+        int n = string.IsNullOrEmpty(scriptText) ? 1 : scriptText.Length;
+        if (span == null || span.ld <= 0 || span.rd <= 0)
+        {
+            charStart = 0;
+            charEnd = 0;
+            return;
+        }
+
+        charStart = Math.Max(0, Math.Min(n, (span.ln * n) / span.ld));
+        charEnd = Math.Max(charStart, Math.Min(n, (span.rn * n) / span.rd));
+    }
 }

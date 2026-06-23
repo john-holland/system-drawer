@@ -67,6 +67,35 @@ def char_to_farey_stub(script_text: str, char_start: int, char_end: int) -> Tupl
     return char_to_farey(script_text, char_start, char_end, None)
 
 
+def farey_to_char(
+    script_text: str,
+    ln: int,
+    ld: int,
+    rn: int,
+    rd: int,
+) -> Tuple[int, int]:
+    """Map Farey interval back to char range using proportional document root."""
+    n = max(len(script_text or ""), 1)
+    if ld <= 0 or rd <= 0:
+        return 0, 0
+    char_start = max(0, min(n, (int(ln) * n) // int(ld)))
+    char_end = max(char_start, min(n, (int(rn) * n) // int(rd)))
+    return char_start, char_end
+
+
+def resolve_binding_char_span(binding: dict, script_text: str = "") -> Tuple[int, int]:
+    """Return display char span for a clause binding, falling back to Farey when cache is empty."""
+    cs = int(binding.get("char_start") or binding.get("charStart") or 0)
+    ce = int(binding.get("char_end") or binding.get("charEnd") or 0)
+    if ce > cs:
+        return cs, ce
+    ln = int(binding.get("farey_left_num") or binding.get("fareyLeftNum") or 0)
+    ld = int(binding.get("farey_left_den") or binding.get("fareyLeftDen") or 1)
+    rn = int(binding.get("farey_right_num") or binding.get("fareyRightNum") or 1)
+    rd = int(binding.get("farey_right_den") or binding.get("fareyRightDen") or 1)
+    return farey_to_char(script_text, ln, ld, rn, rd)
+
+
 def resolve_effective_properties(
     property_key: str,
     clause_bindings: Iterable[dict],

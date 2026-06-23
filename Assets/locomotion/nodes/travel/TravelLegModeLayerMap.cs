@@ -27,9 +27,16 @@ public class TravelLegModeLayerMap
         switch (mode)
         {
             case TravelLegMode.Drive:
+            case TravelLegMode.Moor:
+            case TravelLegMode.ParkWater:
+            case TravelLegMode.Beach:
                 return driveLayerIndex;
             case TravelLegMode.Fly:
+            case TravelLegMode.Land:
+            case TravelLegMode.LandWater:
+            case TravelLegMode.Dock:
                 return flyLayerIndex;
+            case TravelLegMode.Park:
             default:
                 return walkLayerIndex;
         }

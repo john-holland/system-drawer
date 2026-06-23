@@ -85,4 +85,37 @@ public static class PhysicalPathingGoodSectionStubs
             impulseStack = stack
         };
     }
+
+    static GoodSection CreateTerminalStub(string name, TravelLegMode leg, PhysicalPathingMedium medium)
+    {
+        return new GoodSection
+        {
+            sectionName = name,
+            description = "Stub terminal section",
+            physicalPathingMedium = medium,
+            terminalLegMode = leg,
+            impulseStack = new System.Collections.Generic.List<ImpulseAction>()
+        };
+    }
+
+    public static GoodSection CreateParkStub() =>
+        CreateTerminalStub("stub_terminal_park", TravelLegMode.Park, PhysicalPathingMedium.Ground);
+
+    public static GoodSection CreateParkWaterStub() =>
+        CreateTerminalStub("stub_terminal_park_water", TravelLegMode.ParkWater, PhysicalPathingMedium.Water);
+
+    public static GoodSection CreateLandStub() =>
+        CreateTerminalStub("stub_terminal_land", TravelLegMode.Land, PhysicalPathingMedium.Ground);
+
+    public static GoodSection CreateLandWaterStub() =>
+        CreateTerminalStub("stub_terminal_land_water", TravelLegMode.LandWater, PhysicalPathingMedium.Water);
+
+    public static GoodSection CreateMoorStub() =>
+        CreateTerminalStub("stub_terminal_moor", TravelLegMode.Moor, PhysicalPathingMedium.Water);
+
+    public static GoodSection CreateBeachStub() =>
+        CreateTerminalStub("stub_terminal_beach", TravelLegMode.Beach, PhysicalPathingMedium.Ground);
+
+    public static GoodSection CreateDockStub() =>
+        CreateTerminalStub("stub_terminal_dock", TravelLegMode.Dock, PhysicalPathingMedium.Space);
 }

@@ -4,7 +4,6 @@
     "references": [
         "Locomotion.Narrative.Inference",
         "Locomotion.Narrative.Runtime",
-        "Locomotion.Runtime",
         "HierarchicalPathFinding",
         "SystemDrawer",
         "Planetary",

@@ -14,6 +14,7 @@ public sealed class ClauseRefRecord
     public string astNodeId;
     public string entryId;
     public string draftScriptId;
+    public string draftEpisodeId;
     public string episodeScriptId;
 
     public FareySpanRecord FareySpan => new FareySpanRecord

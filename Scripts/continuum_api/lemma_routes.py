@@ -11,10 +11,22 @@ from typing import Any, Callable
 from flask import jsonify, request
 
 try:
-    from continuum_api.lemma_import import import_rows, parse_default_properties, parse_tabular_file, upsert_lemma_row
+    from continuum_api.lemma_import import (
+        _valid_property_keys,
+        import_rows,
+        parse_default_properties,
+        parse_tabular_file,
+        upsert_lemma_row,
+    )
     from continuum_api.lemma_merge import BUILTIN_URN_PREFIX, filter_entries, is_builtin_urn, merge_vocabulary
 except ImportError:
-    from lemma_import import import_rows, parse_default_properties, parse_tabular_file, upsert_lemma_row
+    from lemma_import import (
+        _valid_property_keys,
+        import_rows,
+        parse_default_properties,
+        parse_tabular_file,
+        upsert_lemma_row,
+    )
     from lemma_merge import BUILTIN_URN_PREFIX, filter_entries, is_builtin_urn, merge_vocabulary
 
 GetConn = Callable[[], sqlite3.Connection]
@@ -22,6 +34,39 @@ GetConn = Callable[[], sqlite3.Connection]
 
 def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _create_lemma_error_response(err: str, entry_id: str | None = None):
+    """Map upsert/import errors to structured JSON for the create form."""
+    if err == "missing word":
+        return jsonify({"error": "Word is required.", "code": "word_required", "field": "word"}), 400
+    if err == "cannot create built-in URN as custom entry":
+        return (
+            jsonify(
+                {
+                    "error": "Word cannot be a built-in URN. Use a plain term such as the-car.",
+                    "code": "builtin_urn",
+                    "field": "word",
+                }
+            ),
+            400,
+        )
+    if err == "matches built-in entry":
+        payload: dict[str, Any] = {
+            "error": (
+                "This word matches a built-in lemma for this language. "
+                "Use the existing entry or change the word."
+            ),
+            "code": "builtin_conflict",
+            "field": "word",
+        }
+        if entry_id:
+            payload["existingEntryId"] = entry_id
+        return jsonify(payload), 409
+    payload = {"error": err, "code": "validation_error"}
+    if entry_id:
+        payload["existingEntryId"] = entry_id
+    return jsonify(payload), 400
 
 
 def _entry_json(e: dict[str, Any]) -> dict[str, Any]:
@@ -40,6 +85,7 @@ def _entry_json(e: dict[str, Any]) -> dict[str, Any]:
         "clauseCount": int(e.get("clauseCount") or 0),
         "linkedAssetIds": e.get("linkedAssetIds") or [],
         "components": e.get("components") or [],
+        "componentCreation": e.get("componentCreation"),
     }
 
 
@@ -53,6 +99,14 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
         static_dir = Path(__file__).resolve().parent / "static" / "lemma-library"
         return send_from_directory(static_dir, "index.html")
 
+    @app.route("/api/thesaurus/pos-tags", methods=["GET"])
+    def list_pos_tags_route():
+        try:
+            from thesaurus.pos_tags import list_pos_tags
+        except ImportError:
+            from pos_tags import list_pos_tags
+        return jsonify({"items": list_pos_tags()}), 200
+
     @app.route("/api/thesaurus/entries", methods=["GET"])
     def list_thesaurus_entries():
         q = request.args.get("q")
@@ -61,6 +115,13 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
         source = request.args.get("source", "all")
         property_key = request.args.get("propertyKey")
         component = request.args.get("component")
+        component_type = request.args.get("componentType")
+        bucket_id = request.args.get("bucketId")
+        causality_leaf = request.args.get("causalityLeaf")
+        has_meta_raw = request.args.get("hasComponentMetadata")
+        has_component_metadata = None
+        if has_meta_raw is not None:
+            has_component_metadata = has_meta_raw.lower() in ("1", "true", "yes")
         has_clause_raw = request.args.get("hasClause")
         has_clause = None
         if has_clause_raw is not None:
@@ -88,6 +149,10 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                 property_key=property_key,
                 has_clause=has_clause,
                 component=component,
+                component_type=component_type,
+                bucket_id=bucket_id,
+                causality_leaf=causality_leaf,
+                has_component_metadata=has_component_metadata,
             )
             items.sort(key=lambda x: ((x.get("term") or "").lower(), x.get("id") or ""))
             total = len(items)
@@ -101,7 +166,7 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
         body = request.get_json() or {}
         word = (body.get("word") or body.get("term") or "").strip()
         if not word:
-            return jsonify({"error": "word required"}), 400
+            return jsonify({"error": "Word is required.", "code": "word_required", "field": "word"}), 400
         row = {
             "word": word,
             "description": body.get("description") or body.get("definition") or "",
@@ -111,19 +176,21 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
             "prefabId": body.get("prefabId") or "",
             "defaultProperties": body.get("defaultProperties"),
         }
+        try:
+            from thesaurus.pos_tags import normalize_pos_tag
+        except ImportError:
+            from pos_tags import normalize_pos_tag
+        row["partOfSpeech"] = normalize_pos_tag(row["partOfSpeech"])
         if isinstance(row["synonyms"], list):
             row["synonyms"] = "|".join(str(s) for s in row["synonyms"])
+        conn = None
         try:
             conn = get_conn()
-            from lemma_import import _valid_property_keys
-
             status, err, entry_id = upsert_lemma_row(conn, row, _valid_property_keys(conn))
             if err:
-                conn.close()
-                return jsonify({"error": err}), 400
+                return _create_lemma_error_response(err, entry_id)
             conn.commit()
             merged = merge_vocabulary(conn)
-            conn.close()
             entry = merged.get(entry_id) if entry_id else None
             if not entry:
                 entry = next(
@@ -136,9 +203,96 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                     ),
                     None,
                 )
-            return jsonify({"ok": True, "status": status, "entry": _entry_json(entry) if entry else None}), 201
+            message = (
+                "Lemma created."
+                if status == "created"
+                else "A lemma with this word, language, and part of speech already exists; prefab and properties were updated."
+            )
+            code = 201 if status == "created" else 200
+            return (
+                jsonify(
+                    {
+                        "ok": True,
+                        "status": status,
+                        "message": message,
+                        "entry": _entry_json(entry) if entry else None,
+                    }
+                ),
+                code,
+            )
+        except sqlite3.IntegrityError as e:
+            msg = str(e).lower()
+            field = "word"
+            if "property" in msg:
+                field = "defaultProperties"
+            elif "prefab" in msg:
+                field = "prefabId"
+            return (
+                jsonify(
+                    {
+                        "error": "Could not save lemma because it conflicts with an existing record.",
+                        "code": "duplicate_entry",
+                        "field": field,
+                        "detail": str(e),
+                    }
+                ),
+                409,
+            )
         except sqlite3.OperationalError as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"error": str(e), "code": "database_error"}), 500
+        except Exception as e:
+            return jsonify({"error": f"Failed to create lemma: {e}", "code": "internal_error"}), 500
+        finally:
+            if conn is not None:
+                conn.close()
+
+    @app.route("/api/thesaurus/entries/<entry_id>/component-blueprint", methods=["POST"])
+    def post_component_blueprint(entry_id: str):
+        body = request.get_json() or {}
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_component_metadata import upsert_blueprint
+            except ImportError:
+                from lemma_component_metadata import upsert_blueprint
+            result = upsert_blueprint(conn, entry_id, body)
+            conn.commit()
+            conn.close()
+            return jsonify(result), 201
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_component_metadata_schema.sql"}), 500
+
+    @app.route("/api/thesaurus/entries/<entry_id>/component-reports", methods=["POST"])
+    def post_component_report(entry_id: str):
+        body = request.get_json() or {}
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_component_metadata import append_report
+            except ImportError:
+                from lemma_component_metadata import append_report
+            result = append_report(conn, entry_id, body)
+            conn.commit()
+            conn.close()
+            return jsonify(result), 201
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_component_metadata_schema.sql"}), 500
+
+    @app.route("/api/thesaurus/entries/<entry_id>/component-metadata", methods=["GET"])
+    def get_component_metadata(entry_id: str):
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_component_metadata import load_metadata_for_entry
+            except ImportError:
+                from lemma_component_metadata import load_metadata_for_entry
+            data = load_metadata_for_entry(conn, entry_id)
+            conn.close()
+            return jsonify(data), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_component_metadata_schema.sql"}), 500
 
     @app.route("/api/thesaurus/entries/import", methods=["POST"])
     def import_thesaurus_entries():

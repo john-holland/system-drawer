@@ -43,6 +43,9 @@ public class GoodSection
     [Tooltip("Vehicle instrument slot id when this section targets driving.")]
     public string driveInstrumentId;
 
+    [Tooltip("Terminal travel leg when this section represents parking/landing.")]
+    public TravelLegMode terminalLegMode = TravelLegMode.Walk;
+
     [Header("Impulse Stack")]
     [Tooltip("Stack of impulse actions to execute for this section")]
     public List<ImpulseAction> impulseStack = new List<ImpulseAction>();

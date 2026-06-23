@@ -82,6 +82,7 @@ public sealed class ContinuumLocalizationClient : IContinuumLocalizationClient, 
             fareyRightNum = clauseRef?.fareyRightNum ?? 1,
             fareyRightDen = clauseRef?.fareyRightDen ?? 1,
             draftScriptId = clauseRef?.draftScriptId ?? "",
+            draftEpisodeId = clauseRef?.draftEpisodeId ?? "",
             entryId = clauseRef?.entryId ?? "",
             astNodeId = clauseRef?.astNodeId ?? "",
         });
@@ -171,6 +172,20 @@ public sealed class ContinuumLocalizationClient : IContinuumLocalizationClient, 
             await Task.Yield();
         }
     }
+
+    public async Task<bool> PostComponentBlueprintAsync(string entryId, ComponentMetadataPayloadDto payload, CancellationToken ct = default)
+    {
+        if (payload == null || string.IsNullOrEmpty(entryId))
+            return false;
+        payload.entryId = entryId;
+        payload.source = "blueprint";
+        var body = JsonUtility.ToJson(payload);
+        await PostJson($"/api/thesaurus/entries/{Uri.EscapeDataString(entryId)}/component-blueprint", body, ct);
+        return true;
+    }
+
+    public Task<bool> PostComponentReportAsync(string entryId, ComponentMetadataPayloadDto payload, CancellationToken ct = default) =>
+        LemmaComponentReportCollector.PostReportAsync(entryId, payload, ct);
 
     static T[] ParseItems<T>(string json) where T : class
     {
@@ -295,6 +310,7 @@ public sealed class ContinuumLocalizationClient : IContinuumLocalizationClient, 
         public int fareyRightNum;
         public int fareyRightDen;
         public string draftScriptId;
+        public string draftEpisodeId;
         public string entryId;
         public string astNodeId;
     }

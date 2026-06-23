@@ -10,6 +10,7 @@ using UnityEngine;
 public sealed class ContinuumScriptEditorWindow : EditorWindow
 {
     string _draftId = "";
+    string _draftScriptId = "";
     string _reviewId = "";
     string _loadedText = "";
     string _originalText = "";
@@ -149,6 +150,7 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
         var draft = await ContinuumEditorLocalizationClient.Instance.GetDraftScriptAsync(_draftId);
         _loadedText = draft?.scriptText ?? "";
         _originalText = _loadedText;
+        _draftScriptId = draft?.id ?? "";
         _bindings = await ContinuumEditorLocalizationClient.Instance.GetClauseBindingsAsync(_draftId);
         _readOnly = false;
         await RefreshChangeListFromDraft();
@@ -174,6 +176,7 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
         var draft = await ContinuumEditorLocalizationClient.Instance.GetDraftScriptAsync(_draftId);
         _loadedText = draft?.scriptText ?? "";
         _originalText = _loadedText;
+        _draftScriptId = draft?.id ?? "";
         _bindings = await ContinuumEditorLocalizationClient.Instance.GetClauseBindingsAsync(_draftId);
         var cl = await ContinuumEditorLocalizationClient.Instance.GetActiveChangeListForDraftAsync(_draftId);
         _changeListId = cl?.id ?? _changeListId;
@@ -212,6 +215,8 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
             charStart = start,
             charEnd = end,
             selectionText = text,
+            draftScriptId = _draftScriptId,
+            draftEpisodeId = _draftId,
             fareyLeftNum = farey.ln,
             fareyLeftDen = farey.ld,
             fareyRightNum = farey.rn,

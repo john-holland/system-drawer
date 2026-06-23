@@ -304,6 +304,16 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
                 AddToolSegment(legNode, seg);
                 break;
 
+            case TravelLegMode.Park:
+            case TravelLegMode.Land:
+            case TravelLegMode.LandWater:
+            case TravelLegMode.Moor:
+            case TravelLegMode.ParkWater:
+            case TravelLegMode.Beach:
+            case TravelLegMode.Dock:
+                AddTerminalSegment(legNode, seg);
+                break;
+
             case TravelLegMode.Fly:
                 if (useFlyingCardsForFlySegments && cardSolver != null && cardSolver.flyingCardConfig != null &&
                     seg.waypoints != null && seg.waypoints.Count >= 2)
@@ -344,6 +354,21 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             node.physicalMedium = medium;
             legNode.children.Add(node);
         }
+    }
+
+    void AddTerminalSegment(TravelLegSequenceNode legNode, MultiModalSegment seg)
+    {
+        if (legNode == null || seg == null)
+            return;
+        if (legNode.children == null)
+            legNode.children = new List<BehaviorTreeNode>();
+
+        GameObject go = new GameObject($"Terminal_{seg.mode}");
+        go.transform.SetParent(legNode.transform, worldPositionStays: false);
+        ExecuteTerminalLegNode node = go.AddComponent<ExecuteTerminalLegNode>();
+        node.segment = seg;
+        node.reachedDistance = waypointReachedDistance;
+        legNode.children.Add(node);
     }
 
     void AppendDriveWaypointChain(TravelLegSequenceNode legNode, MultiModalSegment seg, BehaviorTree tree)

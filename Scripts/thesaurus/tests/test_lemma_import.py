@@ -17,7 +17,7 @@ if str(_scripts) not in sys.path:
     sys.path.insert(0, str(_scripts))
 
 from continuum_api.lemma_import import parse_default_properties, parse_tabular_file, upsert_lemma_row
-from continuum_api.lemma_merge import filter_entries, is_builtin_urn, load_builtin_vocabulary
+from continuum_api.lemma_merge import filter_entries, find_builtin_entry, find_builtin_entries_for_term, is_builtin_urn, load_builtin_vocabulary
 
 
 def test_parse_default_properties_prompt():
@@ -55,6 +55,48 @@ def test_load_builtin_vocabulary():
     items = load_builtin_vocabulary()
     assert len(items) >= 90
     assert any(i["term"] == "the" for i in items)
+
+
+def test_find_builtin_entry():
+    hit = find_builtin_entry("the", "en", "determiner")
+    assert hit is not None
+    assert hit["term"] == "the"
+    assert find_builtin_entry("the-car", "en", "noun") is None
+
+
+def test_upsert_skips_builtin_collision(mem_db):
+    from continuum_api.lemma_import import _valid_property_keys
+
+    keys = _valid_property_keys(mem_db)
+    status, err, eid = upsert_lemma_row(
+        mem_db,
+        {"word": "the", "language": "en", "partOfSpeech": "determiner"},
+        keys,
+    )
+    assert status == "skipped"
+    assert err == "matches built-in entry"
+    assert eid and is_builtin_urn(eid)
+
+
+def test_upsert_skips_in_homograph_wrong_pos(mem_db):
+    """Creating 'in' with default noun POS must still hit built-in preposition."""
+    from continuum_api.lemma_import import _valid_property_keys
+
+    keys = _valid_property_keys(mem_db)
+    status, err, eid = upsert_lemma_row(
+        mem_db,
+        {"word": "in", "language": "en", "partOfSpeech": "noun"},
+        keys,
+    )
+    assert status == "skipped"
+    assert err == "matches built-in entry"
+    assert eid == "urn:unity:continuum:builtin:v1:/en/prep/in"
+
+
+def test_find_builtin_entries_for_term_in():
+    hits = find_builtin_entries_for_term("in", "en")
+    assert len(hits) == 1
+    assert hits[0]["posTag"] == "preposition"
 
 
 def test_filter_entries_builtin_only():

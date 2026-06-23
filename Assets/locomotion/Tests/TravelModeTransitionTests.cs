@@ -257,5 +257,44 @@ public class TravelModeTransitionTests
             return BehaviorTreeStatus.Success;
         }
     }
+
+    [Test]
+    public void BuildPlan_DriveThenParkWater_InsertsTransition_WhenBindingMatches()
+    {
+        var root = new GameObject("composite_root");
+        var treeGo = new GameObject("bt");
+        treeGo.transform.SetParent(root.transform);
+        var tree = treeGo.AddComponent<BehaviorTree>();
+
+        var compositeGo = new GameObject("composite");
+        compositeGo.transform.SetParent(root.transform);
+        var composite = compositeGo.AddComponent<CompositeMultiModalPathNode>();
+
+        var templateGo = new GameObject("activation_template");
+        templateGo.AddComponent<TransitionCounterNode>();
+
+        composite.modeTransitionBindings = new List<TravelModeTransitionBinding>
+        {
+            new TravelModeTransitionBinding
+            {
+                fromMode = TravelLegMode.Drive,
+                toMode = TravelLegMode.ParkWater,
+                activationRoot = templateGo
+            }
+        };
+
+        var plan = new GenericMultiModalPathPlan();
+        plan.segments.Add(MultiModalSegment.FromDrive(new List<Vector3> { Vector3.zero, Vector3.forward }, null));
+        plan.segments.Add(MultiModalSegment.FromParkWater(new List<Vector3> { Vector3.forward, Vector3.forward * 2f }, Vector3.forward * 3f));
+
+        Assert.IsTrue(composite.BuildChildrenFromPlanForTests(plan, tree));
+        Assert.AreEqual(2, composite.children.Count);
+        var leg1 = composite.children[1] as TravelLegSequenceNode;
+        Assert.IsNotNull(leg1);
+        Assert.IsTrue(leg1.children != null && leg1.children.Count > 0);
+        Assert.IsInstanceOf<TravelModeTransitionSequenceNode>(leg1.children[0]);
+
+        Object.DestroyImmediate(root);
+    }
 }
 #endif

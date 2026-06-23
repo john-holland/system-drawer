@@ -69,13 +69,16 @@ def parse_prompt_spans(text: str) -> List[SpanRef]:
     return spans
 
 
-def bindings_to_spans(bindings: Sequence[dict]) -> List[SpanRef]:
+def bindings_to_spans(bindings: Sequence[dict], script_text: str = "") -> List[SpanRef]:
+    from thesaurus.clause_audit import resolve_binding_char_span
+
     out: List[SpanRef] = []
     for b in bindings or []:
+        cs, ce = resolve_binding_char_span(b, script_text or "")
         out.append(
             SpanRef(
-                int(b.get("char_start") or b.get("charStart") or 0),
-                int(b.get("char_end") or b.get("charEnd") or 0),
+                cs,
+                ce,
                 binding_id=b.get("id"),
                 label=b.get("selection_text") or b.get("selectionText") or "",
                 kind="binding",
@@ -88,7 +91,15 @@ def _shift_span(span: SpanRef, edit: EditRegion) -> Tuple[int, int, bool, bool]:
     """Return (new_start, new_end, overlapped, shifted_only)."""
     s, e = span.char_start, span.char_end
     edit_end = edit.offset + edit.old_len
-    if edit_end <= s or (edit.offset >= e and edit.old_len == 0):
+    if edit.old_len == 0:
+        if edit.offset >= e:
+            return s, e, False, False
+        if edit.offset < s:
+            return s + edit.delta, e + edit.delta, False, True
+        if edit.offset < e:
+            return s, e, True, False
+        return s, e, False, False
+    if edit_end <= s:
         return s, e, False, False
     if edit.offset >= e:
         return s + edit.delta, e + edit.delta, False, True
@@ -104,7 +115,7 @@ def audit_edit(
     required: List[DiffItem] = []
     warnings: List[DiffItem] = []
     regions = compute_edit_regions(old_text or "", new_text or "")
-    all_spans = bindings_to_spans(bindings) + parse_prompt_spans(old_text or "")
+    all_spans = bindings_to_spans(bindings, old_text or "") + parse_prompt_spans(old_text or "")
 
     updated_bindings = [dict(b) for b in (bindings or [])]
     binding_by_id = {b.get("id"): b for b in updated_bindings if b.get("id")}
@@ -156,3 +167,94 @@ def audit_edit(
                 b["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     return required, warnings, updated_bindings
+
+
+def _binding_field(binding: dict, *keys: str, default: str = "") -> str:
+    for k in keys:
+        if k in binding and binding[k] is not None:
+            return str(binding[k])
+    return default
+
+
+def _binding_int(binding: dict, *keys: str, default: int = 0) -> int:
+    for k in keys:
+        if k in binding and binding[k] is not None:
+            return int(binding[k])
+    return default
+
+
+def audit_binding_edit(
+    old: dict,
+    new: dict,
+    script_text: str = "",
+) -> Tuple[List[DiffItem], List[DiffItem]]:
+    """Return (required, warnings) for direct binding metadata/span edits."""
+    required: List[DiffItem] = []
+    warnings: List[DiffItem] = []
+    bid = old.get("id")
+    label = _binding_field(old, "selection_text", "selectionText") or "clause"
+
+    old_cs = _binding_int(old, "char_start", "charStart")
+    old_ce = _binding_int(old, "char_end", "charEnd")
+    new_cs = _binding_int(new, "char_start", "charStart", default=old_cs)
+    new_ce = _binding_int(new, "char_end", "charEnd", default=old_ce)
+
+    old_pk = _binding_field(old, "property_key", "propertyKey")
+    new_pk = _binding_field(new, "property_key", "propertyKey", default=old_pk)
+    old_pv = _binding_field(old, "property_value", "propertyValue")
+    new_pv = _binding_field(new, "property_value", "propertyValue", default=old_pv)
+    old_eid = _binding_field(old, "entry_id", "entryId")
+    new_eid = _binding_field(new, "entry_id", "entryId", default=old_eid)
+
+    property_changed = old_pk != new_pk or old_pv != new_pv or old_eid != new_eid
+    span_changed = old_cs != new_cs or old_ce != new_ce
+
+    if not property_changed and not span_changed:
+        return [], []
+
+    if property_changed:
+        required.append(
+            DiffItem(
+                severity="required",
+                item_type="binding_property_updated",
+                description=f"Updated property on clause '{label}' ({old_pk} → {new_pk})",
+                binding_id=bid,
+                old_char_start=old_cs,
+                old_char_end=old_ce,
+                new_char_start=new_cs,
+                new_char_end=new_ce,
+            )
+        )
+
+    if span_changed:
+        required.append(
+            DiffItem(
+                severity="required",
+                item_type="binding_span_updated",
+                description=f"Moved clause '{label}' from [{old_cs},{old_ce}) to [{new_cs},{new_ce})",
+                binding_id=bid,
+                old_char_start=old_cs,
+                old_char_end=old_ce,
+                new_char_start=new_cs,
+                new_char_end=new_ce,
+            )
+        )
+        text = script_text or ""
+        stored = _binding_field(new, "selection_text", "selectionText", default=label)
+        if stored and 0 <= new_cs < new_ce <= len(text):
+            actual = text[new_cs:new_ce]
+            if actual != stored:
+                warnings.append(
+                    DiffItem(
+                        severity="warning",
+                        item_type="binding_selection_mismatch",
+                        description=f"Clause text at [{new_cs},{new_ce}) is '{actual}' but binding stores '{stored}'",
+                        binding_id=bid,
+                        old_char_start=old_cs,
+                        old_char_end=old_ce,
+                        new_char_start=new_cs,
+                        new_char_end=new_ce,
+                    )
+                )
+
+    return required, warnings

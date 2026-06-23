@@ -1,0 +1,37 @@
+playbook: telecom/v1
+name: ubiquitous-net
+networks:
+  - id: ubiquitous
+    name: Ubiquitous Virtual Network
+    virtual: true
+    discovery:
+      crossRoute: true
+resources:
+  - path: resources/ring-tone.usc.json
+    source: static
+    uscAssetId: null
+  - path: resources/sites/corp-intranet/manifest.json
+    source: representational_net
+    siteId: corp-intranet
+devices:
+  - id: terminal-lobby
+    network_id: ubiquitous
+    display_name: Lobby Terminal
+    ip: auto
+    phone: "1-1-555-0100"
+    permissions: [browse, call]
+  - id: terminal-security
+    network_id: ubiquitous
+    display_name: Security Desk
+    ip: auto
+    phone: "1-1-555-0101"
+    permissions: [browse, call]
+pam:
+  users:
+    - name: operator
+      password: changeme
+      devices: [terminal-lobby]
+      permissions: [admin, browse, call]
+      filesystem:
+        - playbook: base/ubiquitous-net.playbook.yaml
+          paths: ["/shared"]

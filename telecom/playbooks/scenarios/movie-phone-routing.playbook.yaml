@@ -1,0 +1,25 @@
+playbook: telecom/v1
+name: movie-phone-routing
+networks:
+  - id: ubiquitous
+    virtual: true
+    discovery:
+      crossRoute: true
+  - id: studio-lot
+    virtual: false
+    discovery:
+      crossRoute: false
+devices:
+  - id: hero-phone
+    network_id: ubiquitous
+    phone: "1-1-555-555-5555"
+    ip: auto
+  - id: director-line
+    network_id: studio-lot
+    phone: "1-1-555-555-5556"
+    ip: auto
+routes:
+  - network_id: ubiquitous
+    prefix: "0100:0001"
+    next_hop: gateway-ubiquitous
+    metric: 10

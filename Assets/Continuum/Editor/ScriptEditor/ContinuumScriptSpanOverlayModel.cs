@@ -31,7 +31,12 @@ public static class ContinuumScriptSpanOverlayModel
             foreach (var b in bindings)
             {
                 if (b == null) continue;
-                spans.Add(new OverlaySpan { charStart = b.charStart, charEnd = b.charEnd, kind = SpanKind.Clause, label = b.propertyKey });
+                int charStart = b.charStart;
+                int charEnd = b.charEnd;
+                if (charEnd <= charStart)
+                    FareySpanUtility.FareySpanToCharRange(scriptText, b.FareySpan, out charStart, out charEnd);
+                if (charEnd <= charStart) continue;
+                spans.Add(new OverlaySpan { charStart = charStart, charEnd = charEnd, kind = SpanKind.Clause, label = b.propertyKey });
             }
         }
         if (comments != null)

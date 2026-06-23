@@ -84,5 +84,22 @@ public class PhysicalPathingAndDriveTests
     {
         Assert.IsFalse(PhysicalMediumVolumeRules.MediumAllowsMode(PhysicalPathingMedium.Water, TravelLegMode.Drive));
     }
+
+    [Test]
+    public void TerminalGoodSectionStubs_HaveTerminalLegMode()
+    {
+        Assert.AreEqual(TravelLegMode.ParkWater, PhysicalPathingGoodSectionStubs.CreateParkWaterStub().terminalLegMode);
+        Assert.AreEqual(TravelLegMode.LandWater, PhysicalPathingGoodSectionStubs.CreateLandWaterStub().terminalLegMode);
+        Assert.AreEqual(PhysicalPathingMedium.Water, PhysicalPathingGoodSectionStubs.CreateMoorStub().physicalPathingMedium);
+    }
+
+    [Test]
+    public void MediumAllowsTerminalLeg_Beach_AllowsGroundAndWater()
+    {
+        Assert.IsTrue(PhysicalMediumVolumeRules.MediumAllowsTerminalLeg(
+            PhysicalPathingMedium.Ground, TravelLegMode.Beach));
+        Assert.IsTrue(PhysicalMediumVolumeRules.MediumAllowsTerminalLeg(
+            PhysicalPathingMedium.Water, TravelLegMode.Beach));
+    }
 }
 #endif

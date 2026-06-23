@@ -1,0 +1,19 @@
+{
+    "name": "Continuum.Telecom.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Continuum.Editor",
+        "Continuum.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

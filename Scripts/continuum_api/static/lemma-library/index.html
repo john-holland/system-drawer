@@ -5,21 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Continuum – Lemma Library</title>
   <link rel="stylesheet" href="/static/shared/continuum-multisort/multisort.css">
+  <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css">
   <link rel="stylesheet" href="/static/lemma-library/lemma-library.css">
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="/static/shared/continuum-multisort/multisort.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Lemma Library</h1>
-    <nav>
-      <a href="#browse" data-nav="browse">Browse</a>
-      <a href="#create" data-nav="create">Create</a>
-      <a href="#import" data-nav="import">Bulk import</a>
-      <a href="#localization" data-nav="localization">Localization</a>
-      <a href="/ui">Episodic hub</a>
-    </nav>
-  </header>
+  <div id="continuum-nav-root"></div>
 
   <div id="main-layout" class="layout">
     <aside class="sidebar" id="sidebar-panels">
@@ -40,6 +32,9 @@
             <option value="builtin">Built-in</option>
             <option value="custom">Custom</option>
           </select>
+          <input type="text" id="filter-component-type" placeholder="Component type">
+          <input type="text" id="filter-bucket-id" placeholder="Bucket id prefix">
+          <label><input type="checkbox" id="filter-has-metadata"> Has component metadata</label>
           <button type="button" id="btn-refresh-browse" class="secondary">Refresh</button>
         </div>
         <div id="results-count"></div>
@@ -53,7 +48,7 @@
           <label>Description <textarea id="f-desc" rows="3"></textarea></label>
           <label>Synonyms (pipe-separated) <input id="f-syns" placeholder="example|another"></label>
           <label>Language <input id="f-lang" value="en"></label>
-          <label>Part of speech <input id="f-pos" value="noun"></label>
+          <label>Part of speech <select id="f-pos" required></select></label>
           <label>Prefab / USC asset id <input id="f-prefab"></label>
           <label>Default properties <input id="f-props" placeholder="{P:walk|non-ik-animation=true}"></label>
           <pre id="props-preview" style="font-size:12px;color:#8892b0"></pre>
@@ -86,13 +81,49 @@
         <div id="loc-results"></div>
       </section>
 
+      <section id="view-translations" class="view">
+        <h2>Translation export / import</h2>
+        <p style="color:#8892b0;font-size:14px">Export thesaurus terms to XLIFF 2.0 for CAT tools, then re-import translations.</p>
+        <div class="toolbar" style="flex-wrap:wrap;gap:12px;display:flex;align-items:center;margin-bottom:16px">
+          <label>Source
+            <select id="xliff-source-lang"></select>
+          </label>
+          <label>Target
+            <select id="xliff-target-lang"></select>
+          </label>
+          <button type="button" id="btn-xliff-export">Export XLIFF</button>
+          <label style="margin-left:12px">Import file
+            <input type="file" id="xliff-import-file" accept=".xliff,.xml">
+          </label>
+          <button type="button" id="btn-xliff-import">Import XLIFF</button>
+          <button type="button" class="secondary" id="btn-xliff-audit">Language audit</button>
+        </div>
+        <div id="xliff-msg" class="msg"></div>
+        <pre id="xliff-audit-out" style="font-size:12px;max-height:320px;overflow:auto;background:#0f1420;padding:12px;border-radius:8px"></pre>
+      </section>
+
       <section id="view-entry" class="view">
         <div id="entry-detail"></div>
       </section>
     </main>
   </div>
 
+  <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
+  <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
   <script src="/static/lemma-library/lemma-library.js"></script>
+  <script>
+    ContinuumNav.mount({
+      app: 'lemma',
+      theme: 'dark',
+      subnav: [
+        { label: 'Browse', href: '#browse', attrs: { 'data-nav': 'browse' } },
+        { label: 'Create', href: '#create', attrs: { 'data-nav': 'create' } },
+        { label: 'Bulk import', href: '#import', attrs: { 'data-nav': 'import' } },
+        { label: 'Localization', href: '#localization', attrs: { 'data-nav': 'localization' } },
+        { label: 'Translations', href: '#translations', attrs: { 'data-nav': 'translations' } },
+      ],
+    });
+  </script>
   <script>
     (function () {
       function syncSidebar() {
@@ -100,7 +131,7 @@
         document.getElementById('multisort-browse').classList.toggle('hidden', page === 'localization');
         document.getElementById('multisort-loc').classList.toggle('hidden', page !== 'localization');
         document.getElementById('sidebar-panels').style.display =
-          (page === 'create' || page === 'import' || page.startsWith('entry')) ? 'none' : '';
+          (page === 'create' || page === 'import' || page === 'translations' || page.startsWith('entry')) ? 'none' : '';
       }
       window.addEventListener('hashchange', syncSidebar);
       syncSidebar();

@@ -10,7 +10,7 @@ from typing import Callable
 from flask import jsonify, request
 
 from thesaurus.clause_ref import BINDING_KINDS
-from thesaurus.script_edit_diff import audit_edit
+from thesaurus.script_edit_diff import audit_binding_edit, audit_edit
 
 try:
     from continuum_api.localization_helpers import (
@@ -21,7 +21,9 @@ try:
         ensure_clause_binding_columns,
         get_active_change_list,
         merge_change_list,
+        require_draft_author,
         resolve_clause_ref_farey,
+        resolve_draft_script_id,
         validate_property_value,
     )
 except ImportError:
@@ -33,7 +35,9 @@ except ImportError:
         ensure_clause_binding_columns,
         get_active_change_list,
         merge_change_list,
+        require_draft_author,
         resolve_clause_ref_farey,
+        resolve_draft_script_id,
         validate_property_value,
     )
 
@@ -193,19 +197,30 @@ def register_localization_routes(
         draft_script_id = request.args.get("draftScriptId")
         entry_id = request.args.get("entryId")
         binding_kind = request.args.get("bindingKind")
+        selection_text = request.args.get("selectionText")
         try:
             conn = get_conn()
             ensure_clause_binding_columns(conn)
-            if draft_episode_id:
+            if selection_text is not None:
                 cur = conn.execute(
-                    """SELECT b.* FROM localization_clause_bindings b
+                    """SELECT b.*, s.script_text AS draft_script_text FROM localization_clause_bindings b
+                       LEFT JOIN draft_episode_script s ON s.id = b.draft_script_id
+                       WHERE b.selection_text = ?
+                       ORDER BY b.updated_at DESC""",
+                    (selection_text,),
+                )
+            elif draft_episode_id:
+                cur = conn.execute(
+                    """SELECT b.*, s.script_text AS draft_script_text FROM localization_clause_bindings b
                        JOIN draft_episode_script s ON s.id = b.draft_script_id
                        WHERE s.draft_episode_id = ?""",
                     (draft_episode_id,),
                 )
             elif draft_script_id:
                 cur = conn.execute(
-                    "SELECT * FROM localization_clause_bindings WHERE draft_script_id = ?",
+                    """SELECT b.*, s.script_text AS draft_script_text FROM localization_clause_bindings b
+                       LEFT JOIN draft_episode_script s ON s.id = b.draft_script_id
+                       WHERE b.draft_script_id = ?""",
                     (draft_script_id,),
                 )
             elif entry_id:
@@ -216,7 +231,10 @@ def register_localization_routes(
             else:
                 conn.close()
                 return jsonify({"items": []}), 200
-            items = [binding_row(r) for r in cur.fetchall()]
+            items = [
+                binding_row(r, r["draft_script_text"] if "draft_script_text" in r.keys() else "")
+                for r in cur.fetchall()
+            ]
             if binding_kind:
                 items = [i for i in items if i.get("bindingKind") == binding_kind]
             conn.close()
@@ -263,6 +281,8 @@ def register_localization_routes(
             ensure_clause_binding_columns(conn)
             script_text = body.get("scriptText", "")
             ref = resolve_clause_ref_farey(conn, body, script_text)
+            draft_script_id = resolve_draft_script_id(conn, body) or ref.draft_script_id
+            ref.draft_script_id = draft_script_id
             bid = str(uuid.uuid4())
             now = _now()
             conn.execute(
@@ -275,7 +295,7 @@ def register_localization_routes(
                 (
                     bid,
                     ref.episode_script_id or body.get("episodeScriptId"),
-                    ref.draft_script_id or body.get("draftScriptId"),
+                    draft_script_id,
                     ref.farey_left_num,
                     ref.farey_left_den,
                     ref.farey_right_num,
@@ -381,6 +401,10 @@ def register_localization_routes(
         try:
             conn = get_conn()
             _ensure_review_columns(conn)
+            auth_err = require_draft_author(conn, draft_id, get_user())
+            if auth_err:
+                conn.close()
+                return jsonify({"error": auth_err}), 403
             blocked = draft_blocks_author_edit(conn, draft_id)
             if blocked:
                 conn.close()
@@ -388,11 +412,111 @@ def register_localization_routes(
             bindings = _load_bindings_for_draft(conn, draft_id)
             required, warnings, updated = audit_edit(old_text, new_text, bindings)
             cl_id, revision, req_out, warn_out = merge_change_list(conn, draft_id, required, warnings)
+            try:
+                from continuum_api.localization_helpers import upsert_draft_script_text
+            except ImportError:
+                from localization_helpers import upsert_draft_script_text
+            upsert_draft_script_text(conn, draft_id, new_text)
             for b in updated:
                 conn.execute(
                     "UPDATE localization_clause_bindings SET char_start = ?, char_end = ?, updated_at = ? WHERE id = ?",
                     (b["char_start"], b["char_end"], _now(), b["id"]),
                 )
+            conn.commit()
+            conn.close()
+            return jsonify(
+                {
+                    "changeListId": cl_id,
+                    "revision": revision,
+                    "required": req_out,
+                    "warnings": warn_out,
+                }
+            ), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/drafts/episodes/<draft_id>/apply-binding-edit", methods=["POST"])
+    def apply_binding_edit(draft_id: str):
+        body = request.get_json() or {}
+        binding_id = body.get("bindingId")
+        script_text = body.get("scriptText", "")
+        if not binding_id:
+            return jsonify({"error": "bindingId required"}), 400
+        try:
+            conn = get_conn()
+            _ensure_review_columns(conn)
+            auth_err = require_draft_author(conn, draft_id, get_user())
+            if auth_err:
+                conn.close()
+                return jsonify({"error": auth_err}), 403
+            blocked = draft_blocks_author_edit(conn, draft_id)
+            if blocked:
+                conn.close()
+                return jsonify({"error": f"draft change list is {blocked}; withdraw before editing"}), 409
+            cur = conn.execute(
+                """SELECT b.* FROM localization_clause_bindings b
+                   JOIN draft_episode_script s ON s.id = b.draft_script_id
+                   WHERE s.draft_episode_id = ? AND b.id = ?""",
+                (draft_id, binding_id),
+            )
+            old_row = cur.fetchone()
+            if not old_row:
+                conn.close()
+                return jsonify({"error": "binding not found for draft"}), 404
+            old = dict(old_row)
+            new_cs = body.get("charStart", old["char_start"])
+            new_ce = body.get("charEnd", old["char_end"])
+            new_pk = body.get("propertyKey", old["property_key"])
+            new_pv = body.get("propertyValue", old["property_value"])
+            new_eid = body.get("entryId", old.get("entry_id"))
+            err = validate_property_value(conn, new_pk, new_pv) if new_pk else None
+            if err:
+                conn.close()
+                return jsonify({"error": err}), 400
+            selection_text = body.get("selectionText")
+            if selection_text is None and script_text and new_ce > new_cs:
+                selection_text = script_text[int(new_cs) : int(new_ce)]
+            elif selection_text is None:
+                selection_text = old["selection_text"]
+            new = {
+                **old,
+                "char_start": int(new_cs),
+                "char_end": int(new_ce),
+                "property_key": new_pk,
+                "property_value": new_pv,
+                "entry_id": new_eid,
+                "selection_text": selection_text,
+            }
+            required, warnings = audit_binding_edit(old, new, script_text)
+            if not required and not warnings:
+                conn.close()
+                return jsonify({"changeListId": None, "revision": 0, "required": [], "warnings": []}), 200
+            from thesaurus.clause_audit import char_to_farey
+
+            ln, ld, rn, rd = char_to_farey(script_text or old.get("selection_text", ""), int(new_cs), int(new_ce))
+            now = _now()
+            conn.execute(
+                """UPDATE localization_clause_bindings SET
+                   char_start = ?, char_end = ?, farey_left_num = ?, farey_left_den = ?,
+                   farey_right_num = ?, farey_right_den = ?, selection_text = ?,
+                   property_key = ?, property_value = ?, entry_id = ?, updated_at = ?
+                   WHERE id = ?""",
+                (
+                    int(new_cs),
+                    int(new_ce),
+                    ln,
+                    ld,
+                    rn,
+                    rd,
+                    selection_text,
+                    new_pk,
+                    new_pv,
+                    new_eid,
+                    now,
+                    binding_id,
+                ),
+            )
+            cl_id, revision, req_out, warn_out = merge_change_list(conn, draft_id, required, warnings)
             conn.commit()
             conn.close()
             return jsonify(
@@ -480,6 +604,11 @@ def register_localization_routes(
                 (change_list_id,),
             ).fetchone()
             if row and row["draft_episode_id"]:
+                try:
+                    from continuum_api.localization_helpers import ensure_reviewer_rows_for_submission
+                except ImportError:
+                    from localization_helpers import ensure_reviewer_rows_for_submission
+                ensure_reviewer_rows_for_submission(conn, row["draft_episode_id"], change_list_id)
                 revs = conn.execute(
                     "SELECT reviewer_user_id FROM reviewer WHERE draft_episode_id = ?",
                     (row["draft_episode_id"],),
@@ -488,6 +617,21 @@ def register_localization_routes(
                     create_notification(
                         conn,
                         r["reviewer_user_id"],
+                        "change_list_submitted",
+                        "Draft submitted for localization review",
+                        draft_id=row["draft_episode_id"],
+                    )
+                cl_revs = conn.execute(
+                    "SELECT user_id FROM localization_change_list_reviewers WHERE change_list_id = ?",
+                    (change_list_id,),
+                ).fetchall()
+                assigned = {r["reviewer_user_id"] for r in revs}
+                for r in cl_revs:
+                    if r["user_id"] in assigned:
+                        continue
+                    create_notification(
+                        conn,
+                        r["user_id"],
                         "change_list_submitted",
                         "Draft submitted for localization review",
                         draft_id=row["draft_episode_id"],

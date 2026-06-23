@@ -72,6 +72,14 @@ public static class ContinuumChangeListModal
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Save"))
         {
+            foreach (var item in _required)
+            {
+                if (item != null && !item.userAcknowledged)
+                {
+                    EditorUtility.DisplayDialog("Change list", "Acknowledge all required items before save.", "OK");
+                    return;
+                }
+            }
             _onSave?.Invoke(_changeListId, _data);
             Close();
         }

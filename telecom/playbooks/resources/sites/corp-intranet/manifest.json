@@ -1,0 +1,10 @@
+{
+  "representationalNet": "telecom/v1",
+  "siteId": "corp-intranet",
+  "basePath": "/sites/corp-intranet/",
+  "pages": [
+    { "slug": "index.html", "title": "CorpNet Home", "links": ["about.html", "directory.html"] },
+    { "slug": "about.html", "title": "About CorpNet", "links": ["index.html"] },
+    { "slug": "directory.html", "title": "Staff Directory", "links": ["index.html"] }
+  ]
+}

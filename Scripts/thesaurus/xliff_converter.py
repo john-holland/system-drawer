@@ -11,7 +11,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import BinaryIO
 
+from thesaurus.language_resolver import resolve_language_id
+
 XLIFF_NS = "urn:oasis:names:tc:xliff:document:2.0"
+XML_NS = "http://www.w3.org/XML/1998/namespace"
 
 
 def _register_ns():
@@ -29,16 +32,12 @@ def export_to_xliff(
     Export thesaurus_entries (source language) and thesaurus_translations (target language) to XLIFF 2.0 XML.
     Returns XML string. Unit id = entry_id for round-trip.
     """
-    cur = conn.execute("SELECT id FROM languages WHERE code = ? LIMIT 1", (source_lang_code,))
-    src_row = cur.fetchone()
-    if not src_row:
+    source_language_id = resolve_language_id(conn, source_lang_code, create=True)
+    if not source_language_id:
         raise ValueError(f"Source language not found: {source_lang_code}")
-    source_language_id = src_row["id"]
-    cur = conn.execute("SELECT id FROM languages WHERE code = ? LIMIT 1", (target_lang_code,))
-    trg_row = cur.fetchone()
-    if not trg_row:
+    target_language_id = resolve_language_id(conn, target_lang_code, create=True)
+    if not target_language_id:
         raise ValueError(f"Target language not found: {target_lang_code}")
-    target_language_id = trg_row["id"]
     cur = conn.execute(
         """SELECT e.id AS entry_id, e.term, e.pos_tag
            FROM thesaurus_entries e
@@ -53,7 +52,6 @@ def export_to_xliff(
         (target_language_id,),
     )
     translations = {r["entry_id"]: r["form"] for r in cur.fetchall()}
-    _register_ns()
     root = ET.Element(ET.QName(XLIFF_NS, "xliff"))
     root.set("version", "2.0")
     root.set("srcLang", source_lang_code)
@@ -67,17 +65,13 @@ def export_to_xliff(
         unit.set("id", entry_id)
         seg = ET.SubElement(unit, ET.QName(XLIFF_NS, "segment"))
         src = ET.SubElement(seg, ET.QName(XLIFF_NS, "source"))
-        src.text = (r["term"] or "").strip()
-        if r.get("pos_tag"):
-            src.set("xml:space", "preserve")
+        term = (r["term"] or "").strip()
+        src.text = term
+        if " " in term:
+            src.set(f"{{{XML_NS}}}space", "preserve")
         tgt = ET.SubElement(seg, ET.QName(XLIFF_NS, "target"))
         tgt.text = (translations.get(entry_id) or "").strip()
-    return ET.tostring(
-        root,
-        encoding="unicode",
-        default_namespace=XLIFF_NS,
-        method="xml",
-    )
+    return ET.tostring(root, encoding="unicode", method="xml")
 
 
 def import_from_xliff(conn, xliff_content: str | Path | BinaryIO) -> tuple[int, int]:
@@ -101,11 +95,9 @@ def import_from_xliff(conn, xliff_content: str | Path | BinaryIO) -> tuple[int, 
                 break
     if not trg_lang:
         raise ValueError("XLIFF trgLang not found")
-    cur = conn.execute("SELECT id FROM languages WHERE code = ? LIMIT 1", (trg_lang.strip(),))
-    row = cur.fetchone()
-    if not row:
+    target_language_id = resolve_language_id(conn, trg_lang.strip(), create=True)
+    if not target_language_id:
         raise ValueError(f"Target language not found in DB: {trg_lang}")
-    target_language_id = row["id"]
     updated = 0
     inserted = 0
     for unit in root.iter():

@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Continuum – Episodic Content</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
+    body { font-family: system-ui, sans-serif; margin: 0; }
+    .section { padding: 24px; max-width: 900px; margin: 0 auto; }
     h1 { margin-top: 0; }
     h2 { margin-top: 24px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
     form { margin-bottom: 16px; }
@@ -19,8 +20,6 @@
     .steps { margin: 16px 0; padding-left: 20px; }
     .steps li { margin-bottom: 4px; }
     a { color: #06c; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #ccc; padding-bottom: 16px; }
-    header nav a { margin-right: 16px; }
     .notif-badge { background: #c00; color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 12px; margin-left: 4px; }
     .notif-dropdown { position: relative; }
     .notif-panel { display: none; position: absolute; right: 0; top: 100%; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto; min-width: 280px; z-index: 10; margin-top: 4px; }
@@ -33,26 +32,20 @@
     .comment-form { margin-top: 12px; }
   </style>
   <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
+  <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
+  <script src="/static/shared/continuum-script-editor/continuum-script-spans.js"></script>
   <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
   <script src="/static/shared/continuum-clause-selector/continuum-clause-selector.js"></script>
 </head>
 <body>
-  <header>
-    <nav>
-      <a href="#" data-route="">Home</a>
-      <a href="#review" data-route="review">Review</a>
-      <a href="#herb-garden" data-route="herb-garden">Herb Garden</a>
-      <a href="/lemma-library">Lemma Library</a>
-    </nav>
-    <div>
-      <label>User ID <input id="user-id" placeholder="anonymous" style="max-width:120px"></label>
-      <span class="notif-dropdown">
-        <button id="notif-btn">Notifications <span id="notif-badge" class="notif-badge" style="display:none">0</span></button>
-        <div id="notif-panel" class="notif-panel"></div>
-      </span>
-    </div>
-  </header>
+  <div id="continuum-nav-root"></div>
+  <div id="continuum-nav-extra-source" class="hidden" style="display:none">
+    <span class="notif-dropdown">
+      <button id="notif-btn">Notifications <span id="notif-badge" class="notif-badge" style="display:none">0</span></button>
+      <div id="notif-panel" class="notif-panel"></div>
+    </span>
+  </div>
 
   <section id="section-home" class="section active">
     <h1>Continuum – Episodic Content</h1>
@@ -136,16 +129,42 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
     <div id="herb-garden-result"></div>
   </section>
 
+  <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
+  <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
   <script>
     const API = '/api';
     const scriptOutputBase = (typeof window !== 'undefined' && window.location.port === '5050')
       ? 'http://localhost:5174' : (window.location.origin.replace(/:\d+$/, ':5174'));
 
+    ContinuumNav.mount({
+      app: 'hub',
+      theme: 'light',
+      extraEl: '#continuum-nav-extra-source',
+      subnav: [
+        { label: 'Home', href: '#', attrs: { 'data-route': '' } },
+        { label: 'Review', href: '#review', attrs: { 'data-route': 'review' } },
+        { label: 'Herb Garden', href: '#herb-garden', attrs: { 'data-route': 'herb-garden' } },
+      ],
+    });
+
+    function bindRouteLinks() {
+      document.querySelectorAll('#continuum-subnav [data-route]').forEach(a => {
+        a.onclick = (e) => {
+          e.preventDefault();
+          const r = a.getAttribute('data-route');
+          window.location.hash = r || 'home';
+        };
+      });
+    }
+    bindRouteLinks();
+
+    ContinuumUserSession.onChange(() => {
+      loadNotifications();
+      if (getRoute() === 'review') loadReviewData();
+    });
+
     function getHeaders() {
-      const h = { 'Content-Type': 'application/json' };
-      const uid = document.getElementById('user-id').value.trim();
-      if (uid) h['X-User-ID'] = uid;
-      return h;
+      return ContinuumUserSession.getHeaders({ 'Content-Type': 'application/json' });
     }
 
     function apiFetch(url, opts = {}) {
@@ -156,7 +175,14 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
 
     function getRoute() {
       const h = window.location.hash.slice(1) || '';
-      return h || 'home';
+      return (h.split('?')[0] || '').replace(/^\//, '') || 'home';
+    }
+
+    function getHashParams() {
+      const h = window.location.hash.slice(1) || '';
+      const q = h.indexOf('?');
+      if (q < 0) return new URLSearchParams();
+      return new URLSearchParams(h.slice(q + 1));
     }
 
     function showSection(route) {
@@ -164,12 +190,18 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       const id = route === 'home' ? 'section-home' : 'section-' + route.replace('/', '-');
       const el = document.getElementById(id);
       if (el) el.classList.add('active');
+      document.querySelectorAll('#continuum-subnav [data-route]').forEach(a => {
+        const r = a.getAttribute('data-route') || 'home';
+        const normalized = r === '' ? 'home' : r;
+        a.classList.toggle('active', normalized === route);
+      });
     }
 
-    document.querySelectorAll('[data-route]').forEach(a => {
-      a.onclick = (e) => { e.preventDefault(); const r = a.getAttribute('data-route'); window.location.hash = r || 'home'; };
-    });
-    window.onhashchange = () => { showSection(getRoute()); if (getRoute() === 'review') loadReviewData(); if (getRoute() === 'herb-garden') loadHerbGarden(); };
+    window.onhashchange = () => {
+      showSection(getRoute());
+      if (getRoute() === 'review') loadReviewData();
+      if (getRoute() === 'herb-garden') loadHerbGarden();
+    };
 
     async function loadNotifications() {
       try {
@@ -274,16 +306,24 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       const draftList = Array.isArray(drafts) ? drafts : drafts.items || [];
 
       const listEl = document.getElementById('my-reviews-list');
-      listEl.innerHTML = '<table><thead><tr><th>Draft</th><th>Status</th><th>Role</th><th>Actions</th></tr></thead><tbody></tbody></table>';
+      listEl.innerHTML = '<table><thead><tr><th>Draft</th><th>Status</th><th>Change list</th><th>Role</th><th>Actions</th></tr></thead><tbody></tbody></table>';
       const tbody = listEl.querySelector('tbody');
+      const currentUser = ContinuumUserSession.getUserId();
       reviews.forEach(r => {
         const tr = document.createElement('tr');
-        const role = r.reviewerUserId === document.getElementById('user-id').value.trim() ? 'Reviewer' : 'Reviewee';
-        tr.innerHTML = `<td>${r.draftTitle || r.draftEpisodeId}</td><td>${r.status}</td><td>${role}</td>
-          <td><button data-review-id="${r.id}" data-draft-id="${r.draftEpisodeId}" data-committed="${!!r.committedAt}" class="select-review">View</button>
-          ${!r.committedAt && role === 'Reviewee' ? `<button data-draft-id="${r.draftEpisodeId}" class="commit-draft">Commit</button>` : ''}</td>`;
+        const role = r.reviewerUserId === currentUser ? 'Reviewer'
+          : (r.revieweeUserId === currentUser ? 'Reviewee' : (r.revieweeUserId ? 'Other' : 'Author'));
+        const clStatus = r.changeListStatus ? r.changeListStatus.replace('_', ' ') : '—';
+        const statusLabel = r.status === 'pending_review' ? 'awaiting review' : r.status;
+        tr.innerHTML = `<td>${escapeHtml(r.draftTitle || r.draftEpisodeId)}</td><td>${escapeHtml(statusLabel)}</td><td>${escapeHtml(clStatus)}</td><td>${role}</td>
+          <td><button type="button" data-review-id="${r.id || ''}" data-draft-id="${r.draftEpisodeId}" data-committed="${!!r.committedAt}" class="select-review">View</button>
+          ${!r.committedAt && role === 'Reviewee' ? `<button type="button" data-draft-id="${r.draftEpisodeId}" class="commit-draft">Commit</button>` : ''}</td>`;
         tbody.appendChild(tr);
       });
+
+      if (!reviews.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><em>No reviews yet. Assign a reviewer or submit a change list from Script Output.</em></td></tr>';
+      }
 
       document.getElementById('assign-draft').innerHTML = draftList.filter(d => !d.committedAt).map(d =>
         `<option value="${d.id}">${d.title} (${d.id.slice(0,8)})</option>`
@@ -294,7 +334,7 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       ).join('') || '<option value="">No users</option>';
 
       listEl.querySelectorAll('.select-review').forEach(btn => {
-        btn.onclick = () => showReviewDetail(btn.dataset.reviewId, btn.dataset.draftId, btn.dataset.committed === 'true');
+        btn.onclick = () => showReviewDetail(btn.dataset.reviewId || '', btn.dataset.draftId, btn.dataset.committed === 'true');
       });
       listEl.querySelectorAll('.commit-draft').forEach(btn => {
         btn.onclick = async () => {
@@ -304,12 +344,27 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
           loadReviewData();
         };
       });
+
+      const hashDraft = getHashParams().get('draftId');
+      if (hashDraft) {
+        const match = reviews.find(r => r.draftEpisodeId === hashDraft);
+        if (match) {
+          showReviewDetail(match.id || '', hashDraft, !!match.committedAt);
+        } else {
+          showReviewDetail('', hashDraft, false);
+        }
+      }
     }
 
     async function showReviewDetail(reviewId, draftId, committed) {
+      const commentRequests = reviewId
+        ? [
+            apiFetch(`/reviews/${reviewId}/comments`),
+            apiFetch(`/reviews/${reviewId}/comments/archive`).catch(() => ({ ok: false })),
+          ]
+        : [Promise.resolve({ ok: true, json: async () => ({ items: [] }) }), Promise.resolve({ ok: false })];
       const [commentsRes, archiveRes, scriptRes, bindingsRes, clRes] = await Promise.all([
-        apiFetch(`/reviews/${reviewId}/comments`),
-        apiFetch(`/reviews/${reviewId}/comments/archive`).catch(() => ({ ok: false })),
+        ...commentRequests,
         apiFetch(`/drafts/episodes/${draftId}/script`),
         apiFetch(`/thesaurus/clause-bindings?draftEpisodeId=${draftId}`).catch(() => ({ ok: false })),
         apiFetch(`/localization/change-lists?draftEpisodeId=${draftId}`).catch(() => ({ ok: false })),
@@ -318,6 +373,9 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       const archived = archiveRes.ok ? ((await archiveRes.json()).items || []) : [];
       const scriptData = await scriptRes.ok ? scriptRes.json() : { scriptText: '' };
       const scriptText = scriptData.scriptText || '';
+      if (!scriptRes.ok) {
+        console.warn('Draft script not found for', draftId, scriptRes.status);
+      }
       let bindings = bindingsRes.ok ? ((await bindingsRes.json()).items || []) : [];
       const changeList = clRes.ok ? await clRes.json() : null;
 
@@ -327,17 +385,55 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         if (editorInst) {
           editorInst.options.clauseBindings = bindings;
           ContinuumScriptEditor.renderOverlays(editorInst, editorInst.options);
+          ContinuumScriptEditor.renderClausePanel(editorInst);
         }
       }
 
+      function changeListSaveBody(clData) {
+        const items = [...(clData?.required || []), ...(clData?.warnings || [])]
+          .filter(i => i && i.id)
+          .map(i => ({ id: i.id, userAcknowledged: !!i.userAcknowledged }));
+        return JSON.stringify({ items });
+      }
+
+      function openBindingChangeListModal(editRes) {
+        if (!editRes?.changeListId && !(editRes?.required?.length) && !(editRes?.warnings?.length)) {
+          refreshBindings();
+          return;
+        }
+        ContinuumChangeListModal.open(editRes.changeListId, editRes, {
+          onSave: async (clId, clData) => {
+            if (clId) {
+              await apiFetch(`/localization/change-lists/${clId}/save`, {
+                method: 'POST',
+                body: changeListSaveBody(clData),
+              });
+            }
+            await refreshBindings();
+          },
+          onSubmit: async (clId, clData) => {
+            if (clId) {
+              await apiFetch(`/localization/change-lists/${clId}/save`, {
+                method: 'POST',
+                body: changeListSaveBody(clData),
+              });
+              await apiFetch(`/localization/change-lists/${clId}/submit-for-review`, { method: 'POST', body: '{}' });
+            }
+            loadReviewData();
+          },
+        });
+      }
+
       const detail = document.getElementById('review-detail');
-      const canEdit = !committed;
+      const workflowBlocked = changeList && ['in_review', 'submitted'].includes(changeList.workflowStatus || '');
+      const canEdit = !committed && !workflowBlocked;
       const hasComment = comments.length > 0;
       const clItems = (changeList && changeList.items) || [];
       const clRequired = clItems.filter(i => i.severity === 'required');
       const clWarnings = clItems.filter(i => i.severity !== 'required');
       detail.innerHTML = `
-        <div id="review-script-ace"></div>
+        <div id="review-script-ace" style="min-height:240px;border:1px solid #ccc;border-radius:4px"></div>
+        ${!scriptText ? '<p class="error" style="margin-top:8px">No script saved for this draft yet. Open Script Output, edit, and Save before review.</p>' : ''}
         ${changeList && changeList.id ? `
         <div id="review-change-list" style="margin-top:12px;padding:12px;border:1px solid #ddd;border-radius:4px">
           <h3>Change list <small>(${changeList.workflowStatus || 'in_progress'}, rev ${changeList.revision || 0})</small></h3>
@@ -346,8 +442,9 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
           <ul id="cl-required-list">${clRequired.map(i => `<li><label><input type="checkbox" data-id="${i.id}" ${i.userAcknowledged ? 'checked' : ''}/> ${escapeHtml(i.description || i.itemType)}</label></li>`).join('') || '<li><em>None</em></li>'}</ul>
           <details><summary>Warnings (${clWarnings.length})</summary><ul>${clWarnings.map(i => `<li>${escapeHtml(i.description || '')}</li>`).join('') || '<li>None</li>'}</ul></details>
           ${canEdit ? '<button id="cl-save-btn">Save change list</button> <button id="cl-submit-btn">Submit for review</button>' : ''}
+          ${workflowBlocked ? '<p style="font-size:13px;color:#666;margin-top:8px">Change list is in review — script is read-only until withdrawn or approved.</p>' : ''}
         </div>` : ''}
-        ${canEdit ? `<p><strong>Status:</strong> <select id="review-status">
+        ${reviewId && canEdit ? `<p><strong>Status:</strong> <select id="review-status">
           <option value="pending">Pending</option>
           <option value="approved">Approve</option>
           <option value="request_changes">Deny</option>
@@ -355,7 +452,8 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         ${!hasComment ? `<div class="comment-form">
           <label>Add comment (one per review cycle) <textarea id="new-comment" rows="2"></textarea></label>
           <button id="add-comment">Add comment</button>
-        </div>` : '<p><em>Comment posted this cycle — use Approve or Deny for further feedback.</em></p>'}` : '<p><em>Committed – no edits allowed</em></p>'}
+        </div>` : '<p><em>Comment posted this cycle — use Approve or Deny for further feedback.</em></p>'}` : (reviewId && workflowBlocked ? '<p><em>Script is read-only while change list is in review. Use Approve/Deny below when assigned as reviewer.</em></p>' : '')}
+        ${committed ? '<p><em>Committed – no edits allowed</em></p>' : ''}
         <h3>Comments — current cycle</h3>
         <ul id="review-comments-list"></ul>
         <details class="old-comments"><summary>Old comments (${archived.length})</summary>
@@ -364,16 +462,25 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       `;
 
       const editorInst = ContinuumScriptEditor.mount(document.getElementById('review-script-ace'), {
-        mode: committed ? 'review' : 'edit',
-        draftId, reviewId, scriptText, committed,
+        mode: committed || workflowBlocked ? 'review' : 'edit',
+        draftId, reviewId: reviewId || undefined, scriptText, committed: committed || workflowBlocked,
+        readOnly: committed || workflowBlocked,
+        overlaySnapshotText: scriptText,
+        draftEpisodeId: draftId,
         clauseBindings: bindings,
         reviewComments: comments,
         onBindingsChanged: refreshBindings,
+        onBindingEdited: openBindingChangeListModal,
       });
 
       const clSaveBtn = detail.querySelector('#cl-save-btn');
       if (clSaveBtn && changeList && changeList.id) {
         clSaveBtn.onclick = async () => {
+          const unchecked = clRequired.filter(i => {
+            const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
+            return cb ? !cb.checked : !i.userAcknowledged;
+          });
+          if (unchecked.length) { alert('Acknowledge all required items before save'); return; }
           const items = [...clRequired, ...clWarnings].map(i => {
             const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
             return { id: i.id, userAcknowledged: cb ? cb.checked : !!i.userAcknowledged };
@@ -407,8 +514,8 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       }
 
       const statusSelect = detail.querySelector('#review-status');
-      if (statusSelect) {
-        const revRes = await apiFetch('/reviews?asReviewer=true');
+      if (statusSelect && reviewId) {
+        const revRes = await apiFetch('/reviews?asReviewer=true&asReviewee=true');
         const revData = await revRes.json();
         const rev = (revData.items || []).find(x => x.id === reviewId);
         if (rev) statusSelect.value = rev.status;
@@ -419,7 +526,7 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       }
 
       const addBtn = detail.querySelector('#add-comment');
-      if (addBtn) addBtn.onclick = async () => {
+      if (addBtn && reviewId) addBtn.onclick = async () => {
         const text = document.getElementById('new-comment').value.trim();
         if (!text) return;
         const sel = ContinuumScriptEditor.getSelection(editorInst);

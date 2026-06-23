@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://continuum.local/schemas/telecom-playbook.schema.json",
+  "title": "Telecom Playbook",
+  "type": "object",
+  "required": ["playbook", "name", "networks"],
+  "additionalProperties": false,
+  "properties": {
+    "playbook": { "const": "telecom/v1" },
+    "name": { "type": "string", "minLength": 1 },
+    "networks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/network" }
+    },
+    "resources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/resource" }
+    },
+    "devices": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/device" }
+    },
+    "routes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/route" }
+    },
+    "pam": { "$ref": "#/$defs/pam" }
+  },
+  "$defs": {
+    "network": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "virtual": { "type": "boolean", "default": false },
+        "discovery": {
+          "type": "object",
+          "properties": {
+            "crossRoute": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "required": ["path", "source"],
+      "properties": {
+        "path": { "type": "string" },
+        "source": { "enum": ["static", "usc", "representational_net"] },
+        "uscAssetId": { "type": ["string", "null"] },
+        "siteId": { "type": "string" }
+      }
+    },
+    "device": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "network_id": { "type": "string" },
+        "display_name": { "type": "string" },
+        "ip": { "type": "string" },
+        "phone": { "type": "string" },
+        "permissions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": ["network_id", "prefix"],
+      "properties": {
+        "network_id": { "type": "string" },
+        "prefix": { "type": "string" },
+        "next_hop": { "type": "string" },
+        "metric": { "type": "integer" }
+      }
+    },
+    "pam": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "password": { "type": "string" },
+              "devices": { "type": "array", "items": { "type": "string" } },
+              "permissions": { "type": "array", "items": { "type": "string" } },
+              "filesystem": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "playbook": { "type": "string" },
+                    "paths": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

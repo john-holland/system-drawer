@@ -1,2 +1,6 @@
 Flask>=3.0
 croniter>=2.0
+PyYAML>=6.0
+flask-socketio>=5.3
+eventlet>=0.35
+requests>=2.28

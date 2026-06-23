@@ -8,9 +8,16 @@
     body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f5; }
     #toolbar { padding: 8px; background: #fff; border-bottom: 1px solid #ddd; }
     #editor-root { padding: 8px; }
-    .ace-prompt-placeholder { border-bottom: 2px dotted #1976d2; position: absolute; }
-    .ace-loc-clause { border-bottom: 2px dotted #2e7d32; position: absolute; }
-    .ace-review-comment { border-bottom: 2px dotted #ef6c00; position: absolute; }
+    .ace-prompt-placeholder,
+    .ace-loc-clause,
+    .ace-review-comment {
+      position: absolute !important;
+      background: transparent !important;
+      pointer-events: none;
+    }
+    .ace-prompt-placeholder { border-bottom: 2px dashed #1976d2; }
+    .ace-loc-clause { border-bottom: 2px dashed #2e7d32; }
+    .ace-review-comment { border-bottom: 2px dashed #ef6c00; }
   </style>
 </head>
 <body>
@@ -18,6 +25,7 @@
     <span id="status">Continuum editor host (local bundle)</span>
   </div>
   <div id="editor-root"></div>
+  <script src="continuum-script-spans.js"></script>
   <script src="continuum-script-editor.js"></script>
   <script src="continuum-clause-selector.js"></script>
   <script>

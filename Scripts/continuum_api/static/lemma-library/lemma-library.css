@@ -15,22 +15,6 @@ body {
   color: var(--text);
   min-height: 100vh;
 }
-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  background: #12121f;
-}
-header h1 { margin: 0; font-size: 18px; }
-header nav a {
-  color: var(--accent);
-  text-decoration: none;
-  margin-right: 12px;
-  font-size: 14px;
-}
-header nav a.active { font-weight: 600; text-decoration: underline; }
 .layout {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -97,6 +81,13 @@ button.secondary { background: var(--panel); color: var(--text); border: 1px sol
 .badge.builtin { background: #2d4a3e; color: #8fd4a8; }
 .badge.custom { background: #3a2d4a; color: #c4a8f4; }
 .chip { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #3a3a52; margin-right: 4px; }
+.chip-component { background: #2d4a3e; color: #8fd4a8; }
+.chip-blueprint { background: #2d3a4a; color: #8fc4f4; }
+.chip-runtime { background: #4a3a2d; color: #f4c48f; }
+.chip-prop { background: #3a3a52; color: var(--muted); }
+.comp-tree { font-size: 12px; list-style: none; padding-left: 0; }
+.comp-tree li { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.muted { color: var(--muted); font-size: 13px; }
 form label { display: block; margin-top: 10px; font-size: 13px; color: var(--muted); }
 form input, form textarea, form select {
   width: 100%;
@@ -110,6 +101,17 @@ form input, form textarea, form select {
 .msg { padding: 8px; border-radius: 6px; margin-top: 8px; }
 .msg.error { background: #4a2020; color: #ffb0b0; }
 .msg.ok { background: #204a30; color: #b0ffc8; }
+#form-create label.field-error input,
+#form-create label.field-error textarea {
+  border-color: #e07070;
+  box-shadow: 0 0 0 1px #e07070;
+}
+#form-create .field-hint {
+  display: block;
+  font-size: 12px;
+  color: #ffb0b0;
+  margin-top: 4px;
+}
 .detail-grid { display: grid; gap: 8px; }
 .detail-grid dt { color: var(--muted); font-size: 12px; }
 .detail-grid dd { margin: 0 0 8px; }

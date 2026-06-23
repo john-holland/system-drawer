@@ -22,6 +22,48 @@ def load_builtin_vocabulary() -> list[dict[str, Any]]:
     return list(data.get("items") or [])
 
 
+def find_builtin_entries_for_term(
+    term: str,
+    language_code: str = "en",
+) -> list[dict[str, Any]]:
+    """Return all built-in rows matching term and language (any POS)."""
+    term_lc = (term or "").strip().lower()
+    if not term_lc:
+        return []
+    lang = (language_code or "en").strip().lower()
+    out: list[dict[str, Any]] = []
+    for item in load_builtin_vocabulary():
+        if (item.get("term") or "").lower() != term_lc:
+            continue
+        if (item.get("languageCode") or "en").lower() != lang:
+            continue
+        out.append(item)
+    return out
+
+
+def find_builtin_entry(
+    term: str,
+    language_code: str = "en",
+    pos_tag: str | None = None,
+) -> dict[str, Any] | None:
+    """Return built-in vocabulary row matching term, language, and optional POS."""
+    term_lc = (term or "").strip().lower()
+    if not term_lc:
+        return None
+    lang = (language_code or "en").strip().lower()
+    pos = (pos_tag or "").strip().lower()
+    for item in load_builtin_vocabulary():
+        if (item.get("term") or "").lower() != term_lc:
+            continue
+        if (item.get("languageCode") or "en").lower() != lang:
+            continue
+        item_pos = (item.get("posTag") or "").strip().lower()
+        if pos and item_pos and item_pos != pos:
+            continue
+        return item
+    return None
+
+
 def _entry_view_from_builtin(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": row["id"],
@@ -38,6 +80,7 @@ def _entry_view_from_builtin(row: dict[str, Any]) -> dict[str, Any]:
         "clauseCount": 0,
         "linkedAssetIds": [],
         "components": [],
+        "componentCreation": None,
     }
 
 
@@ -70,6 +113,7 @@ def _load_db_custom_entries(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                 "clauseCount": 0,
                 "linkedAssetIds": [],
                 "components": [],
+                "componentCreation": None,
             }
         )
     return items
@@ -154,6 +198,11 @@ def _load_enrichment(conn: sqlite3.Connection) -> tuple[dict, dict, dict, dict, 
 
 def merge_vocabulary(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
     """Return merged entry map keyed by id."""
+    try:
+        from continuum_api.lemma_component_metadata import component_creation_view, load_all_cache_maps
+    except ImportError:
+        from lemma_component_metadata import component_creation_view, load_all_cache_maps
+
     merged: dict[str, dict[str, Any]] = {}
     for row in load_builtin_vocabulary():
         merged[row["id"]] = _entry_view_from_builtin(row)
@@ -233,6 +282,12 @@ def merge_vocabulary(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
         except sqlite3.OperationalError:
             pass
 
+    cache_by_entry = load_all_cache_maps(conn)
+
+    for eid, view in merged.items():
+        cache = cache_by_entry.get(eid)
+        view["componentCreation"] = component_creation_view(cache)
+
     return merged
 
 
@@ -246,6 +301,10 @@ def filter_entries(
     property_key: str | None = None,
     has_clause: bool | None = None,
     component: str | None = None,
+    component_type: str | None = None,
+    bucket_id: str | None = None,
+    causality_leaf: str | None = None,
+    has_component_metadata: bool | None = None,
 ) -> list[dict[str, Any]]:
     q_lc = (q or "").strip().lower()
     lang = (language or "").strip().lower()
@@ -268,6 +327,23 @@ def filter_entries(
             props = e.get("properties") or {}
             if component not in props and component not in (e.get("components") or []):
                 continue
+        cc = e.get("componentCreation") or {}
+        if component_type:
+            types = cc.get("componentTypes") or []
+            if not any(component_type.lower() in (t or "").lower() for t in types):
+                continue
+        if bucket_id:
+            buckets = cc.get("bucketIds") or []
+            if not any((b or "").startswith(bucket_id) for b in buckets):
+                continue
+        if causality_leaf:
+            leaves = cc.get("causalityLeafIds") or []
+            if causality_leaf not in leaves:
+                continue
+        if has_component_metadata is True and not cc:
+            continue
+        if has_component_metadata is False and cc:
+            continue
         if has_clause is True and int(e.get("clauseCount") or 0) <= 0:
             continue
         if has_clause is False and int(e.get("clauseCount") or 0) > 0:

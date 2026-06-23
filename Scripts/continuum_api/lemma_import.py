@@ -11,9 +11,24 @@ from datetime import datetime, timezone
 from typing import Any
 
 try:
-    from continuum_api.lemma_merge import BUILTIN_URN_PREFIX, is_builtin_urn
+    from continuum_api.lemma_merge import (
+        BUILTIN_URN_PREFIX,
+        find_builtin_entries_for_term,
+        find_builtin_entry,
+        is_builtin_urn,
+    )
 except ImportError:
-    from lemma_merge import BUILTIN_URN_PREFIX, is_builtin_urn
+    from lemma_merge import (
+        BUILTIN_URN_PREFIX,
+        find_builtin_entries_for_term,
+        find_builtin_entry,
+        is_builtin_urn,
+    )
+
+try:
+    from thesaurus.pos_tags import normalize_pos_tag
+except ImportError:
+    from pos_tags import normalize_pos_tag
 
 P_PROMPT_RE = re.compile(r"\{\{?P:([^}|]+)(?:\|([^}]+))?\}?\}?|\{P:([^}|]+)(?:\|([^}]+))?\}", re.IGNORECASE)
 
@@ -132,16 +147,18 @@ def parse_tabular_file(
 
 
 def _resolve_language_id(conn: sqlite3.Connection, code: str) -> str:
-    code = (code or "en").strip().lower()
-    cur = conn.execute("SELECT id FROM languages WHERE LOWER(code) = ? LIMIT 1", (code,))
-    row = cur.fetchone()
-    if row:
-        return row["id"]
-    lang_id = str(uuid.uuid4())
-    conn.execute(
-        "INSERT INTO languages (id, code, name, script_direction) VALUES (?, ?, ?, 'ltr')",
-        (lang_id, code, code),
-    )
+    try:
+        from thesaurus.language_resolver import resolve_language_id
+    except ImportError:
+        from language_resolver import resolve_language_id
+    lang_id = resolve_language_id(conn, code, create=True)
+    if not lang_id:
+        code = (code or "en").strip().lower() or "en"
+        lang_id = str(uuid.uuid4())
+        conn.execute(
+            "INSERT INTO languages (id, code, name, script_direction) VALUES (?, ?, ?, 'ltr')",
+            (lang_id, code, code),
+        )
     return lang_id
 
 
@@ -168,7 +185,7 @@ def upsert_lemma_row(
         return "skipped", "cannot create built-in URN as custom entry", None
 
     language = (row.get("language") or "en").strip().lower()
-    pos = (row.get("partOfSpeech") or row.get("pos") or "unknown").strip().lower()
+    pos = normalize_pos_tag(row.get("partOfSpeech") or row.get("pos"))
     language_id = _resolve_language_id(conn, language)
 
     cur = conn.execute(
@@ -187,6 +204,16 @@ def upsert_lemma_row(
             return "skipped", "matches built-in entry", entry_id
         status = "updated"
     else:
+        builtin = find_builtin_entry(word, language, pos)
+        if builtin:
+            return "skipped", "matches built-in entry", builtin["id"]
+        homographs = find_builtin_entries_for_term(word, language)
+        if homographs:
+            preferred = next(
+                (h for h in homographs if (h.get("posTag") or "").lower() == (pos or "")),
+                homographs[0],
+            )
+            return "skipped", "matches built-in entry", preferred["id"]
         entry_id = str(uuid.uuid4())
         conn.execute(
             "INSERT INTO thesaurus_entries (id, language_id, term, pos_tag) VALUES (?, ?, ?, ?)",

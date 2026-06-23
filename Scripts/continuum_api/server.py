@@ -10,13 +10,14 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, request, send_from_directory
+from flask import Flask, Response, g, jsonify, redirect, request, send_from_directory
 
 # Allow importing thesaurus when run from repo root or Scripts
 _scripts = Path(__file__).resolve().parent.parent
 if str(_scripts) not in sys.path:
     sys.path.insert(0, str(_scripts))
 from thesaurus import farey_ast, xliff_converter, script_to_ast
+from thesaurus.language_resolver import ensure_default_languages
 import continuum_screenplay_work_orders as screenplay_wo
 
 try:
@@ -36,6 +37,31 @@ try:
 except ImportError:
     from lemma_routes import register_lemma_routes
 
+try:
+    from continuum_api.script_output_routes import register_script_output_routes
+except ImportError:
+    from script_output_routes import register_script_output_routes
+
+try:
+    from continuum_api.telecom_routes import register_telecom_routes
+except ImportError:
+    from telecom_routes import register_telecom_routes
+
+try:
+    from continuum_api.camera_routes import register_camera_routes
+except ImportError:
+    from camera_routes import register_camera_routes
+
+try:
+    from continuum_api.table_read_routes import register_table_read_routes
+except ImportError:
+    from table_read_routes import register_table_read_routes
+
+try:
+    from flask_socketio import SocketIO
+except ImportError:
+    SocketIO = None
+
 app = Flask(__name__, static_folder=str(Path(__file__).resolve().parent / "static"), static_url_path="/static")
 
 DEV_CORS_ORIGINS = {
@@ -43,7 +69,14 @@ DEV_CORS_ORIGINS = {
     "http://127.0.0.1:5174",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
 }
+
+# USC spatial library SPA (serve_library.py) — separate process during dual-server dev.
+LIBRARY_APP_BASE = os.environ.get("CONTINUUM_LIBRARY_BASE", "http://127.0.0.1:5051").rstrip("/")
 
 
 def _apply_cors_headers(response):
@@ -1108,9 +1141,13 @@ def put_draft_script(draft_id: str):
     try:
         conn = get_conn()
         try:
-            from continuum_api.localization_helpers import draft_blocks_author_edit
+            from continuum_api.localization_helpers import draft_blocks_author_edit, require_draft_author
         except ImportError:
-            from localization_helpers import draft_blocks_author_edit
+            from localization_helpers import draft_blocks_author_edit, require_draft_author
+        auth_err = require_draft_author(conn, draft_id, request.headers.get("X-User-ID", "anonymous"))
+        if auth_err:
+            conn.close()
+            return jsonify({"error": auth_err}), 403
         blocked = draft_blocks_author_edit(conn, draft_id)
         if blocked:
             conn.close()
@@ -1153,7 +1190,17 @@ def _create_notification(conn, user_id: str, ntype: str, message: str, draft_id=
 
 
 register_localization_routes(app, get_conn, _get_current_user, _create_notification, _is_admin)
+register_script_output_routes(app, get_conn, _get_current_user)
 register_lemma_routes(app, get_conn)
+register_telecom_routes(app, get_conn)
+register_camera_routes(app, get_conn, _get_current_user)
+
+_socketio_cors = list(DEV_CORS_ORIGINS) + [
+    "http://127.0.0.1:5050",
+    "http://localhost:5050",
+]
+socketio = SocketIO(app, cors_allowed_origins=_socketio_cors) if SocketIO else None
+register_table_read_routes(app, get_conn, _get_current_user, socketio, LIBRARY_APP_BASE)
 
 
 def _is_approved_to_commit(conn, user_id: str) -> bool:
@@ -1202,7 +1249,6 @@ def list_reviews():
             params,
         )
         rows = cur.fetchall()
-        conn.close()
         items = [
             {
                 "id": r["id"],
@@ -1217,6 +1263,36 @@ def list_reviews():
             }
             for r in rows
         ]
+        try:
+            from continuum_api.localization_helpers import list_submitted_change_lists_for_user
+        except ImportError:
+            from localization_helpers import list_submitted_change_lists_for_user
+        seen_drafts = {item["draftEpisodeId"] for item in items}
+        for cl in list_submitted_change_lists_for_user(conn, user_id):
+            draft_id = cl["draft_episode_id"]
+            if draft_id in seen_drafts:
+                for item in items:
+                    if item["draftEpisodeId"] == draft_id:
+                        item["changeListStatus"] = cl["workflow_status"]
+                        item["changeListId"] = cl["change_list_id"]
+                continue
+            items.append(
+                {
+                    "id": None,
+                    "draftEpisodeId": draft_id,
+                    "reviewerUserId": None,
+                    "revieweeUserId": cl.get("created_by"),
+                    "status": "pending_review",
+                    "createdAt": cl.get("submitted_at") or cl.get("updated_at"),
+                    "updatedAt": cl.get("updated_at"),
+                    "draftTitle": cl.get("title"),
+                    "committedAt": cl.get("committed_at"),
+                    "changeListStatus": cl["workflow_status"],
+                    "changeListId": cl["change_list_id"],
+                }
+            )
+            seen_drafts.add(draft_id)
+        conn.close()
         return jsonify({"items": items, "total": len(items)}), 200
     except sqlite3.OperationalError as e:
         return jsonify({"error": str(e), "hint": "Apply continuum_review_schema.sql"}), 500
@@ -1270,6 +1346,44 @@ def create_review():
         return jsonify({"error": str(e), "hint": "Apply continuum_review_schema.sql"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/reviews/<review_id>", methods=["GET"])
+def get_review(review_id: str):
+    """Get a single review assignment."""
+    user_id = _get_current_user()
+    try:
+        conn = get_conn()
+        cur = conn.execute(
+            """SELECT r.id, r.draft_episode_id, r.reviewer_user_id, r.reviewee_user_id, r.status,
+                      r.created_at, r.updated_at, d.title, d.committed_at
+               FROM reviewer r
+               JOIN draft_episodes d ON d.id = r.draft_episode_id
+               WHERE r.id = ?""",
+            (review_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({"error": "review not found"}), 404
+        if row["reviewer_user_id"] != user_id and row["reviewee_user_id"] != user_id and not _is_admin():
+            conn.close()
+            return jsonify({"error": "forbidden"}), 403
+        item = {
+            "id": row["id"],
+            "draftEpisodeId": row["draft_episode_id"],
+            "reviewerUserId": row["reviewer_user_id"],
+            "revieweeUserId": row["reviewee_user_id"],
+            "status": row["status"],
+            "createdAt": row["created_at"],
+            "updatedAt": row["updated_at"],
+            "draftTitle": row["title"],
+            "committedAt": row["committed_at"],
+        }
+        conn.close()
+        return jsonify(item), 200
+    except sqlite3.OperationalError as e:
+        return jsonify({"error": str(e), "hint": "Apply continuum_review_schema.sql"}), 500
 
 
 @app.route("/api/reviews/<review_id>", methods=["PATCH"])
@@ -1927,6 +2041,21 @@ def _version_gt(a: str, b: str) -> bool:
     return parse(a) > parse(b)
 
 
+@app.route("/api/thesaurus/languages", methods=["GET"])
+def list_thesaurus_languages():
+    """Read-only language codes for translation UI."""
+    try:
+        conn = get_conn()
+        ensure_default_languages(conn)
+        conn.commit()
+        cur = conn.execute("SELECT id, code FROM languages ORDER BY code")
+        items = [{"id": r["id"], "code": r["code"]} for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"items": items}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/thesaurus/export-xliff", methods=["GET"])
 def export_xliff():
     """Export thesaurus translations to XLIFF 2.0 XML. Query: sourceLang, targetLang."""
@@ -1936,6 +2065,8 @@ def export_xliff():
         return jsonify({"error": "targetLang required"}), 400
     try:
         conn = get_conn()
+        ensure_default_languages(conn)
+        conn.commit()
         xml_str = xliff_converter.export_to_xliff(conn, source_lang, target_lang)
         conn.close()
         return Response(xml_str, mimetype="application/xml", headers={"Content-Disposition": "attachment; filename=thesaurus.xliff"})
@@ -2081,6 +2212,17 @@ def serve_ui(subpath=None):
     return send_from_directory(static_dir, "ui.html")
 
 
+@app.route("/library")
+@app.route("/library/<path:subpath>")
+def redirect_library(subpath=None):
+    """USC library runs on serve_library.py (default port 5051)."""
+    suffix = f"/{subpath}" if subpath else ""
+    target = f"{LIBRARY_APP_BASE}/library{suffix}"
+    if request.query_string:
+        target = f"{target}?{request.query_string.decode()}"
+    return redirect(target, code=302)
+
+
 @app.route("/api/audit", methods=["GET"])
 def get_audit_log():
     """Get audit log. Contractors see own rows; admins see all. Query: limit, offset."""
@@ -2167,7 +2309,10 @@ def main():
 
         threading.Thread(target=_cron_loop, daemon=True, name="continuum-submit-cron").start()
 
-    app.run(host=args.host, port=args.port, debug=True)
+    if socketio:
+        socketio.run(app, host=args.host, port=args.port, debug=True, allow_unsafe_werkzeug=True)
+    else:
+        app.run(host=args.host, port=args.port, debug=True)
 
 
 if __name__ == "__main__":

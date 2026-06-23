@@ -1,0 +1,12 @@
+playbook: telecom/v1
+name: pam-default
+networks:
+  - id: ubiquitous
+    virtual: true
+    discovery:
+      crossRoute: true
+pam:
+  users:
+    - name: guest
+      devices: []
+      permissions: [browse]

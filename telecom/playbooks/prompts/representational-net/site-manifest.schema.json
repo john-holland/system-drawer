@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Representational Net Site Manifest",
+  "type": "object",
+  "required": ["representationalNet", "siteId", "basePath", "pages"],
+  "properties": {
+    "representationalNet": { "const": "telecom/v1" },
+    "siteId": { "type": "string" },
+    "basePath": { "type": "string" },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["slug", "title", "links"],
+        "properties": {
+          "slug": { "type": "string" },
+          "title": { "type": "string" },
+          "links": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

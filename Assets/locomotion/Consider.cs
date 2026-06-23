@@ -810,12 +810,7 @@ public class Consider : MonoBehaviour
 
     private Vector3 GetCenterOfMass(GameObject obj)
     {
-        Rigidbody rb = obj.GetComponent<Rigidbody>();
-        if (rb != null && rb.centerOfMass != Vector3.zero)
-        {
-            return obj.transform.TransformPoint(rb.centerOfMass);
-        }
-        return obj.transform.position;
+        return ActorPhysicalCentroid.GetWorldCenterOfMass(obj);
     }
 
     private float CalculateTipAngle(GameObject obj, Vector3 direction)

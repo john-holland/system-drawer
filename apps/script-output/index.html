@@ -4,202 +4,111 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Script Output</title>
+  <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css" />
   <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
+  <link rel="stylesheet" href="/script-output.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
+  <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
+  <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
+  <script src="/static/shared/continuum-script-editor/continuum-script-spans.js"></script>
+  <script src="/static/shared/continuum-script-output/continuum-script-permissions.js"></script>
+  <script src="/static/shared/continuum-script-output/continuum-script-ack.js"></script>
   <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
   <script src="/static/shared/continuum-clause-selector/continuum-clause-selector.js"></script>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 16px; max-width: 1200px; }
-    label { margin-right: 8px; }
-    input { min-width: 280px; padding: 6px 8px; }
-    button { margin-right: 8px; padding: 6px 12px; cursor: pointer; }
-    #status { color: #666; font-size: 14px; margin: 8px 0; }
-    #editor-host { margin-top: 12px; min-height: 400px; border: 1px solid #ccc; border-radius: 4px; }
-  </style>
+  <script src="/static/shared/continuum-script-output/continuum-script-output.js"></script>
 </head>
-<body>
-  <h1>Script Output</h1>
-  <p id="mode-hint">Load a draft or episode script from the Continuum API.</p>
-  <div>
-    <label>Draft ID <input id="draft-id" placeholder="draft episode uuid" /></label>
-    <label>Episode ID <input id="episode-id" placeholder="episode uuid" /></label>
-    <button id="load-btn">Load</button>
-    <button id="save-btn">Save</button>
+<body class="continuum-script-output">
+  <div id="continuum-nav-root"></div>
+  <div class="so-toolbar-row">
+    <label>Draft ID <input id="draft-id" type="text" placeholder="draft episode uuid" /></label>
+    <label>Episode ID <input id="episode-id" type="text" placeholder="episode uuid" /></label>
+    <button type="button" id="load-btn">Load</button>
+    <button type="button" id="save-btn">Save</button>
+    <button type="button" id="table-read-btn" hidden>Start table read</button>
+    <button type="button" id="suggest-btn" hidden>Submit suggestion</button>
   </div>
   <div id="status"></div>
-  <div id="editor-host"></div>
+  <p id="mode-hint" class="so-mode-hint"></p>
+
+  <header id="so-header" class="so-header"></header>
+
+  <section id="so-suggestions-section" class="so-section" hidden>
+    <h2>Script suggestions</h2>
+    <div id="so-suggestions" class="so-panel"></div>
+    <label style="display:block;margin-top:8px;font-size:13px">Note with suggestion (optional)
+      <input id="suggest-comment" type="text" style="width:100%;box-sizing:border-box;margin-top:4px" placeholder="Comment for the author"/>
+    </label>
+  </section>
+
+  <section class="so-section">
+    <h2>Script</h2>
+    <div id="editor-host"></div>
+  </section>
+
+  <section class="so-section">
+    <h2>Lemma clauses at selection</h2>
+    <div id="so-lemma-panel"></div>
+  </section>
+
+  <section id="so-diffs-section" class="so-section" hidden>
+    <h2>Diffs — active suggestion</h2>
+    <div id="so-diffs" class="so-panel"></div>
+  </section>
+
+  <section id="so-accept-section" class="so-section" hidden>
+    <h2>Accept / deny suggestion</h2>
+    <div id="so-accept-bar" class="so-panel so-accept-bar"></div>
+    <div id="so-suggestion-comments" class="so-panel" style="margin-top:8px"></div>
+  </section>
+
+  <section class="so-section">
+    <h2>Change list</h2>
+    <div id="so-change-list" class="so-panel"></div>
+  </section>
+
+  <section class="so-section">
+    <h2>Comments</h2>
+    <div id="so-comments" class="so-panel"></div>
+    <div id="so-comment-form" class="so-comment-form" style="margin-top:8px">
+      <label>Add comment <textarea id="so-new-comment" rows="2"></textarea></label>
+      <button type="button" id="so-add-comment-btn">Add comment</button>
+    </div>
+  </section>
+
+  <details class="so-collapsed">
+    <summary>Old comments</summary>
+    <ul id="so-old-comments"></ul>
+  </details>
+
+  <details class="so-collapsed">
+    <summary>Old suggestions</summary>
+    <ul id="so-old-suggestions"></ul>
+  </details>
+
   <script>
-    const API = '/api';
-
-    let scriptSnapshot = '';
-    let editorInst = null;
-    let loadMode = 'draft'; // 'draft' | 'episode'
-    let activeId = '';
-    let clauseBindings = [];
-
-    function changeListSaveBody(data) {
-      const items = [...(data?.required || []), ...(data?.warnings || [])]
-        .filter(i => i && i.id)
-        .map(i => ({ id: i.id, userAcknowledged: !!i.userAcknowledged }));
-      return JSON.stringify({ items });
-    }
-
-    async function loadClauseBindings(draftId) {
-      if (!draftId) { clauseBindings = []; return; }
-      try {
-        const data = await api(`/thesaurus/clause-bindings?draftEpisodeId=${encodeURIComponent(draftId)}`);
-        clauseBindings = data.items || [];
-      } catch (_) {
-        clauseBindings = [];
-      }
-    }
-
-    function setStatus(msg, isError) {
-      const el = document.getElementById('status');
-      el.textContent = msg || '';
-      el.style.color = isError ? '#c00' : '#666';
-    }
-
-    async function api(path, opts) {
-      const res = await fetch(API + path, {
-        ...opts,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-ID': 'anonymous',
-          ...(opts?.headers || {}),
-        },
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || res.statusText || 'Request failed');
-      return data;
-    }
-
-    function readQueryParams() {
-      const params = new URLSearchParams(window.location.search);
-      const draftId = params.get('draftId') || params.get('draft_id');
-      const episodeId = params.get('episodeId') || params.get('episode_id');
-      if (draftId) {
-        document.getElementById('draft-id').value = draftId;
-        loadMode = 'draft';
-        activeId = draftId;
-      }
-      if (episodeId) {
-        document.getElementById('episode-id').value = episodeId;
-        loadMode = 'episode';
-        activeId = episodeId;
-      }
-      if (draftId && episodeId) loadMode = 'draft';
-    }
-
-    async function loadScript() {
+    ContinuumNav.mount({ app: 'hub', theme: 'light' });
+    document.getElementById('so-add-comment-btn').onclick = () => {
+      ContinuumScriptOutput.addComment();
+    };
+    ContinuumScriptOutput.init({
+      apiBase: '/api',
+      getUserId: () => ContinuumUserSession.getUserId(),
+    });
+    ContinuumUserSession.onChange(() => {
+      if (ContinuumScriptOutput._state && ContinuumScriptOutput._state.activeId) ContinuumScriptOutput.loadDraft();
+    });
+    document.getElementById('table-read-btn').onclick = async () => {
       const draftId = document.getElementById('draft-id').value.trim();
-      const episodeId = document.getElementById('episode-id').value.trim();
-      setStatus('Loading…');
-      try {
-        if (draftId) {
-          loadMode = 'draft';
-          activeId = draftId;
-          const data = await api(`/drafts/episodes/${draftId}/script`);
-          scriptSnapshot = data.scriptText || '';
-          await loadClauseBindings(draftId);
-          mountEditor(draftId, scriptSnapshot);
-          setStatus(`Loaded draft script (${data.language || 'en'})`);
-          return;
-        }
-        if (episodeId) {
-          loadMode = 'episode';
-          activeId = episodeId;
-          const data = await api(`/episode-script/${episodeId}`);
-          if (!data || !data.scriptText) {
-            setStatus('No script for this episode yet — start typing and Save to create one.', false);
-            scriptSnapshot = '';
-            mountEditor(episodeId, '');
-            return;
-          }
-          scriptSnapshot = data.scriptText || '';
-          mountEditor(episodeId, scriptSnapshot);
-          setStatus(`Loaded episode script (${data.language || 'en'})`);
-          return;
-        }
-        setStatus('Enter a Draft ID or Episode ID', true);
-      } catch (e) {
-        setStatus(e.message, true);
-      }
-    }
-
-    function mountEditor(id, text) {
-      editorInst = ContinuumScriptEditor.mount(document.getElementById('editor-host'), {
-        scriptText: text,
-        draftId: loadMode === 'draft' ? id : undefined,
-        mode: 'edit',
-        clauseBindings,
-        onBindingsChanged: async () => {
-          if (loadMode === 'draft') await loadClauseBindings(activeId);
-          if (editorInst) {
-            editorInst.options.clauseBindings = clauseBindings;
-            ContinuumScriptEditor.renderOverlays(editorInst, editorInst.options);
-          }
-        },
+      if (!draftId) return;
+      const res = await fetch('/api/table-read/sessions', {
+        method: 'POST',
+        headers: ContinuumUserSession.getHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ draftEpisodeId: draftId }),
       });
-    }
-
-    async function saveScript() {
-      if (!activeId) {
-        setStatus('Load a script first', true);
-        return;
-      }
-      const newText = ContinuumScriptEditor.getValue(editorInst);
-      try {
-        if (loadMode === 'draft') {
-          const editRes = await api(`/scripts/${activeId}/apply-edit`, {
-            method: 'POST',
-            body: JSON.stringify({ oldText: scriptSnapshot, newText }),
-          });
-          ContinuumChangeListModal.open(editRes.changeListId, editRes, {
-            onSave: async (clId, clData) => {
-              await api(`/drafts/episodes/${activeId}/script`, {
-                method: 'PUT',
-                body: JSON.stringify({ scriptText: newText }),
-              });
-              await api(`/localization/change-lists/${clId}/save`, {
-                method: 'POST',
-                body: changeListSaveBody(clData),
-              });
-              scriptSnapshot = newText;
-              await loadClauseBindings(activeId);
-              if (editorInst) {
-                editorInst.options.clauseBindings = clauseBindings;
-                ContinuumScriptEditor.renderOverlays(editorInst, editorInst.options);
-              }
-              setStatus('Draft saved');
-            },
-            onSubmit: async (clId, clData) => {
-              await api(`/localization/change-lists/${clId}/save`, {
-                method: 'POST',
-                body: changeListSaveBody(clData),
-              });
-              await api(`/localization/change-lists/${clId}/submit-for-review`, { method: 'POST', body: '{}' });
-              setStatus('Submitted for review');
-            },
-          });
-        } else {
-          await api(`/episode-script/${activeId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ scriptText: newText }),
-          });
-          scriptSnapshot = newText;
-          setStatus('Episode script saved');
-        }
-      } catch (e) {
-        setStatus(e.message, true);
-      }
-    }
-
-    document.getElementById('load-btn').onclick = loadScript;
-    document.getElementById('save-btn').onclick = saveScript;
-
-    readQueryParams();
-    if (activeId) loadScript();
+      if (!res.ok) { alert('Could not start table read'); return; }
+      const data = await res.json();
+      window.open('/table-read?session=' + encodeURIComponent(data.id) + '&draft=' + encodeURIComponent(draftId), '_blank');
+    };
   </script>
 </body>
 </html>

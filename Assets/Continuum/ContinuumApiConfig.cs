@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ public static class ContinuumApiConfig
 {
     private static string _cached;
     private static string _cachedTenant;
+    private static bool? _disableReporting;
 
     public static string GetApiBaseUrl()
     {
@@ -54,4 +56,39 @@ public static class ContinuumApiConfig
         _cachedTenant = "default";
         return _cachedTenant;
     }
+
+    /// <summary>
+    /// When true, runtime component reports are suppressed (skunk-works / local-only mode).
+    /// Set CONTINUUM_DISABLE_REPORTING=1 in the environment or PlayerPrefs ContinuumDisableReporting=1.
+    /// </summary>
+    public static bool DisableReportingForSkunkWorks
+    {
+        get
+        {
+            if (_disableReporting.HasValue)
+                return _disableReporting.Value;
+            try
+            {
+                var env = Environment.GetEnvironmentVariable("CONTINUUM_DISABLE_REPORTING");
+                if (!string.IsNullOrEmpty(env) && env != "0" && !string.Equals(env, "false", StringComparison.OrdinalIgnoreCase))
+                {
+                    _disableReporting = true;
+                    return true;
+                }
+            }
+            catch { }
+            _disableReporting = PlayerPrefs.GetInt("ContinuumDisableReporting", 0) == 1;
+            return _disableReporting.Value;
+        }
+        set
+        {
+            _disableReporting = value;
+            PlayerPrefs.SetInt("ContinuumDisableReporting", value ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+    }
+
+    /// <summary>Runtime reports push in development builds unless skunk-works opt-out is set.</summary>
+    public static bool ShouldPushRuntimeComponentReports =>
+        !DisableReportingForSkunkWorks && (Debug.isDebugBuild || Application.isEditor);
 }

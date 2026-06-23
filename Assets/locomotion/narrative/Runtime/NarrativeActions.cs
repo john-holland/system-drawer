@@ -93,6 +93,14 @@ namespace Locomotion.Narrative
                     _spawnedInstance.transform.localPosition = localPosition;
                     _spawnedInstance.transform.localRotation = Quaternion.Euler(localEulerAngles);
                 }
+                var reportTag = _spawnedInstance.GetComponentInChildren<ContinuumLemmaReportTag>();
+                if (reportTag != null && !string.IsNullOrEmpty(reportTag.entryId))
+                {
+                    LemmaComponentReportCollector.NotifyPrefabSpawned(
+                        reportTag.entryId,
+                        _spawnedInstance,
+                        reportTag.prefabRef);
+                }
             }
 
             return BehaviorTreeStatus.Success;

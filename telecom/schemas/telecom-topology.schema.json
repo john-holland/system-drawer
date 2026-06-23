@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://continuum.local/schemas/telecom-topology.schema.json",
+  "title": "Telecom Topology Export",
+  "type": "object",
+  "required": ["topology", "networks"],
+  "properties": {
+    "topology": { "const": "telecom/v1" },
+    "exportedAt": { "type": "string" },
+    "networks": { "type": "array", "items": { "$ref": "#/$defs/network" } },
+    "devices": { "type": "array", "items": { "$ref": "#/$defs/device" } },
+    "routes": { "type": "array", "items": { "$ref": "#/$defs/route" } },
+    "connections": { "type": "array", "items": { "$ref": "#/$defs/connection" } }
+  },
+  "$defs": {
+    "network": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "virtual": { "type": "boolean" },
+        "discoveryCrossRoute": { "type": "boolean" },
+        "playbookPath": { "type": "string" }
+      }
+    },
+    "device": {
+      "type": "object",
+      "required": ["id", "networkId"],
+      "properties": {
+        "id": { "type": "string" },
+        "networkId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "phoneE164": { "type": "string" },
+        "ipv6Full": { "type": "string" },
+        "causalityLeafId": { "type": "string" },
+        "uscAssetId": { "type": "string" },
+        "spatialGeohash": { "type": "string" }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": ["networkId", "prefix"],
+      "properties": {
+        "networkId": { "type": "string" },
+        "prefix": { "type": "string" },
+        "nextHop": { "type": "string" },
+        "metric": { "type": "integer" }
+      }
+    },
+    "connection": {
+      "type": "object",
+      "required": ["fromNetworkId", "toNetworkId"],
+      "properties": {
+        "fromNetworkId": { "type": "string" },
+        "toNetworkId": { "type": "string" },
+        "gatewayDeviceId": { "type": "string" },
+        "enabled": { "type": "boolean" }
+      }
+    }
+  }
+}

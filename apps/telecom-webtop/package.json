@@ -1,0 +1,16 @@
+{
+  "name": "telecom-webtop",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite --port 5175",
+    "build": "vite build",
+    "preview": "vite preview --port 8080"
+  },
+  "dependencies": {
+    "@os-js/client": "^3.1.12"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

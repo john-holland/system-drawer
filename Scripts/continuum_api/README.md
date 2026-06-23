@@ -34,6 +34,20 @@ Web UI: `/lemma-library` (browse, create, bulk import, localization search).
 - `GET /api/thesaurus/localization-view` – localization-focused combined view
 - `POST /api/thesaurus/parse-properties` – parse `{P:...}` default property strings
 
+### XLIFF translations
+
+Web UI: Lemma Library → **Translations** (`/lemma-library#translations`).
+
+- `GET /api/thesaurus/languages` – language codes for export/import dropdowns
+- `GET /api/thesaurus/export-xliff?sourceLang=en&targetLang=fr` – download XLIFF 2.0 XML
+- `POST /api/thesaurus/import-xliff` – multipart `file` or JSON `{ "xliff": "…" }`
+- `GET /api/thesaurus/language-audit` – missing translation report (optional UI link)
+
+```bash
+curl -o thesaurus-fr.xliff "http://127.0.0.1:5050/api/thesaurus/export-xliff?sourceLang=en&targetLang=fr"
+curl -X POST -F file=@thesaurus-fr.xliff http://127.0.0.1:5050/api/thesaurus/import-xliff
+```
+
 Built-in vocabulary JSON: `continuum_api/data/builtin_vocabulary.json` (export via Unity **Continuum → Export Built-in Vocabulary JSON**).
 
 Apply `continuum_lemma_library_schema.sql` for `prefab-id` property spec and indexes.

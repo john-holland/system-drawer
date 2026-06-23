@@ -260,4 +260,41 @@ public static class GenericTraversibilityPlannerSolver
 
         return best;
     }
+
+    /// <summary>Append terminal leg when enabled; returns input plan when disabled or resolution fails.</summary>
+    public static GenericMultiModalPathPlan AppendTerminalLegIfEnabled(
+        GenericMultiModalPathPlan plan,
+        Vector3 approachStart,
+        Vector3 goalHint,
+        HierarchicalPathingSolver solver,
+        ActorPhysicalProfile profile,
+        in PlannerTerminalOptions terminalOptions)
+    {
+        if (plan == null || plan.IsEmpty || !terminalOptions.enableTerminalLeg || solver == null)
+            return plan;
+
+        Vector3 start = approachStart;
+        if (plan.segments != null && plan.segments.Count > 0)
+        {
+            MultiModalSegment last = plan.segments[plan.segments.Count - 1];
+            if (last?.waypoints != null && last.waypoints.Count > 0)
+                start = last.waypoints[last.waypoints.Count - 1];
+        }
+
+        TravelLegMode mode = terminalOptions.autoFromProfile || !TravelLegModeExtensions.IsTerminalLeg(terminalOptions.terminalMode)
+            ? profile.defaultTerminalLeg
+            : terminalOptions.terminalMode;
+
+        var zones = ParkingZoneIndex.QueryNear(goalHint, terminalOptions.terminalSearchRadius > 0f
+            ? terminalOptions.terminalSearchRadius
+            : 60f);
+
+        if (!TerminalPlacementSolver.TryResolveTerminalLeg(
+                start, goalHint, profile, mode, solver, zones, out MultiModalSegment terminalLeg))
+            return plan;
+
+        GenericMultiModalPathPlan copy = plan.Clone();
+        copy.segments.Add(terminalLeg);
+        return copy;
+    }
 }

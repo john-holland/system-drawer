@@ -60,6 +60,10 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
             _ = LoadPropertiesAsync();
         if (GUILayout.Button("Save"))
             SaveProperties();
+        GUI.enabled = !string.IsNullOrEmpty(_entryId);
+        if (GUILayout.Button("Scan prefab components"))
+            _ = ScanPrefabComponentsAsync();
+        GUI.enabled = true;
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space(6);
@@ -109,6 +113,17 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         }
     }
 
+    async Task ScanPrefabComponentsAsync()
+    {
+        if (string.IsNullOrEmpty(_entryId))
+            return;
+        var ok = await LemmaComponentBlueprintScanner.ScanAndPostEntryAsync(_entryId);
+        EditorUtility.DisplayDialog(
+            "Lemma Properties",
+            ok ? "Prefab component blueprint uploaded." : "Scan failed — check prefab-id property and Console.",
+            "OK");
+    }
+
     async Task LoadPropertiesAsync()
     {
         if (string.IsNullOrEmpty(_entryId)) return;
@@ -142,6 +157,8 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
             charEnd = _clauseCharEnd,
             selectionText = _clauseSelection,
             entryId = _entryId,
+            draftEpisodeId = _clauseDraftId,
+            draftScriptId = draft?.id ?? "",
             fareyLeftNum = farey.ln,
             fareyLeftDen = farey.ld,
             fareyRightNum = farey.rn,

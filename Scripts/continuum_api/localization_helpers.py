@@ -73,6 +73,22 @@ def validate_property_value(conn: sqlite3.Connection, property_key: str, propert
     return None
 
 
+def resolve_draft_script_id(conn: sqlite3.Connection, body: dict) -> Optional[str]:
+    draft_script_id = body.get("draftScriptId") or body.get("draft_script_id")
+    if draft_script_id:
+        return str(draft_script_id)
+    draft_episode_id = body.get("draftEpisodeId") or body.get("draftId")
+    if not draft_episode_id:
+        return None
+    row = conn.execute(
+        """SELECT id FROM draft_episode_script
+           WHERE draft_episode_id = ?
+           ORDER BY updated_at DESC LIMIT 1""",
+        (draft_episode_id,),
+    ).fetchone()
+    return row["id"] if row else None
+
+
 def resolve_clause_ref_farey(conn: sqlite3.Connection, body: dict, script_text: str = "") -> ClauseRef:
     ref = ClauseRef.from_body(body)
     if ref.farey_left_den > 0 and ref.farey_right_den > 0 and (
@@ -84,8 +100,8 @@ def resolve_clause_ref_farey(conn: sqlite3.Connection, body: dict, script_text: 
         cur = conn.execute(
             """SELECT n.farey_left_num, n.farey_left_den, n.farey_right_num, n.farey_right_den
                FROM thesaurus_ast_nodes n
-               JOIN draft_episode_script s ON s.draft_episode_id = n.draft_episode_id
-               WHERE s.id = ?""",
+               JOIN draft_episode_script s ON s.episode_script_id = n.episode_script_id
+               WHERE s.id = ? AND n.episode_script_id IS NOT NULL""",
             (ref.draft_script_id,),
         )
         ast_nodes = [dict(r) for r in cur.fetchall()]
@@ -202,7 +218,207 @@ def advance_change_list_on_review_approve(conn: sqlite3.Connection, draft_episod
     )
 
 
-def binding_row(r) -> dict:
+def upsert_draft_script_text(
+    conn: sqlite3.Connection,
+    draft_episode_id: str,
+    script_text: str,
+    language: str = "en",
+) -> None:
+    """Persist draft script body (used when applying edits from Script Output)."""
+    cur = conn.execute(
+        "SELECT id FROM draft_episode_script WHERE draft_episode_id = ? AND language = ?",
+        (draft_episode_id, language),
+    )
+    row = cur.fetchone()
+    now = _now()
+    if row:
+        conn.execute(
+            "UPDATE draft_episode_script SET script_text = ?, updated_at = ? WHERE id = ?",
+            (script_text, now, row["id"]),
+        )
+        return
+    conn.execute(
+        """INSERT INTO draft_episode_script
+           (id, draft_episode_id, episode_script_id, script_text, language, created_at, updated_at)
+           VALUES (?, ?, NULL, ?, ?, ?, ?)""",
+        (str(uuid.uuid4()), draft_episode_id, script_text, language, now, now),
+    )
+
+
+def ensure_reviewer_rows_for_submission(
+    conn: sqlite3.Connection,
+    draft_episode_id: str,
+    change_list_id: str,
+) -> None:
+    """Ensure reviewer table rows exist when a change list is submitted for review."""
+    draft = conn.execute(
+        "SELECT created_by FROM draft_episodes WHERE id = ?",
+        (draft_episode_id,),
+    ).fetchone()
+    reviewee = (draft["created_by"] if draft else None) or "anonymous"
+    reviewer_ids: set[str] = set()
+    for r in conn.execute(
+        "SELECT reviewer_user_id FROM reviewer WHERE draft_episode_id = ?",
+        (draft_episode_id,),
+    ).fetchall():
+        reviewer_ids.add(r["reviewer_user_id"])
+    for r in conn.execute(
+        "SELECT user_id FROM localization_change_list_reviewers WHERE change_list_id = ?",
+        (change_list_id,),
+    ).fetchall():
+        reviewer_ids.add(r["user_id"])
+    if not reviewer_ids:
+        return
+    now = _now()
+    for reviewer_id in reviewer_ids:
+        existing = conn.execute(
+            "SELECT id FROM reviewer WHERE draft_episode_id = ? AND reviewer_user_id = ?",
+            (draft_episode_id, reviewer_id),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE reviewer SET status = 'pending', updated_at = ? WHERE id = ?",
+                (now, existing["id"]),
+            )
+            continue
+        conn.execute(
+            """INSERT INTO reviewer
+               (id, draft_episode_id, reviewer_user_id, reviewee_user_id, status, created_at, updated_at)
+               VALUES (?, ?, ?, ?, 'pending', ?, ?)""",
+            (str(uuid.uuid4()), draft_episode_id, reviewer_id, reviewee, now, now),
+        )
+
+
+def list_submitted_change_lists_for_user(
+    conn: sqlite3.Connection,
+    user_id: str,
+) -> list[dict[str, Any]]:
+    """Drafts with change lists in review, visible to author, assigned reviewer, or CL reviewer."""
+    cur = conn.execute(
+        """SELECT cl.id AS change_list_id, cl.workflow_status, cl.submitted_at, cl.updated_at,
+                  d.id AS draft_episode_id, d.title, d.committed_at, d.created_by
+           FROM localization_change_lists cl
+           JOIN draft_episodes d ON d.id = cl.draft_episode_id
+           WHERE cl.workflow_status IN ('in_review', 'submitted')
+           AND (
+               d.created_by = ?
+               OR EXISTS (
+                   SELECT 1 FROM reviewer r
+                   WHERE r.draft_episode_id = d.id
+                   AND (r.reviewer_user_id = ? OR r.reviewee_user_id = ?)
+               )
+               OR EXISTS (
+                   SELECT 1 FROM localization_change_list_reviewers clr
+                   WHERE clr.change_list_id = cl.id AND clr.user_id = ?
+               )
+           )
+           ORDER BY COALESCE(cl.submitted_at, cl.updated_at) DESC""",
+        (user_id, user_id, user_id, user_id),
+    )
+    return [dict(r) for r in cur.fetchall()]
+
+
+def is_draft_author(conn: sqlite3.Connection, draft_episode_id: str, user_id: str) -> bool:
+    row = conn.execute(
+        "SELECT created_by FROM draft_episodes WHERE id = ?",
+        (draft_episode_id,),
+    ).fetchone()
+    if not row:
+        return False
+    author = (row["created_by"] or "anonymous").strip()
+    return author == (user_id or "anonymous").strip()
+
+
+def require_draft_author(conn: sqlite3.Connection, draft_episode_id: str, user_id: str) -> Optional[str]:
+    if not is_draft_author(conn, draft_episode_id, user_id):
+        return "Only the draft author may perform this action"
+    return None
+
+
+def change_list_needs_review_ack(row: Optional[sqlite3.Row | dict]) -> bool:
+    if not row:
+        return False
+    if isinstance(row, sqlite3.Row):
+        row = dict(row)
+    status = (row.get("workflow_status") or row.get("workflowStatus") or "").lower()
+    if status in ("in_review", "submitted"):
+        return True
+    return bool(row.get("submitted_at") or row.get("submittedAt"))
+
+
+def ensure_script_output_tables(conn: sqlite3.Connection) -> None:
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS script_suggestions (
+            id TEXT PRIMARY KEY,
+            draft_episode_id TEXT NOT NULL,
+            suggested_by TEXT NOT NULL,
+            base_script_text TEXT NOT NULL,
+            suggested_script_text TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            review_cycle INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            resolved_at TEXT,
+            resolved_by TEXT
+        );
+        CREATE TABLE IF NOT EXISTS script_suggestions_archive (
+            id TEXT PRIMARY KEY,
+            original_suggestion_id TEXT,
+            draft_episode_id TEXT NOT NULL,
+            suggested_by TEXT NOT NULL,
+            base_script_text TEXT NOT NULL,
+            suggested_script_text TEXT NOT NULL,
+            status TEXT NOT NULL,
+            review_cycle INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            resolved_at TEXT,
+            resolved_by TEXT,
+            archived_at TEXT NOT NULL,
+            archived_reason TEXT NOT NULL DEFAULT 'resolved'
+        );
+        """
+    )
+
+
+def ensure_draft_comment_thread(conn: sqlite3.Connection, draft_episode_id: str) -> str:
+    """Return reviewer.id for storing draft-scoped comments (creates thread row if needed)."""
+    cur = conn.execute(
+        "SELECT id FROM reviewer WHERE draft_episode_id = ? ORDER BY created_at LIMIT 1",
+        (draft_episode_id,),
+    )
+    row = cur.fetchone()
+    if row:
+        return row["id"]
+    draft = conn.execute(
+        "SELECT created_by FROM draft_episodes WHERE id = ?",
+        (draft_episode_id,),
+    ).fetchone()
+    author = (draft["created_by"] if draft else None) or "anonymous"
+    now = _now()
+    rid = str(uuid.uuid4())
+    conn.execute(
+        """INSERT INTO reviewer
+           (id, draft_episode_id, reviewer_user_id, reviewee_user_id, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'pending', ?, ?)""",
+        (rid, draft_episode_id, author, author, now, now),
+    )
+    return rid
+
+
+def binding_row(r, script_text: str = "") -> dict:
+    char_start = r["char_start"]
+    char_end = r["char_end"]
+    if char_end <= char_start and script_text:
+        from thesaurus.clause_audit import farey_to_char
+
+        char_start, char_end = farey_to_char(
+            script_text,
+            r["farey_left_num"],
+            r["farey_left_den"],
+            r["farey_right_num"],
+            r["farey_right_den"],
+        )
     return {
         "id": r["id"],
         "episodeScriptId": r["episode_script_id"],
@@ -211,8 +427,8 @@ def binding_row(r) -> dict:
         "fareyLeftDen": r["farey_left_den"],
         "fareyRightNum": r["farey_right_num"],
         "fareyRightDen": r["farey_right_den"],
-        "charStart": r["char_start"],
-        "charEnd": r["char_end"],
+        "charStart": char_start,
+        "charEnd": char_end,
         "selectionText": r["selection_text"],
         "propertyKey": r["property_key"],
         "propertyValue": r["property_value"],

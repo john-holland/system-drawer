@@ -10,8 +10,55 @@
   async function api(path, opts) {
     const r = await fetch(API + path, { credentials: 'include', ...opts });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || r.statusText);
+    if (!r.ok) {
+      const err = new Error(data.error || r.statusText);
+      err.status = r.status;
+      err.code = data.code;
+      err.field = data.field;
+      err.existingEntryId = data.existingEntryId;
+      err.detail = data.detail;
+      err.body = data;
+      throw err;
+    }
     return data;
+  }
+
+  const CREATE_FIELD_IDS = {
+    word: 'f-word',
+    term: 'f-word',
+    prefabId: 'f-prefab',
+    partOfSpeech: 'f-pos',
+    language: 'f-lang',
+    defaultProperties: 'f-props',
+    description: 'f-desc',
+    synonyms: 'f-syns',
+  };
+
+  function clearCreateFieldErrors() {
+    document.querySelectorAll('#form-create label.field-error').forEach(l => {
+      l.classList.remove('field-error');
+      const hint = l.querySelector('.field-hint');
+      if (hint) hint.remove();
+    });
+  }
+
+  function highlightCreateField(field, message) {
+    const inputId = CREATE_FIELD_IDS[field];
+    if (!inputId) return;
+    const input = document.getElementById(inputId);
+    const label = input?.closest('label');
+    if (!label) return;
+    label.classList.add('field-error');
+    if (message) {
+      let hint = label.querySelector('.field-hint');
+      if (!hint) {
+        hint = document.createElement('span');
+        hint.className = 'field-hint';
+        label.appendChild(hint);
+      }
+      hint.textContent = message;
+    }
+    input?.focus();
   }
 
   function getRoute() {
@@ -21,7 +68,7 @@
   }
 
   function setActiveNav(page) {
-    document.querySelectorAll('[data-nav]').forEach(a => {
+    document.querySelectorAll('#continuum-subnav [data-nav]').forEach(a => {
       a.classList.toggle('active', a.dataset.nav === page);
     });
   }
@@ -32,7 +79,7 @@
     if (el) el.classList.add('active');
     const layout = document.getElementById('main-layout');
     if (layout) {
-      layout.classList.toggle('layout-single', page === 'create' || page === 'import' || page === 'entry');
+      layout.classList.toggle('layout-single', page === 'create' || page === 'import' || page === 'translations' || page === 'entry');
     }
     setActiveNav(page === 'entry' ? 'browse' : page);
   }
@@ -49,7 +96,8 @@
     { id: 'alpha', label: 'Alphabetical', field: 'alpha', visible: true, asc: true },
     { id: 'pos', label: 'Part of speech', field: 'posTag', visible: true, asc: true },
     { id: 'source', label: 'Built-in vs custom', field: 'isBuiltIn', visible: true, asc: true },
-    { id: 'components', label: 'Components', field: 'components', visible: false, asc: true },
+    { id: 'components', label: 'Property keys', field: 'components', visible: false, asc: true },
+    { id: 'compTypes', label: 'Component types', field: 'componentTypes', visible: false, asc: true },
   ];
 
   const LOC_DIMS = [
@@ -87,10 +135,30 @@
         badge.classList.add(item.isBuiltIn ? 'builtin' : 'custom');
         row.querySelector('.chip-pos').textContent = item.posTag || '';
         const chips = row.querySelector('.chips');
-        (item.components || []).slice(0, 3).forEach(c => {
+        const cc = item.componentCreation || {};
+        (cc.componentTypes || []).slice(0, 3).forEach(c => {
           const ch = document.createElement('span');
-          ch.className = 'chip';
+          ch.className = 'chip chip-component';
           ch.textContent = c;
+          ch.title = 'Unity component type';
+          chips.appendChild(ch);
+        });
+        if (cc.hasBlueprint) {
+          const ch = document.createElement('span');
+          ch.className = 'chip chip-blueprint';
+          ch.textContent = 'Blueprint';
+          chips.appendChild(ch);
+        } else if (cc.hasRuntimeReports) {
+          const ch = document.createElement('span');
+          ch.className = 'chip chip-runtime';
+          ch.textContent = 'Runtime';
+          chips.appendChild(ch);
+        }
+        (item.components || []).slice(0, 2).forEach(c => {
+          const ch = document.createElement('span');
+          ch.className = 'chip chip-prop';
+          ch.textContent = c;
+          ch.title = 'Property key';
           chips.appendChild(ch);
         });
         if (item.clauseCount > 0) {
@@ -142,10 +210,16 @@
     const q = document.getElementById('search-q')?.value || '';
     const language = document.getElementById('filter-lang')?.value || '';
     const source = document.getElementById('filter-source')?.value || 'all';
+    const componentType = document.getElementById('filter-component-type')?.value?.trim() || '';
+    const bucketId = document.getElementById('filter-bucket-id')?.value?.trim() || '';
+    const hasMetadata = document.getElementById('filter-has-metadata')?.checked;
     const params = new URLSearchParams({ limit: '2000' });
     if (q) params.set('q', q);
     if (language) params.set('language', language);
     if (source) params.set('source', source);
+    if (componentType) params.set('componentType', componentType);
+    if (bucketId) params.set('bucketId', bucketId);
+    if (hasMetadata) params.set('hasComponentMetadata', 'true');
     const data = await api('/api/thesaurus/entries?' + params);
     browseItems = data.items || [];
     renderBrowseList();
@@ -192,7 +266,10 @@
   }
 
   async function loadEntry(id) {
-    const data = await api('/api/thesaurus/entries?entryId=' + encodeURIComponent(id));
+    const [data, meta] = await Promise.all([
+      api('/api/thesaurus/entries?entryId=' + encodeURIComponent(id)),
+      api('/api/thesaurus/entries/' + encodeURIComponent(id) + '/component-metadata').catch(() => null),
+    ]);
     const el = document.getElementById('entry-detail');
     if (!el) return;
     const props = Object.entries(data.properties || {})
@@ -202,6 +279,43 @@
     const tags = (data.tags || []).join(', ') || '—';
     const libBase = localStorage.getItem('continuumLibraryBase') || '';
     const assetLink = (data.linkedAssetIds || [])[0];
+    const cc = data.componentCreation || {};
+    const compTypes = (cc.componentTypes || []).join(', ') || '—';
+    let componentSection = '<h3>Component creation</h3>';
+    if (!cc || (!cc.hasBlueprint && !cc.hasRuntimeReports)) {
+      componentSection += '<p class="muted">No prefab blueprint or runtime reports yet. Scan in Unity (Lemma Properties → Scan prefab components).</p>';
+    } else {
+      componentSection += `<p><span class="chip chip-component">${cc.hasBlueprint ? 'Blueprint' : ''}</span> ` +
+        `<span class="chip chip-runtime">${cc.hasRuntimeReports ? 'Runtime reports' : ''}</span></p>` +
+        `<p><strong>Component types:</strong> ${esc(compTypes)}</p>`;
+      if ((cc.bucketIds || []).length) {
+        componentSection += '<p><strong>Bucket ids:</strong> ' +
+          cc.bucketIds.map(b => {
+            const href = libBase ? `${esc(libBase)}?highlight=${encodeURIComponent(b)}&view=spatial` : '#';
+            return libBase ? `<a href="${href}" target="_blank">${esc(b)}</a>` : esc(b);
+          }).join(', ') + '</p>';
+      }
+      if (meta?.blueprint?.payload?.nodes?.length) {
+        componentSection += '<details open><summary>Farey object tree (blueprint)</summary><ul class="comp-tree">';
+        meta.blueprint.payload.nodes.forEach(n => {
+          const types = (n.components || []).map(c => c.typeName || c.type_name).filter(Boolean).join(', ');
+          const f = n.farey || {};
+          componentSection += `<li><code>${esc(n.path || n.gameObjectName || '')}</code> ` +
+            (types ? `<small>${esc(types)}</small> ` : '') +
+            (f.ln != null ? `<small>[${f.ln}/${f.ld}–${f.rn}/${f.rd}]</small>` : '') +
+            '</li>';
+        });
+        componentSection += '</ul></details>';
+      }
+      if (meta?.reports?.length) {
+        componentSection += '<details><summary>Recent runtime reports</summary><table class="preview"><thead><tr><th>Run</th><th>Captured</th><th>Buckets</th></tr></thead><tbody>';
+        meta.reports.slice(0, 10).forEach(r => {
+          const buckets = (r.payload?.spatialBuckets || []).map(b => b.bucketId || b.bucket_id).filter(Boolean).join(', ');
+          componentSection += `<tr><td>${esc(r.runId || r.id)}</td><td>${esc(r.capturedAt || '')}</td><td>${esc(buckets || '—')}</td></tr>`;
+        });
+        componentSection += '</tbody></table></details>';
+      }
+    }
     el.innerHTML =
       '<h2>' + esc(data.term) + '</h2>' +
       '<dl class="detail-grid">' +
@@ -216,8 +330,9 @@
       '<dt>Clauses</dt><dd>' + (data.clauseCount || 0) + '</dd>' +
       '</dl>' +
       '<h3>Properties</h3><table class="preview"><tbody>' + (props || '<tr><td colspan=2>None</td></tr>') + '</tbody></table>' +
+      componentSection +
       '<p style="margin-top:16px">' +
-      (assetLink && libBase ? '<a href="' + esc(libBase) + '?highlight=' + encodeURIComponent(assetLink) + '" target="_blank">View USC asset on map</a> · ' : '') +
+      (assetLink && libBase ? '<a href="' + esc(libBase) + '?highlight=' + encodeURIComponent(assetLink) + '&view=spatial" target="_blank">View USC asset on map</a> · ' : '') +
       '<a href="/api/deeplink?window=Continuum/Lemma+Properties&entryId=' + encodeURIComponent(id) + '" target="_blank">Open in Unity</a>' +
       '</p>' +
       '<button type="button" class="secondary" id="back-browse">← Back to browse</button>';
@@ -229,16 +344,37 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
   }
 
+  async function loadPosTags(selected) {
+    const sel = document.getElementById('f-pos');
+    if (!sel) return;
+    try {
+      const data = await api('/api/thesaurus/pos-tags');
+      const items = data.items || [];
+      sel.innerHTML = items.map(row => {
+        const seg = row.segment ? ` · ${row.segment}` : '';
+        const cat = row.category ? ` (${row.category})` : '';
+        const label = `${row.label || row.posTag}${seg}${cat}`;
+        return `<option value="${esc(row.posTag)}">${esc(label)}</option>`;
+      }).join('');
+    } catch (_) {
+      sel.innerHTML = '<option value="noun">Noun · noun (Subject)</option><option value="unknown">Unknown · unknown</option>';
+    }
+    const want = (selected || 'noun').trim().toLowerCase();
+    const opt = Array.from(sel.options).find(o => (o.value || '').toLowerCase() === want);
+    sel.value = opt ? opt.value : 'noun';
+  }
+
   async function submitCreate(ev) {
     ev.preventDefault();
     const msg = document.getElementById('create-msg');
     msg.textContent = '';
     msg.className = 'msg';
+    clearCreateFieldErrors();
     const body = {
       word: document.getElementById('f-word').value,
       description: document.getElementById('f-desc').value,
       language: document.getElementById('f-lang').value || 'en',
-      partOfSpeech: document.getElementById('f-pos').value || 'unknown',
+      partOfSpeech: (document.getElementById('f-pos').value || 'unknown').trim().toLowerCase(),
       prefabId: document.getElementById('f-prefab').value,
       defaultProperties: document.getElementById('f-props').value,
     };
@@ -250,11 +386,28 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      msg.textContent = 'Created: ' + (data.entry?.term || body.word);
+      const label = data.status === 'updated' ? 'Updated' : 'Created';
+      msg.textContent = data.message || (label + ': ' + (data.entry?.term || body.word));
       msg.className = 'msg ok';
-      if (data.entry?.id) setTimeout(() => { location.hash = 'entry/' + encodeURIComponent(data.entry.id); route(); }, 600);
+      if (data.entry?.id) {
+        setTimeout(() => { location.hash = 'entry/' + encodeURIComponent(data.entry.id); route(); }, 600);
+      }
     } catch (e) {
+      if (e.field) highlightCreateField(e.field, e.message);
       msg.textContent = e.message;
+      if (e.existingEntryId) {
+        const link = document.createElement('a');
+        link.href = '#entry/' + encodeURIComponent(e.existingEntryId);
+        link.textContent = ' View existing entry';
+        link.style.marginLeft = '8px';
+        link.style.color = '#b0c8ff';
+        link.addEventListener('click', ev => {
+          ev.preventDefault();
+          location.hash = 'entry/' + encodeURIComponent(e.existingEntryId);
+          route();
+        });
+        msg.appendChild(link);
+      }
       msg.className = 'msg error';
     }
   }
@@ -271,6 +424,84 @@
       document.getElementById('props-preview').textContent = JSON.stringify(data.properties, null, 2);
     } catch (e) {
       document.getElementById('props-preview').textContent = e.message;
+    }
+  }
+
+  async function loadTranslationsView() {
+    const srcSel = document.getElementById('xliff-source-lang');
+    const tgtSel = document.getElementById('xliff-target-lang');
+    if (!srcSel || !tgtSel) return;
+    try {
+      const data = await api('/api/thesaurus/languages');
+      const items = data.items || [];
+      const opts = items.map(l => `<option value="${esc(l.code)}">${esc(l.code)}</option>`).join('');
+      srcSel.innerHTML = opts;
+      tgtSel.innerHTML = opts;
+      srcSel.value = 'en';
+      if (items.some(l => l.code === 'fr')) tgtSel.value = 'fr';
+      else if (items.length > 1) tgtSel.selectedIndex = 1;
+    } catch (e) {
+      srcSel.innerHTML = '<option value="en">en</option>';
+      tgtSel.innerHTML = '<option value="fr">fr</option><option value="es">es</option>';
+    }
+  }
+
+  async function exportXliff() {
+    const msg = document.getElementById('xliff-msg');
+    const src = document.getElementById('xliff-source-lang')?.value || 'en';
+    const tgt = document.getElementById('xliff-target-lang')?.value || '';
+    if (!tgt) { msg.textContent = 'Select a target language'; msg.className = 'msg error'; return; }
+    msg.textContent = 'Exporting…';
+    msg.className = 'msg';
+    try {
+      const r = await fetch(API + '/api/thesaurus/export-xliff?sourceLang=' + encodeURIComponent(src) + '&targetLang=' + encodeURIComponent(tgt), { credentials: 'include' });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error || r.statusText);
+      }
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'thesaurus-' + tgt + '.xliff';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      msg.textContent = 'Downloaded thesaurus-' + tgt + '.xliff';
+      msg.className = 'msg ok';
+    } catch (e) {
+      msg.textContent = e.message;
+      msg.className = 'msg error';
+    }
+  }
+
+  async function importXliff() {
+    const msg = document.getElementById('xliff-msg');
+    const file = document.getElementById('xliff-import-file')?.files[0];
+    if (!file) { msg.textContent = 'Choose an XLIFF file'; msg.className = 'msg error'; return; }
+    const fd = new FormData();
+    fd.append('file', file);
+    msg.textContent = 'Importing…';
+    msg.className = 'msg';
+    try {
+      const r = await fetch(API + '/api/thesaurus/import-xliff', { method: 'POST', body: fd, credentials: 'include' });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || 'Import failed');
+      msg.textContent = 'Updated ' + (data.updated ?? 0) + ', inserted ' + (data.inserted ?? 0);
+      msg.className = 'msg ok';
+    } catch (e) {
+      msg.textContent = e.message;
+      msg.className = 'msg error';
+    }
+  }
+
+  async function runLanguageAudit() {
+    const out = document.getElementById('xliff-audit-out');
+    if (!out) return;
+    out.textContent = 'Loading audit…';
+    try {
+      const data = await api('/api/thesaurus/language-audit');
+      out.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      out.textContent = e.message;
     }
   }
 
@@ -323,14 +554,19 @@
     showView(page === 'entry' ? 'entry' : page);
     if (page === 'browse') await loadBrowse();
     else if (page === 'localization') await loadLocalization();
+    else if (page === 'translations') await loadTranslationsView();
     else if (page === 'entry' && id) await loadEntry(id);
   }
 
   function init() {
     initMultisort();
+    loadPosTags('noun');
     document.getElementById('form-create')?.addEventListener('submit', submitCreate);
     document.getElementById('f-props')?.addEventListener('input', debounce(previewProps, 400));
     document.getElementById('btn-import')?.addEventListener('click', runImport);
+    document.getElementById('btn-xliff-export')?.addEventListener('click', exportXliff);
+    document.getElementById('btn-xliff-import')?.addEventListener('click', importXliff);
+    document.getElementById('btn-xliff-audit')?.addEventListener('click', runLanguageAudit);
     document.getElementById('search-q')?.addEventListener('input', debounce(() => loadBrowse(), 300));
     document.getElementById('filter-lang')?.addEventListener('change', () => loadBrowse());
     document.getElementById('filter-source')?.addEventListener('change', () => loadBrowse());

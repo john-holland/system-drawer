@@ -1,0 +1,10 @@
+.nd-main { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 3rem; font-family: system-ui, sans-serif; }
+.nd-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+.nd-tabs button { padding: 0.4rem 0.8rem; cursor: pointer; border: 1px solid #ccc; background: #f6f8fa; border-radius: 4px; }
+.nd-tabs button.active { background: #0969da; color: #fff; border-color: #0969da; }
+.nd-panel { border: 1px solid #d0d7de; border-radius: 6px; padding: 1rem; min-height: 200px; }
+.nd-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.nd-table th, .nd-table td { border-bottom: 1px solid #eee; padding: 0.4rem 0.5rem; text-align: left; }
+.nd-form { display: grid; gap: 0.5rem; max-width: 480px; margin-top: 1rem; }
+.nd-form input, .nd-form select { padding: 0.35rem; }
+.nd-status { padding: 0.5rem; background: #f6f8fa; border-radius: 4px; margin-top: 0.5rem; }

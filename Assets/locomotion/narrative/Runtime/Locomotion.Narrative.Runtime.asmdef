@@ -2,6 +2,7 @@
   "name": "Locomotion.Narrative.Runtime",
   "rootNamespace": "Locomotion.Narrative",
   "references": [
+    "Continuum.Runtime",
     "Locomotion.Audio",
     "HierarchicalPathFinding",
     "Planetary"
