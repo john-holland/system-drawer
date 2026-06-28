@@ -1,0 +1,8 @@
+building_type_id,display_name,property_class,lemma_term,prefab_id,default_opex_usd
+city_hall,City Hall,public,government-building,,750000
+fire_station,Fire Station,public,fire-station,Assets/Prefabs/Buildings/FireStation.prefab,400000
+residential_duplex,Residential Duplex,private,housing-duplex,doc-usc-housing-duplex,120000
+church_small,Small Church,religious,church,,90000
+corner_store,Corner Store,commercial,retail-corner,,200000
+hobby_center,Community Hobby Center,hobby_venue,hobby-venue,,150000
+treatment_clinic,Addiction Treatment Clinic,addiction_venue,addiction-treatment,,350000

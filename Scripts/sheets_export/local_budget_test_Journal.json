@@ -1,0 +1,11 @@
+[
+  [
+    "id",
+    "entry_type",
+    "debit",
+    "credit",
+    "amount_usd",
+    "story_id",
+    "memo"
+  ]
+]

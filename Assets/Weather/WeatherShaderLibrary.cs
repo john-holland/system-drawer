@@ -1,4 +1,5 @@
 using UnityEngine;
+using Weather.CloudBake;
 
 namespace Weather
 {
@@ -19,6 +20,8 @@ namespace Weather
         public static readonly int Temperature = Shader.PropertyToID("_Temperature");
         public static readonly int Pressure = Shader.PropertyToID("_Pressure");
         public static readonly int Humidity = Shader.PropertyToID("_Humidity");
+        public static readonly int CloudShadowTint = Shader.PropertyToID("_CloudShadowTint");
+        public static readonly int CloudSunDir = Shader.PropertyToID("_CloudSunDir");
 
         /// <summary>
         /// Set up shader properties from WeatherPhysicsManifold
@@ -77,6 +80,15 @@ namespace Weather
             material.SetFloat(Temperature, meteorology.temperature);
             material.SetFloat(Pressure, meteorology.pressure);
             material.SetFloat(Humidity, meteorology.humidity);
+        }
+
+        /// <summary>Set cloud bake shadow tint and sun direction on a material.</summary>
+        public static void SetupCloudBakeLighting(CloudTodShadowModel model, Material material)
+        {
+            if (model == null || material == null)
+                return;
+            material.SetColor(CloudShadowTint, model.CloudShadowTint);
+            material.SetVector(CloudSunDir, model.SunDirection);
         }
 
         /// <summary>

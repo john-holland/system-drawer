@@ -72,6 +72,10 @@ public class TravelAgentMultibodySettings
     [Tooltip("When true, multibody relaxation only considers peers in the same multibodyFormationGroupId (unsafe if group is incomplete).")]
     public bool limitMultibodyPeersToSameFormationGroup;
 
+    [Header("Rope footprint")]
+    [Tooltip("When true, lateral relaxation also clears registered RopePathingFootprint body samples.")]
+    public bool enableRopeFootprintClearance = true;
+
     public Vector3 ResolveFinalTargetWorld()
     {
         if (useFinalTargetTransform && finalTarget != null)

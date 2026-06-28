@@ -30,23 +30,78 @@
     return [{ offset: prefix, oldLen, newLen, delta: newLen - oldLen }];
   }
 
-  function shiftSpan(charStart, charEnd, edit) {
-    const s = charStart;
-    const e = charEnd;
-    const editEnd = edit.offset + edit.oldLen;
-    if (edit.oldLen === 0) {
-      if (edit.offset >= e) return { charStart: s, charEnd: e, overlapped: false, shifted: false };
-      if (edit.offset < s) {
-        return { charStart: s + edit.delta, charEnd: e + edit.delta, overlapped: false, shifted: true };
+  function firstLetterInSelection(binding) {
+    const sel = binding.selectionText || binding.selection_text || '';
+    for (let i = 0; i < sel.length; i++) {
+      const ch = sel[i];
+      if (ch.trim() && ch !== '\n' && ch !== '\r' && ch !== '\t') {
+        return { letter: ch, offsetInSelection: i };
       }
-      if (edit.offset < e) return { charStart: s, charEnd: e, overlapped: true, shifted: false };
-      return { charStart: s, charEnd: e, overlapped: false, shifted: false };
     }
-    if (editEnd <= s) return { charStart: s, charEnd: e, overlapped: false, shifted: false };
-    if (edit.offset >= e) {
-      return { charStart: s + edit.delta, charEnd: e + edit.delta, overlapped: false, shifted: true };
+    return sel.length ? { letter: sel[0], offsetInSelection: 0 } : null;
+  }
+
+  function reanchorSpanByFirstLetter(currentText, binding, shiftedStart, shiftedEnd) {
+    const sel = binding.selectionText || binding.selection_text || '';
+    const anchor = firstLetterInSelection(binding);
+    if (!anchor || shiftedEnd <= shiftedStart || !sel) {
+      return { charStart: shiftedStart, charEnd: shiftedEnd };
     }
-    return { charStart: s, charEnd: e, overlapped: true, shifted: false };
+    const spanLen = shiftedEnd - shiftedStart;
+    const expectLetterPos = shiftedStart + anchor.offsetInSelection;
+    const slack = Math.max(40, sel.length + 20);
+    const searchFrom = Math.max(0, expectLetterPos - slack);
+    const searchTo = Math.min(currentText.length, expectLetterPos + slack);
+    let bestStart = shiftedStart;
+    let bestScore = -1;
+    for (let pos = searchFrom; pos < searchTo; pos++) {
+      if (currentText[pos] !== anchor.letter) continue;
+      const start = pos - anchor.offsetInSelection;
+      if (start < 0) continue;
+      const slice = currentText.slice(start, start + sel.length);
+      let score = 0;
+      const cmpLen = Math.min(slice.length, sel.length);
+      for (let j = 0; j < cmpLen; j++) {
+        if (slice[j] === sel[j]) score += 1;
+      }
+      const dist = Math.abs(start - shiftedStart);
+      const combined = score * 1000 - dist;
+      if (combined > bestScore) {
+        bestScore = combined;
+        bestStart = start;
+      }
+    }
+    if (bestScore >= 0) {
+      return { charStart: bestStart, charEnd: bestStart + spanLen };
+    }
+    return { charStart: shiftedStart, charEnd: shiftedEnd };
+  }
+
+  function mapPointThroughEdit(p, edit, bias) {
+    const offset = edit.offset;
+    const oldLen = edit.oldLen;
+    const newLen = edit.newLen;
+    if (oldLen === 0) {
+      if (bias === 'end') {
+        if (p <= offset) return p;
+        return p + newLen;
+      }
+      if (p < offset) return p;
+      return p + newLen;
+    }
+    const editEnd = offset + oldLen;
+    if (p <= offset) return p;
+    if (p >= editEnd) return p + edit.delta;
+    return offset;
+  }
+
+  function shiftSpan(charStart, charEnd, edit) {
+    const newStart = mapPointThroughEdit(charStart, edit, 'start');
+    const newEnd = mapPointThroughEdit(charEnd, edit, 'end');
+    const editEnd = edit.offset + edit.oldLen;
+    const overlapped = editEnd > charStart && edit.offset < charEnd;
+    const shifted = newStart !== charStart || newEnd !== charEnd;
+    return { charStart: newStart, charEnd: newEnd, overlapped, shifted };
   }
 
   function resolveBindingCharSpan(text, binding) {
@@ -72,18 +127,38 @@
     return { charStart, charEnd };
   }
 
+  function editAllowsReanchor(edit, snapshotText, spanStart, spanEnd) {
+    if (edit.oldLen === 0) return true;
+    if (edit.offset >= spanEnd || edit.offset + edit.oldLen <= spanStart) return false;
+    const deleted = (snapshotText || '').slice(edit.offset, edit.offset + edit.oldLen);
+    return deleted.trim() === '';
+  }
+
   function displayBindingSpans(snapshotText, currentText, bindings) {
     const regions = computeEditRegions(snapshotText || '', currentText || '');
     return (bindings || []).map((binding) => {
       let span = resolveBindingCharSpan(snapshotText || '', binding);
       let cs = span.charStart;
       let ce = span.charEnd;
+      let overlapped = false;
       for (const edit of regions) {
         const next = shiftSpan(cs, ce, edit);
+        if (next.overlapped) overlapped = true;
         cs = next.charStart;
         ce = next.charEnd;
       }
-      return { ...binding, charStart: cs, charEnd: ce };
+      if (overlapped && regions.some((edit) => editAllowsReanchor(edit, snapshotText, span.charStart, span.charEnd))) {
+        const reanchored = reanchorSpanByFirstLetter(currentText || '', binding, cs, ce);
+        cs = reanchored.charStart;
+        ce = reanchored.charEnd;
+      }
+      const anchor = firstLetterInSelection(binding);
+      const out = { ...binding, charStart: cs, charEnd: ce };
+      if (anchor) {
+        out._anchorLetter = anchor.letter;
+        out._anchorOffsetInSelection = anchor.offsetInSelection;
+      }
+      return out;
     });
   }
 
@@ -132,7 +207,10 @@
 
   return {
     computeEditRegions,
+    mapPointThroughEdit,
     shiftSpan,
+    firstLetterInSelection,
+    reanchorSpanByFirstLetter,
     resolveBindingCharSpan,
     fareyToCharSpan,
     displayBindingSpans,

@@ -11,6 +11,8 @@
     editorInst: null,
     suggestions: [],
     recording: null,
+    chatPanel: null,
+    users: [],
   };
 
   function esc(s) {
@@ -74,22 +76,73 @@
       .catch(function (e) { setStatus(e.message, true); });
   }
 
+  function loadUsers() {
+    return fetch('/api/users', { headers: headers() })
+      .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+      .then(function (data) { state.users = data.items || []; })
+      .catch(function () { state.users = []; });
+  }
+
+  function mountChatPanel() {
+    if (!global.ContinuumChatPanel || !state.snapshot) return;
+    var roomId = state.snapshot.session && state.snapshot.session.chatRoomId;
+    if (!roomId) return;
+    localStorage.setItem('continuumChatTableReadRoom', roomId);
+    var host = document.getElementById('tr-chat-panel');
+    if (!host) return;
+    if (state.chatPanel) {
+      state.chatPanel.setChatRoomId(roomId);
+      return;
+    }
+    state.chatPanel = global.ContinuumChatPanel.mount(host, {
+      chatRoomId: roomId,
+      useTome: true,
+    });
+  }
+
   function renderSessionBar() {
     var el = document.getElementById('tr-session-bar');
     if (!el || !state.snapshot) return;
     var s = state.snapshot.session;
-    var link = location.origin + '/table-read?session=' + encodeURIComponent(s.id) + '&draft=' + encodeURIComponent(s.draftEpisodeId);
+    var link = s.shareUrl || (location.origin + '/table-read?session=' + encodeURIComponent(s.id) + '&draft=' + encodeURIComponent(s.draftEpisodeId));
+    var userOpts = state.users.map(function (u) {
+      return '<option value="' + esc(u.userId) + '">' + esc(u.userId) + '</option>';
+    }).join('');
     el.innerHTML =
       '<div><strong>Session</strong> ' + esc(s.id.slice(0, 8)) + '… · ' + esc(s.status) + '</div>' +
       '<div class="tr-share"><label>Share <input readonly value="' + esc(link) + '" id="tr-share-link" /></label>' +
       '<button type="button" id="tr-copy-link">Copy</button></div>' +
       (isHost() && s.status === 'active'
-        ? '<button type="button" id="tr-end-session" class="tr-danger">End session</button>'
+        ? '<div class="tr-invite"><select id="tr-invite-user"><option value="">— invite user —</option>' + userOpts + '</select>' +
+          '<button type="button" id="tr-invite-btn">Invite</button></div>' +
+          '<button type="button" id="tr-end-session" class="tr-danger">End session</button>'
         : '');
     var copyBtn = document.getElementById('tr-copy-link');
     if (copyBtn) copyBtn.onclick = function () {
       var inp = document.getElementById('tr-share-link');
       if (inp) { inp.select(); document.execCommand('copy'); setStatus('Link copied'); }
+    };
+    var inviteBtn = document.getElementById('tr-invite-btn');
+    if (inviteBtn) inviteBtn.onclick = function () {
+      var sel = document.getElementById('tr-invite-user');
+      var uid = sel && sel.value;
+      if (!uid) { setStatus('Select a user to invite', true); return; }
+      fetch('/api/tomes/table-read-tome/machines/inviteMachine/message', {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({
+          event: 'INVITE_USER',
+          data: { sessionId: s.id, userId: uid },
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var res = d.result || d;
+          if (res.error) throw new Error(res.error);
+          setStatus('Invited ' + uid);
+          if (state.chatPanel) state.chatPanel.refresh();
+        })
+        .catch(function (e) { setStatus(e.message, true); });
     };
     var endBtn = document.getElementById('tr-end-session');
     if (endBtn) endBtn.onclick = function () {
@@ -257,12 +310,35 @@
     renderReadingPane();
     mountEditor();
     renderRecordingPanel();
+    mountChatPanel();
   }
 
   function loadSuggestions(draftId) {
     return api('/drafts/episodes/' + encodeURIComponent(draftId) + '/script-suggestions?status=pending')
       .then(function (data) { state.suggestions = data.items || []; })
       .catch(function () { state.suggestions = []; });
+  }
+
+  function openSessionViaTome(sessionId) {
+    var displayName = global.ContinuumUserSession ? global.ContinuumUserSession.getUserId() : 'anonymous';
+    return fetch('/api/tomes/table-read-tome/machines/sessionMachine/message', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({
+        event: 'SESSION_OPEN',
+        data: { sessionId: sessionId, displayName: displayName },
+      }),
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error((data.result && data.result.error) || data.error || r.statusText);
+          return data.result || data;
+        });
+      })
+      .then(function (snap) {
+        if (snap && snap.session) applySnapshot(snap);
+        else return joinSession(sessionId);
+      });
   }
 
   function joinSession(sessionId) {
@@ -282,9 +358,10 @@
     }
     setStatus('Joining…');
     var chain = Promise.resolve();
-    if (state.draftId) chain = loadSuggestions(state.draftId);
+    chain = chain.then(function () { return loadUsers(); });
+    if (state.draftId) chain = chain.then(function () { return loadSuggestions(state.draftId); });
     chain
-      .then(function () { return joinSession(state.sessionId); })
+      .then(function () { return openSessionViaTome(state.sessionId); })
       .then(function () {
         connectSocket();
         setStatus('Connected');
@@ -293,7 +370,7 @@
 
     if (global.ContinuumUserSession) {
       global.ContinuumUserSession.onChange(function () {
-        joinSession(state.sessionId).then(connectSocket);
+        openSessionViaTome(state.sessionId).then(connectSocket);
       });
     }
     window.addEventListener('beforeunload', function () {

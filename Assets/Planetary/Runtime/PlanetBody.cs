@@ -27,6 +27,11 @@ namespace Planetary
         public Vector3 stablePoleAxis = Vector3.up;
         public Vector3 magneticPoleAxis = Vector3.up;
         public float primeMeridianOffsetDeg;
+
+        [Header("Society sim")]
+        [Tooltip("Matches society_planets.planet_id in continuum API")]
+        public string societyPlanetId = "earth";
+
         public int meshResolution = 32;
         public int chunksPerFace = 2;
 
@@ -129,7 +134,9 @@ namespace Planetary
                 planetRadius,
                 meshResolution,
                 chunksPerFace,
-                (lat, lon) => planarBase.SampleHeight(lat, lon));
+                (lat, lon) => planarBase.SampleHeight(lat, lon),
+                Vector3.zero,
+                stablePoleAxis);
             planetRenderer.SetChunks(chunks, transform);
         }
 

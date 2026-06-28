@@ -85,6 +85,82 @@
 
 body.tr-page { margin: 0; background: #0d0d14; }
 
+.tr-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  min-height: calc(100vh - 52px);
+}
+
+.tr-main {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+
+.tr-chat-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  padding: 16px 12px;
+  box-sizing: border-box;
+  background: #0d0d14;
+  border-left: 1px solid #2e7d32;
+}
+
+.tr-chat-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #4caf50;
+  font-family: system-ui, sans-serif;
+}
+
+#tr-chat-panel {
+  height: calc(100% - 28px);
+  min-height: 400px;
+}
+
+.tr-invite {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tr-invite select {
+  min-width: 140px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #3a3a52;
+  background: #1a1a2e;
+  color: #e8e8f0;
+  font-size: 12px;
+}
+
+.tr-invite button {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #2e7d32;
+  background: #2e7d32;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .tr-layout { flex-direction: column; }
+  .tr-chat-sidebar {
+    width: 100%;
+    position: static;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid #2e7d32;
+  }
+  #tr-chat-panel { min-height: 280px; }
+}
+
 .tr-turn-text {
   margin: 8px 0 0;
   white-space: pre-wrap;

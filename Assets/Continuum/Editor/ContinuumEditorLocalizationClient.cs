@@ -208,6 +208,50 @@ public sealed class ContinuumEditorLocalizationClient : IContinuumLocalizationCl
         return r.success;
     }
 
+    public async Task<LemmaCompositionResponseDto> GetCompositionAsync(string entryId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(entryId))
+            return null;
+        var r = await ContinuumEditorApiClient.RequestAsync(
+            "GET",
+            $"/api/thesaurus/entries/{Uri.EscapeDataString(entryId)}/composition",
+            null,
+            ct);
+        return r.success ? JsonUtility.FromJson<LemmaCompositionResponseDto>(r.json) : null;
+    }
+
+    public async Task<LemmaCompositionResponseDto> PutCompositionAsync(
+        string entryId,
+        LemmaCompositionChildPutDto[] children,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(entryId))
+            return null;
+        var body = JsonUtility.ToJson(new LemmaCompositionPutBody { children = children ?? Array.Empty<LemmaCompositionChildPutDto>() });
+        var r = await ContinuumEditorApiClient.RequestAsync(
+            "PUT",
+            $"/api/thesaurus/entries/{Uri.EscapeDataString(entryId)}/composition",
+            body,
+            ct);
+        return r.success ? JsonUtility.FromJson<LemmaCompositionResponseDto>(r.json) : null;
+    }
+
+    public async Task<LemmaRecombobulateResponseDto> RecombobulateSpatialAsync(
+        string entryId,
+        LemmaRecombobulateRequestDto request,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(entryId))
+            return null;
+        var body = JsonUtility.ToJson(request ?? new LemmaRecombobulateRequestDto());
+        var r = await ContinuumEditorApiClient.RequestAsync(
+            "POST",
+            $"/api/thesaurus/entries/{Uri.EscapeDataString(entryId)}/recombobulate-spatial",
+            body,
+            ct);
+        return r.success ? JsonUtility.FromJson<LemmaRecombobulateResponseDto>(r.json) : null;
+    }
+
     static T[] ParseItems<T>(string json) where T : class
     {
         if (string.IsNullOrEmpty(json))

@@ -50,6 +50,18 @@ def draft_blocks_author_edit(conn: sqlite3.Connection, draft_episode_id: str) ->
     return None
 
 
+def withdraw_change_list_if_in_review(conn: sqlite3.Connection, draft_episode_id: str) -> bool:
+    """Return True when an in_review change list was reopened for editing."""
+    row = get_active_change_list(conn, draft_episode_id)
+    if row and row["workflow_status"] == "in_review":
+        conn.execute(
+            "UPDATE localization_change_lists SET workflow_status = 'in_progress', updated_at = ? WHERE id = ?",
+            (_now(), row["id"]),
+        )
+        return True
+    return False
+
+
 def validate_property_value(conn: sqlite3.Connection, property_key: str, property_value: str) -> Optional[str]:
     cur = conn.execute(
         "SELECT value_type, allowed_values_json FROM localization_property_specs WHERE key = ?",

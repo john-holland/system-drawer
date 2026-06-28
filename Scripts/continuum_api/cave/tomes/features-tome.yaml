@@ -1,0 +1,11 @@
+id: features-tome
+name: Features / Login Tome
+routing:
+  basePath: /api/tomes/features-tome
+  routes:
+    loginMachine:
+      path: /login
+      method: POST
+    presenceMachine:
+      path: /presence
+      method: POST

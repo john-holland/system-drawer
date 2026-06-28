@@ -166,6 +166,8 @@ public static class TravelMultibodyPathAdjuster
 
                 Vector3 selfFlat = FlattenXZ(pts[i]);
 
+                RelaxAgainstRopeFootprints(ref accum, ref hits, selfFlat, selfR, settings);
+
                 for (int pi = 0; pi < peerPolys.Count; pi++)
                 {
                     List<Vector3> poly = peerPolys[pi];
@@ -321,9 +323,37 @@ public static class TravelMultibodyPathAdjuster
         return Vector3.forward;
     }
 
-    /// <summary>
-    /// Test hook: run XZ relaxation on a polyline against peer polylines with no dynamic cache entries.
-    /// </summary>
+    static void RelaxAgainstRopeFootprints(
+        ref Vector3 accum,
+        ref int hits,
+        Vector3 selfFlat,
+        float selfR,
+        TravelAgentMultibodySettings settings)
+    {
+        if (settings == null || !settings.enableRopeFootprintClearance)
+            return;
+
+        foreach (RopePathingFootprint footprint in RopePathingFootprintRegistry.All)
+        {
+            if (footprint == null)
+                continue;
+            footprint.RebuildSamples();
+            float ropeR = footprint.SampleRadiusM;
+            foreach (Vector3 sample in footprint.BodySamples)
+            {
+                Vector3 dFlat = selfFlat - FlattenXZ(sample);
+                float dist = dFlat.magnitude;
+                float minD = selfR + ropeR;
+                if (dist < minD && dist > 1e-5f)
+                {
+                    accum += (dFlat / dist) * (minD - dist) * RelaxationStep;
+                    hits++;
+                }
+            }
+        }
+    }
+
+    /// <summary>Test hook: run XZ relaxation on a polyline against peer polylines with no dynamic cache entries.</summary>
     public static void RelaxPolylineAgainstPeersForTests(
         List<Vector3> pts,
         List<Vector3> originals,

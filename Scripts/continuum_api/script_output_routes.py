@@ -5,9 +5,10 @@ from __future__ import annotations
 import sqlite3
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Callable
 
-from flask import jsonify, request
+from flask import jsonify, request, send_from_directory
 
 from thesaurus.script_edit_diff import audit_edit
 
@@ -126,6 +127,18 @@ def _diff_items_to_json(items) -> list:
 
 
 def register_script_output_routes(app, get_conn: GetConn, get_user: GetUser) -> None:
+    script_output_dir = Path(__file__).resolve().parents[2] / "apps" / "script-output"
+
+    @app.route("/script-output.css")
+    def serve_script_output_css():
+        return send_from_directory(script_output_dir, "script-output.css")
+
+    @app.route("/script-output", strict_slashes=False)
+    @app.route("/script-output/", strict_slashes=False)
+    @app.route("/script-output/<path:subpath>", strict_slashes=False)
+    def serve_script_output(subpath=None):
+        return send_from_directory(script_output_dir, "index.html")
+
     @app.route("/api/drafts/episodes/<draft_id>/reviews", methods=["GET"])
     def list_draft_reviews(draft_id: str):
         try:

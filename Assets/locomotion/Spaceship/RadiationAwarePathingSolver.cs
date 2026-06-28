@@ -19,8 +19,10 @@ namespace Locomotion.Spaceship
         {
             var basePath = context != null
                 ? context.FindPath(start, goal, true)
-                : new List<Vector3> { start, goal };
-            if (basePath == null || basePath.Count < 2 || ignoreRadiation && ignoreTime)
+                : null;
+            if (basePath == null || basePath.Count < 2)
+                basePath = new List<Vector3> { start, goal };
+            if (ignoreRadiation && ignoreTime)
                 return basePath;
 
             var best = new List<Vector3>(basePath);

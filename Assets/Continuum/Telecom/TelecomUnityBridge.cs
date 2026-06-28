@@ -46,6 +46,14 @@ namespace Continuum.Telecom
             device.webViewDisplay.SendToJs(json);
         }
 
+        public void PushSocietySnapshot(string cityId, string snapshotJson)
+        {
+            if (device?.webViewDisplay == null) return;
+            var escaped = snapshotJson?.Replace("\\", "\\\\").Replace("\"", "\\\"") ?? "{}";
+            var json = $"{{\"action\":\"societySnapshot\",\"payload\":{{\"cityId\":\"{cityId}\",\"snapshot\":\"{escaped}\"}}}}";
+            device.webViewDisplay.SendToJs(json);
+        }
+
         async void HandleMessageAsync(string json)
         {
             var resp = await HandleAsync(json);

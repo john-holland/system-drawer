@@ -1,0 +1,8 @@
+id: network-tome
+name: Network Definitions Tome
+routing:
+  basePath: /api/tomes/network-tome
+  routes:
+    networkMachine:
+      path: /networks
+      method: POST

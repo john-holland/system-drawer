@@ -1,0 +1,9 @@
+[
+  [
+    "schedule_id",
+    "milestone",
+    "start",
+    "end",
+    "story_ids"
+  ]
+]

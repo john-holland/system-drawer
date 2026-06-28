@@ -61,10 +61,35 @@ public static class VocabularyBuiltInJsonExporter
         var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
-        File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
+        File.WriteAllText(path, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         return path;
     }
 
-    static string JsonQuote(string s) => JsonUtility.ToJson(s ?? "");
+    static string JsonQuote(string s)
+    {
+        if (s == null)
+            return "null";
+        var sb = new StringBuilder(s.Length + 2);
+        sb.Append('"');
+        foreach (char c in s)
+        {
+            switch (c)
+            {
+                case '\\': sb.Append("\\\\"); break;
+                case '"': sb.Append("\\\""); break;
+                case '\n': sb.Append("\\n"); break;
+                case '\r': sb.Append("\\r"); break;
+                case '\t': sb.Append("\\t"); break;
+                default:
+                    if (c < ' ')
+                        sb.AppendFormat("\\u{0:x4}", (int)c);
+                    else
+                        sb.Append(c);
+                    break;
+            }
+        }
+        sb.Append('"');
+        return sb.ToString();
+    }
 }
 #endif

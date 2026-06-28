@@ -75,10 +75,15 @@ namespace Locomotion.Camera
 
         void Update()
         {
+            Tick(Time.deltaTime);
+        }
+
+        public void Tick(float deltaTime)
+        {
             if (state != CameraTransitionState.Blending || targetCamera == null)
                 return;
 
-            _elapsed += Time.deltaTime;
+            _elapsed += deltaTime;
             float t = EvaluateEase(Mathf.Clamp01(_elapsed / _duration));
             var blended = new CameraRigPose
             {

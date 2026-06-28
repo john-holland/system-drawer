@@ -1,14 +1,20 @@
-(function () {
+(function (global) {
   'use strict';
 
   const API = '';
   let browseItems = [];
   let locRows = [];
+  let createModeTabs = null;
   let multisortBrowse = null;
   let multisortLoc = null;
 
   async function api(path, opts) {
-    const r = await fetch(API + path, { credentials: 'include', ...opts });
+    const headers = Object.assign(
+      { 'Content-Type': 'application/json' },
+      global.ContinuumUserSession ? global.ContinuumUserSession.getHeaders() : {},
+      (opts && opts.headers) || {},
+    );
+    const r = await fetch(API + path, { credentials: 'include', ...opts, headers });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
       const err = new Error(data.error || r.statusText);
@@ -62,9 +68,37 @@
   }
 
   function getRoute() {
-    const h = (location.hash.slice(1) || 'browse').split('?')[0];
-    if (h.startsWith('entry/')) return { page: 'entry', id: decodeURIComponent(h.slice(6)) };
-    return { page: h || 'browse' };
+    const raw = location.hash.slice(1) || 'browse';
+    const [path, query] = raw.split('?');
+    const params = new URLSearchParams(query || '');
+    if (path.startsWith('entry/')) {
+      return {
+        page: 'entry',
+        id: decodeURIComponent(path.slice(6)),
+        propertyKey: params.get('propertyKey') || '',
+        from: params.get('from') || sessionStorage.getItem('lemmaReturnPage') || '',
+      };
+    }
+    return { page: path || 'browse', id: null, propertyKey: '', from: '' };
+  }
+
+  function resolveLemmaId(row) {
+    return row?.lemmaId || row?.entryId || null;
+  }
+
+  function navigateToEntry(entryId, opts) {
+    if (!entryId) return;
+    opts = opts || {};
+    const from = opts.from || (getRoute().page === 'localization' ? 'localization' : '');
+    if (from) sessionStorage.setItem('lemmaReturnPage', from);
+    let hash = 'entry/' + encodeURIComponent(entryId);
+    const q = new URLSearchParams();
+    if (opts.propertyKey) q.set('propertyKey', opts.propertyKey);
+    if (from) q.set('from', from);
+    const qs = q.toString();
+    if (qs) hash += '?' + qs;
+    location.hash = hash;
+    route();
   }
 
   function setActiveNav(page) {
@@ -81,7 +115,8 @@
     if (layout) {
       layout.classList.toggle('layout-single', page === 'create' || page === 'import' || page === 'translations' || page === 'entry');
     }
-    setActiveNav(page === 'entry' ? 'browse' : page);
+    const { from } = getRoute();
+    setActiveNav(page === 'entry' ? (from || 'browse') : page);
   }
 
   function debounce(fn, ms) {
@@ -167,7 +202,7 @@
           ch.textContent = item.clauseCount + ' clauses';
           chips.appendChild(ch);
         }
-        row.onclick = () => { location.hash = 'entry/' + encodeURIComponent(item.id); route(); };
+        row.onclick = () => navigateToEntry(item.id, { from: 'browse' });
         container.appendChild(row);
       });
     });
@@ -194,12 +229,22 @@
           '<span class="chip"></span>';
         el.querySelector('.entry-term').textContent = term;
         const chips = el.querySelectorAll('.chip');
-        chips[0].textContent = row.propertyKey || row.kind || '';
+        chips[0].textContent = row.propertyKey || row.kind || row.bindingKind || '';
         chips[1].textContent = row.propertyValue || '';
-        if (row.lemmaId) {
-          el.onclick = () => { location.hash = 'entry/' + encodeURIComponent(row.lemmaId); route(); };
+        const entryId = resolveLemmaId(row);
+        if (entryId) {
+          el.classList.add('entry-row--linkable');
+          el.title = 'Open lemma entry';
+          el.onclick = () => navigateToEntry(entryId, {
+            from: 'localization',
+            propertyKey: row.propertyKey || '',
+          });
         } else if (row.draftEpisodeId) {
-          el.title = `Draft ${row.draftEpisodeId} [${row.charStart}, ${row.charEnd})`;
+          el.classList.add('entry-row--muted');
+          el.title = `Draft ${row.draftEpisodeId} [${row.charStart}, ${row.charEnd}) — no linked lemma`;
+        } else {
+          el.classList.add('entry-row--muted');
+          el.title = 'No linked lemma entry';
         }
         container.appendChild(el);
       });
@@ -239,7 +284,9 @@
         propertyKey: b.propertyKey || b.bindingKind,
         propertyValue: b.propertyValue,
         lemmaId: b.entryId,
+        entryId: b.entryId,
         kind: b.bindingKind,
+        bindingKind: b.bindingKind,
         draftEpisodeId: draftId,
         charStart: b.charStart,
         charEnd: b.charEnd,
@@ -266,14 +313,35 @@
   }
 
   async function loadEntry(id) {
-    const [data, meta] = await Promise.all([
-      api('/api/thesaurus/entries?entryId=' + encodeURIComponent(id)),
-      api('/api/thesaurus/entries/' + encodeURIComponent(id) + '/component-metadata').catch(() => null),
-    ]);
+    const routeInfo = getRoute();
+    const highlightKey = routeInfo.propertyKey || '';
     const el = document.getElementById('entry-detail');
     if (!el) return;
+    el.innerHTML = '<p class="muted">Loading lemma…</p>';
+    let data;
+    let meta = null;
+    try {
+      [data, meta] = await Promise.all([
+        api('/api/thesaurus/entries?entryId=' + encodeURIComponent(id)),
+        api('/api/thesaurus/entries/' + encodeURIComponent(id) + '/component-metadata').catch(() => null),
+      ]);
+    } catch (err) {
+      el.innerHTML =
+        '<h2>Lemma not found</h2>' +
+        '<p class="msg error">' + esc(err.message || 'Could not load entry') + '</p>' +
+        '<p><code>' + esc(id) + '</code></p>' +
+        '<button type="button" class="secondary" id="back-browse">← Back to localization</button>';
+      document.getElementById('back-browse').onclick = () => {
+        location.hash = routeInfo.from || 'localization';
+        route();
+      };
+      return;
+    }
     const props = Object.entries(data.properties || {})
-      .map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`)
+      .map(([k, v]) => {
+        const hl = highlightKey && k === highlightKey ? ' class="highlight-prop"' : '';
+        return `<tr${hl}><td>${esc(k)}</td><td>${esc(v)}</td></tr>`;
+      })
       .join('');
     const syns = (data.synonyms || []).join(', ') || '—';
     const tags = (data.tags || []).join(', ') || '—';
@@ -316,8 +384,11 @@
         componentSection += '</tbody></table></details>';
       }
     }
+    const backTarget = routeInfo.from || 'browse';
+    const backLabel = backTarget === 'localization' ? '← Back to localization' : '← Back to browse';
     el.innerHTML =
       '<h2>' + esc(data.term) + '</h2>' +
+      (highlightKey ? '<p class="muted">Opened from localization · property <code>' + esc(highlightKey) + '</code></p>' : '') +
       '<dl class="detail-grid">' +
       '<dt>ID</dt><dd><code>' + esc(data.id) + '</code></dd>' +
       '<dt>Part of speech</dt><dd>' + esc(data.posTag) + '</dd>' +
@@ -328,15 +399,66 @@
       '<dt>Synonyms</dt><dd>' + esc(syns) + '</dd>' +
       '<dt>Tags</dt><dd>' + esc(tags) + '</dd>' +
       '<dt>Clauses</dt><dd>' + (data.clauseCount || 0) + '</dd>' +
+      '<dt>Composed</dt><dd>' + (data.isComposedLemma ? 'Yes' : 'No') + '</dd>' +
+      '<dt>Prompt</dt><dd><code style="font-size:12px">' + esc((data.lemmaPrompt || '').slice(0, 120) || '—') + '</code></dd>' +
+      '<dt>Timing</dt><dd>' + (data.defaultTiming
+        ? esc(data.defaultTiming.tMin + 's – ' + data.defaultTiming.tMax + 's')
+        : '—') + '</dd>' +
       '</dl>' +
+      '<h3>Composed lemmas</h3>' +
+      '<p id="entry-composed-lemmas"></p>' +
+      '<button type="button" id="edit-lemma-entry">Edit lemma</button> ' +
+      '<button type="button" id="edit-composition">Composition</button> ' +
       '<h3>Properties</h3><table class="preview"><tbody>' + (props || '<tr><td colspan=2>None</td></tr>') + '</tbody></table>' +
       componentSection +
       '<p style="margin-top:16px">' +
       (assetLink && libBase ? '<a href="' + esc(libBase) + '?highlight=' + encodeURIComponent(assetLink) + '&view=spatial" target="_blank">View USC asset on map</a> · ' : '') +
       '<a href="/api/deeplink?window=Continuum/Lemma+Properties&entryId=' + encodeURIComponent(id) + '" target="_blank">Open in Unity</a>' +
       '</p>' +
-      '<button type="button" class="secondary" id="back-browse">← Back to browse</button>';
-    document.getElementById('back-browse').onclick = () => { location.hash = 'browse'; route(); };
+      '<button type="button" class="secondary" id="back-browse">' + backLabel + '</button>';
+    const composedHost = document.getElementById('entry-composed-lemmas');
+    if (composedHost && global.ContinuumLemmaEntry) {
+      global.ContinuumLemmaEntry.renderInline(composedHost, data.compositionChildren || [], {
+        emptyLabel: 'None',
+      });
+      composedHost.querySelector('.continuum-lemma-entry-empty')?.classList.add('muted');
+    } else if (composedHost) {
+      composedHost.innerHTML = (data.compositionChildren || []).length
+        ? (data.compositionChildren || []).map((c) => `<span class="chip">${esc(c.term || c.entryId)}</span>`).join(' ')
+        : '<span class="muted">None</span>';
+    }
+    document.getElementById('back-browse').onclick = () => {
+      sessionStorage.removeItem('lemmaReturnPage');
+      location.hash = backTarget;
+      route();
+    };
+    document.getElementById('edit-lemma-entry')?.addEventListener('click', () => {
+      if (global.ContinuumClauseSelector) {
+        global.ContinuumClauseSelector.openLemmaEntryDialog({
+          entryId: id,
+          callApi: (method, path, body) => api(path, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: body != null ? JSON.stringify(body) : undefined,
+          }),
+          onSaved: () => loadEntry(id),
+        });
+        return;
+      }
+      window.open('/lemma-library#entry/' + encodeURIComponent(id), '_blank');
+    });
+    document.getElementById('edit-composition')?.addEventListener('click', () => {
+      const editor = global.ContinuumLemmaPromptEditor || global.ContinuumLemmaCompositionEditor;
+      if (!editor) return;
+      editor.openModal({
+        entryId: id,
+        parentEntryId: id,
+        seedPhrase: (data.compositionChildren || []).length ? undefined : (data.term || ''),
+        initialChildren: data.compositionChildren || [],
+        callApi: (method, path, body) => api(path, { method, headers: { 'Content-Type': 'application/json' }, body: body != null ? JSON.stringify(body) : undefined }),
+        onSaved: () => loadEntry(id),
+      });
+    });
   }
 
   function esc(s) {
@@ -378,6 +500,14 @@
       prefabId: document.getElementById('f-prefab').value,
       defaultProperties: document.getElementById('f-props').value,
     };
+    const mode = createModeTabs?.getMode?.() || 'prefab';
+    if (mode === 'composition') {
+      body.prefabId = '';
+      const children = createModeTabs?.getCompositionChildren?.() || [];
+      if (children.length) {
+        body.composition = children.map((c, i) => ({ entryId: c.entryId, sortOrder: i }));
+      }
+    }
     const syns = document.getElementById('f-syns').value;
     if (syns) body.synonyms = syns.split(/[|,;]/).map(s => s.trim()).filter(Boolean);
     try {
@@ -386,6 +516,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (data.entry?.id && mode === 'composition' && createModeTabs) {
+        const pending = createModeTabs.getCompositionChildren?.() || [];
+        if (pending.length && !body.composition) {
+          await api('/api/thesaurus/entries/' + encodeURIComponent(data.entry.id) + '/composition', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              children: pending.map((c, i) => ({ entryId: c.entryId, sortOrder: i })),
+            }),
+          });
+        }
+      }
       const label = data.status === 'updated' ? 'Updated' : 'Created';
       msg.textContent = data.message || (label + ': ' + (data.entry?.term || body.word));
       msg.className = 'msg ok';
@@ -561,6 +703,16 @@
   function init() {
     initMultisort();
     loadPosTags('noun');
+    if (global.ContinuumLemmaCompositionEditor) {
+      createModeTabs = global.ContinuumLemmaCompositionEditor.mountCreateTabs(
+        document.getElementById('create-mode-tabs'),
+        {
+          callApi: (method, path, body) => api(path, { method, headers: { 'Content-Type': 'application/json' }, body: body != null ? JSON.stringify(body) : undefined }),
+          prefabPanel: document.getElementById('create-prefab-panel'),
+          compositionHost: document.getElementById('create-composition-panel'),
+        },
+      );
+    }
     document.getElementById('form-create')?.addEventListener('submit', submitCreate);
     document.getElementById('f-props')?.addEventListener('input', debounce(previewProps, 400));
     document.getElementById('btn-import')?.addEventListener('click', runImport);
@@ -576,9 +728,15 @@
     window.addEventListener('hashchange', route);
     const params = new URLSearchParams(location.search);
     if (params.get('libraryBase')) localStorage.setItem('continuumLibraryBase', params.get('libraryBase'));
+    const hashQuery = (location.hash.slice(1).split('?')[1] || '');
+    const hashParams = new URLSearchParams(hashQuery);
+    const prefillQ = params.get('q') || hashParams.get('q');
+    if (prefillQ && document.getElementById('search-q')) {
+      document.getElementById('search-q').value = prefillQ;
+    }
     route();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

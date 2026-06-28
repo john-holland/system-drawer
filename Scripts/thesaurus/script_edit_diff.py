@@ -87,23 +87,84 @@ def bindings_to_spans(bindings: Sequence[dict], script_text: str = "") -> List[S
     return out
 
 
+def _map_point_through_edit(p: int, edit: EditRegion, bias: str = "start") -> int:
+    if edit.old_len == 0:
+        if bias == "end":
+            if p <= edit.offset:
+                return p
+            return p + edit.new_len
+        if p < edit.offset:
+            return p
+        return p + edit.new_len
+    edit_end = edit.offset + edit.old_len
+    if p <= edit.offset:
+        return p
+    if p >= edit_end:
+        return p + edit.delta
+    return edit.offset
+
+
+def _edit_allows_reanchor(edit: EditRegion, old_text: str, span_start: int, span_end: int) -> bool:
+    if edit.old_len == 0:
+        return True
+    if edit.offset >= span_end or edit.offset + edit.old_len <= span_start:
+        return False
+    deleted = (old_text or "")[edit.offset : edit.offset + edit.old_len]
+    return deleted.strip() == ""
+
+
+def _first_letter_in_selection(selection_text: str) -> Optional[Tuple[str, int]]:
+    for i, ch in enumerate(selection_text or ""):
+        if not ch.isspace():
+            return ch, i
+    if selection_text:
+        return selection_text[0], 0
+    return None
+
+
+def _reanchor_span_by_first_letter(
+    current_text: str,
+    selection_text: str,
+    shifted_start: int,
+    shifted_end: int,
+) -> Optional[Tuple[int, int]]:
+    anchor = _first_letter_in_selection(selection_text)
+    if not anchor or shifted_end <= shifted_start or not selection_text:
+        return None
+    letter, offset_in_sel = anchor
+    span_len = shifted_end - shifted_start
+    expect_letter_pos = shifted_start + offset_in_sel
+    slack = max(40, len(selection_text) + 20)
+    search_from = max(0, expect_letter_pos - slack)
+    search_to = min(len(current_text), expect_letter_pos + slack)
+    best_start = shifted_start
+    best_score = -1
+    for pos in range(search_from, search_to):
+        if pos >= len(current_text) or current_text[pos] != letter:
+            continue
+        start = pos - offset_in_sel
+        if start < 0:
+            continue
+        slice_text = current_text[start : start + len(selection_text)]
+        score = sum(1 for a, b in zip(slice_text, selection_text) if a == b)
+        dist = abs(start - shifted_start)
+        combined = score * 1000 - dist
+        if combined > best_score:
+            best_score = combined
+            best_start = start
+    if best_score >= 0:
+        return best_start, best_start + span_len
+    return None
+
+
 def _shift_span(span: SpanRef, edit: EditRegion) -> Tuple[int, int, bool, bool]:
     """Return (new_start, new_end, overlapped, shifted_only)."""
-    s, e = span.char_start, span.char_end
+    new_start = _map_point_through_edit(span.char_start, edit, "start")
+    new_end = _map_point_through_edit(span.char_end, edit, "end")
     edit_end = edit.offset + edit.old_len
-    if edit.old_len == 0:
-        if edit.offset >= e:
-            return s, e, False, False
-        if edit.offset < s:
-            return s + edit.delta, e + edit.delta, False, True
-        if edit.offset < e:
-            return s, e, True, False
-        return s, e, False, False
-    if edit_end <= s:
-        return s, e, False, False
-    if edit.offset >= e:
-        return s + edit.delta, e + edit.delta, False, True
-    return s, e, True, False
+    overlapped = edit_end > span.char_start and edit.offset < span.char_end
+    shifted = new_start != span.char_start or new_end != span.char_end
+    return new_start, new_end, overlapped, shifted
 
 
 def audit_edit(
@@ -121,18 +182,29 @@ def audit_edit(
     binding_by_id = {b.get("id"): b for b in updated_bindings if b.get("id")}
 
     for span in all_spans:
+        label = span.label or span.kind
         new_start, new_end = span.char_start, span.char_end
         overlapped = False
         shifted = False
+        cur_start, cur_end = span.char_start, span.char_end
         for edit in regions:
-            ns, ne, ov, sh = _shift_span(span, edit)
+            ns, ne, ov, sh = _shift_span(SpanRef(cur_start, cur_end), edit)
             if ov:
                 overlapped = True
             if sh:
                 shifted = True
-            new_start, new_end = ns, ne
+            cur_start, cur_end = ns, ne
+        new_start, new_end = cur_start, cur_end
 
-        label = span.label or span.kind
+        if overlapped and span.kind == "binding" and any(
+            _edit_allows_reanchor(edit, old_text or "", span.char_start, span.char_end) for edit in regions
+        ):
+            reanchored = _reanchor_span_by_first_letter(new_text or "", label, new_start, new_end)
+            if reanchored:
+                new_start, new_end = reanchored
+                overlapped = False
+                shifted = True
+
         if overlapped:
             required.append(
                 DiffItem(

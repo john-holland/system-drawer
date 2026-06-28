@@ -15,8 +15,22 @@ from flask import jsonify, request, send_from_directory
 
 try:
     from continuum_api.table_read_blocks import assign_round_robin, parse_reading_blocks
+    from continuum_api.table_read_chat import (
+        ensure_table_read_schema_column,
+        resaurce_route,
+        send_chat_message,
+        share_url,
+        sync_table_read_chat,
+    )
 except ImportError:
     from table_read_blocks import assign_round_robin, parse_reading_blocks
+    from table_read_chat import (
+        ensure_table_read_schema_column,
+        resaurce_route,
+        send_chat_message,
+        share_url,
+        sync_table_read_chat,
+    )
 
 GetConn = Callable[[], sqlite3.Connection]
 GetUser = Callable[[], str]
@@ -33,10 +47,14 @@ def ensure_table_read_tables(conn: sqlite3.Connection) -> None:
     if schema_path.exists():
         conn.executescript(schema_path.read_text(encoding="utf-8"))
         conn.commit()
+    ensure_table_read_schema_column(conn)
 
 
 def _session_row(r: sqlite3.Row) -> dict:
-    return {
+    chat_room_id = None
+    if "resaurce_chat_room_id" in r.keys():
+        chat_room_id = r["resaurce_chat_room_id"]
+    row = {
         "id": r["id"],
         "draftEpisodeId": r["draft_episode_id"],
         "hostUserId": r["host_user_id"],
@@ -49,6 +67,10 @@ def _session_row(r: sqlite3.Row) -> dict:
         "createdAt": r["created_at"],
         "endedAt": r["ended_at"],
     }
+    if chat_room_id:
+        row["chatRoomId"] = chat_room_id
+        row["shareUrl"] = share_url(r["id"], r["draft_episode_id"])
+    return row
 
 
 def _participant_row(r: sqlite3.Row) -> dict:
@@ -259,6 +281,23 @@ def _session_snapshot(conn: sqlite3.Connection, session_id: str, viewer_user_id:
     }
 
 
+def _create_table_read_notification(conn: sqlite3.Connection, user_id: str, message: str, draft_id: str | None = None) -> None:
+    nid = str(uuid.uuid4())
+    now = _now()
+    try:
+        conn.execute(
+            """INSERT INTO notifications (id, user_id, type, draft_id, review_id, message, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (nid, user_id, "table_read_chat_invite", draft_id, None, message, now),
+        )
+    except sqlite3.OperationalError:
+        pass
+
+
+def _enrich_session_chat(conn: sqlite3.Connection, session: sqlite3.Row, *, post_welcome: bool = False) -> None:
+    sync_table_read_chat(conn, session, post_welcome=post_welcome)
+
+
 def _finalize_user_recordings(conn: sqlite3.Connection, session_id: str, user_id: str) -> None:
     now = _now()
     conn.execute(
@@ -343,6 +382,10 @@ def register_table_read_routes(
             )
             conn.commit()
             _rebuild_turn_queue(conn, sid)
+            session = _get_session(conn, sid)
+            if session:
+                _enrich_session_chat(conn, session, post_welcome=True)
+                session = _get_session(conn, sid)
             return jsonify({"id": sid, "draftEpisodeId": draft_id}), 201
         finally:
             conn.close()
@@ -352,9 +395,13 @@ def register_table_read_routes(
         conn = get_conn()
         try:
             _ensure(conn)
-            snap = _session_snapshot(conn, session_id, get_user())
-            if not snap:
+            session = _get_session(conn, session_id)
+            if not session:
                 return jsonify({"error": "not found"}), 404
+            if not (session["resaurce_chat_room_id"] if "resaurce_chat_room_id" in session.keys() else None):
+                _enrich_session_chat(conn, session)
+                session = _get_session(conn, session_id)
+            snap = _session_snapshot(conn, session_id, get_user())
             return jsonify(snap)
         finally:
             conn.close()
@@ -398,10 +445,78 @@ def register_table_read_routes(
                 )
             conn.commit()
             _rebuild_turn_queue(conn, session_id)
+            session = _get_session(conn, session_id)
+            if session:
+                _enrich_session_chat(conn, session)
             snap = _session_snapshot(conn, session_id, user_id)
             _broadcast(session_id, "participant_joined", {"userId": user_id})
             _broadcast_state(session_id)
             return jsonify(snap)
+        finally:
+            conn.close()
+
+    @app.route("/api/table-read/sessions/<session_id>/ensure-chat", methods=["POST"])
+    def ensure_table_read_chat(session_id: str):
+        conn = get_conn()
+        try:
+            _ensure(conn)
+            session = _get_session(conn, session_id)
+            if not session:
+                return jsonify({"error": "not found"}), 404
+            had_room = bool(session["resaurce_chat_room_id"] if "resaurce_chat_room_id" in session.keys() else None)
+            _enrich_session_chat(conn, session, post_welcome=not had_room)
+            session = _get_session(conn, session_id)
+            room_id = session["resaurce_chat_room_id"] if "resaurce_chat_room_id" in session.keys() else None
+            return jsonify({
+                "ok": True,
+                "chatRoomId": room_id,
+                "shareUrl": share_url(session_id, session["draft_episode_id"]),
+            })
+        finally:
+            conn.close()
+
+    @app.route("/api/table-read/sessions/<session_id>/invite", methods=["POST"])
+    def invite_table_read_user(session_id: str):
+        body = request.get_json(force=True) or {}
+        invite_user_id = (body.get("userId") or body.get("user_id") or "").strip()
+        if not invite_user_id:
+            return jsonify({"error": "userId required"}), 400
+        host_id = get_user()
+        conn = get_conn()
+        try:
+            _ensure(conn)
+            session = _get_session(conn, session_id)
+            if not session:
+                return jsonify({"error": "not found"}), 404
+            if session["host_user_id"] != host_id:
+                return jsonify({"error": "host only"}), 403
+            if session["status"] != "active":
+                return jsonify({"error": "session ended"}), 400
+            _enrich_session_chat(conn, session)
+            session = _get_session(conn, session_id)
+            participants = [p["user_id"] for p in _active_participants(conn, session_id)]
+            if invite_user_id not in participants:
+                participants.append(invite_user_id)
+            out = resaurce_route(
+                "chat/room/sync-table-read-members",
+                {"session_id": session_id, "participants": participants},
+            )
+            room = out.get("chat_room") or {}
+            room_id = room.get("id") or (
+                session["resaurce_chat_room_id"] if "resaurce_chat_room_id" in session.keys() else None
+            )
+            url = share_url(session_id, session["draft_episode_id"])
+            if room_id:
+                send_chat_message(
+                    room_id,
+                    host_id,
+                    f"{host_id} invited you to table read — [Join room]({url})",
+                    "system",
+                )
+            msg = json.dumps({"sessionId": session_id, "chatRoomId": room_id, "shareUrl": url})
+            _create_table_read_notification(conn, invite_user_id, msg, session["draft_episode_id"])
+            conn.commit()
+            return jsonify({"ok": True, "chatRoomId": room_id, "shareUrl": url})
         finally:
             conn.close()
 

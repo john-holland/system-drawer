@@ -20,9 +20,9 @@ public class CameraTransitionControllerTests
             fieldOfView = 40f,
             focusMode = CameraFocusMode.SceneFocus,
         };
-        ctrl.RequestTransition(to, TransitionProfile.Default(0.01f));
-        for (int i = 0; i < 5; i++)
-            ctrl.SendMessage("Update");
+        ctrl.RequestTransition(to, TransitionProfile.Default(0.5f));
+        for (int i = 0; i < 60; i++)
+            ctrl.Tick(1f / 60f);
 
         Assert.That(Vector3.Distance(cam.transform.position, to.position), Is.LessThan(0.5f));
         Object.DestroyImmediate(go);

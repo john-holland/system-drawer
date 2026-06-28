@@ -1,0 +1,18 @@
+{
+  "name": "Environment.Destructible.Runtime",
+  "rootNamespace": "DestructibleEnvironment",
+  "references": [
+    "HierarchicalPathFinding",
+    "Locomotion.Runtime",
+    "Weather.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

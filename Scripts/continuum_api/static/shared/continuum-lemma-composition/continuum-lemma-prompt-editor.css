@@ -1,0 +1,127 @@
+.continuum-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.continuum-prompt-modal {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 920px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+.continuum-prompt-modal h3 {
+  margin: 0;
+  padding: 16px 20px 0;
+}
+.continuum-prompt-banner {
+  margin: 8px 20px 0;
+  padding: 8px 12px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #5d4037;
+}
+.continuum-prompt-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 20px 0;
+  border-bottom: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+.continuum-prompt-tabs button {
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+}
+.continuum-prompt-tabs button.active {
+  border-bottom-color: #1976d2;
+  color: #1976d2;
+  font-weight: 600;
+}
+.continuum-prompt-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 20px;
+}
+.continuum-prompt-panel { display: none; }
+.continuum-prompt-panel.active { display: block; }
+.continuum-prompt-ace {
+  height: 200px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.continuum-prompt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.continuum-prompt-chips button {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+.continuum-prompt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.continuum-prompt-grid label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 4px;
+}
+.continuum-prompt-grid input {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.continuum-prompt-preview {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  min-height: 80px;
+}
+.continuum-prompt-issues {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #c62828;
+}
+.continuum-prompt-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+.continuum-prompt-patch-row {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.continuum-prompt-patch-row input {
+  width: 120px;
+  margin: 2px 4px;
+  padding: 4px 6px;
+}

@@ -64,3 +64,67 @@ public class ComponentMetadataPostResultDto
     public string entryId;
     public string runId;
 }
+
+[Serializable]
+public class LemmaCompositionChildDto
+{
+    public string id;
+    public string entryId;
+    public string term;
+    public int sortOrder;
+    public string spatial4dId;
+    public string anchorText;
+    public string draftEpisodeId;
+}
+
+[Serializable]
+public class LemmaCompositionResponseDto
+{
+    public string parentEntryId;
+    public LemmaCompositionChildDto[] children;
+    public bool isComposedLemma;
+}
+
+[Serializable]
+public class LemmaCompositionPutBody
+{
+    public LemmaCompositionChildPutDto[] children;
+}
+
+[Serializable]
+public class LemmaCompositionChildPutDto
+{
+    public string entryId;
+    public int sortOrder;
+}
+
+[Serializable]
+public class LemmaRecombobulateIssueDto
+{
+    public string id;
+    public string code;
+    public string severity;
+    public string entryId;
+    public string message;
+    public bool requiresAck;
+    public string storedText;
+    public string currentText;
+}
+
+[Serializable]
+public class LemmaRecombobulateResponseDto
+{
+    public string parentEntryId;
+    public LemmaRecombobulateIssueDto[] issues;
+    public string[] appliedIssueIds;
+    public LemmaCompositionResponseDto composition;
+}
+
+[Serializable]
+public class LemmaRecombobulateRequestDto
+{
+    public string scriptText;
+    public string draftEpisodeId;
+    public bool apply;
+    public string[] acknowledgedIssueIds;
+}

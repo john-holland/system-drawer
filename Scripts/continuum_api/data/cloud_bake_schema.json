@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CloudBakeFrameRecord",
+  "type": "object",
+  "properties": {
+    "frameIndex": { "type": "integer" },
+    "allowFloatAway": { "type": "boolean", "default": false },
+    "anchorHash": { "type": "integer" },
+    "viewer": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string" },
+        "worldPoint": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 }
+      }
+    },
+    "gradient": { "type": "string" },
+    "spheres": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "center": { "type": "array", "items": { "type": "number" } },
+          "radius": { "type": "number" },
+          "density": { "type": "number" },
+          "moisture": { "type": "number" }
+        }
+      }
+    },
+    "lossHistory": { "type": "array", "items": { "type": "number" } },
+    "advection": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["AnchorReset", "WeatherSolverAdvection"] },
+        "advectionVectorWorld": { "type": "array", "items": { "type": "number" } }
+      }
+    },
+    "convexion": {
+      "type": "object",
+      "properties": {
+        "bias": { "type": "number", "minimum": -1, "maximum": 1 },
+        "size": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  },
+  "required": ["frameIndex"]
+}

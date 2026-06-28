@@ -50,11 +50,29 @@ def _bootstrap_db(path: str) -> None:
         INSERT INTO reviewer_comments VALUES (
             'c1', 'rev-1', 'draft-tr', 'Nice line.', 'general', '2020-01-01', 0, 5, NULL, 0
         );
+        CREATE TABLE IF NOT EXISTS notifications (
+            id TEXT PRIMARY KEY, user_id TEXT, type TEXT, draft_id TEXT,
+            review_id TEXT, message TEXT, read_at TEXT, created_at TEXT
+        );
+        CREATE TABLE IF NOT EXISTS user_presence (
+            user_id TEXT PRIMARY KEY, last_seen_at TEXT
+        );
+        INSERT INTO user_presence VALUES ('reader-2', '2020-01-01');
         """
     )
     ensure_table_read_tables(conn)
     conn.commit()
     conn.close()
+
+
+def _mock_resaurce(route, payload):
+    if route == "chat/room/ensure-for-table-read":
+        return {"ok": True, "chat_room": {"id": "room_test_1"}}
+    if route == "chat/room/sync-table-read-members":
+        return {"ok": True, "chat_room": {"id": "room_test_1", "participants": payload.get("participants", [])}}
+    if route == "chat/message/send":
+        return {"ok": True, "message": {"id": "msg_1"}}
+    return {"ok": False}
 
 
 @pytest.fixture
@@ -64,6 +82,9 @@ def tr_client(monkeypatch):
     _bootstrap_db(path)
     monkeypatch.setenv("CONTINUUM_DB", path)
     srv._schema_initialized = True
+    monkeypatch.setattr("continuum_api.table_read_chat.resaurce_route", _mock_resaurce)
+    monkeypatch.setattr("continuum_api.table_read_routes.resaurce_route", _mock_resaurce)
+    monkeypatch.setattr("continuum_api.table_read_routes.send_chat_message", lambda *a, **k: {"ok": True})
     yield srv.app.test_client(), path
     try:
         os.unlink(path)
@@ -166,3 +187,40 @@ def test_end_session_host_only(tr_client):
     assert r.status_code == 403
     r = client.post(f"/api/table-read/sessions/{sid}/end", headers={"X-User-ID": "host-1"})
     assert r.status_code == 200
+
+
+def test_join_ensures_chat_room(tr_client):
+    client, _ = tr_client
+    r = client.post(
+        "/api/table-read/sessions",
+        json={"draftEpisodeId": "draft-tr"},
+        headers={"X-User-ID": "host-1"},
+    )
+    sid = r.get_json()["id"]
+    r = client.get(f"/api/table-read/sessions/{sid}", headers={"X-User-ID": "host-1"})
+    snap = r.get_json()
+    assert snap["session"].get("chatRoomId") == "room_test_1"
+    assert "shareUrl" in snap["session"]
+
+
+def test_invite_host_only(tr_client):
+    client, _ = tr_client
+    r = client.post(
+        "/api/table-read/sessions",
+        json={"draftEpisodeId": "draft-tr"},
+        headers={"X-User-ID": "host-1"},
+    )
+    sid = r.get_json()["id"]
+    r = client.post(
+        f"/api/table-read/sessions/{sid}/invite",
+        json={"userId": "reader-2"},
+        headers={"X-User-ID": "other"},
+    )
+    assert r.status_code == 403
+    r = client.post(
+        f"/api/table-read/sessions/{sid}/invite",
+        json={"userId": "reader-2"},
+        headers={"X-User-ID": "host-1"},
+    )
+    assert r.status_code == 200
+    assert r.get_json().get("chatRoomId") == "room_test_1"

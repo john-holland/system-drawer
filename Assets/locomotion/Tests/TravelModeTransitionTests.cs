@@ -156,12 +156,12 @@ public class TravelModeTransitionTests
         var compositeGo = new GameObject("composite");
         compositeGo.transform.SetParent(root.transform);
         var composite = compositeGo.AddComponent<CompositeMultiModalPathNode>();
+        composite.multibodyPolicySource = agent;
         Assert.IsNotNull(TravelExecutionContextProvider.Ensure(compositeGo, tree, agent));
 
-        TravelExecutionContext captured = null;
+        ContextCaptureNode.LastCaptured = null;
         var captureGo = new GameObject("capture");
-        var capture = captureGo.AddComponent<ContextCaptureNode>();
-        capture.onExecute = ctx => captured = ctx;
+        captureGo.AddComponent<ContextCaptureNode>();
 
         composite.modeTransitionBindings = new List<TravelModeTransitionBinding>
         {
@@ -169,7 +169,7 @@ public class TravelModeTransitionTests
             {
                 fromMode = TravelLegMode.Walk,
                 toMode = TravelLegMode.Drive,
-                activationNodes = new List<BehaviorTreeNode> { capture }
+                activationRoot = captureGo
             }
         };
 
@@ -184,6 +184,7 @@ public class TravelModeTransitionTests
         trans.OnEnter(tree);
         trans.Execute(tree);
 
+        var captured = ContextCaptureNode.LastCaptured;
         Assert.IsNotNull(captured);
         Assert.IsTrue(captured.isModeTransition);
         Assert.AreEqual(TravelLegMode.Walk, captured.fromMode);
@@ -192,7 +193,6 @@ public class TravelModeTransitionTests
         Assert.AreSame(amb, captured.ambulatingActor);
 
         Object.DestroyImmediate(root);
-        Object.DestroyImmediate(captureGo);
     }
 
     [Test]
@@ -241,7 +241,7 @@ public class TravelModeTransitionTests
 
     sealed class ContextCaptureNode : TravelContextBehaviorTreeNode, ITravelExecutionContextConsumer
     {
-        public System.Action<TravelExecutionContext> onExecute;
+        public static TravelExecutionContext LastCaptured;
         TravelExecutionContext _injected;
 
         void Awake()
@@ -253,7 +253,7 @@ public class TravelModeTransitionTests
 
         public override BehaviorTreeStatus Execute(BehaviorTree tree)
         {
-            onExecute?.Invoke(Ctx ?? _injected);
+            LastCaptured = Ctx ?? _injected;
             return BehaviorTreeStatus.Success;
         }
     }

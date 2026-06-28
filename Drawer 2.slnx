@@ -3,6 +3,7 @@
   <Project Path="Weather.Runtime.csproj" />
   <Project Path="Continuum.Runtime.csproj" />
   <Project Path="Locomotion.Editor.csproj" />
+  <Project Path="Environment.Destructible.Runtime.csproj" />
   <Project Path="Planetary.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
   <Project Path="SdfMax.Tests.csproj" />
@@ -32,12 +33,15 @@
   <Project Path="SdfMax.Editor.csproj" />
   <Project Path="SystemDrawer.Networking.csproj" />
   <Project Path="Continuum.Tests.csproj" />
+  <Project Path="Environment.Destructible.Editor.csproj" />
   <Project Path="SystemDrawer.PerfTrace.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.Editor.csproj" />
   <Project Path="Planetary.Editor.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />
+  <Project Path="Continuum.Society.csproj" />
   <Project Path="Roads.Tests.csproj" />
   <Project Path="SystemDrawer.Tests.csproj" />
+  <Project Path="Environment.Destructible.Tests.csproj" />
   <Project Path="Weather.Tests.csproj" />
   <Project Path="SystemDrawer.Editor.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />

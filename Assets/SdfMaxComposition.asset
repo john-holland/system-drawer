@@ -15,22 +15,6 @@ MonoBehaviour:
   rootNodeIndex: -1
   nodes:
   - op: 0
-    primitiveType: 1
-    localPosition: {x: 0, y: 0, z: 0}
-    localRotationEuler: {x: 0, y: 0, z: 0}
-    localScale: {x: 0, y: 0, z: 0}
-    radius: 0
-    halfExtents: {x: 0, y: 0, z: 0}
-    constantValue: 0
-    blendK: 0
-    smoothRadius: 0
-    tMin: 0
-    tMax: 0
-    weight: 0
-    gizmoColor: {r: 0, g: 0, b: 0, a: 0}
-    childIndexA: 0
-    childIndexB: 0
-  - op: 0
     primitiveType: 2
     localPosition: {x: 0, y: 0, z: 0}
     localRotationEuler: {x: 0, y: 0, z: 0}
@@ -46,3 +30,39 @@ MonoBehaviour:
     gizmoColor: {r: 0, g: 0, b: 0, a: 0}
     childIndexA: 0
     childIndexB: 0
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 0, y: 0, z: 0}
+    radius: 0
+    halfExtents: {x: 0, y: 0, z: 0}
+    constantValue: 0
+    blendK: 0
+    smoothRadius: 0
+    tMin: 0
+    tMax: 0
+    weight: 0
+    gizmoColor: {r: 0, g: 0, b: 0, a: 0}
+    childIndexA: 0
+    childIndexB: 0
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100

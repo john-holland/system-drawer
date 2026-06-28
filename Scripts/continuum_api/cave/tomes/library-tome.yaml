@@ -1,0 +1,8 @@
+id: library-tome
+name: USC Library Tome
+routing:
+  basePath: /api/tomes/library-tome
+  routes:
+    searchMachine:
+      path: /search
+      method: POST

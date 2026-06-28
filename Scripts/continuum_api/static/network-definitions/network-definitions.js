@@ -1,4 +1,4 @@
-(function () {
+(function (global) {
   'use strict';
 
   var API = (localStorage.getItem('lemmaApiBase') || location.origin).replace(/\/$/, '');
@@ -49,9 +49,18 @@
   function renderNetworks(panel) {
     fetchJson('/api/telecom/networks').then(function (data) {
       var rows = (data.items || []).map(function (n) {
-        return [esc(n.id), esc(n.name), n.virtual ? 'yes' : 'no', esc(n.playbookPath || '')];
+        return [
+          esc(n.id),
+          esc(n.name),
+          n.virtual ? 'yes' : 'no',
+          n.discoveryCrossRoute ? 'yes' : 'no',
+          esc(n.playbookPath || ''),
+          esc(n.createdAt || ''),
+        ];
       });
-      panel.innerHTML = '<h2>Networks</h2>' + (rows.length ? table(['ID', 'Name', 'Virtual', 'Playbook'], rows) : '<p>No networks.</p>');
+      panel.innerHTML = '<h2>Networks</h2>' + (rows.length
+        ? table(['ID', 'Name', 'Virtual', 'Cross-route', 'Playbook', 'Created'], rows)
+        : '<p>No networks registered. POST to <code>/api/telecom/networks</code> or sync a playbook.</p>');
     }).catch(function (e) { panel.textContent = 'Error: ' + e.message; });
   }
 
@@ -69,7 +78,9 @@
       var rows = (data.items || []).map(function (r) {
         return [esc(r.networkId), esc(r.prefix), esc(r.nextHop || ''), String(r.metric)];
       });
-      panel.innerHTML = '<h2>Routes</h2>' + table(['Network', 'Prefix', 'Next hop', 'Metric'], rows);
+      panel.innerHTML = '<h2>Routes</h2>' + (rows.length
+        ? table(['Network', 'Prefix', 'Next hop', 'Metric'], rows)
+        : '<p>No routes yet. Add via <code>POST /api/telecom/routes</code> or import from a playbook.</p>');
     }).catch(function (e) { panel.textContent = 'Error: ' + e.message; });
   }
 
@@ -136,7 +147,8 @@
 
   if (global.ContinuumNav) {
     ContinuumNav.mount({ root: '#continuum-nav-root', app: 'network' });
+    if (window.ContinuumTomeBootstrap) ContinuumTomeBootstrap.mountPage({ tomeId: 'network-tome' });
   }
   renderTabs();
   renderPanel();
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

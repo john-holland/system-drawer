@@ -31,9 +31,11 @@
     .script-viewer { border: 1px solid #ccc; padding: 12px; min-height: 120px; font-family: monospace; white-space: pre-wrap; user-select: text; }
     .comment-form { margin-top: 12px; }
   </style>
+  <link rel="stylesheet" href="/static/shared/continuum-lemma-entry/continuum-lemma-entry.css" />
   <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
   <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
+  <script src="/static/shared/vendor/ace.js"></script>
+  <script src="/static/shared/continuum-lemma-entry/continuum-lemma-entry.js"></script>
   <script src="/static/shared/continuum-script-editor/continuum-script-spans.js"></script>
   <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
   <script src="/static/shared/continuum-clause-selector/continuum-clause-selector.js"></script>
@@ -54,7 +56,7 @@
     <h2>Pipeline steps</h2>
     <ol class="steps">
       <li>Add episode (below)</li>
-      <li>Upload USC asset (via Continuum Library server) and link via episode-assets</li>
+      <li><a id="link-usc-import" href="/library?panel=upload">Upload USC asset</a> and link via episode-assets</li>
       <li>Create episode script and parse (Build AST via Script Output)</li>
       <li>Link asset to episode</li>
       <li>Output to Spatial 4D (export from Unity)</li>
@@ -114,6 +116,11 @@
     <div id="review-detail">
       <p>Select a review above to see script and add comments.</p>
     </div>
+
+    <h2>Comment delete requests</h2>
+    <p id="delete-queue-hint" style="font-size:13px;color:#666">Pending reviewer comment deletions. Enable <strong>Dev → Admin</strong> in the header to service all requests.</p>
+    <button type="button" id="refresh-delete-queue">Refresh queue</button>
+    <div id="delete-request-queue"></div>
   </section>
 
   <section id="section-herb-garden" class="section">
@@ -130,11 +137,14 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
   </section>
 
   <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
+  <script src="/static/shared/continuum-cave-shell/continuum-cave-shell.js"></script>
+  <script src="/static/shared/continuum-cave-shell/continuum-tome-bootstrap.js"></script>
   <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
   <script>
     const API = '/api';
     const scriptOutputBase = (typeof window !== 'undefined' && window.location.port === '5050')
-      ? 'http://localhost:5174' : (window.location.origin.replace(/:\d+$/, ':5174'));
+      ? (window.location.origin + '/script-output')
+      : (window.location.origin.replace(/:\d+$/, ':5174'));
 
     ContinuumNav.mount({
       app: 'hub',
@@ -146,6 +156,9 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         { label: 'Herb Garden', href: '#herb-garden', attrs: { 'data-route': 'herb-garden' } },
       ],
     });
+    ContinuumTomeBootstrap.mountPage({ tomeId: 'hub-tome' });
+    const importLink = document.getElementById('link-usc-import');
+    if (importLink) importLink.href = ContinuumNav.resolveAppUrls().import;
 
     function bindRouteLinks() {
       document.querySelectorAll('#continuum-subnav [data-route]').forEach(a => {
@@ -160,7 +173,10 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
 
     ContinuumUserSession.onChange(() => {
       loadNotifications();
-      if (getRoute() === 'review') loadReviewData();
+      if (getRoute() === 'review') {
+        loadReviewData();
+        loadDeleteRequestQueue();
+      }
     });
 
     function getHeaders() {
@@ -171,12 +187,92 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       return fetch(API + url, { ...opts, headers: { ...getHeaders(), ...(opts.headers || {}) } });
     }
 
-    document.getElementById('script-output-link').href = scriptOutputBase + '/';
+    document.getElementById('script-output-link').href = scriptOutputBase;
 
     function getRoute() {
       const h = window.location.hash.slice(1) || '';
       return (h.split('?')[0] || '').replace(/^\//, '') || 'home';
     }
+
+    function reviewPageUrl(draftId, reviewId) {
+      let u = '#review?draftId=' + encodeURIComponent(draftId);
+      if (reviewId) u += '&reviewId=' + encodeURIComponent(reviewId);
+      return u;
+    }
+
+    function setReviewHash(draftId, reviewId) {
+      history.replaceState(null, '', reviewPageUrl(draftId, reviewId || ''));
+    }
+
+    async function loadDeleteRequestQueue() {
+      const host = document.getElementById('delete-request-queue');
+      if (!host) return;
+      try {
+        const res = await apiFetch('/reviews/comment-delete-requests');
+        const data = await res.json();
+        const items = data.items || [];
+        const isAdmin = ContinuumUserSession.isAdmin();
+        if (!items.length) {
+          host.innerHTML = '<p><em>No pending delete requests.</em></p>';
+          return;
+        }
+        host.innerHTML = '<table><thead><tr><th>Draft</th><th>Comment</th><th>Requested</th><th>By</th><th>Actions</th></tr></thead><tbody></tbody></table>';
+        const tbody = host.querySelector('tbody');
+        items.forEach(item => {
+          const tr = document.createElement('tr');
+          const snippet = (item.commentText || '').slice(0, 80);
+          tr.innerHTML = `<td>${escapeHtml(item.draftTitle || item.draftEpisodeId)}</td>
+            <td>${escapeHtml(snippet)}${(item.commentText || '').length > 80 ? '…' : ''}</td>
+            <td>${escapeHtml(item.deleteRequestedAt || '—')}</td>
+            <td>${escapeHtml(item.deleteRequestedBy || '—')}</td>
+            <td class="delete-queue-actions"></td>`;
+          const actions = tr.querySelector('.delete-queue-actions');
+          const openBtn = document.createElement('button');
+          openBtn.type = 'button';
+          openBtn.textContent = 'Open review';
+          openBtn.onclick = () => {
+            window.location.hash = reviewPageUrl(item.draftEpisodeId, item.reviewId).slice(1);
+            showReviewDetail(item.reviewId, item.draftEpisodeId, false);
+          };
+          actions.appendChild(openBtn);
+          const currentUser = ContinuumUserSession.getUserId();
+          const canDecide = isAdmin || item.revieweeUserId === currentUser;
+          if (canDecide) {
+            const appr = document.createElement('button');
+            appr.textContent = 'Approve delete';
+            appr.onclick = async () => {
+              await apiFetch(`/reviews/${item.reviewId}/comments/${item.commentId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ approveDelete: true }),
+              });
+              loadDeleteRequestQueue();
+              if (document.getElementById('review-detail').dataset.draftId === item.draftEpisodeId) {
+                showReviewDetail(item.reviewId, item.draftEpisodeId, false);
+              }
+            };
+            const deny = document.createElement('button');
+            deny.textContent = 'Deny';
+            deny.onclick = async () => {
+              await apiFetch(`/reviews/${item.reviewId}/comments/${item.commentId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ denyDelete: true }),
+              });
+              loadDeleteRequestQueue();
+              if (document.getElementById('review-detail').dataset.draftId === item.draftEpisodeId) {
+                showReviewDetail(item.reviewId, item.draftEpisodeId, false);
+              }
+            };
+            actions.appendChild(appr);
+            actions.appendChild(deny);
+          }
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        host.innerHTML = '<p class="error">Could not load delete queue.</p>';
+      }
+    }
+
+    document.getElementById('refresh-delete-queue').onclick = loadDeleteRequestQueue;
 
     function getHashParams() {
       const h = window.location.hash.slice(1) || '';
@@ -199,7 +295,10 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
 
     window.onhashchange = () => {
       showSection(getRoute());
-      if (getRoute() === 'review') loadReviewData();
+      if (getRoute() === 'review') {
+        loadReviewData();
+        loadDeleteRequestQueue();
+      }
       if (getRoute() === 'herb-garden') loadHerbGarden();
     };
 
@@ -294,69 +393,131 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
     loadNotifications();
     setInterval(loadNotifications, 60000);
 
-    async function loadReviewData() {
-      const [reviewsRes, usersRes, draftsRes] = await Promise.all([
-        apiFetch('/reviews?asReviewer=true&asReviewee=true'),
-        apiFetch('/users'),
-        apiFetch('/drafts/episodes'),
-      ]);
-      const reviews = (await reviewsRes.json()).items || [];
-      const users = (await usersRes.json()).items || [];
-      const drafts = (await draftsRes.json()) || [];
-      const draftList = Array.isArray(drafts) ? drafts : drafts.items || [];
+    async function resolveDraftIdForReview(id) {
+      if (!id) return '';
+      const draftRes = await apiFetch('/drafts/episodes/' + encodeURIComponent(id));
+      if (draftRes.ok) return id;
+      const epRes = await apiFetch('/drafts/episodes?episodeId=' + encodeURIComponent(id));
+      if (!epRes.ok) return id;
+      const list = await epRes.json();
+      const drafts = Array.isArray(list) ? list : (list.items || []);
+      return drafts.length ? drafts[0].id : id;
+    }
 
-      const listEl = document.getElementById('my-reviews-list');
-      listEl.innerHTML = '<table><thead><tr><th>Draft</th><th>Status</th><th>Change list</th><th>Role</th><th>Actions</th></tr></thead><tbody></tbody></table>';
-      const tbody = listEl.querySelector('tbody');
-      const currentUser = ContinuumUserSession.getUserId();
-      reviews.forEach(r => {
-        const tr = document.createElement('tr');
-        const role = r.reviewerUserId === currentUser ? 'Reviewer'
-          : (r.revieweeUserId === currentUser ? 'Reviewee' : (r.revieweeUserId ? 'Other' : 'Author'));
-        const clStatus = r.changeListStatus ? r.changeListStatus.replace('_', ' ') : '—';
-        const statusLabel = r.status === 'pending_review' ? 'awaiting review' : r.status;
-        tr.innerHTML = `<td>${escapeHtml(r.draftTitle || r.draftEpisodeId)}</td><td>${escapeHtml(statusLabel)}</td><td>${escapeHtml(clStatus)}</td><td>${role}</td>
-          <td><button type="button" data-review-id="${r.id || ''}" data-draft-id="${r.draftEpisodeId}" data-committed="${!!r.committedAt}" class="select-review">View</button>
-          ${!r.committedAt && role === 'Reviewee' ? `<button type="button" data-draft-id="${r.draftEpisodeId}" class="commit-draft">Commit</button>` : ''}</td>`;
-        tbody.appendChild(tr);
-      });
-
-      if (!reviews.length) {
-        tbody.innerHTML = '<tr><td colspan="5"><em>No reviews yet. Assign a reviewer or submit a change list from Script Output.</em></td></tr>';
+    async function loadReviewFromHash(reviews) {
+      let hashDraft = getHashParams().get('draftId');
+      if (!hashDraft) return;
+      hashDraft = await resolveDraftIdForReview(hashDraft);
+      let hashReview = getHashParams().get('reviewId');
+      const match = (reviews || []).find(r => r.draftEpisodeId === hashDraft);
+      if (!hashReview) {
+        try {
+          const dr = await apiFetch('/drafts/episodes/' + encodeURIComponent(hashDraft) + '/reviews');
+          if (dr.ok) {
+            const body = await dr.json();
+            const items = body.items || [];
+            if (items.length) hashReview = items[0].id;
+          }
+        } catch (_) { /* keep hashReview empty */ }
       }
-
-      document.getElementById('assign-draft').innerHTML = draftList.filter(d => !d.committedAt).map(d =>
-        `<option value="${d.id}">${d.title} (${d.id.slice(0,8)})</option>`
-      ).join('') || '<option value="">No drafts</option>';
-
-      document.getElementById('assign-reviewer-user').innerHTML = users.map(u =>
-        `<option value="${u.userId}">${u.userId}</option>`
-      ).join('') || '<option value="">No users</option>';
-
-      listEl.querySelectorAll('.select-review').forEach(btn => {
-        btn.onclick = () => showReviewDetail(btn.dataset.reviewId || '', btn.dataset.draftId, btn.dataset.committed === 'true');
-      });
-      listEl.querySelectorAll('.commit-draft').forEach(btn => {
-        btn.onclick = async () => {
-          const res = await apiFetch(`/drafts/episodes/${btn.dataset.draftId}/commit`, { method: 'POST' });
-          const j = await res.json().catch(() => ({}));
-          if (res.ok) alert('Committed'); else alert('Error: ' + (j.error || res.statusText));
-          loadReviewData();
-        };
-      });
-
-      const hashDraft = getHashParams().get('draftId');
-      if (hashDraft) {
-        const match = reviews.find(r => r.draftEpisodeId === hashDraft);
-        if (match) {
-          showReviewDetail(match.id || '', hashDraft, !!match.committedAt);
-        } else {
-          showReviewDetail('', hashDraft, false);
+      const rid = hashReview || (match && match.id) || '';
+      const detail = document.getElementById('review-detail');
+      if (detail) {
+        detail.innerHTML = '<p>Loading review…</p>';
+      }
+      try {
+        await showReviewDetail(rid, hashDraft, !!(match && match.committedAt));
+      } catch (e) {
+        console.error('showReviewDetail failed', e);
+        if (detail) {
+          detail.innerHTML = '<p class="error">Could not load review: ' + escapeHtml(e.message || String(e)) + '</p>';
         }
       }
     }
 
+    async function loadReviewData() {
+      let reviews = [];
+      try {
+        const [reviewsRes, usersRes, draftsRes] = await Promise.all([
+          apiFetch('/reviews?asReviewer=true&asReviewee=true'),
+          apiFetch('/users'),
+          apiFetch('/drafts/episodes'),
+        ]);
+        reviews = reviewsRes.ok ? ((await reviewsRes.json()).items || []) : [];
+        const users = usersRes.ok ? ((await usersRes.json()).items || []) : [];
+        const drafts = draftsRes.ok ? await draftsRes.json() : [];
+        const draftList = Array.isArray(drafts) ? drafts : drafts.items || [];
+
+        const listEl = document.getElementById('my-reviews-list');
+        listEl.innerHTML = '<table><thead><tr><th>Draft</th><th>Status</th><th>Change list</th><th>Role</th><th>Actions</th></tr></thead><tbody></tbody></table>';
+        const tbody = listEl.querySelector('tbody');
+        const currentUser = ContinuumUserSession.getUserId();
+        reviews.forEach(r => {
+          const tr = document.createElement('tr');
+          const role = r.reviewerUserId === currentUser ? 'Reviewer'
+            : (r.revieweeUserId === currentUser ? 'Reviewee' : (r.revieweeUserId ? 'Other' : 'Author'));
+          const clStatus = r.changeListStatus ? r.changeListStatus.replace('_', ' ') : '—';
+          const statusLabel = r.status === 'pending_review' ? 'awaiting review' : r.status;
+          tr.innerHTML = `<td>${escapeHtml(r.draftTitle || r.draftEpisodeId)}</td><td>${escapeHtml(statusLabel)}</td><td>${escapeHtml(clStatus)}</td><td>${role}</td>
+            <td><button type="button" data-review-id="${r.id || ''}" data-draft-id="${r.draftEpisodeId}" data-committed="${!!r.committedAt}" class="select-review">View</button>
+            ${!r.committedAt && role === 'Reviewee' ? `<button type="button" data-draft-id="${r.draftEpisodeId}" class="commit-draft">Commit</button>` : ''}</td>`;
+          tbody.appendChild(tr);
+        });
+
+        if (!reviews.length) {
+          tbody.innerHTML = '<tr><td colspan="5"><em>No reviews yet. Assign a reviewer or submit a change list from Script Output.</em></td></tr>';
+        }
+
+        document.getElementById('assign-draft').innerHTML = draftList.filter(d => !d.committedAt).map(d =>
+          `<option value="${d.id}">${d.title} (${d.id.slice(0,8)})</option>`
+        ).join('') || '<option value="">No drafts</option>';
+
+        document.getElementById('assign-reviewer-user').innerHTML = users.map(u =>
+          `<option value="${u.userId}">${u.userId}</option>`
+        ).join('') || '<option value="">No users</option>';
+
+        listEl.querySelectorAll('.select-review').forEach(btn => {
+          btn.onclick = () => {
+            setReviewHash(btn.dataset.draftId, btn.dataset.reviewId || '');
+            showReviewDetail(btn.dataset.reviewId || '', btn.dataset.draftId, btn.dataset.committed === 'true');
+          };
+        });
+        listEl.querySelectorAll('.commit-draft').forEach(btn => {
+          btn.onclick = async () => {
+            const res = await apiFetch(`/drafts/episodes/${btn.dataset.draftId}/commit`, { method: 'POST' });
+            const j = await res.json().catch(() => ({}));
+            if (res.ok) alert('Committed'); else alert('Error: ' + (j.error || res.statusText));
+            loadReviewData();
+          };
+        });
+      } catch (e) {
+        console.warn('loadReviewData failed', e);
+      }
+
+      await loadReviewFromHash(reviews);
+      loadDeleteRequestQueue();
+    }
+
     async function showReviewDetail(reviewId, draftId, committed) {
+      setReviewHash(draftId, reviewId);
+      const detail = document.getElementById('review-detail');
+      const draftRes = await apiFetch('/drafts/episodes/' + encodeURIComponent(draftId));
+      if (!draftRes.ok) {
+        if (detail) {
+          detail.innerHTML = '<p class="error">Draft not found: <code>' + escapeHtml(draftId) + '</code>. ' +
+            'Open Script Output and Load first, or check the draft ID in the link.</p>';
+        }
+        return;
+      }
+      const currentUser = ContinuumUserSession.getUserId();
+      let reviewMeta = null;
+      if (reviewId) {
+        const revRes = await apiFetch(`/reviews/${reviewId}`).catch(() => null);
+        if (revRes && revRes.ok) reviewMeta = await revRes.json();
+      }
+      const isReviewer = reviewMeta && reviewMeta.reviewerUserId === currentUser;
+      const isReviewee = reviewMeta && reviewMeta.revieweeUserId === currentUser;
+      const isAdmin = ContinuumUserSession.isAdmin();
       const commentRequests = reviewId
         ? [
             apiFetch(`/reviews/${reviewId}/comments`),
@@ -369,10 +530,10 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         apiFetch(`/thesaurus/clause-bindings?draftEpisodeId=${draftId}`).catch(() => ({ ok: false })),
         apiFetch(`/localization/change-lists?draftEpisodeId=${draftId}`).catch(() => ({ ok: false })),
       ]);
-      const comments = (await commentsRes.json()).items || [];
+      const comments = commentsRes.ok ? ((await commentsRes.json()).items || []) : [];
       const archived = archiveRes.ok ? ((await archiveRes.json()).items || []) : [];
-      const scriptData = await scriptRes.ok ? scriptRes.json() : { scriptText: '' };
-      const scriptText = scriptData.scriptText || '';
+      const scriptData = scriptRes.ok ? await scriptRes.json() : { scriptText: '' };
+      const scriptText = scriptData.scriptText || scriptData.script_text || '';
       if (!scriptRes.ok) {
         console.warn('Draft script not found for', draftId, scriptRes.status);
       }
@@ -424,7 +585,6 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         });
       }
 
-      const detail = document.getElementById('review-detail');
       const workflowBlocked = changeList && ['in_review', 'submitted'].includes(changeList.workflowStatus || '');
       const canEdit = !committed && !workflowBlocked;
       const hasComment = comments.length > 0;
@@ -432,6 +592,11 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       const clRequired = clItems.filter(i => i.severity === 'required');
       const clWarnings = clItems.filter(i => i.severity !== 'required');
       detail.innerHTML = `
+        <div class="review-script-links" style="margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <a href="${reviewPageUrl(draftId, reviewId)}">Review</a>
+          <a href="${scriptOutputBase}/?draftId=${encodeURIComponent(draftId)}" target="_blank" rel="noopener">Open in Script Output</a>
+          ${reviewId ? `<span style="font-size:13px;color:#666">Review ID: <code>${escapeHtml(reviewId)}</code></span>` : ''}
+        </div>
         <div id="review-script-ace" style="min-height:240px;border:1px solid #ccc;border-radius:4px"></div>
         ${!scriptText ? '<p class="error" style="margin-top:8px">No script saved for this draft yet. Open Script Output, edit, and Save before review.</p>' : ''}
         ${changeList && changeList.id ? `
@@ -472,6 +637,10 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         onBindingsChanged: refreshBindings,
         onBindingEdited: openBindingChangeListModal,
       });
+      if (scriptText) {
+        ContinuumScriptEditor.setScriptText(editorInst, scriptText);
+      }
+      ContinuumScriptEditor.resize(editorInst);
 
       const clSaveBtn = detail.querySelector('#cl-save-btn');
       if (clSaveBtn && changeList && changeList.id) {
@@ -551,26 +720,29 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       commentsList.innerHTML = comments.map(c => `
         <li>${escapeHtml(c.commentText)} (${c.textSelectionStart}-${c.textSelectionEnd})
           ${c.deleteRequestedAt ? ' <em>Delete pending</em>' : ''}
-          <button class="req-del" data-cid="${c.id}">Request delete</button>
-          ${c.deleteRequestedAt ? `<button class="appr-del" data-cid="${c.id}">Approve delete</button> <button class="deny-del" data-cid="${c.id}">Deny delete</button>` : ''}
+          ${!c.deleteRequestedAt && (isReviewer || isAdmin) ? `<button class="req-del" data-cid="${c.id}">Request delete</button>` : ''}
+          ${c.deleteRequestedAt && (isReviewee || isAdmin) ? `<button class="appr-del" data-cid="${c.id}">Approve delete</button> <button class="deny-del" data-cid="${c.id}">Deny delete</button>` : ''}
         </li>`).join('') || '<li><em>None</em></li>';
 
       commentsList.querySelectorAll('.req-del').forEach(btn => {
         btn.onclick = async () => {
           await apiFetch(`/reviews/${reviewId}/comments/${btn.dataset.cid}`, { method: 'PATCH', body: JSON.stringify({ requestDelete: true }) });
           showReviewDetail(reviewId, draftId, committed);
+          loadDeleteRequestQueue();
         };
       });
       commentsList.querySelectorAll('.appr-del').forEach(btn => {
         btn.onclick = async () => {
           await apiFetch(`/reviews/${reviewId}/comments/${btn.dataset.cid}`, { method: 'PATCH', body: JSON.stringify({ approveDelete: true }) });
           showReviewDetail(reviewId, draftId, committed);
+          loadDeleteRequestQueue();
         };
       });
       commentsList.querySelectorAll('.deny-del').forEach(btn => {
         btn.onclick = async () => {
           await apiFetch(`/reviews/${reviewId}/comments/${btn.dataset.cid}`, { method: 'PATCH', body: JSON.stringify({ denyDelete: true }) });
           showReviewDetail(reviewId, draftId, committed);
+          loadDeleteRequestQueue();
         };
       });
 
@@ -628,7 +800,10 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
     };
 
     showSection(getRoute());
-    if (getRoute() === 'review') loadReviewData();
+    if (getRoute() === 'review') {
+      loadReviewData();
+      loadDeleteRequestQueue();
+    }
     if (getRoute() === 'herb-garden') loadHerbGarden();
   </script>
 </body>

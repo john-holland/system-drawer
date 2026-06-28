@@ -21,6 +21,8 @@ namespace Planetary.Composition
             float radius = body != null ? body.PlanetRadius : 1000f;
             int rootIdx = baseAsset.rootNodeIndex;
 
+            float crustOuterRadius = radius;
+            float maxSurfaceReliefM = Mathf.Clamp(radius * 0.05f, 0.5f, 500f);
             if (compositionProfile != null && atmosphere != null)
             {
                 foreach (var layer in compositionProfile.layers)
@@ -29,22 +31,74 @@ namespace Planetary.Composition
                         continue;
                     switch (layer.layer)
                     {
+                        case PlanetaryCompositionLayer.Core:
+                        {
+                            float coreOuter = radius + layer.shellOffsetMeters;
+                            float coreInner = coreOuter - Mathf.Max(0.01f, layer.shellThicknessMeters);
+                            if (coreInner <= 0.01f)
+                                rootIdx = AddFilledSphereBlend(asset, rootIdx, coreOuter, layer, layer.weight);
+                            else
+                                rootIdx = AddAnnularShellBlend(asset, rootIdx, coreInner, coreOuter, layer, layer.weight);
+                            break;
+                        }
+                        case PlanetaryCompositionLayer.Crust:
+                            crustOuterRadius = radius + maxSurfaceReliefM;
+                            rootIdx = AddAnnularShellBlend(
+                                asset,
+                                rootIdx,
+                                radius - Mathf.Max(0f, layer.shellThicknessMeters),
+                                crustOuterRadius,
+                                layer,
+                                layer.weight);
+                            break;
                         case PlanetaryCompositionLayer.Water:
-                            rootIdx = AddShellBlend(asset, rootIdx, radius + layer.shellOffsetMeters, layer, 0.3f);
+                            rootIdx = AddAnnularShellBlend(
+                                asset,
+                                rootIdx,
+                                crustOuterRadius,
+                                crustOuterRadius + Mathf.Max(1f, layer.shellThicknessMeters),
+                                layer,
+                                0.3f);
                             break;
                         case PlanetaryCompositionLayer.Atmosphere:
-                            float atmosR = radius + atmosphere.troposphereTopM;
-                            rootIdx = AddShellBlend(asset, rootIdx, atmosR, layer, atmosphere.pressureScaleHeightM * 0.0001f);
+                            rootIdx = AddAnnularShellBlend(
+                                asset,
+                                rootIdx,
+                                crustOuterRadius,
+                                radius + atmosphere.troposphereTopM,
+                                layer,
+                                atmosphere.pressureScaleHeightM * 0.0001f);
                             break;
                         case PlanetaryCompositionLayer.Weather:
-                            rootIdx = AddShellBlend(asset, rootIdx, radius + atmosphere.cloudBaseM, layer, atmosphere.cloudDensityCoeff);
-                            rootIdx = AddShellBlend(asset, rootIdx, radius + atmosphere.cloudTopM, layer, atmosphere.cloudDensityCoeff * 0.5f);
+                            float cloudInner = radius + atmosphere.cloudBaseM;
+                            float cloudOuter = radius + atmosphere.cloudTopM;
+                            if (cloudInner < crustOuterRadius)
+                                cloudInner = crustOuterRadius;
+                            rootIdx = AddAnnularShellBlend(
+                                asset,
+                                rootIdx,
+                                cloudInner,
+                                cloudOuter,
+                                layer,
+                                atmosphere.cloudDensityCoeff);
                             break;
                         case PlanetaryCompositionLayer.Lava:
-                            rootIdx = AddShellBlend(asset, rootIdx, radius + layer.shellOffsetMeters, layer, layer.weight);
+                            rootIdx = AddAnnularShellBlend(
+                                asset,
+                                rootIdx,
+                                radius + layer.shellOffsetMeters - Mathf.Max(1f, layer.shellThicknessMeters),
+                                radius + layer.shellOffsetMeters,
+                                layer,
+                                layer.weight);
                             break;
                         case PlanetaryCompositionLayer.Mantle:
-                            rootIdx = AddShellBlend(asset, rootIdx, radius + layer.shellOffsetMeters, layer, layer.weight);
+                            rootIdx = AddAnnularShellBlend(
+                                asset,
+                                rootIdx,
+                                radius + layer.shellOffsetMeters - Mathf.Max(1f, layer.shellThicknessMeters),
+                                radius + layer.shellOffsetMeters,
+                                layer,
+                                layer.weight);
                             break;
                     }
                 }
@@ -54,24 +108,74 @@ namespace Planetary.Composition
             return asset;
         }
 
-        static int AddShellBlend(SdfMaxCompositionAsset asset, int rootIdx, float shellRadius, PlanetaryCompositionProfile.LayerSettings layer, float weight)
+        static int AddAnnularShellBlend(
+            SdfMaxCompositionAsset asset,
+            int rootIdx,
+            float innerRadius,
+            float outerRadius,
+            PlanetaryCompositionProfile.LayerSettings layer,
+            float weight)
         {
-            int shellIdx = AddNode(asset, new SdfMaxNode
+            if (outerRadius <= innerRadius + 0.01f)
+                return rootIdx;
+
+            int outerIdx = AddNode(asset, new SdfMaxNode
             {
                 op = SdfMaxOp.PrimitiveLeaf,
                 primitiveType = SdfPrimitiveType.DisplacedSphere,
-                sphereRadius = shellRadius,
+                sphereRadius = outerRadius,
                 smoothRadius = layer.smoothRadius,
                 weight = weight * layer.weight
+            });
+            int innerIdx = AddNode(asset, new SdfMaxNode
+            {
+                op = SdfMaxOp.PrimitiveLeaf,
+                primitiveType = SdfPrimitiveType.DisplacedSphere,
+                sphereRadius = innerRadius,
+                smoothRadius = layer.smoothRadius,
+                weight = weight * layer.weight
+            });
+            int bandIdx = AddNode(asset, new SdfMaxNode
+            {
+                op = SdfMaxOp.Subtract,
+                childIndexA = outerIdx,
+                childIndexB = innerIdx
             });
             int blendIdx = AddNode(asset, new SdfMaxNode
             {
                 op = SdfMaxOp.SmoothMax,
                 childIndexA = rootIdx,
-                childIndexB = shellIdx,
+                childIndexB = bandIdx,
                 smoothRadius = layer.smoothRadius
             });
             return blendIdx;
+        }
+
+        static int AddFilledSphereBlend(
+            SdfMaxCompositionAsset asset,
+            int rootIdx,
+            float sphereRadius,
+            PlanetaryCompositionProfile.LayerSettings layer,
+            float weight)
+        {
+            if (sphereRadius <= 0.01f)
+                return rootIdx;
+
+            int sphereIdx = AddNode(asset, new SdfMaxNode
+            {
+                op = SdfMaxOp.PrimitiveLeaf,
+                primitiveType = SdfPrimitiveType.DisplacedSphere,
+                sphereRadius = sphereRadius,
+                smoothRadius = layer.smoothRadius,
+                weight = weight * layer.weight
+            });
+            return AddNode(asset, new SdfMaxNode
+            {
+                op = SdfMaxOp.SmoothMax,
+                childIndexA = rootIdx,
+                childIndexB = sphereIdx,
+                smoothRadius = layer.smoothRadius
+            });
         }
 
         static int AddNode(SdfMaxCompositionAsset asset, SdfMaxNode node)

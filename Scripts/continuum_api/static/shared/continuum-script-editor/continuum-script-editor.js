@@ -13,6 +13,27 @@
     return `${b.propertyKey || b.property_key || 'property'}=${b.propertyValue || b.property_value || ''}`;
   }
 
+  function renderLemmaBindingMeta(metaEl, binding, snippet) {
+    const entryId = binding.entryId || binding.entry_id || binding.propertyValue || binding.property_value;
+    if (!entryId) {
+      metaEl.textContent = bindingSummary(binding);
+      return;
+    }
+    const term = (binding._term || (snippet || '').trim() || entryId).trim();
+    const LE = global.ContinuumLemmaEntry;
+    if (!LE) {
+      metaEl.textContent = `entry: ${entryId}`;
+      return;
+    }
+    if (term && term !== entryId) {
+      metaEl.appendChild(document.createTextNode(`${term} · `));
+    }
+    metaEl.appendChild(LE.createLink({ entryId, term }, {
+      label: entryId,
+      title: `Open lemma: ${term}`,
+    }));
+  }
+
   function hasNonEmptySelection(inst) {
     const sel = ContinuumScriptEditor.getSelection(inst);
     return sel.charEnd > sel.charStart && (sel.text || '').length > 0;
@@ -35,6 +56,30 @@
       err.apiBody = parsed;
     }
     return err;
+  }
+
+  function finishAceEditorLayout(editor, scriptText) {
+    if (!editor || !editor.setValue) return;
+    editor.setValue(scriptText || '', -1);
+    editor.clearSelection();
+    editor.setOptions({
+      useWorker: false,
+      fontSize: '13px',
+      showPrintMargin: false,
+      wrap: true,
+    });
+    editor.setReadOnly(!!editor._continuumReadOnly);
+    const resize = () => {
+      try {
+        editor.resize(true);
+        editor.renderer.updateFull(true);
+      } catch (_) { /* ace not ready */ }
+    };
+    if (typeof requestAnimationFrame !== 'undefined') {
+      requestAnimationFrame(resize);
+    } else {
+      resize();
+    }
   }
 
   const ContinuumScriptEditor = {
@@ -75,6 +120,7 @@
       if (!el) return null;
       options = options || {};
       el.innerHTML = '';
+      el.classList.add('continuum-script-editor-host');
       const toolbar = document.createElement('div');
       toolbar.className = 'continuum-script-toolbar';
       const attachBtn = document.createElement('button');
@@ -116,10 +162,8 @@
       let editor;
       if (aceLoaded) {
         editor = ace.edit(editorEl);
-        editor.setTheme('ace/theme/textmate');
-        editor.session.setMode('ace/mode/plain_text');
-        editor.setValue(options.scriptText || '', -1);
-        editor.setReadOnly(readOnly);
+        editor._continuumReadOnly = readOnly;
+        finishAceEditorLayout(editor, options.scriptText || '');
       } else {
         const ta = document.createElement('textarea');
         ta.className = 'script-viewer';
@@ -408,30 +452,92 @@
         const card = document.createElement('div');
         card.className = 'continuum-clause-card';
         const kind = b.bindingKind || b.binding_kind || 'property';
-        const snippet = b.selectionText || b.selection_text || text.substring(b.charStart, b.charEnd) || '—';
+        const liveSlice = text.substring(b.charStart, b.charEnd);
+        const snippet = liveSlice || b.selectionText || b.selection_text || '—';
         card.innerHTML =
           `<span class="continuum-clause-kind continuum-clause-kind-${kind}">${kind}</span>` +
-          `<span class="continuum-clause-snippet">"${snippet.slice(0, 40)}" [${b.charStart}, ${b.charEnd})</span>` +
-          `<span class="continuum-clause-meta">${bindingSummary(b)}</span>`;
+          `<span class="continuum-clause-snippet">"${snippet.slice(0, 40)}" [${b.charStart}, ${b.charEnd})</span>`;
+        const meta = document.createElement('span');
+        meta.className = 'continuum-clause-meta';
+        if (kind === 'lemma') {
+          renderLemmaBindingMeta(meta, b, snippet);
+        } else {
+          meta.textContent = bindingSummary(b);
+        }
+        card.appendChild(meta);
         if (!inst.readOnly && global.ContinuumClauseSelector) {
-          const editBtn = document.createElement('button');
-          editBtn.type = 'button';
-          editBtn.textContent = 'Edit';
-          editBtn.className = 'continuum-clause-edit-btn';
-          editBtn.onclick = () => {
-            global.ContinuumClauseSelector.openEditDialog(b, {
-              draftEpisodeId: options.draftEpisodeId || options.draftId,
-              draftScriptId: options.draftScriptId,
-              scriptText: text,
-              onEdited: async (result) => {
-                if (options.onBindingsChanged) await options.onBindingsChanged();
-                if (options.onBindingEdited) options.onBindingEdited(result);
-                ContinuumScriptEditor.renderOverlays(inst, inst.options);
-                ContinuumScriptEditor.renderClausePanel(inst);
-              },
-            });
-          };
-          card.appendChild(editBtn);
+          if (kind === 'lemma') {
+            const entryId = b.entryId || b.entry_id || b.propertyValue || b.property_value;
+            if (entryId && global.ContinuumClauseSelector.openLemmaEntryDialog) {
+              const editBtn = document.createElement('button');
+              editBtn.type = 'button';
+              editBtn.textContent = 'Edit lemma';
+              editBtn.className = 'continuum-clause-edit-btn';
+              editBtn.onclick = () => {
+                global.ContinuumClauseSelector.openLemmaEntryDialog({
+                  entryId,
+                  selectionText: (snippet || '').trim(),
+                  prefabOnly: true,
+                  binding: b,
+                  draftEpisodeId: options.draftEpisodeId || options.draftId,
+                  scriptText: text,
+                  onEdited: async (result) => {
+                    if (options.onBindingsChanged) await options.onBindingsChanged();
+                    if (options.onBindingEdited) options.onBindingEdited(result);
+                    ContinuumScriptEditor.renderOverlays(inst, inst.options);
+                    ContinuumScriptEditor.renderClausePanel(inst);
+                  },
+                });
+              };
+              card.appendChild(editBtn);
+            }
+          } else {
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'continuum-clause-edit-btn';
+            editBtn.onclick = () => {
+              global.ContinuumClauseSelector.openEditDialog(b, {
+                draftEpisodeId: options.draftEpisodeId || options.draftId,
+                draftScriptId: options.draftScriptId,
+                scriptText: text,
+                onEdited: async (result) => {
+                  if (options.onBindingsChanged) await options.onBindingsChanged();
+                  if (options.onBindingEdited) options.onBindingEdited(result);
+                  ContinuumScriptEditor.renderOverlays(inst, inst.options);
+                  ContinuumScriptEditor.renderClausePanel(inst);
+                },
+              });
+            };
+            card.appendChild(editBtn);
+          }
+        }
+        if (kind === 'lemma' && global.ContinuumLemmaPromptEditor) {
+          const entryId = b.entryId || b.entry_id || b.propertyValue || b.property_value;
+          if (entryId) {
+            const snippet = (b.selectionText || b.selection_text || text.substring(
+              b.charStart ?? b.char_start ?? 0,
+              b.charEnd ?? b.char_end ?? 0,
+            ) || '').trim();
+            const compBtn = document.createElement('button');
+            compBtn.type = 'button';
+            compBtn.textContent = 'Composition';
+            compBtn.className = 'continuum-clause-edit-btn';
+            compBtn.style.marginLeft = '4px';
+            compBtn.onclick = () => {
+              global.ContinuumLemmaPromptEditor.openModal({
+                entryId,
+                parentEntryId: entryId,
+                draftEpisodeId: options.draftEpisodeId || options.draftId,
+                scriptText: text,
+                seedPhrase: snippet,
+                onSaved: () => {
+                  if (options.onBindingsChanged) options.onBindingsChanged();
+                },
+              });
+            };
+            card.appendChild(compBtn);
+          }
         }
         list.appendChild(card);
       });
@@ -444,11 +550,12 @@
       if (!inst || !inst.aceLoaded) return;
       const session = inst.editor.getSession();
       const text = inst.editor.getValue();
+      const docLen = text.length;
       const snapshot = inst.overlaySnapshotText ?? options.overlaySnapshotText ?? options.scriptText ?? text;
       const spans = Spans
         ? Spans.buildOverlaySpans(text, snapshot, options.clauseBindings, options.reviewComments)
         : [];
-      const sig = spans.map((s) => `${s.kind}:${s.charStart}:${s.charEnd}`).join('|');
+      const sig = `${docLen}|` + spans.map((s) => `${s.kind}:${s.charStart}:${s.charEnd}`).join('|');
       if (inst._overlaySpanSig === sig && inst._markers && inst._markers.length) return;
       inst._overlaySpanSig = sig;
 
@@ -457,11 +564,15 @@
         inst._markers = inst._markers || [];
         inst._markers.forEach(id => session.removeMarker(id));
         inst._markers = [];
+        if (!docLen) return;
         spans.forEach(span => {
-          if (span.charEnd <= span.charStart) return;
+          let cs = Math.max(0, Math.min(span.charStart, docLen));
+          let ce = Math.max(cs, Math.min(span.charEnd, docLen));
+          if (ce <= cs) return;
           const Range = ace.require('ace/range').Range;
-          const start = session.doc.indexToPosition(span.charStart);
-          const end = session.doc.indexToPosition(span.charEnd);
+          const start = session.doc.indexToPosition(cs);
+          const end = session.doc.indexToPosition(ce);
+          if (start.row === end.row && start.column === end.column) return;
           const cls = span.kind === 'prompt' ? 'ace-prompt-placeholder' : span.kind === 'clause' ? 'ace-loc-clause' : 'ace-review-comment';
           const id = session.addMarker(new Range(start.row, start.column, end.row, end.column), cls, 'text', false);
           inst._markers.push(id);
@@ -469,6 +580,31 @@
       } finally {
         inst._overlayUpdating = false;
       }
+    },
+
+    resize(inst) {
+      inst = inst || this._instance;
+      if (!inst || !inst.aceLoaded || !inst.editor) return;
+      try {
+        inst.editor.resize(true);
+        inst.editor.renderer.updateFull(true);
+      } catch (_) { /* ignore */ }
+    },
+
+    setScriptText(inst, scriptText) {
+      inst = inst || this._instance;
+      if (!inst) return;
+      const text = scriptText || '';
+      inst.options.scriptText = text;
+      inst.overlaySnapshotText = text;
+      if (inst.aceLoaded) {
+        finishAceEditorLayout(inst.editor, text);
+      } else if (inst.editor && inst.editor._ta) {
+        inst.editor._ta.value = text;
+      }
+      inst._overlaySpanSig = null;
+      this.renderOverlays(inst, inst.options);
+      this.renderClausePanel(inst);
     },
 
     getValue(inst) {

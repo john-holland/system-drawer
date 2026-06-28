@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>City Config — Continuum</title>
+  <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css">
+  <link rel="stylesheet" href="/static/shared/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/static/city-config/city-config.css">
+  <link rel="stylesheet" href="/static/city-config/city-spatial-map.css">
+</head>
+<body>
+  <div id="continuum-nav-root"></div>
+  <main class="cc-main">
+    <header class="cc-header">
+      <h1>City configuration</h1>
+      <div class="cc-selectors">
+        <label>Planet <select id="cc-planet"></select></label>
+        <label>City <select id="cc-city"></select></label>
+        <button type="button" id="cc-new-city">New city</button>
+      </div>
+    </header>
+    <div class="cc-layout">
+      <section class="cc-map-panel">
+        <div id="city-spatial-map" class="cc-map"></div>
+        <div id="cc-map-legend" class="cc-legend"></div>
+      </section>
+      <section class="cc-controls">
+        <div class="cc-row">
+          <label>Size (sq m) <input type="range" id="cc-size" min="100000" max="10000000" step="50000"><span id="cc-size-val"></span></label>
+          <label>Budget ($) <input type="range" id="cc-budget" min="1000000" max="100000000" step="500000"><span id="cc-budget-val"></span></label>
+        </div>
+        <div class="cc-row">
+          <label><input type="checkbox" id="cc-debt"> Allow city debt (no max size)</label>
+        </div>
+        <fieldset class="cc-commodities" id="cc-commodities"></fieldset>
+        <fieldset>
+          <legend>Solve mode</legend>
+          <label><input type="radio" name="cc-mode" value="forward" checked> Configure</label>
+          <label><input type="radio" name="cc-mode" value="required_budget"> Required budget</label>
+          <label><input type="radio" name="cc-mode" value="required_size"> Required size</label>
+          <button type="button" id="cc-solve">Solve zoning</button>
+        </fieldset>
+        <div id="cc-network" class="cc-network"></div>
+        <div id="cc-preview" class="cc-preview"></div>
+        <h2>Buildings</h2>
+        <table class="cc-table" id="cc-buildings"><thead><tr><th>Name</th><th>Type</th><th>Zone</th><th>Opex</th></tr></thead><tbody></tbody></table>
+        <button type="button" id="cc-add-building">Add building</button>
+        <h2>Zone document (YAML)</h2>
+        <textarea id="cc-zones" rows="12"></textarea>
+        <button type="button" id="cc-save-zones">Save zones</button>
+      </section>
+    </div>
+  </main>
+  <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
+  <script src="/static/shared/continuum-cave-shell/continuum-cave-shell.js"></script>
+  <script src="/static/shared/continuum-cave-shell/continuum-tome-bootstrap.js"></script>
+  <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
+  <script src="/static/shared/vendor/leaflet/leaflet.js"></script>
+  <script src="/static/shared/vendor/ace.js"></script>
+  <script src="/static/city-config/city-spatial-map.js"></script>
+  <script src="/static/city-config/city-config.js"></script>
+</body>
+</html>

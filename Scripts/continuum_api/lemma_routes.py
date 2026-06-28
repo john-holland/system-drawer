@@ -36,6 +36,35 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _resolve_clause_lemma_id(
+    merged: dict[str, Any],
+    entry_id: str | None,
+    property_key: str | None,
+    property_value: str | None,
+    selection_text: str | None,
+    lemma_by_selection: dict[str, str],
+) -> str | None:
+    """Resolve a clause binding row to a lemma library entry id when possible."""
+    candidates: list[str] = []
+    if entry_id:
+        candidates.append(entry_id)
+    if property_key == "entry-id" and property_value:
+        candidates.append(property_value)
+    for candidate in candidates:
+        if candidate in merged:
+            return candidate
+    sel = (selection_text or "").strip()
+    if sel:
+        mapped = lemma_by_selection.get(sel)
+        if mapped and mapped in merged:
+            return mapped
+        term = sel.lower()
+        matches = [e for e in merged.values() if (e.get("term") or "").lower() == term]
+        if len(matches) == 1:
+            return matches[0]["id"]
+    return candidates[0] if candidates else None
+
+
 def _create_lemma_error_response(err: str, entry_id: str | None = None):
     """Map upsert/import errors to structured JSON for the create form."""
     if err == "missing word":
@@ -86,6 +115,13 @@ def _entry_json(e: dict[str, Any]) -> dict[str, Any]:
         "linkedAssetIds": e.get("linkedAssetIds") or [],
         "components": e.get("components") or [],
         "componentCreation": e.get("componentCreation"),
+        "compositionChildren": e.get("compositionChildren") or [],
+        "isComposedLemma": bool(e.get("isComposedLemma")),
+        "lemmaPrompt": e.get("lemmaPrompt"),
+        "spatial4dId": e.get("spatial4dId"),
+        "defaultTiming": e.get("defaultTiming"),
+        "patchProperties": e.get("patchProperties") or {},
+        "usesOverlay": bool(e.get("usesOverlay")),
     }
 
 
@@ -160,6 +196,8 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
             return jsonify({"items": [_entry_json(e) for e in page], "total": total}), 200
         except sqlite3.OperationalError as e:
             return jsonify({"error": str(e)}), 500
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
     @app.route("/api/thesaurus/entries", methods=["POST"])
     def create_thesaurus_entry():
@@ -189,6 +227,16 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
             status, err, entry_id = upsert_lemma_row(conn, row, _valid_property_keys(conn))
             if err:
                 return _create_lemma_error_response(err, entry_id)
+            composition = body.get("composition")
+            if composition and entry_id:
+                try:
+                    try:
+                        from continuum_api.lemma_composition import replace_composition
+                    except ImportError:
+                        from lemma_composition import replace_composition
+                    replace_composition(conn, entry_id, composition)
+                except ValueError as e:
+                    return jsonify({"error": str(e), "code": "composition_invalid"}), 400
             conn.commit()
             merged = merge_vocabulary(conn)
             entry = merged.get(entry_id) if entry_id else None
@@ -388,8 +436,9 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                 pass
 
             clauses = []
+            lemma_by_selection: dict[str, str] = {}
             try:
-                where = ["binding_kind = 'lemma'"]
+                where = ["binding_kind IN ('lemma', 'localization')"]
                 params: list[Any] = []
                 if property_key:
                     where.append("property_key = ?")
@@ -401,16 +450,29 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                     f"SELECT * FROM localization_clause_bindings WHERE {' AND '.join(where)} LIMIT 500",
                     params,
                 )
-                for r in cur.fetchall():
-                    clauses.append(
-                        {
-                            "id": r["id"],
-                            "selectionText": r["selection_text"],
-                            "propertyKey": r["property_key"],
-                            "propertyValue": r["property_value"],
-                            "draftScriptId": r["draft_script_id"],
-                        }
+                binding_rows = cur.fetchall()
+                for r in binding_rows:
+                    if r["binding_kind"] == "lemma" and r["entry_id"]:
+                        lemma_by_selection.setdefault(r["selection_text"], r["entry_id"])
+                for r in binding_rows:
+                    clause = {
+                        "id": r["id"],
+                        "selectionText": r["selection_text"],
+                        "propertyKey": r["property_key"],
+                        "propertyValue": r["property_value"],
+                        "draftScriptId": r["draft_script_id"],
+                        "entryId": r["entry_id"],
+                        "bindingKind": r["binding_kind"],
+                    }
+                    clause["lemmaId"] = _resolve_clause_lemma_id(
+                        merged,
+                        r["entry_id"],
+                        r["property_key"],
+                        r["property_value"],
+                        r["selection_text"],
+                        lemma_by_selection,
                     )
+                    clauses.append(clause)
             except sqlite3.OperationalError:
                 pass
 
@@ -449,8 +511,8 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
             for c in clauses:
                 rows.append(
                     {
-                        "kind": "clause",
-                        "lemmaId": None,
+                        "kind": "localizationClause" if c.get("bindingKind") == "localization" else "clause",
+                        "lemmaId": c.get("lemmaId"),
                         "lemmaTerm": c["selectionText"],
                         "posTag": None,
                         "propertyKey": c["propertyKey"],
@@ -459,6 +521,7 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                         "component": c["propertyKey"],
                         "clauseId": c["id"],
                         "draftScriptId": c.get("draftScriptId"),
+                        "bindingKind": c.get("bindingKind"),
                     }
                 )
 
@@ -479,3 +542,100 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
         body = request.get_json() or {}
         raw = body.get("defaultProperties") or body.get("text") or ""
         return jsonify({"properties": parse_default_properties(raw)}), 200
+
+    @app.route("/api/thesaurus/entries/<entry_id>/composition", methods=["GET"])
+    def get_entry_composition(entry_id: str):
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_composition import load_composition
+            except ImportError:
+                from lemma_composition import load_composition
+            data = load_composition(conn, entry_id)
+            conn.close()
+            return jsonify(data), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_composition_schema.sql"}), 500
+
+    @app.route("/api/thesaurus/entries/<entry_id>/composition", methods=["PUT"])
+    def put_entry_composition(entry_id: str):
+        body = request.get_json() or {}
+        children = body.get("children") or body.get("composition") or []
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_composition import replace_composition
+            except ImportError:
+                from lemma_composition import replace_composition
+            data = replace_composition(conn, entry_id, children)
+            conn.commit()
+            conn.close()
+            return jsonify(data), 200
+        except ValueError as e:
+            return jsonify({"error": str(e), "code": "composition_invalid"}), 400
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_composition_schema.sql"}), 500
+
+    @app.route("/api/thesaurus/entries/<path:entry_id>/prompt", methods=["GET"])
+    def get_entry_prompt(entry_id: str):
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_prompt import load_prompt_bundle
+            except ImportError:
+                from lemma_prompt import load_prompt_bundle
+            data = load_prompt_bundle(conn, entry_id)
+            conn.close()
+            return jsonify(data), 200
+        except ValueError as e:
+            return jsonify({"error": str(e), "code": "not_found"}), 404
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_prompt_schema.sql"}), 500
+
+    @app.route("/api/thesaurus/entries/<path:entry_id>/prompt", methods=["PUT"])
+    def put_entry_prompt(entry_id: str):
+        body = request.get_json() or {}
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_prompt import upsert_lemma_prompt_bundle
+            except ImportError:
+                from lemma_prompt import upsert_lemma_prompt_bundle
+            data = upsert_lemma_prompt_bundle(conn, entry_id, body)
+            conn.commit()
+            conn.close()
+            return jsonify(data), 200
+        except ValueError as e:
+            return jsonify({"error": str(e), "code": "prompt_invalid"}), 400
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_prompt_schema.sql"}), 500
+
+    @app.route("/api/thesaurus/entries/<path:entry_id>/expand-prompt", methods=["POST"])
+    def post_expand_prompt(entry_id: str):
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_prompt import expand_lemma_prompt
+            except ImportError:
+                from lemma_prompt import expand_lemma_prompt
+            data = expand_lemma_prompt(conn, entry_id)
+            conn.close()
+            return jsonify(data), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/thesaurus/entries/<entry_id>/recombobulate-spatial", methods=["POST"])
+    def post_recombobulate_spatial(entry_id: str):
+        body = request.get_json() or {}
+        try:
+            conn = get_conn()
+            try:
+                from continuum_api.lemma_composition_spatial import recombobulate_spatial
+            except ImportError:
+                from lemma_composition_spatial import recombobulate_spatial
+            data = recombobulate_spatial(conn, entry_id, body)
+            conn.commit()
+            conn.close()
+            return jsonify(data), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e), "hint": "Apply continuum_lemma_composition_schema.sql"}), 500

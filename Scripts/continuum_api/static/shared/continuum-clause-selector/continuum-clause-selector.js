@@ -103,11 +103,16 @@
   }
 
   function lemmaLibraryEntryUrl(entryId) {
+    if (global.ContinuumLemmaEntry) return global.ContinuumLemmaEntry.entryUrl(entryId);
     return `/lemma-library#entry/${encodeURIComponent(entryId)}`;
   }
 
   function openLemmaEntryPage(entryId) {
     if (!entryId) return;
+    if (global.ContinuumLemmaEntry) {
+      global.ContinuumLemmaEntry.open(entryId);
+      return;
+    }
     const url = lemmaLibraryEntryUrl(entryId);
     window.open(url, '_blank', 'noopener,noreferrer');
   }
@@ -269,11 +274,15 @@
         <summary style="cursor:pointer;font-weight:600">Create new lemma (if not found)</summary>
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
           <label>Word <input id="clause-lemma-word" style="width:100%;box-sizing:border-box"/></label>
+          <div id="clause-create-mode-tabs"></div>
           <label>Language <select id="clause-lemma-lang" style="width:100%"></select></label>
           <label>Part of speech <select id="clause-lemma-pos" style="width:100%"></select></label>
           <label>Description <textarea id="clause-lemma-desc" rows="2" style="width:100%;box-sizing:border-box"></textarea></label>
           <label>Synonyms (pipe-separated) <input id="clause-lemma-syns" placeholder="a|b" style="width:100%;box-sizing:border-box"/></label>
+          <div id="clause-create-prefab-panel">
           <label>Prefab / USC asset id <input id="clause-lemma-prefab" style="width:100%;box-sizing:border-box"/></label>
+          </div>
+          <div id="clause-create-composition-panel" style="display:none"></div>
           <label>Default properties <input id="clause-lemma-props" placeholder="{P:walk|non-ik-animation=true}" style="width:100%;box-sizing:border-box"/></label>
         </div>
       </details>
@@ -423,6 +432,17 @@
       runSearch(selectionText);
     }
 
+    if (!opts.prefabOnly && global.ContinuumLemmaCompositionEditor && scope.querySelector('#clause-create-mode-tabs')) {
+      scope._compositionCreateTabs = global.ContinuumLemmaCompositionEditor.mountCreateTabs(
+        scope.querySelector('#clause-create-mode-tabs'),
+        {
+          callApi,
+          prefabPanel: scope.querySelector('#clause-create-prefab-panel'),
+          compositionHost: scope.querySelector('#clause-create-composition-panel'),
+        },
+      );
+    }
+
     return { setSelected, runSearch };
   }
 
@@ -437,14 +457,22 @@
     const synsRaw = (scope.querySelector('#clause-lemma-syns')?.value || '').trim();
     const posEl = scope.querySelector('#clause-lemma-pos');
     const posRaw = posEl && posEl.value ? posEl.value : 'unknown';
+    const tabs = scope._compositionCreateTabs;
+    const mode = tabs?.getMode?.() || 'prefab';
     const body = {
       word,
       language: scope.querySelector('#clause-lemma-lang')?.value || 'en',
       partOfSpeech: String(posRaw).trim().toLowerCase() || 'unknown',
       description: scope.querySelector('#clause-lemma-desc')?.value || '',
-      prefabId: scope.querySelector('#clause-lemma-prefab')?.value || '',
+      prefabId: mode === 'composition' ? '' : (scope.querySelector('#clause-lemma-prefab')?.value || ''),
       defaultProperties: scope.querySelector('#clause-lemma-props')?.value || '',
     };
+    if (mode === 'composition') {
+      const children = tabs?.getCompositionChildren?.() || [];
+      if (children.length) {
+        body.composition = children.map((c, i) => ({ entryId: c.entryId, sortOrder: i }));
+      }
+    }
     if (synsRaw) {
       body.synonyms = synsRaw.split(/[|,;]/).map(s => s.trim()).filter(Boolean);
     }
@@ -512,10 +540,11 @@
       box.innerHTML = `
         <h3 style="margin:0 0 8px">Attach to clause</h3>
         <p style="font-size:13px;color:#555">"${escHtml((clauseRef.selectionText || '').slice(0, 60))}" [${clauseRef.charStart}, ${clauseRef.charEnd})</p>
-        <div role="tablist" style="display:flex;gap:8px;margin-bottom:12px">
+        <div role="tablist" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
           <button type="button" data-tab="property">Property</button>
           <button type="button" data-tab="lemma">Lemma</button>
           <button type="button" data-tab="localization">Localization</button>
+          <button type="button" data-tab="prompt">Prompt placeholder</button>
         </div>
         <div id="clause-tab-property">
           <label>Property key <select id="clause-prop-key"><option value="">Loading…</option></select></label>
@@ -525,6 +554,10 @@
         <div id="clause-tab-localization" hidden>
           <label>Language code <input id="clause-lang" placeholder="es" style="width:100%"/></label>
           <label style="display:block;margin-top:8px">Translation <input id="clause-loc-val" style="width:100%"/></label>
+        </div>
+        <div id="clause-tab-prompt" hidden>
+          <label>Placeholder name <input id="clause-prompt-name" style="width:100%" placeholder="active phrase or {P:…} name"/></label>
+          <p style="font-size:12px;color:#666;margin-top:6px">Defaults to selection text when empty.</p>
         </div>
         ${clauseActionsHtml('clause-attach', 'Attach')}`;
       overlay.appendChild(box);
@@ -547,7 +580,7 @@
         activeTab = name;
         clearClauseDialogError(box);
         if (name === 'lemma') ensureLemmaPicker();
-        ['property', 'lemma', 'localization'].forEach(t => {
+        ['property', 'lemma', 'localization', 'prompt'].forEach(t => {
           const el = box.querySelector('#clause-tab-' + t);
           if (el) el.hidden = t !== name;
         });
@@ -602,6 +635,13 @@
             body.entryId = await resolveLemmaEntryId(box, ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector));
             body.propertyKey = box.querySelector('#clause-lemma-key').value || 'entry-id';
             body.propertyValue = body.entryId;
+          } else if (activeTab === 'prompt') {
+            body.bindingKind = 'prompt_placeholder';
+            const nameInput = box.querySelector('#clause-prompt-name');
+            const phName = (nameInput && nameInput.value.trim()) || (clauseRef.selectionText || '').trim();
+            body.promptPlaceholderName = phName;
+            body.propertyKey = 'prompt-placeholder';
+            body.propertyValue = phName;
           } else {
             body.bindingKind = 'localization';
             const lang = box.querySelector('#clause-lang').value.trim();
@@ -623,6 +663,7 @@
       const scriptText = options.scriptText || '';
       const cs = binding.charStart ?? binding.char_start ?? 0;
       const ce = binding.charEnd ?? binding.char_end ?? 0;
+      const liveSelection = (scriptText && ce > cs) ? scriptText.substring(cs, ce) : '';
       const overlay = document.createElement('div');
       overlay.className = 'continuum-clause-overlay';
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:110;display:flex;align-items:center;justify-content:center';
@@ -666,7 +707,7 @@
         fields.innerHTML = lemmaFieldsHtml(binding.propertyKey || binding.property_key || 'entry-id');
         box._lemmaPicker = setupLemmaPicker(box, ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector), {
           entryId: binding.entryId || binding.propertyValue || binding.property_value || '',
-          selectionText: scriptText.substring(cs, ce),
+          selectionText: liveSelection || binding.selectionText || binding.selection_text || '',
         });
       } else {
         fields.innerHTML = `
@@ -740,6 +781,91 @@
           showClauseDialogError(box, e, { onUseExisting: useExistingEntry });
         }
       };
+    },
+
+    openLemmaEntryDialog(options) {
+      options = options || {};
+      const entryId = options.entryId;
+      const binding = options.binding;
+      const callApi = options.callApi || ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector);
+      if (!entryId && !binding) return;
+      const saveLabel = binding ? 'Save' : 'Done';
+      const overlay = document.createElement('div');
+      overlay.className = 'continuum-clause-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:110;display:flex;align-items:center;justify-content:center';
+      const box = document.createElement('div');
+      box.style.cssText = 'background:#fff;padding:16px;max-width:520px;width:90%;max-height:90vh;overflow:auto;border-radius:6px;color:#222';
+      box.innerHTML =
+        '<h3 style="margin:0 0 8px">Edit lemma</h3>' +
+        '<p style="font-size:13px;color:#555;margin:0 0 8px">Search, select, or create a lemma entry.</p>' +
+        '<div id="clause-edit-fields"></div>' +
+        clauseActionsHtml('lemma-entry', saveLabel);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      box.addEventListener('mousedown', (ev) => ev.stopPropagation());
+      box.addEventListener('click', (ev) => ev.stopPropagation());
+      const fields = box.querySelector('#clause-edit-fields');
+      fields.innerHTML = lemmaFieldsHtml('entry-id');
+      const compPanel = box.querySelector('#clause-create-composition-panel');
+      const modeTabs = box.querySelector('#clause-create-mode-tabs');
+      if (options.prefabOnly !== false && compPanel) compPanel.style.display = 'none';
+      if (options.prefabOnly !== false && modeTabs) modeTabs.style.display = 'none';
+      box._lemmaPicker = setupLemmaPicker(box, callApi, {
+        entryId: entryId || binding?.entryId || binding?.propertyValue || binding?.property_value,
+        selectionText: options.selectionText || '',
+        prefabOnly: options.prefabOnly !== false,
+      });
+
+      const useExistingEntry = async (existingId) => {
+        const entry = await callApi(
+          'GET',
+          `/api/thesaurus/entries?entryId=${encodeURIComponent(existingId)}`,
+        );
+        if (box._lemmaPicker && box._lemmaPicker.setSelected && entry && entry.id) {
+          box._lemmaPicker.setSelected(entry);
+        }
+      };
+      ensureConflictActions(box, 'lemma-entry', { onUseExisting: useExistingEntry });
+      clearClauseDialogError(box);
+
+      box.querySelector('#lemma-entry-cancel').onclick = () => overlay.remove();
+      box.querySelector('#lemma-entry-save').onclick = async () => {
+        if (!binding) {
+          overlay.remove();
+          if (options.onSaved) options.onSaved();
+          return;
+        }
+        clearClauseDialogError(box);
+        try {
+          const draftId = options.draftEpisodeId || options.draftId;
+          if (!draftId) throw new Error('Draft ID required');
+          const scriptText = options.scriptText || '';
+          const cs = binding.charStart ?? binding.char_start ?? 0;
+          const ce = binding.charEnd ?? binding.char_end ?? 0;
+          const resolvedId = await resolveLemmaEntryId(box, callApi);
+          const body = {
+            bindingId: binding.id,
+            charStart: cs,
+            charEnd: ce,
+            scriptText,
+            entryId: resolvedId,
+            propertyKey: box.querySelector('#clause-lemma-key')?.value || 'entry-id',
+            propertyValue: resolvedId,
+            selectionText: options.selectionText || scriptText.substring(cs, ce),
+          };
+          const result = await callApi(
+            'POST',
+            `/api/drafts/episodes/${encodeURIComponent(draftId)}/apply-binding-edit`,
+            body,
+          );
+          overlay.remove();
+          if (options.onEdited) await options.onEdited(result);
+          if (options.onSaved) options.onSaved();
+        } catch (e) {
+          showClauseDialogError(box, e, { onUseExisting: useExistingEntry });
+        }
+      };
+      overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
     },
 
     bindingTemplateKey,

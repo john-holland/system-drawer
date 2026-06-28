@@ -1,0 +1,13 @@
+.cc-main { padding: 1rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+.cc-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.cc-selectors { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+.cc-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 900px) { .cc-layout { grid-template-columns: 1fr; } }
+.cc-map-panel { min-height: 360px; }
+.cc-map { height: 360px; border: 1px solid #444; border-radius: 6px; }
+.cc-controls label { display: block; margin: 0.35rem 0; }
+.cc-row { margin-bottom: 0.75rem; }
+.cc-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.cc-table th, .cc-table td { border: 1px solid #555; padding: 0.35rem 0.5rem; }
+.cc-preview, .cc-network { background: #1a1a2e; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0; font-size: 0.85rem; }
+#cc-zones { width: 100%; font-family: monospace; font-size: 0.8rem; }

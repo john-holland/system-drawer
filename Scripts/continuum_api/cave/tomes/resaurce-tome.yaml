@@ -1,0 +1,11 @@
+id: resaurce-tome
+name: Resaurce Legal & Commerce Tome
+routing:
+  basePath: /api/tomes/resaurce-tome
+  routes:
+    legalMachine:
+      path: /legal
+      method: POST
+    mediaRightsMachine:
+      path: /media-rights
+      method: POST

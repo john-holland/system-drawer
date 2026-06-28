@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="/static/shared/continuum-multisort/multisort.css">
   <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css">
   <link rel="stylesheet" href="/static/lemma-library/lemma-library.css">
-  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <link rel="stylesheet" href="/static/shared/continuum-lemma-entry/continuum-lemma-entry.css">
+  <link rel="stylesheet" href="/static/shared/continuum-lemma-composition/continuum-lemma-composition-editor.css">
+  <link rel="stylesheet" href="/static/shared/continuum-lemma-composition/continuum-lemma-prompt-editor.css">
+  <script src="/static/shared/vendor/d3.min.js"></script>
   <script src="/static/shared/continuum-multisort/multisort.js"></script>
 </head>
 <body>
@@ -45,11 +48,17 @@
         <h2>Create lemma</h2>
         <form id="form-create">
           <label>Word <input id="f-word" required></label>
+          <div id="create-mode-tabs"></div>
           <label>Description <textarea id="f-desc" rows="3"></textarea></label>
           <label>Synonyms (pipe-separated) <input id="f-syns" placeholder="example|another"></label>
           <label>Language <input id="f-lang" value="en"></label>
           <label>Part of speech <select id="f-pos" required></select></label>
+          <div id="create-prefab-panel">
           <label>Prefab / USC asset id <input id="f-prefab"></label>
+          </div>
+          <div id="create-composition-panel" style="display:none">
+            <p class="muted" style="font-size:13px">Pick child lemmas — saved on submit with the new parent entry.</p>
+          </div>
           <label>Default properties <input id="f-props" placeholder="{P:walk|non-ik-animation=true}"></label>
           <pre id="props-preview" style="font-size:12px;color:#8892b0"></pre>
           <button type="submit">Create lemma</button>
@@ -109,7 +118,15 @@
   </div>
 
   <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
+  <script src="/static/shared/continuum-cave-shell/continuum-cave-shell.js"></script>
+  <script src="/static/shared/continuum-cave-shell/continuum-tome-bootstrap.js"></script>
   <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
+  <script src="/static/shared/vendor/ace.js"></script>
+  <script src="/static/shared/continuum-lemma-entry/continuum-lemma-entry.js"></script>
+  <script src="/static/shared/continuum-lemma-composition/continuum-lemma-picker.js"></script>
+  <script src="/static/shared/continuum-lemma-composition/continuum-lemma-composition-editor.js"></script>
+  <script src="/static/shared/continuum-lemma-composition/continuum-lemma-prompt-editor.js"></script>
+  <script src="/static/shared/continuum-clause-selector/continuum-clause-selector.js"></script>
   <script src="/static/lemma-library/lemma-library.js"></script>
   <script>
     ContinuumNav.mount({
@@ -123,6 +140,7 @@
         { label: 'Translations', href: '#translations', attrs: { 'data-nav': 'translations' } },
       ],
     });
+    ContinuumTomeBootstrap.mountPage({ tomeId: 'lemma-tome' });
   </script>
   <script>
     (function () {

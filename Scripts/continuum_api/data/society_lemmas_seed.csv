@@ -1,0 +1,8 @@
+government,spirituality,property_class,building_type,lemma_term
+government,Government systems,government,government,government-building
+spirituality,Spiritual practice,spirituality,spirituality,church
+property_class,Public property class,property_class,public,city_hall
+property_class,Commercial property,property_class,commercial,corner_store
+building_type,Residential duplex,building_type,residential_duplex,housing-duplex
+lobby_issue,Lobby influence,lobby_issue,lobby,lobbyist
+budget_line,Public services budget,budget_line,budget,public-services

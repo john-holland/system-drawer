@@ -14,8 +14,11 @@ from flask import Flask, Response, g, jsonify, redirect, request, send_from_dire
 
 # Allow importing thesaurus when run from repo root or Scripts
 _scripts = Path(__file__).resolve().parent.parent
+_api = Path(__file__).resolve().parent
 if str(_scripts) not in sys.path:
     sys.path.insert(0, str(_scripts))
+if str(_api) not in sys.path:
+    sys.path.insert(0, str(_api))
 from thesaurus import farey_ast, xliff_converter, script_to_ast
 from thesaurus.language_resolver import ensure_default_languages
 import continuum_screenplay_work_orders as screenplay_wo
@@ -44,8 +47,10 @@ except ImportError:
 
 try:
     from continuum_api.telecom_routes import register_telecom_routes
+    from continuum_api.society_routes import register_society_routes
 except ImportError:
     from telecom_routes import register_telecom_routes
+    from society_routes import register_society_routes
 
 try:
     from continuum_api.camera_routes import register_camera_routes
@@ -58,11 +63,37 @@ except ImportError:
     from table_read_routes import register_table_read_routes
 
 try:
+    from continuum_api.cave_routes import register_cave_routes
+    from continuum_api.resaurce_routes import register_resaurce_routes
+    from continuum_api.saurce_routes import register_saurce_routes
+    from continuum_api.drawer_game_routes import register_drawer_game_routes
+    from continuum_api.library_routes import register_library_routes
+    from continuum_api.sql_viewer_routes import register_sql_viewer_routes
+    from continuum_api.story_routes import register_story_routes
+    from continuum_api.chat_routes import register_chat_routes
+    from continuum_api.production_proxy_routes import register_production_proxy_routes
+    from continuum_api.calendar_routes import register_calendar_routes
+    from continuum_api.agile_ui_routes import register_agile_ui_routes
+except ImportError:
+    from cave_routes import register_cave_routes
+    from resaurce_routes import register_resaurce_routes
+    from saurce_routes import register_saurce_routes
+    from drawer_game_routes import register_drawer_game_routes
+    from library_routes import register_library_routes
+    from sql_viewer_routes import register_sql_viewer_routes
+    from story_routes import register_story_routes
+    from chat_routes import register_chat_routes
+    from production_proxy_routes import register_production_proxy_routes
+    from calendar_routes import register_calendar_routes
+    from agile_ui_routes import register_agile_ui_routes
+
+try:
     from flask_socketio import SocketIO
 except ImportError:
     SocketIO = None
 
 app = Flask(__name__, static_folder=str(Path(__file__).resolve().parent / "static"), static_url_path="/static")
+app.secret_key = os.environ.get("CONTINUUM_SECRET_KEY", "continuum-dev-secret-change-in-production")
 
 DEV_CORS_ORIGINS = {
     "http://localhost:5174",
@@ -176,6 +207,21 @@ def get_conn():
             ensure_database(conn)
         except ImportError:
             pass
+        try:
+            from continuum_api.lemma_composition import ensure_lemma_composition_schema
+        except ImportError:
+            from lemma_composition import ensure_lemma_composition_schema
+        ensure_lemma_composition_schema(conn)
+        try:
+            from continuum_api.lemma_prompt import ensure_lemma_prompt_schema
+        except ImportError:
+            from lemma_prompt import ensure_lemma_prompt_schema
+        ensure_lemma_prompt_schema(conn)
+        try:
+            from continuum_api.story_db import ensure_stories_schema
+        except ImportError:
+            from story_db import ensure_stories_schema
+        ensure_stories_schema(conn)
         _schema_initialized = True
     return conn
 
@@ -1193,6 +1239,7 @@ register_localization_routes(app, get_conn, _get_current_user, _create_notificat
 register_script_output_routes(app, get_conn, _get_current_user)
 register_lemma_routes(app, get_conn)
 register_telecom_routes(app, get_conn)
+register_society_routes(app, get_conn)
 register_camera_routes(app, get_conn, _get_current_user)
 
 _socketio_cors = list(DEV_CORS_ORIGINS) + [
@@ -1201,6 +1248,17 @@ _socketio_cors = list(DEV_CORS_ORIGINS) + [
 ]
 socketio = SocketIO(app, cors_allowed_origins=_socketio_cors) if SocketIO else None
 register_table_read_routes(app, get_conn, _get_current_user, socketio, LIBRARY_APP_BASE)
+register_cave_routes(app, get_conn, _get_current_user)
+register_resaurce_routes(app, get_conn)
+register_saurce_routes(app, get_conn, _get_current_user)
+register_drawer_game_routes(app, get_conn)
+register_library_routes(app)
+register_sql_viewer_routes(app, get_conn, _get_current_user, get_db_path)
+register_story_routes(app, get_conn)
+register_chat_routes(app)
+register_production_proxy_routes(app)
+register_calendar_routes(app, get_conn)
+register_agile_ui_routes(app)
 
 
 def _is_approved_to_commit(conn, user_id: str) -> bool:
@@ -1230,8 +1288,8 @@ def list_reviews():
             where_parts.append("r.reviewee_user_id = ?")
             params.append(user_id)
         elif as_reviewer and as_reviewee:
-            where_parts.append("(r.reviewer_user_id = ? OR r.reviewee_user_id = ?)")
-            params.extend([user_id, user_id])
+            where_parts.append("(r.reviewer_user_id = ? OR r.reviewee_user_id = ? OR d.created_by = ?)")
+            params.extend([user_id, user_id, user_id])
         else:
             conn.close()
             return jsonify({"items": [], "total": 0}), 200
@@ -1320,7 +1378,7 @@ def create_review():
             conn.close()
             return jsonify({"error": "draft not found"}), 404
         reviewee = row["created_by"] or reviewee
-        draft_title = row.get("title") or draft_id
+        draft_title = row["title"] or draft_id
         cur = conn.execute(
             "SELECT id FROM reviewer WHERE draft_episode_id = ? AND reviewer_user_id = ?",
             (draft_id, reviewer_user_id),
@@ -1348,6 +1406,65 @@ def create_review():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/reviews/comment-delete-requests", methods=["GET"])
+def list_comment_delete_requests():
+    """Pending reviewer comment delete requests. Admin sees all; others see reviews they participate in."""
+    user_id = _get_current_user()
+    admin = _is_admin()
+    try:
+        conn = get_conn()
+        if admin:
+            cur = conn.execute(
+                """SELECT c.id AS comment_id, c.reviewer_id AS review_id, c.comment_text,
+                          c.delete_requested_at, c.delete_requested_by, c.text_selection_start, c.text_selection_end,
+                          r.draft_episode_id, r.reviewer_user_id, r.reviewee_user_id, r.status AS review_status,
+                          d.title AS draft_title
+                   FROM reviewer_comments c
+                   JOIN reviewer r ON r.id = c.reviewer_id
+                   JOIN draft_episodes d ON d.id = r.draft_episode_id
+                   WHERE c.delete_requested_at IS NOT NULL
+                   ORDER BY c.delete_requested_at ASC""",
+            )
+        else:
+            cur = conn.execute(
+                """SELECT c.id AS comment_id, c.reviewer_id AS review_id, c.comment_text,
+                          c.delete_requested_at, c.delete_requested_by, c.text_selection_start, c.text_selection_end,
+                          r.draft_episode_id, r.reviewer_user_id, r.reviewee_user_id, r.status AS review_status,
+                          d.title AS draft_title
+                   FROM reviewer_comments c
+                   JOIN reviewer r ON r.id = c.reviewer_id
+                   JOIN draft_episodes d ON d.id = r.draft_episode_id
+                   WHERE c.delete_requested_at IS NOT NULL
+                     AND (r.reviewer_user_id = ? OR r.reviewee_user_id = ?)
+                   ORDER BY c.delete_requested_at ASC""",
+                (user_id, user_id),
+            )
+        rows = cur.fetchall()
+        conn.close()
+        items = [
+            {
+                "commentId": r["comment_id"],
+                "reviewId": r["review_id"],
+                "commentText": r["comment_text"],
+                "deleteRequestedAt": r["delete_requested_at"],
+                "deleteRequestedBy": r["delete_requested_by"],
+                "textSelectionStart": r["text_selection_start"],
+                "textSelectionEnd": r["text_selection_end"],
+                "draftEpisodeId": r["draft_episode_id"],
+                "draftTitle": r["draft_title"],
+                "reviewerUserId": r["reviewer_user_id"],
+                "revieweeUserId": r["reviewee_user_id"],
+                "reviewStatus": r["review_status"],
+            }
+            for r in rows
+        ]
+        return jsonify({"items": items, "total": len(items)}), 200
+    except sqlite3.OperationalError as e:
+        return jsonify({"error": str(e), "hint": "Apply continuum_review_schema.sql"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/reviews/<review_id>", methods=["GET"])
 def get_review(review_id: str):
     """Get a single review assignment."""
@@ -1367,8 +1484,13 @@ def get_review(review_id: str):
             conn.close()
             return jsonify({"error": "review not found"}), 404
         if row["reviewer_user_id"] != user_id and row["reviewee_user_id"] != user_id and not _is_admin():
-            conn.close()
-            return jsonify({"error": "forbidden"}), 403
+            draft = conn.execute(
+                "SELECT created_by FROM draft_episodes WHERE id = ?",
+                (row["draft_episode_id"],),
+            ).fetchone()
+            if not draft or (draft["created_by"] or "") != user_id:
+                conn.close()
+                return jsonify({"error": "forbidden"}), 403
         item = {
             "id": row["id"],
             "draftEpisodeId": row["draft_episode_id"],
@@ -1458,7 +1580,9 @@ def list_review_comments(review_id: str):
     try:
         conn = get_conn()
         cur = conn.execute(
-            "SELECT id, reviewer_id, script_ref, text_selection_start, text_selection_end, comment_text, created_at FROM reviewer_comments WHERE reviewer_id = ? ORDER BY created_at",
+            """SELECT id, reviewer_id, script_ref, text_selection_start, text_selection_end,
+                      comment_text, created_at, delete_requested_at, delete_requested_by
+               FROM reviewer_comments WHERE reviewer_id = ? ORDER BY created_at""",
             (review_id,),
         )
         rows = cur.fetchall()
@@ -1472,6 +1596,8 @@ def list_review_comments(review_id: str):
                 "textSelectionEnd": r["text_selection_end"],
                 "commentText": r["comment_text"],
                 "createdAt": r["created_at"],
+                "deleteRequestedAt": r["delete_requested_at"] if "delete_requested_at" in r.keys() else None,
+                "deleteRequestedBy": r["delete_requested_by"] if "delete_requested_by" in r.keys() else None,
             }
             for r in rows
         ]
@@ -1547,13 +1673,14 @@ def add_review_comment(review_id: str):
 
 @app.route("/api/reviews/<review_id>/comments/<comment_id>", methods=["PATCH"])
 def update_review_comment(review_id: str, comment_id: str):
-    """Edit or delete comment. Body: commentText (null to delete)."""
+    """Edit or delete comment. Body: commentText (null to delete), requestDelete, approveDelete, denyDelete."""
     body = request.get_json() or {}
     user_id = _get_current_user()
+    admin = _is_admin()
     try:
         conn = get_conn()
         cur = conn.execute(
-            """SELECT r.reviewer_user_id, d.committed_at FROM reviewer r
+            """SELECT r.reviewer_user_id, r.reviewee_user_id, d.committed_at FROM reviewer r
                JOIN draft_episodes d ON d.id = r.draft_episode_id WHERE r.id = ?""",
             (review_id,),
         )
@@ -1561,13 +1688,15 @@ def update_review_comment(review_id: str, comment_id: str):
         if not row:
             conn.close()
             return jsonify({"error": "review not found"}), 404
-        if row["reviewer_user_id"] != user_id and not _is_admin():
-            conn.close()
-            return jsonify({"error": "forbidden"}), 403
+        is_reviewer = row["reviewer_user_id"] == user_id
+        is_reviewee = row["reviewee_user_id"] == user_id
         if row["committed_at"]:
             conn.close()
             return jsonify({"error": "cannot edit comment after commit"}), 409
         if body.get("requestDelete"):
+            if not is_reviewer and not admin:
+                conn.close()
+                return jsonify({"error": "forbidden"}), 403
             now = __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
             conn.execute(
                 "UPDATE reviewer_comments SET delete_requested_at = ?, delete_requested_by = ? WHERE id = ? AND reviewer_id = ?",
@@ -1580,14 +1709,19 @@ def update_review_comment(review_id: str, comment_id: str):
             rev = cur.fetchone()
             if rev:
                 other = rev["reviewee_user_id"] if user_id == rev["reviewer_user_id"] else rev["reviewer_user_id"]
-                _create_notification(
-                    conn, other, "comment_delete_requested",
-                    "Comment delete requested on draft review",
-                    draft_id=rev["draft_episode_id"], review_id=review_id,
-                )
+                if other:
+                    _create_notification(
+                        conn, other, "comment_delete_requested",
+                        "Comment delete requested on draft review",
+                        draft_id=rev["draft_episode_id"], review_id=review_id,
+                    )
             conn.commit()
             conn.close()
             return jsonify({"ok": True}), 200
+        if body.get("approveDelete") or body.get("denyDelete"):
+            if not is_reviewee and not admin:
+                conn.close()
+                return jsonify({"error": "forbidden"}), 403
         if body.get("approveDelete"):
             try:
                 from continuum_api.localization_routes import build_previously_on
@@ -1632,6 +1766,9 @@ def update_review_comment(review_id: str, comment_id: str):
             conn.commit()
             conn.close()
             return jsonify({"ok": True}), 200
+        if not is_reviewer and not admin:
+            conn.close()
+            return jsonify({"error": "forbidden"}), 403
         if "commentText" in body and body["commentText"] is None:
             conn.execute("DELETE FROM reviewer_comments WHERE id = ? AND reviewer_id = ?", (comment_id, review_id))
         else:
@@ -2203,8 +2340,9 @@ def export_cave_hierarchy():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/ui")
-@app.route("/ui/<path:subpath>")
+@app.route("/ui", strict_slashes=False)
+@app.route("/ui/", strict_slashes=False)
+@app.route("/ui/<path:subpath>", strict_slashes=False)
 @app.route("/")
 def serve_ui(subpath=None):
     """Serve Continuuum web UI (ui.html for all /ui paths)."""
@@ -2212,15 +2350,18 @@ def serve_ui(subpath=None):
     return send_from_directory(static_dir, "ui.html")
 
 
-@app.route("/library")
-@app.route("/library/<path:subpath>")
-def redirect_library(subpath=None):
-    """USC library runs on serve_library.py (default port 5051)."""
-    suffix = f"/{subpath}" if subpath else ""
-    target = f"{LIBRARY_APP_BASE}/library{suffix}"
-    if request.query_string:
-        target = f"{target}?{request.query_string.decode()}"
-    return redirect(target, code=302)
+@app.route("/library-legacy-redirect")
+def redirect_library_legacy():
+    """Deprecated: library is served on same origin via library_routes."""
+    return redirect("/library", code=301)
+
+
+@app.route("/continuum_editor-legacy")
+def redirect_continuum_editor_legacy():
+    return redirect("/continuum_editor/", code=301)
+
+
+# Legacy redirects removed — library_routes handles /library and /continuum_editor
 
 
 @app.route("/api/audit", methods=["GET"])

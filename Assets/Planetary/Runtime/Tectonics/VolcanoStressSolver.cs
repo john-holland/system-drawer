@@ -38,14 +38,24 @@ namespace Planetary.Tectonics
             }
         }
 
-        public static int AppendVolcanoConeToGraph(SdfMaxCompositionAsset asset, int rootIdx, VolcanoSite site, float planetRadius)
+        public static int AppendVolcanoConeToGraph(
+            SdfMaxCompositionAsset asset,
+            int rootIdx,
+            VolcanoSite site,
+            Transform planetTransform)
         {
+            Vector3 local = planetTransform != null
+                ? planetTransform.InverseTransformPoint(site.worldPosition)
+                : site.worldPosition;
+
             int coneIdx = asset.nodes.Count;
             asset.nodes.Add(new SdfMaxNode
             {
                 op = SdfMaxOp.PrimitiveLeaf,
                 primitiveType = SdfPrimitiveType.Sphere,
+                localPosition = local,
                 sphereRadius = site.radiusMeters,
+                radius = site.radiusMeters,
                 weight = 1f
             });
             int blend = asset.nodes.Count;
@@ -57,6 +67,12 @@ namespace Planetary.Tectonics
                 smoothRadius = site.radiusMeters * 0.25f
             });
             return blend;
+        }
+
+        [System.Obsolete("Use AppendVolcanoConeToGraph with planet Transform for correct vent placement.")]
+        public static int AppendVolcanoConeToGraph(SdfMaxCompositionAsset asset, int rootIdx, VolcanoSite site, float planetRadius)
+        {
+            return AppendVolcanoConeToGraph(asset, rootIdx, site, null);
         }
     }
 }

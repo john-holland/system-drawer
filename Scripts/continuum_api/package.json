@@ -1,0 +1,17 @@
+{
+  "name": "continuum-api-society",
+  "private": true,
+  "dependencies": {
+    "gov-glove": "file:vendor/gov-glove",
+    "log-view-machine": "file:../../../../Development/log-view-machine/log-view-machine",
+    "yaml": "^2.6.0"
+  },
+  "continuumIntegration": {
+    "logViewMachineVersion": "2.1.1",
+    "caveYamlDir": "cave"
+  },
+  "scripts": {
+    "postinstall": "node -e \"try{require('child_process').execSync('node vendor/gov-glove/dist/cli.js --version',{stdio:'inherit'})}catch(e){process.exit(0)}\"",
+    "cave:overview": "node cave/load-cave-config.mjs"
+  }
+}

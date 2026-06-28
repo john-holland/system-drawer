@@ -25,6 +25,7 @@ try:
         resolve_clause_ref_farey,
         resolve_draft_script_id,
         validate_property_value,
+        withdraw_change_list_if_in_review,
     )
 except ImportError:
     from localization_helpers import (
@@ -39,6 +40,7 @@ except ImportError:
         resolve_clause_ref_farey,
         resolve_draft_script_id,
         validate_property_value,
+        withdraw_change_list_if_in_review,
     )
 
 GetConn = Callable[[], sqlite3.Connection]
@@ -449,6 +451,7 @@ def register_localization_routes(
             if auth_err:
                 conn.close()
                 return jsonify({"error": auth_err}), 403
+            withdraw_change_list_if_in_review(conn, draft_id)
             blocked = draft_blocks_author_edit(conn, draft_id)
             if blocked:
                 conn.close()

@@ -120,6 +120,9 @@ namespace Weather
             if (wind == null)
                 return;
 
+            if (CloudBake.CloudBakeSession.IsActive && !CloudBake.CloudBakeSession.AllowFloatAway)
+                return;
+
             // Get wind at cloud altitude
             float cloudAltitude = (altitude.x + altitude.y) * 0.5f;
             Vector3 windVector = wind.GetWindAtPosition(transform.position, cloudAltitude);

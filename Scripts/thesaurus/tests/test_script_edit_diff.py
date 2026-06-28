@@ -32,9 +32,35 @@ class ScriptEditDiffTests(unittest.TestCase):
         self.assertEqual(updated[0]["char_start"], 10)
         self.assertEqual(updated[0]["char_end"], 16)
 
-    def test_insert_at_clause_start_is_overlap_required(self):
+    def test_insert_at_clause_start_reanchors_to_first_letter(self):
         old = "AAAA clause BBBB"
         new = "AAAA X clause BBBB"
+        binding = [{"id": "b1", "char_start": 5, "char_end": 11, "selection_text": "clause"}]
+        req, warn, updated = audit_edit(old, new, binding)
+        self.assertEqual(len(req), 0)
+        self.assertEqual(len(warn), 1)
+        self.assertEqual(updated[0]["char_start"], 7)
+        self.assertEqual(updated[0]["char_end"], 13)
+
+    def test_whitespace_delete_inside_clause_shifts_span(self):
+        old = "X cl ause Y"
+        new = "X clause Y"
+        binding = [{"id": "b1", "char_start": 2, "char_end": 9, "selection_text": "cl ause"}]
+        req, warn, updated = audit_edit(old, new, binding)
+        self.assertEqual(len(req), 0)
+        self.assertEqual(updated[0]["char_start"], 2)
+        self.assertEqual(updated[0]["char_end"], 8)
+
+    def test_char_delete_inside_clause_requires_review(self):
+        old = "X clause Y"
+        new = "X cluse Y"
+        binding = [{"id": "b1", "char_start": 2, "char_end": 8, "selection_text": "clause"}]
+        req, _, _ = audit_edit(old, new, binding)
+        self.assertGreaterEqual(len(req), 1)
+
+    def test_insert_at_clause_start_is_overlap_required(self):
+        old = "AAAA clause BBBB"
+        new = "AAAA clXuse BBBB"
         binding = [{"id": "b1", "char_start": 5, "char_end": 11, "selection_text": "clause"}]
         req, warn, _ = audit_edit(old, new, binding)
         self.assertEqual(len(warn), 0)

@@ -1,0 +1,20 @@
+id: sql-viewer-tome
+name: SQL Viewer Tome
+routing:
+  basePath: /api/tomes/sql-viewer-tome
+  routes:
+    schemaMachine:
+      path: /schema
+      method: GET
+    previewMachine:
+      path: /preview
+      method: POST
+    queryMachine:
+      path: /query
+      method: POST
+    validateMachine:
+      path: /validate
+      method: POST
+    recipesMachine:
+      path: /recipes
+      method: GET

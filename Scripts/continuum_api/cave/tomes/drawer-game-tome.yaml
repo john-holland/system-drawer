@@ -1,0 +1,11 @@
+id: drawer-game-tome
+name: System Drawer Game Tome
+routing:
+  basePath: /api/tomes/drawer-game-tome
+  routes:
+    multiplayerClient:
+      path: /client
+      method: POST
+    hostAgent:
+      path: /host
+      method: POST

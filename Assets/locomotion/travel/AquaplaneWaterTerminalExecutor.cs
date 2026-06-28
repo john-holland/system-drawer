@@ -45,17 +45,17 @@ public sealed class AquaplaneWaterTerminalExecutor
         switch (_phase)
         {
             case Phase.PlaningApproach:
-                return TickPlaningApproach();
+                return TickPlaningApproach(deltaTime);
             case Phase.BleedSpeed:
                 return TickBleedSpeed();
             case Phase.HoldAtSlot:
-                return TickHold();
+                return TickHold(deltaTime);
             default:
                 return BehaviorTreeStatus.Success;
         }
     }
 
-    BehaviorTreeStatus TickPlaningApproach()
+    BehaviorTreeStatus TickPlaningApproach(float deltaTime)
     {
         if (_segment.waypoints == null || _segment.waypoints.Count == 0)
         {
@@ -82,7 +82,11 @@ public sealed class AquaplaneWaterTerminalExecutor
         }
         else
         {
-            _body.AddForce(to.normalized * 500f, ForceMode.Force);
+            float speed = 8f;
+            Vector3 move = to.normalized * (speed * deltaTime);
+            if (move.sqrMagnitude > to.sqrMagnitude)
+                move = to;
+            _body.MovePosition(pos + move);
         }
 
         return BehaviorTreeStatus.Running;
@@ -105,7 +109,7 @@ public sealed class AquaplaneWaterTerminalExecutor
         return BehaviorTreeStatus.Running;
     }
 
-    BehaviorTreeStatus TickHold()
+    BehaviorTreeStatus TickHold(float deltaTime)
     {
         Vector3 target = _segment.terminalCentroidWorld;
         Vector3 pos = _body.position;
@@ -120,8 +124,19 @@ public sealed class AquaplaneWaterTerminalExecutor
             return BehaviorTreeStatus.Success;
         }
 
-        if (_holdPolicy == WaterHoldPolicy.Anchor)
-            _body.AddForce(delta.normalized * 80f, ForceMode.Force);
+        if (_aquaplane != null)
+        {
+            if (_holdPolicy == WaterHoldPolicy.Anchor)
+                _body.AddForce(delta.normalized * 80f, ForceMode.Force);
+        }
+        else
+        {
+            float speed = _holdPolicy == WaterHoldPolicy.Anchor ? 4f : 3f;
+            Vector3 move = delta.normalized * (speed * deltaTime);
+            if (move.sqrMagnitude > delta.sqrMagnitude)
+                move = delta;
+            _body.MovePosition(pos + move);
+        }
 
         return BehaviorTreeStatus.Running;
     }

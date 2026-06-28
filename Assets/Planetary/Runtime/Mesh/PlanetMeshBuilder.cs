@@ -17,8 +17,12 @@ namespace Planetary
             float radius,
             int resolution,
             int chunksPerFace,
-            System.Func<float, float, float> heightAtLatLon)
+            System.Func<float, float, float> heightAtLatLon,
+            Vector3 planetCenterLocal = default,
+            Vector3 stablePoleAxis = default)
         {
+            if (stablePoleAxis.sqrMagnitude < 1e-6f)
+                stablePoleAxis = Vector3.up;
             var result = new List<PlanetMeshChunk>();
             var faceVerts = new List<Vector3>[6];
             var faceTris = new List<int>[6];
@@ -35,7 +39,16 @@ namespace Planetary
                 for (int cx = 0; cx < chunksPerFace; cx++)
                 for (int cy = 0; cy < chunksPerFace; cy++)
                 {
-                    var mesh = BuildChunkMesh((PlanetFaceId)f, radius, resolution, chunksPerFace, cx, cy, heightAtLatLon);
+                    var mesh = BuildChunkMesh(
+                        (PlanetFaceId)f,
+                        radius,
+                        resolution,
+                        chunksPerFace,
+                        cx,
+                        cy,
+                        heightAtLatLon,
+                        planetCenterLocal,
+                        stablePoleAxis);
                     result.Add(new PlanetMeshChunk { Face = (PlanetFaceId)f, ChunkX = cx, ChunkY = cy, Mesh = mesh });
                 }
             }
@@ -80,7 +93,9 @@ namespace Planetary
             int chunksPerFace,
             int cx,
             int cy,
-            System.Func<float, float, float> heightAtLatLon)
+            System.Func<float, float, float> heightAtLatLon,
+            Vector3 planetCenterLocal,
+            Vector3 stablePoleAxis)
         {
             int sub = Mathf.Max(2, res / chunksPerFace);
             var verts = new List<Vector3>();
@@ -111,11 +126,31 @@ namespace Planetary
                 tris.Add(i1); tris.Add(i2); tris.Add(i3);
             }
             var mesh = new Mesh { name = $"Planet_{face}_{cx}_{cy}" };
-            mesh.SetVertices(verts);
-            mesh.SetTriangles(tris, 0);
-            mesh.RecalculateNormals();
+            ApplySurfaceFrame(mesh, verts, tris, planetCenterLocal, stablePoleAxis);
             mesh.RecalculateBounds();
             return mesh;
+        }
+
+        static void ApplySurfaceFrame(
+            Mesh mesh,
+            List<Vector3> verts,
+            List<int> tris,
+            Vector3 planetCenterLocal,
+            Vector3 stablePoleAxis)
+        {
+            var normals = new Vector3[verts.Count];
+            var uvs = new Vector2[verts.Count];
+            for (int i = 0; i < verts.Count; i++)
+            {
+                normals[i] = PlanetSurfaceFrame.OutwardNormal(verts[i], planetCenterLocal);
+                uvs[i] = PlanetSurfaceFrame.WorldToSphericalUv(
+                    verts[i], planetCenterLocal, stablePoleAxis, 0f);
+            }
+
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.SetNormals(normals);
+            mesh.SetUVs(0, uvs);
         }
     }
 }

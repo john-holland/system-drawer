@@ -23,7 +23,25 @@ Tree inclusion for clause-level audio: an AST node belongs to a clause if the no
 - `GET /api/episode-script/<id>/screenplay?language=...` – screenplay output (blocks with dialogue/SFX and audio refs)
 - `POST /api/episodes/<episode_id>/extract-screenplay-work-orders` – body `{ episodeScriptId? }` – extract work orders from script_speech_audio and script_sound_effects (dialogue and SFX tasks)
 
-### Lemma library
+## Society sim (gov-glove)
+
+Political society simulation: planets, cities, zoning, building registry, telecom virtual networks.
+
+```bash
+cd Scripts/continuum_api && npm install
+python -m continuum_api.server --db continuum.db --port 5050
+```
+
+Web UI: `/city-config`, `/society-dashboard`
+
+- `GET /api/society/planets` – list planets
+- `POST /api/society/planets/{planetId}/cities` – create city (+ virtual network + IPv6)
+- `POST /api/society/cities/{cityId}/zoning/solve` – zoning / size / budget solver
+- `POST /api/society/cities/{cityId}/tick` – advance political solver
+- `GET /api/society/cities/{cityId}/spatial-map` – top-down zones + building pins
+
+Requires `gov-glove` npm package (vendored under `vendor/gov-glove`).
+
 
 Web UI: `/lemma-library` (browse, create, bulk import, localization search).
 

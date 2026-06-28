@@ -8,6 +8,11 @@ onMessage('deviceContext', (ctx) => {
   if (el) el.textContent = [ctx.phone, ctx.ipv6Full].filter(Boolean).join(' · ') || 'ready';
 });
 
+onMessage('societySnapshot', (payload) => {
+  const el = document.getElementById('society-snapshot-status');
+  if (el && payload?.cityId) el.textContent = `City ${payload.cityId} snapshot updated`;
+});
+
 registerApp({
   id: 'TelecomDialer',
   title: 'Dialer',
@@ -60,6 +65,35 @@ registerApp({
         <h3>Devices</h3><pre>${JSON.stringify(devs, null, 2)}</pre>`;
     } catch (e) {
       container.textContent = e.message;
+    }
+  },
+});
+
+registerApp({
+  id: 'SocietyBrowser',
+  title: 'Society',
+  async mount(container) {
+    container.innerHTML = '<p>Loading society conditions…</p><pre id="society-conditions"></pre>';
+    try {
+      const base = location.origin.replace(':5175', ':5050');
+      const planets = await fetch(`${base}/api/society/planets`).then((r) => r.json());
+      const earth = (planets.items || []).find((p) => p.planetId === 'earth');
+      if (!earth) {
+        container.querySelector('#society-conditions').textContent = 'No earth planet';
+        return;
+      }
+      const cities = await fetch(`${base}/api/society/planets/earth/cities`).then((r) => r.json());
+      const city = (cities.items || [])[0];
+      if (!city) {
+        container.querySelector('#society-conditions').textContent = 'No cities on earth';
+        return;
+      }
+      const prompt = await fetch(
+        `${base}/api/society/cities/${encodeURIComponent(city.cityId)}/conditions/prompt`,
+      ).then((r) => r.json());
+      container.querySelector('#society-conditions').textContent = prompt.prompt || JSON.stringify(prompt, null, 2);
+    } catch (e) {
+      container.querySelector('#society-conditions').textContent = e.message;
     }
   },
 });

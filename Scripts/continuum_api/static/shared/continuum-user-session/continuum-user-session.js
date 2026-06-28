@@ -3,6 +3,7 @@
 
   var USER_KEY = 'continuumUserId';
   var DEV_KEY = 'continuumDevMode';
+  var ADMIN_KEY = 'continuumAdminMode';
   var listeners = [];
 
   function normUser(id) {
@@ -21,7 +22,7 @@
   }
 
   function notify(kind) {
-    var detail = { userId: getUserId(), devMode: isDevMode(), kind: kind || 'change' };
+    var detail = { userId: getUserId(), devMode: isDevMode(), adminMode: isAdmin(), kind: kind || 'change' };
     listeners.forEach(function (fn) {
       try { fn(detail); } catch (_) { /* ignore */ }
     });
@@ -49,12 +50,28 @@
     var next = !!on;
     var prev = isDevMode();
     if (next) localStorage.setItem(DEV_KEY, '1');
-    else localStorage.removeItem(DEV_KEY);
+    else {
+      localStorage.removeItem(DEV_KEY);
+      setAdmin(false);
+    }
     if (prev !== next) notify('dev');
+  }
+
+  function isAdmin() {
+    return localStorage.getItem(ADMIN_KEY) === '1';
+  }
+
+  function setAdmin(on) {
+    var next = !!on;
+    var prev = isAdmin();
+    if (next) localStorage.setItem(ADMIN_KEY, '1');
+    else localStorage.removeItem(ADMIN_KEY);
+    if (prev !== next) notify('admin');
   }
 
   function getHeaders(extra) {
     var h = { 'X-User-ID': getUserId() };
+    if (isAdmin()) h['X-Admin'] = '1';
     if (extra) {
       Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
     }
@@ -76,6 +93,8 @@
     setUserId: setUserId,
     isDevMode: isDevMode,
     setDevMode: setDevMode,
+    isAdmin: isAdmin,
+    setAdmin: setAdmin,
     getHeaders: getHeaders,
     onChange: onChange,
   };

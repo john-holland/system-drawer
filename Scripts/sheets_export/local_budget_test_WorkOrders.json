@@ -1,0 +1,9 @@
+[
+  [
+    "id",
+    "story_id",
+    "status",
+    "asset_kind",
+    "asset_ref_json"
+  ]
+]

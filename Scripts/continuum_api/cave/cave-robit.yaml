@@ -1,0 +1,59 @@
+defaultTransport:
+  type: http
+  config:
+    url: http://127.0.0.1:5050
+routes:
+  - fromCave: continuum
+    toTome: hub-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api
+  - fromCave: continuum
+    toTome: lemma-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api/thesaurus
+  - fromCave: continuum
+    toTome: library-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api/library
+  - fromCave: continuum
+    toTome: society-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api/society
+  - fromCave: continuum
+    toTome: saurce-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api/saurce
+  - fromCave: continuum
+    toTome: resaurce-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api
+  - fromCave: continuum
+    toTome: drawer-game-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api/drawer-game
+  - fromCave: continuum
+    toTome: sql-viewer-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api/sql-viewer
+  - fromCave: continuum
+    toTome: table-read-tome
+    transport:
+      type: http
+      config:
+        url: http://127.0.0.1:5050/api/table-read

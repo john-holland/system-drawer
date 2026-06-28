@@ -1,0 +1,26 @@
+[
+  [
+    "field",
+    "value"
+  ],
+  [
+    "id",
+    "budget_test"
+  ],
+  [
+    "name",
+    "Test"
+  ],
+  [
+    "capacity_usd",
+    null
+  ],
+  [
+    "water_level_usd",
+    null
+  ],
+  [
+    "saurce_product_id",
+    null
+  ]
+]

@@ -1,0 +1,11 @@
+id: lemma-tome
+name: Lemma Library Tome
+routing:
+  basePath: /api/tomes/lemma-tome
+  routes:
+    browseMachine:
+      path: /browse
+      method: POST
+    compositionMachine:
+      path: /composition
+      method: POST

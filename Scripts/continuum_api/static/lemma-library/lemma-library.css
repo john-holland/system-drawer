@@ -70,6 +70,11 @@ button.secondary { background: var(--panel); color: var(--text); border: 1px sol
   cursor: pointer;
 }
 .entry-row:hover { background: var(--panel); }
+.entry-row--linkable { cursor: pointer; }
+.entry-row--muted { cursor: default; opacity: 0.72; }
+.entry-row--muted:hover { background: transparent; }
+.preview tr.highlight-prop { background: rgba(102, 126, 234, 0.18); }
+.preview tr.highlight-prop td:first-child { font-weight: 600; color: var(--accent); }
 .entry-term { font-weight: 600; }
 .badge {
   font-size: 11px;

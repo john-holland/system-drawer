@@ -136,6 +136,11 @@
         return;
       }
       const scriptUpdated = script && script.updatedAt ? script.updatedAt : '—';
+      const review = (this._state.reviews || []).find((r) => r.id) || (this._state.reviews || [])[0];
+      const reviewHref = this._state.draftId
+        ? '/ui#review?draftId=' + encodeURIComponent(this._state.draftId) +
+          (review && review.id ? '&reviewId=' + encodeURIComponent(review.id) : '')
+        : '';
       el.innerHTML = `
         <h1>${escHtml(d.title || 'Untitled draft')}</h1>
         <div class="so-meta">
@@ -144,6 +149,7 @@
           <span><strong>Draft updated</strong> ${escHtml(d.updatedAt || '—')}</span>
           <span><strong>Script updated</strong> ${escHtml(scriptUpdated)}</span>
           ${this._state.changeList ? `<span><strong>Change list</strong> ${escHtml(this._state.changeList.workflowStatus || '—')}</span>` : ''}
+          ${reviewHref ? `<span><a href="${escHtml(reviewHref)}" target="_blank" rel="noopener">Open review</a></span>` : ''}
         </div>`;
     },
 

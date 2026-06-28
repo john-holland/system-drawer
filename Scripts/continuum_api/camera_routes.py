@@ -68,6 +68,8 @@ def register_camera_routes(app, get_conn: GetConn, get_user: Callable[[], str]) 
     @app.route("/camera-scenes")
     @app.route("/camera-scenes/<path:subpath>")
     def serve_camera_pathing(subpath=None):
+        if subpath and subpath != "index.html":
+            return send_from_directory(static_dir, subpath)
         return send_from_directory(static_dir, "index.html")
 
     def _ensure(conn: sqlite3.Connection) -> None:

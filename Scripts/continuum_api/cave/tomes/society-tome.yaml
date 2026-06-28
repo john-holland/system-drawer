@@ -1,0 +1,8 @@
+id: society-tome
+name: Society Sim Tome
+routing:
+  basePath: /api/tomes/society-tome
+  routes:
+    cityMachine:
+      path: /cities
+      method: POST

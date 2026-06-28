@@ -1,4 +1,4 @@
-(function () {
+(function (global) {
   'use strict';
 
   var API = (localStorage.getItem('lemmaApiBase') || location.origin).replace(/\/$/, '');
@@ -104,9 +104,10 @@
   document.getElementById('cp-load').addEventListener('click', loadScenes);
   if (global.ContinuumNav) {
     ContinuumNav.mount({ root: '#continuum-nav-root', app: 'camera' });
+    if (window.ContinuumTomeBootstrap) ContinuumTomeBootstrap.mountPage({ tomeId: 'camera-tome' });
   }
 
   var m = location.pathname.match(/\/camera-scenes\/([^/]+)/);
   if (m) showScene(m[1]);
   else loadScenes();
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

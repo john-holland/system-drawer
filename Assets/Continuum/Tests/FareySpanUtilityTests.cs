@@ -27,11 +27,13 @@ public class FareySpanUtilityTests
     }
 
     [Test]
-    public void CharRangeToFareySpan_StubReturnsRoot()
+    public void CharRangeToFareySpan_ProportionalMapping()
     {
         var span = FareySpanUtility.CharRangeToFareySpan("hello", 1, 3);
-        Assert.AreEqual(0, span.ln);
-        Assert.AreEqual(1, span.rn);
+        Assert.AreEqual(1, span.ln);
+        Assert.AreEqual(5, span.ld);
+        Assert.AreEqual(3, span.rn);
+        Assert.AreEqual(5, span.rd);
     }
 
     [Test]

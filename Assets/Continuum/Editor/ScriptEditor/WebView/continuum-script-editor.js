@@ -13,6 +13,27 @@
     return `${b.propertyKey || b.property_key || 'property'}=${b.propertyValue || b.property_value || ''}`;
   }
 
+  function renderLemmaBindingMeta(metaEl, binding, snippet) {
+    const entryId = binding.entryId || binding.entry_id || binding.propertyValue || binding.property_value;
+    if (!entryId) {
+      metaEl.textContent = bindingSummary(binding);
+      return;
+    }
+    const term = (binding._term || (snippet || '').trim() || entryId).trim();
+    const LE = global.ContinuumLemmaEntry;
+    if (!LE) {
+      metaEl.textContent = `entry: ${entryId}`;
+      return;
+    }
+    if (term && term !== entryId) {
+      metaEl.appendChild(document.createTextNode(`${term} · `));
+    }
+    metaEl.appendChild(LE.createLink({ entryId, term }, {
+      label: entryId,
+      title: `Open lemma: ${term}`,
+    }));
+  }
+
   function hasNonEmptySelection(inst) {
     const sel = ContinuumScriptEditor.getSelection(inst);
     return sel.charEnd > sel.charStart && (sel.text || '').length > 0;
@@ -99,7 +120,17 @@
       clausePanel.id = 'continuum-clause-panel';
       clausePanel.className = 'continuum-clause-panel';
       clausePanel.setAttribute('aria-label', 'Clauses at cursor');
-      el.appendChild(clausePanel);
+      const clauseHost = options.clausePanelHost
+        ? (typeof options.clausePanelHost === 'string'
+          ? document.querySelector(options.clausePanelHost)
+          : options.clausePanelHost)
+        : null;
+      if (clauseHost) {
+        clauseHost.innerHTML = '';
+        clauseHost.appendChild(clausePanel);
+      } else {
+        el.appendChild(clausePanel);
+      }
 
       const readOnly = options.readOnly || (options.mode === 'review' && options.committed);
       const aceLoaded = typeof ace !== 'undefined';
@@ -398,30 +429,88 @@
         const card = document.createElement('div');
         card.className = 'continuum-clause-card';
         const kind = b.bindingKind || b.binding_kind || 'property';
-        const snippet = b.selectionText || b.selection_text || text.substring(b.charStart, b.charEnd) || '—';
+        const liveSlice = text.substring(b.charStart, b.charEnd);
+        const snippet = liveSlice || b.selectionText || b.selection_text || '—';
         card.innerHTML =
           `<span class="continuum-clause-kind continuum-clause-kind-${kind}">${kind}</span>` +
-          `<span class="continuum-clause-snippet">"${snippet.slice(0, 40)}" [${b.charStart}, ${b.charEnd})</span>` +
-          `<span class="continuum-clause-meta">${bindingSummary(b)}</span>`;
+          `<span class="continuum-clause-snippet">"${snippet.slice(0, 40)}" [${b.charStart}, ${b.charEnd})</span>`;
+        const meta = document.createElement('span');
+        meta.className = 'continuum-clause-meta';
+        if (kind === 'lemma') {
+          renderLemmaBindingMeta(meta, b, snippet);
+        } else {
+          meta.textContent = bindingSummary(b);
+        }
+        card.appendChild(meta);
         if (!inst.readOnly && global.ContinuumClauseSelector) {
-          const editBtn = document.createElement('button');
-          editBtn.type = 'button';
-          editBtn.textContent = 'Edit';
-          editBtn.className = 'continuum-clause-edit-btn';
-          editBtn.onclick = () => {
-            global.ContinuumClauseSelector.openEditDialog(b, {
-              draftEpisodeId: options.draftEpisodeId || options.draftId,
-              draftScriptId: options.draftScriptId,
-              scriptText: text,
-              onEdited: async (result) => {
-                if (options.onBindingsChanged) await options.onBindingsChanged();
-                if (options.onBindingEdited) options.onBindingEdited(result);
-                ContinuumScriptEditor.renderOverlays(inst, inst.options);
-                ContinuumScriptEditor.renderClausePanel(inst);
-              },
-            });
-          };
-          card.appendChild(editBtn);
+          if (kind === 'lemma') {
+            const entryId = b.entryId || b.entry_id || b.propertyValue || b.property_value;
+            if (entryId && global.ContinuumClauseSelector.openLemmaEntryDialog) {
+              const editBtn = document.createElement('button');
+              editBtn.type = 'button';
+              editBtn.textContent = 'Edit lemma';
+              editBtn.className = 'continuum-clause-edit-btn';
+              editBtn.onclick = () => {
+                global.ContinuumClauseSelector.openLemmaEntryDialog({
+                  entryId,
+                  selectionText: (snippet || '').trim(),
+                  prefabOnly: true,
+                  binding: b,
+                  draftEpisodeId: options.draftEpisodeId || options.draftId,
+                  scriptText: text,
+                  onEdited: async (result) => {
+                    if (options.onBindingsChanged) await options.onBindingsChanged();
+                    if (options.onBindingEdited) options.onBindingEdited(result);
+                    ContinuumScriptEditor.renderOverlays(inst, inst.options);
+                    ContinuumScriptEditor.renderClausePanel(inst);
+                  },
+                });
+              };
+              card.appendChild(editBtn);
+            }
+          } else {
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'continuum-clause-edit-btn';
+            editBtn.onclick = () => {
+              global.ContinuumClauseSelector.openEditDialog(b, {
+                draftEpisodeId: options.draftEpisodeId || options.draftId,
+                draftScriptId: options.draftScriptId,
+                scriptText: text,
+                onEdited: async (result) => {
+                  if (options.onBindingsChanged) await options.onBindingsChanged();
+                  if (options.onBindingEdited) options.onBindingEdited(result);
+                  ContinuumScriptEditor.renderOverlays(inst, inst.options);
+                  ContinuumScriptEditor.renderClausePanel(inst);
+                },
+              });
+            };
+            card.appendChild(editBtn);
+          }
+        }
+        if (kind === 'lemma' && global.ContinuumLemmaPromptEditor) {
+          const entryId = b.entryId || b.entry_id || b.propertyValue || b.property_value;
+          if (entryId) {
+            const compBtn = document.createElement('button');
+            compBtn.type = 'button';
+            compBtn.textContent = 'Composition';
+            compBtn.className = 'continuum-clause-edit-btn';
+            compBtn.style.marginLeft = '4px';
+            compBtn.onclick = () => {
+              global.ContinuumLemmaPromptEditor.openModal({
+                entryId,
+                parentEntryId: entryId,
+                draftEpisodeId: options.draftEpisodeId || options.draftId,
+                scriptText: text,
+                seedPhrase: (snippet || '').trim(),
+                onSaved: () => {
+                  if (options.onBindingsChanged) options.onBindingsChanged();
+                },
+              });
+            };
+            card.appendChild(compBtn);
+          }
         }
         list.appendChild(card);
       });
@@ -477,9 +566,18 @@
       box.style.cssText = 'background:#fff;padding:20px;max-width:560px;max-height:80vh;overflow:auto;border-radius:6px;color:#222';
       const required = (data && data.required) || [];
       const warnings = (data && data.warnings) || [];
-      const state = { required: required.map(i => ({ ...i })), warnings: warnings.map(i => ({ ...i })) };
+      const ackExtra = (global.ContinuumScriptAck && data && data._changeListForAck)
+        ? global.ContinuumScriptAck.buildChangeListAckItems(data._changeListForAck)
+        : [];
+      const state = {
+        required: [...ackExtra.map((i) => ({ ...i })), ...required.map((i) => ({ ...i }))],
+        warnings: warnings.map(i => ({ ...i })),
+      };
 
       function unacknowledgedRequired(items) {
+        if (global.ContinuumScriptAck && global.ContinuumScriptAck.unacknowledgedRequired) {
+          return global.ContinuumScriptAck.unacknowledgedRequired(items);
+        }
         return (items || []).filter(i => !i.userAcknowledged && i.severity !== 'warning');
       }
 

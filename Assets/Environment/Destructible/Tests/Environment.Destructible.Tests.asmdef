@@ -1,0 +1,22 @@
+{
+  "name": "Environment.Destructible.Tests",
+  "rootNamespace": "DestructibleEnvironment.Tests",
+  "references": [
+    "Environment.Destructible.Runtime",
+    "Locomotion.Runtime",
+    "Weather.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

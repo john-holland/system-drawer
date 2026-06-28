@@ -62,6 +62,8 @@ def register_telecom_routes(app, get_conn: GetConn) -> None:
     @app.route("/network-definitions")
     @app.route("/network-definitions/<path:subpath>")
     def serve_network_definitions(subpath=None):
+        if subpath and subpath != "index.html":
+            return send_from_directory(static_nd, subpath)
         return send_from_directory(static_nd, "index.html")
 
     def _ensure(conn: sqlite3.Connection) -> None:

@@ -76,11 +76,11 @@ public struct PlannerTimelineOptions
             switch (hintDifficulty)
             {
                 case PlannerHintDifficulty.Easy:
-                    return 0.2f;
+                    return 1f;
                 case PlannerHintDifficulty.Medium:
                     return 0.55f;
                 case PlannerHintDifficulty.Hard:
-                    return 1f;
+                    return 0f;
                 default:
                     return Mathf.Clamp01(hintEffectiveness01);
             }

@@ -1,0 +1,19 @@
+{
+  "name": "Environment.Destructible.Editor",
+  "rootNamespace": "DestructibleEnvironment.Editor",
+  "references": [
+    "Environment.Destructible.Runtime",
+    "Locomotion.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

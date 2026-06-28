@@ -1,0 +1,11 @@
+id: hub-tome
+name: Episodic Hub Tome
+routing:
+  basePath: /api/tomes/hub-tome
+  routes:
+    scriptMachine:
+      path: /script
+      method: POST
+    episodeMachine:
+      path: /episodes
+      method: POST

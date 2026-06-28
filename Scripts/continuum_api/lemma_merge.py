@@ -18,7 +18,7 @@ def is_builtin_urn(entry_id: str | None) -> bool:
 def load_builtin_vocabulary() -> list[dict[str, Any]]:
     if not BUILTIN_JSON.is_file():
         return []
-    data = json.loads(BUILTIN_JSON.read_text(encoding="utf-8"))
+    data = json.loads(BUILTIN_JSON.read_text(encoding="utf-8-sig"))
     return list(data.get("items") or [])
 
 
@@ -81,6 +81,13 @@ def _entry_view_from_builtin(row: dict[str, Any]) -> dict[str, Any]:
         "linkedAssetIds": [],
         "components": [],
         "componentCreation": None,
+        "compositionChildren": [],
+        "isComposedLemma": False,
+        "lemmaPrompt": None,
+        "spatial4dId": None,
+        "defaultTiming": None,
+        "patchProperties": {},
+        "usesOverlay": False,
     }
 
 
@@ -114,6 +121,13 @@ def _load_db_custom_entries(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                 "linkedAssetIds": [],
                 "components": [],
                 "componentCreation": None,
+                "compositionChildren": [],
+                "isComposedLemma": False,
+                "lemmaPrompt": None,
+                "spatial4dId": None,
+                "defaultTiming": None,
+                "patchProperties": {},
+                "usesOverlay": False,
             }
         )
     return items
@@ -287,6 +301,87 @@ def merge_vocabulary(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
     for eid, view in merged.items():
         cache = cache_by_entry.get(eid)
         view["componentCreation"] = component_creation_view(cache)
+
+    try:
+        try:
+            from continuum_api.lemma_composition import load_all_parent_children
+        except ImportError:
+            from lemma_composition import load_all_parent_children
+        comp_map = load_all_parent_children(conn)
+        for eid, view in merged.items():
+            children = comp_map.get(eid, [])
+            view["compositionChildren"] = children
+            view["isComposedLemma"] = len(children) > 0
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        try:
+            from continuum_api.lemma_prompt import ensure_lemma_prompt_schema, load_overlay
+        except ImportError:
+            from lemma_prompt import ensure_lemma_prompt_schema, load_overlay
+        ensure_lemma_prompt_schema(conn)
+        overlay_ids: list[str] = []
+        try:
+            cur = conn.execute("SELECT target_entry_id FROM thesaurus_lemma_overlays")
+            overlay_ids = [r["target_entry_id"] for r in cur.fetchall()]
+        except sqlite3.OperationalError:
+            pass
+        for oid in overlay_ids:
+            if oid not in merged and is_builtin_urn(oid):
+                merged[oid] = _entry_view_from_builtin(
+                    {
+                        "id": oid,
+                        "term": oid.split("/")[-1].replace("_", " "),
+                        "posTag": "unknown",
+                        "languageCode": "en",
+                    }
+                )
+        for eid, view in merged.items():
+            overlay = load_overlay(conn, eid)
+            if not overlay:
+                props = view.get("properties") or {}
+                if props.get("lemma-prompt"):
+                    view["lemmaPrompt"] = props["lemma-prompt"]
+                if props.get("spatial-4d-id"):
+                    view["spatial4dId"] = props["spatial-4d-id"]
+                t_min = props.get("spatial-t-min")
+                t_max = props.get("spatial-t-max")
+                if t_min is not None or t_max is not None:
+                    view["defaultTiming"] = {
+                        "tMin": float(t_min or 0),
+                        "tMax": float(t_max or 3600),
+                    }
+                continue
+            view["usesOverlay"] = True
+            if overlay.get("lemma_prompt"):
+                view["lemmaPrompt"] = overlay["lemma_prompt"]
+            if overlay.get("spatial_4d_id"):
+                view["spatial4dId"] = overlay["spatial_4d_id"]
+            patch = overlay.get("patch_properties_json")
+            if patch:
+                try:
+                    parsed = json.loads(patch) if isinstance(patch, str) else patch
+                    if isinstance(parsed, dict):
+                        view["patchProperties"] = parsed
+                        view["properties"].update({str(k): str(v) for k, v in parsed.items()})
+                except json.JSONDecodeError:
+                    pass
+            if overlay.get("default_timing_json"):
+                try:
+                    view["defaultTiming"] = json.loads(overlay["default_timing_json"])
+                except json.JSONDecodeError:
+                    pass
+            if overlay.get("composition_json") and view["isBuiltIn"]:
+                try:
+                    comp_list = json.loads(overlay["composition_json"])
+                    if isinstance(comp_list, list) and comp_list:
+                        view["compositionChildren"] = comp_list
+                        view["isComposedLemma"] = True
+                except json.JSONDecodeError:
+                    pass
+    except sqlite3.OperationalError:
+        pass
 
     return merged
 

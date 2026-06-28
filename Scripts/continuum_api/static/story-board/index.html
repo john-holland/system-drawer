@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Story Board — Continuum</title>
+  <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1419; color: #e6edf3; }
+    main { padding: 1rem; }
+    .board { display: flex; gap: 0.75rem; overflow-x: auto; min-height: 70vh; align-items: flex-start; }
+    .col {
+      flex: 0 0 220px; background: #161b22; border-radius: 8px; padding: 0.5rem;
+      min-height: 120px; transition: background 0.15s, box-shadow 0.15s;
+    }
+    .col.col-drop-target { background: #1c2330; box-shadow: inset 0 0 0 2px #58a6ff; }
+    .col h3 { margin: 0 0 0.5rem; font-size: 0.85rem; text-transform: uppercase; color: #8b949e; }
+    .col-cards { min-height: 80px; }
+    .card {
+      background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 0.5rem;
+      margin-bottom: 0.5rem; cursor: grab; user-select: none;
+    }
+    .card:hover { border-color: #58a6ff; }
+    .card:active { cursor: grabbing; }
+    .card.card-dragging { opacity: 0.45; border-style: dashed; }
+    .toolbar { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    input, button, select, textarea { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 4px; padding: 0.35rem 0.5rem; }
+    button { cursor: pointer; }
+    .errors { color: #f85149; font-size: 0.85rem; }
+    .legal-warn { color: #d29922; font-size: 0.85rem; }
+    .wo-row { margin: 0.25rem 0; font-size: 0.85rem; }
+    fieldset { border: 1px solid #30363d; border-radius: 6px; margin: 0.5rem 0; padding: 0.5rem; }
+    a.chip { color: #58a6ff; font-size: 0.8rem; margin-right: 0.5rem; }
+
+    .story-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 1000;
+      display: none; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .story-modal-overlay.open { display: flex; }
+    .story-modal {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      width: min(640px, 96vw); max-height: 90vh; overflow: auto; padding: 1.25rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+    .story-modal-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 0.75rem; margin-bottom: 0.75rem;
+    }
+    .story-modal-header h2 { margin: 0; font-size: 1.15rem; flex: 1; }
+    .story-modal-close {
+      background: transparent; border: none; color: #8b949e; font-size: 1.4rem;
+      line-height: 1; padding: 0 0.25rem; cursor: pointer;
+    }
+    .story-modal-close:hover { color: #e6edf3; }
+    .story-modal-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <header id="continuum-nav-root"></header>
+  <main>
+    <h1>Story Board</h1>
+    <div class="toolbar">
+      <button id="btn-refresh">Refresh</button>
+      <button id="btn-new">New story</button>
+      <input id="filter-schedule" placeholder="Schedule ID filter" />
+    </div>
+    <div class="board" id="board"></div>
+  </main>
+
+  <div id="story-modal-overlay" class="story-modal-overlay" aria-hidden="true">
+    <div class="story-modal" role="dialog" aria-modal="true" aria-labelledby="story-modal-title">
+      <div class="story-modal-header">
+        <h2 id="story-modal-title">Story</h2>
+        <button type="button" class="story-modal-close" id="story-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div id="story-modal-body"></div>
+    </div>
+  </div>
+
+  <script src="/static/shared/continuum-chat-panel/continuum-chat-panel.js"></script>
+  <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
+  <script src="/story-board/story-board.js"></script>
+</body>
+</html>

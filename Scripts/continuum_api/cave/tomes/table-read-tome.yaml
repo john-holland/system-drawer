@@ -1,0 +1,17 @@
+id: table-read-tome
+name: Table Read Tome
+routing:
+  basePath: /api/tomes/table-read-tome
+  routes:
+    sessionMachine:
+      path: /session
+      method: POST
+    chatEnsureMachine:
+      path: /chat/ensure
+      method: POST
+    inviteMachine:
+      path: /invite
+      method: POST
+    messagesMachine:
+      path: /chat/messages
+      method: POST

@@ -1,0 +1,8 @@
+id: camera-tome
+name: Camera Pathing Tome
+routing:
+  basePath: /api/tomes/camera-tome
+  routes:
+    pathMachine:
+      path: /paths
+      method: POST

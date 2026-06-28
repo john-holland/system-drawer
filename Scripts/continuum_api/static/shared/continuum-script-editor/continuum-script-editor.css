@@ -16,6 +16,16 @@
   border-bottom: 2px dashed #c60 !important;
 }
 #review-script-ace { border: 1px solid #ccc; min-height: 200px; }
+#review-script-ace .ace_editor,
+.continuum-script-editor-host .ace_editor {
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+#review-script-ace .ace_text-layer,
+.continuum-script-editor-host .ace_text-layer {
+  color: #1a1a1a;
+}
 .old-comments { margin-top: 16px; border-top: 1px solid #ddd; padding-top: 8px; }
 .old-comments summary { cursor: pointer; font-weight: 600; }
 .continuum-clause-panel {

@@ -1,0 +1,14 @@
+id: saurce-tome
+name: Saurce Product & Investment Tome
+routing:
+  basePath: /api/tomes/saurce-tome
+  routes:
+    productMachine:
+      path: /products
+      method: POST
+    investmentMachine:
+      path: /investments
+      method: POST
+    disbursementMachine:
+      path: /disburse
+      method: POST
