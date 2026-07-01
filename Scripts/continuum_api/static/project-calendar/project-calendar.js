@@ -5,17 +5,25 @@
     ContinuumNav.mount(document.getElementById('continuum-nav-root'), { app: 'project-calendar' });
   }
 
+  var caveShell = window.ContinuumCaveShell
+    ? window.ContinuumCaveShell.init({ tomeId: 'production-calendar-tome', presence: false })
+    : null;
+
+  async function caveMsg(message, payload) {
+    if (!caveShell) throw new Error('ContinuumCaveShell not loaded');
+    return caveShell.caveMessage(message, payload || {});
+  }
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   }
 
-  async function api(path, opts) {
-    var r = await fetch(path, opts || {});
-    if (!r.ok) {
-      var err = await r.json().catch(function () { return {}; });
-      throw { status: r.status, body: err };
+  async function api(message, payload) {
+    try {
+      return await caveMsg(message, payload || {});
+    } catch (e) {
+      throw { status: e.status, body: e.body || {} };
     }
-    return r.json();
   }
 
   function daysBetween(a, b) {
@@ -47,12 +55,14 @@
   function populateScheduleDropdown() {
     var sel = document.getElementById('filter-schedule');
     var prev = sel.value;
-    sel.innerHTML = '<option value="">— all schedules —</option>';
+    sel.innerHTML = '<option value="">— select schedule —</option>';
     state.schedules.forEach(function (sched) {
       var opt = document.createElement('option');
       opt.value = sched.id;
-      var label = sched.name || sched.id;
-      if (sched.start_date) label += ' (' + sched.start_date + ')';
+      var name = sched.name || sched.id;
+      var label = name;
+      if (sched.start_date) label += ' · start ' + sched.start_date;
+      label += ' [' + sched.id + ']';
       opt.textContent = label;
       sel.appendChild(opt);
     });
@@ -94,9 +104,16 @@
       (s4.spatial4dTMin != null ? ' (volume t_min ' + esc(s4.spatial4dTMin) + ')' : '') +
       '<br>volumes: ' + esc(s4.spatial4dVolumeCount) +
       (s4.episodeIds && s4.episodeIds.length ? '<br>episodes: ' + esc(s4.episodeIds.join(', ')) : '');
-    if (ctx.scheduleStartDate) {
-      eff.textContent = 'Schedule start: ' + ctx.scheduleStartDate +
-        ' → narrative Day 1: ' + (ctx.effectiveNarrativeStartDate || '—');
+    if (ctx.scheduleStartDate && ctx.spatial4d) {
+      var t0 = ctx.spatial4d.narrativeTOrigin;
+      eff.textContent =
+        'Production schedule start: ' + ctx.scheduleStartDate +
+        ' · spatial 4D t₀ = ' + t0 + ' sec' +
+        ' → Narrative Day 1 (calendar): ' + (ctx.effectiveNarrativeStartDate || '—');
+    } else if (ctx.spatial4d) {
+      eff.textContent =
+        'Spatial 4D t₀ = ' + ctx.spatial4d.narrativeTOrigin +
+        ' sec — select a production schedule to map narrative calendar days.';
     } else {
       eff.textContent = 'Select a production schedule to anchor narrative calendar days.';
     }
@@ -130,7 +147,21 @@
     filtered.forEach(function (s) {
       if (!s.calendar_start_date && s.narrative_t_start == null) return;
       var row = document.createElement('div');
-      row.innerHTML = '<div style="font-size:0.85rem;margin-top:0.5rem">' + esc(s.summary || s.id) + '</div>';
+      row.className = 'story-row';
+      row.tabIndex = 0;
+      row.setAttribute('role', 'button');
+      row.setAttribute('aria-label', 'Open story: ' + (s.summary || s.id));
+      row.innerHTML = '<div style="font-size:0.85rem;margin-top:0.5rem;color:#58a6ff">' + esc(s.summary || s.id) + '</div>';
+      function openStory() {
+        window.location.href = '/story-board/?story=' + encodeURIComponent(s.id);
+      }
+      row.addEventListener('click', openStory);
+      row.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          openStory();
+        }
+      });
       if (s.calendar_start_date) {
         var bar = document.createElement('div');
         bar.className = 'bar';
@@ -195,7 +226,7 @@
     var el = document.getElementById('water-gauge');
     if (!planId || !el) return;
     try {
-      var data = await api('/api/production/budget/' + encodeURIComponent(planId) + '/water-level');
+      var data = await api('production_budget_water_level', { budget_plan_id: planId });
       var wl = data.water_level || data;
       var cap = wl.capacity_usd || 1;
       var level = wl.water_level_usd != null ? wl.water_level_usd : 0;
@@ -213,25 +244,39 @@
     var offset = parseFloat(document.getElementById('narrative-offset').value) || 0;
     var start = sched && (sched.start_date || sched.startDate);
     var effective = start ? addDays(start, offset) : null;
-    document.getElementById('effective-start').textContent = start
-      ? 'Preview: narrative Day 1 = ' + (effective || '—') + ' (schedule ' + start + ' + ' + offset + 'd)'
-      : 'Select a schedule to preview narrative Day 1.';
+    var ctx = state.context;
+    var t0 = ctx && ctx.spatial4d ? ctx.spatial4d.narrativeTOrigin : null;
+    var effEl = document.getElementById('effective-start');
+    if (!start) {
+      effEl.textContent = t0 != null
+        ? 'Select a production schedule. Offset applies calendar days from schedule start to narrative t₀ (' + t0 + ' sec).'
+        : 'Select a production schedule to preview narrative Day 1.';
+      return effective;
+    }
+    effEl.textContent =
+      'Preview: at spatial 4D t₀' + (t0 != null ? ' (' + t0 + ' sec)' : '') +
+      ', Narrative Day 1 = ' + (effective || '—') +
+      ' (schedule start ' + start + ' + ' + offset + ' calendar days)';
+    if (state.context) {
+      state.context.narrativeStartOffsetDays = offset;
+      state.context.effectiveNarrativeStartDate = effective;
+    }
     return effective;
   }
 
   async function load() {
     var schedFilter = document.getElementById('filter-schedule').value;
-    var overlayUrl = '/api/narrative-timeline-overlay';
-    if (schedFilter) overlayUrl += '?schedule_id=' + encodeURIComponent(schedFilter);
-    var storiesUrl = '/api/stories';
-    if (schedFilter) storiesUrl += '?resaurce_schedule_id=' + encodeURIComponent(schedFilter);
+    var overlayPayload = {};
+    if (schedFilter) overlayPayload.schedule_id = schedFilter;
+    var storiesPayload = {};
+    if (schedFilter) storiesPayload.resaurce_schedule_id = schedFilter;
 
     var results = await Promise.all([
-      api(storiesUrl),
-      api(overlayUrl),
-      api('/api/production/schedules'),
-      api('/api/production/budget').catch(function () { return { budget_plans: [] }; }),
-      api('/api/calendar/subscriptions').catch(function () { return { subscriptions: [] }; }),
+      api('list_stories', storiesPayload),
+      api('narrative_overlay_get', overlayPayload),
+      api('production_schedule_list', {}),
+      api('production_budget_list', {}).catch(function () { return { budget_plans: [] }; }),
+      api('calendar_subscriptions_list', {}).catch(function () { return { subscriptions: [] }; }),
     ]);
 
     state.stories = results[0].stories || [];
@@ -272,35 +317,31 @@
 
   document.getElementById('btn-save-overlay').onclick = async function () {
     var schedId = document.getElementById('filter-schedule').value || null;
-    await api('/api/narrative-timeline-overlay', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        resaurceScheduleId: schedId,
-        narrativeStartOffsetDays: parseFloat(document.getElementById('narrative-offset').value) || 0,
-        scaleLabel: document.getElementById('scale-label').value,
-        events: (state.overlay && state.overlay.events) || [],
-      }),
+    if (!schedId) {
+      alert('Select a production schedule before saving the narrative overlay.');
+      return;
+    }
+    await api('narrative_overlay_save', {
+      resaurceScheduleId: schedId,
+      narrativeStartOffsetDays: parseFloat(document.getElementById('narrative-offset').value) || 0,
+      scaleLabel: document.getElementById('scale-label').value,
+      events: (state.overlay && state.overlay.events) || [],
     });
     load();
   };
 
   document.getElementById('btn-sync-cal').onclick = async function () {
-    await api('/api/calendar/sync-now', { method: 'POST' });
+    await api('calendar_sync_now', {});
     alert('Sync triggered');
   };
 
   document.getElementById('btn-add-sub').onclick = async function () {
     var prov = document.getElementById('sub-provider').value;
-    await api('/api/calendar/subscriptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        provider: prov,
-        cronExpr: '*/15 * * * *',
-        targetUrl: document.getElementById('sub-target').value || null,
-        resaurceScheduleId: document.getElementById('filter-schedule').value || null,
-      }),
+    await api('calendar_subscriptions_create', {
+      provider: prov,
+      cronExpr: '*/15 * * * *',
+      targetUrl: document.getElementById('sub-target').value || null,
+      resaurceScheduleId: document.getElementById('filter-schedule').value || null,
     });
     load();
   };

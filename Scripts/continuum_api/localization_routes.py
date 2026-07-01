@@ -413,6 +413,12 @@ def register_localization_routes(
                 return jsonify({"error": f"draft change list is {blocked}; withdraw before editing"}), 409
             bindings = _load_bindings_for_draft(conn, draft_id)
             required, warnings, updated = audit_edit(old_text, new_text, bindings)
+            try:
+                from continuum_api.mod_db import audit_mayor_dog_mod_sections
+            except ImportError:
+                from mod_db import audit_mayor_dog_mod_sections
+            mod_required = audit_mayor_dog_mod_sections(conn, draft_id, old_text, new_text)
+            required = list(required) + mod_required
             cl_id, revision, req_out, warn_out = merge_change_list(conn, draft_id, required, warnings)
             try:
                 from continuum_api.localization_helpers import upsert_draft_script_text

@@ -31,7 +31,12 @@ def test_builtin_preorder_legal_gate():
     body = r.get_json()
     assert body["featureKey"] == PLATFORM_PREORDER_FEATURE
     assert body["legalCase"]["id"] == BUILTIN_PREORDER_CASE_ID
-    assert body["gate"]["status"] == "blocked"
+    assert body["legalCase"]["status"] == "closed"
+    assert body["gate"]["status"] == "cleared"
+    r = client.get(f"/api/legal/cases/{BUILTIN_PREORDER_CASE_ID}")
+    assert r.status_code == 200
+    resolutions = r.get_json().get("resolutions") or []
+    assert any("abstract business method" in (res.get("summary") or "").lower() for res in resolutions)
 
 
 def test_saurce_game_product_preorder_and_investment_flow():

@@ -25,6 +25,9 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
     LocalizationChangeListItemRecord[] _cachedRequired = Array.Empty<LocalizationChangeListItemRecord>();
     LocalizationChangeListItemRecord[] _cachedWarnings = Array.Empty<LocalizationChangeListItemRecord>();
     Vector2 _sideScroll;
+    DraftEpisodeRecord[] _draftEpisodes = Array.Empty<DraftEpisodeRecord>();
+    int _draftPopupIndex;
+    bool _showManualDraftId;
 
     public static void Open(string draftId = null, string reviewId = null)
     {
@@ -33,6 +36,7 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
         if (!string.IsNullOrEmpty(draftId)) w._draftId = draftId;
         if (!string.IsNullOrEmpty(reviewId)) w._reviewId = reviewId;
         w.Show();
+        _ = w.RefreshDraftListAsync();
         w.LoadDraft();
     }
 
@@ -52,6 +56,32 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
         Open();
     }
 
+    void OnEnable() => _ = RefreshDraftListAsync();
+
+    async Task RefreshDraftListAsync()
+    {
+        try
+        {
+            var all = await ContinuumEditorLocalizationClient.Instance.GetDraftEpisodesAsync();
+            _draftEpisodes = all.Where(d => d != null && !d.IsCommitted).OrderByDescending(d => d.updatedAt).ToArray();
+            if (!string.IsNullOrEmpty(_draftId))
+            {
+                var idx = Array.FindIndex(_draftEpisodes, d => d.id == _draftId);
+                if (idx >= 0) _draftPopupIndex = idx;
+            }
+            else if (_draftEpisodes.Length > 0 && string.IsNullOrEmpty(_draftId))
+            {
+                _draftPopupIndex = 0;
+                _draftId = _draftEpisodes[0].id;
+            }
+            Repaint();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"Script Editor: failed to list drafts — {ex.Message}");
+        }
+    }
+
     void OnDisable() => _webHost?.Dispose();
 
     void OnGUI()
@@ -68,7 +98,25 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
     void DrawToolbar()
     {
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        _draftId = EditorGUILayout.TextField(_draftId, GUILayout.Width(160));
+        if (_draftEpisodes.Length > 0 && !_showManualDraftId)
+        {
+            var labels = _draftEpisodes.Select(d => d.DisplayLabel).ToArray();
+            var next = EditorGUILayout.Popup(_draftPopupIndex, labels, GUILayout.MinWidth(200));
+            if (next != _draftPopupIndex && next >= 0 && next < _draftEpisodes.Length)
+            {
+                _draftPopupIndex = next;
+                _draftId = _draftEpisodes[next].id;
+                LoadDraft();
+            }
+        }
+        else
+        {
+            _draftId = EditorGUILayout.TextField(_draftId, GUILayout.Width(160));
+        }
+        if (GUILayout.Button(_showManualDraftId ? "▼" : "✎", EditorStyles.toolbarButton, GUILayout.Width(22)))
+            _showManualDraftId = !_showManualDraftId;
+        if (GUILayout.Button("↻", EditorStyles.toolbarButton, GUILayout.Width(22)))
+            _ = RefreshDraftListAsync();
         _reviewId = EditorGUILayout.TextField(_reviewId, GUILayout.Width(120));
         if (GUILayout.Button("Load", EditorStyles.toolbarButton, GUILayout.Width(50)))
             LoadDraft();

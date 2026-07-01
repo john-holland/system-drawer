@@ -8,6 +8,7 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const P_RE = /\{\{?P:[^}]+\}?\}?|\{P:[^}]+\}/g;
+  const M_RE = /\{\{?M:[^}]+\}?\}?|\{M:[^}]+\}/g;
 
   function computeEditRegions(oldText, newText) {
     oldText = oldText || '';
@@ -162,6 +163,17 @@
     });
   }
 
+  function parseModSpans(text) {
+    const spans = [];
+    if (!text) return spans;
+    let m;
+    M_RE.lastIndex = 0;
+    while ((m = M_RE.exec(text)) !== null) {
+      spans.push({ charStart: m.index, charEnd: m.index + m[0].length, kind: 'mayorDogModSlot', text: m[0] });
+    }
+    return spans;
+  }
+
   function parsePromptSpans(text) {
     const spans = [];
     if (!text) return spans;
@@ -177,6 +189,7 @@
     const shifted = displayBindingSpans(snapshotText ?? currentText, currentText, clauseBindings);
     return [
       ...parsePromptSpans(currentText),
+      ...parseModSpans(currentText),
       ...shifted.map((b) => ({
         charStart: b.charStart,
         charEnd: b.charEnd,
@@ -215,6 +228,7 @@
     fareyToCharSpan,
     displayBindingSpans,
     parsePromptSpans,
+    parseModSpans,
     buildOverlaySpans,
     spansOverlap,
     bindingsAtRange,

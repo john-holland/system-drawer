@@ -39,6 +39,26 @@ spelunk:
       route: /sql-viewer
       container: main
       tomeId: sql-viewer-tome
+    story-board:
+      route: /story-board
+      container: main
+      tomeId: story-board-tome
+    project-calendar:
+      route: /project-calendar
+      container: main
+      tomeId: production-calendar-tome
+    budget-dashboard:
+      route: /budget-dashboard
+      container: main
+      tomeId: budget-tome
+    legal-tracker:
+      route: /legal-tracker
+      container: main
+      tomeId: legal-tracker-tome
+    mayor-dog-mods:
+      route: /mayor-dog-mods
+      container: main
+      tomeId: mayor-dog-mods-tome
     features:
       route: /features
       container: main

@@ -1,0 +1,21 @@
+id: legal-tracker-tome
+name: Legal Tracker Tome
+machines:
+  caseMachine:
+    events:
+      LIST: list_legal_cases
+      CREATE: create_legal_case
+      GET: get_legal_case
+      PATCH: patch_legal_case
+  resolutionMachine:
+    events:
+      ADD: legal_case_resolution
+  gateMachine:
+    events:
+      GET: legal_preordering_gate
+robotCopy:
+  flows:
+    list_cases:
+      message: list_legal_cases
+    create_case:
+      message: create_legal_case

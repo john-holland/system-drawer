@@ -1,0 +1,31 @@
+id: production-calendar-tome
+name: Production Calendar Tome
+machines:
+  scheduleMachine:
+    events:
+      LIST: production_schedule_list
+      CREATE: production_schedule_create
+      GET: production_schedule_get
+      MILESTONE_STORIES: production_schedule_milestone_stories
+  budgetMachine:
+    events:
+      LIST: production_budget_list
+      WATER_LEVEL: production_budget_water_level
+  storyMachine:
+    events:
+      LIST: list_stories
+  overlayMachine:
+    events:
+      GET: narrative_overlay_get
+      SAVE: narrative_overlay_save
+  calendarMachine:
+    events:
+      SUBSCRIPTIONS_LIST: calendar_subscriptions_list
+      SUBSCRIPTIONS_CREATE: calendar_subscriptions_create
+      SYNC_NOW: calendar_sync_now
+robotCopy:
+  flows:
+    list_schedules:
+      message: production_schedule_list
+    list_stories:
+      message: list_stories

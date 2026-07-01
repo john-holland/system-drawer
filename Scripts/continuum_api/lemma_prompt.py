@@ -17,6 +17,11 @@ P_PROMPT_RE = re.compile(
     re.IGNORECASE,
 )
 
+try:
+    from continuum_api.mod_db import build_mod_context_from_manifest, resolve_mod_placeholders
+except ImportError:
+    from mod_db import build_mod_context_from_manifest, resolve_mod_placeholders
+
 SPATIAL_PROP_KEYS = (
     "spatial-center-x",
     "spatial-center-y",
@@ -368,6 +373,7 @@ def expand_lemma_prompt(
     visited: set[str] | None = None,
     inline_params: dict[str, str] | None = None,
     child_patch: dict[str, str] | None = None,
+    mod_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     ensure_lemma_prompt_schema(conn)
     visited = set(visited or [])
@@ -441,6 +447,8 @@ def expand_lemma_prompt(
         return "".join(out_parts), nodes
 
     expanded, child_nodes = expand_segment(template)
+    if mod_context:
+        expanded = resolve_mod_placeholders(expanded, mod_context)
     spatial = load_effective_spatial(conn, entry_id)
 
     for node in child_nodes:

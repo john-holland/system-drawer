@@ -1,0 +1,16 @@
+id: budget-tome
+name: Budget Dashboard Tome
+machines:
+  budgetMachine:
+    events:
+      LIST: production_budget_list
+      GET: production_budget_get
+      WATER_LEVEL: production_budget_water_level
+      JOURNAL_LIST: production_budget_journal_list
+      PUBLISH_SHEETS: production_budget_publish_sheets
+robotCopy:
+  flows:
+    water_level:
+      message: production_budget_water_level
+    journal_list:
+      message: production_budget_journal_list

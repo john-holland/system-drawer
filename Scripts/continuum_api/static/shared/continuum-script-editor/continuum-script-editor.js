@@ -128,6 +128,12 @@
       attachBtn.textContent = 'Attach clause';
       attachBtn.setAttribute('aria-label', 'Attach property, lemma, or localization to selection');
       toolbar.appendChild(attachBtn);
+      const modSlotBtn = document.createElement('button');
+      modSlotBtn.type = 'button';
+      modSlotBtn.textContent = 'Mark Mayor Dog mod slot';
+      modSlotBtn.setAttribute('aria-label', 'Mark selection as Mayor Dog Mod slot for player overrides');
+      modSlotBtn.onclick = () => this.markMayorDogModSlot(inst);
+      toolbar.appendChild(modSlotBtn);
       const suggestionsEl = document.createElement('div');
       suggestionsEl.className = 'continuum-clause-suggestions';
       suggestionsEl.setAttribute('aria-label', 'Reuse lemma or property configs for selected text');
@@ -544,6 +550,53 @@
       panel.appendChild(list);
     },
 
+    async markMayorDogModSlot(inst) {
+      inst = inst || this._instance;
+      if (!inst || inst.readOnly) return;
+      const sel = this.getSelection(inst);
+      if (sel.charEnd <= sel.charStart || !(sel.text || '').trim()) {
+        alert('Select script text to mark as a Mayor Dog Mod slot.');
+        return;
+      }
+      const options = inst.options || {};
+      const draftId = options.draftEpisodeId || options.draftId;
+      if (!draftId) {
+        alert('Draft episode ID is required to mark episode mod slots.');
+        return;
+      }
+      const label = (sel.text || '').trim().slice(0, 48);
+      const slotKey = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'mod-slot';
+      const body = {
+        targetKind: 'episode_section',
+        draftEpisodeId: draftId,
+        charStart: sel.charStart,
+        charEnd: sel.charEnd,
+        slotKey: `${slotKey}-${Date.now().toString(36).slice(-4)}`,
+        label,
+        sourceText: this.getValue(inst),
+      };
+      try {
+        const resp = await this.callApi('POST', '/api/mods/moddable-targets', body);
+        const item = resp.item || resp;
+        const token = `{M:${item.slotKey || body.slotKey}}`;
+        if (inst.aceLoaded && inst.editor) {
+          const Range = ace.require('ace/range').Range;
+          const session = inst.editor.getSession();
+          const start = session.doc.indexToPosition(sel.charEnd);
+          session.insert(start, token);
+        } else if (inst.editor && inst.editor._ta) {
+          const ta = inst.editor._ta;
+          const v = ta.value;
+          ta.value = v.slice(0, sel.charEnd) + token + v.slice(sel.charEnd);
+        }
+        inst._overlaySpanSig = null;
+        this.renderOverlays(inst, inst.options);
+        alert(`Mayor Dog Mod slot created: ${item.slotKey || body.slotKey}`);
+      } catch (err) {
+        alert(err.message || 'Failed to create mod slot');
+      }
+    },
+
     renderOverlays(inst, options) {
       inst = inst || this._instance;
       options = options || inst?.options || {};
@@ -573,7 +626,13 @@
           const start = session.doc.indexToPosition(cs);
           const end = session.doc.indexToPosition(ce);
           if (start.row === end.row && start.column === end.column) return;
-          const cls = span.kind === 'prompt' ? 'ace-prompt-placeholder' : span.kind === 'clause' ? 'ace-loc-clause' : 'ace-review-comment';
+          const cls = span.kind === 'prompt'
+            ? 'ace-prompt-placeholder'
+            : span.kind === 'mayorDogModSlot'
+              ? 'ace-mayor-dog-mod-slot'
+              : span.kind === 'clause'
+                ? 'ace-loc-clause'
+                : 'ace-review-comment';
           const id = session.addMarker(new Range(start.row, start.column, end.row, end.column), cls, 'text', false);
           inst._markers.push(id);
         });

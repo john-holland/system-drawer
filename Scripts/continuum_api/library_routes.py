@@ -1,23 +1,49 @@
-"""Proxy USC library UI and API from serve_library (default :5051) onto continuum_api."""
+"""USC library UI and API on continuum_api (inline serve_library or optional proxy)."""
 
 from __future__ import annotations
 
 import os
+import sys
 import urllib.error
-import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from flask import Response, request, send_file
+from flask import Response, redirect, request, send_file, send_from_directory
 
 CONTINUUM_REPO = Path(__file__).resolve().parents[2] / "continuum"
 if not CONTINUUM_REPO.is_dir():
     CONTINUUM_REPO = Path(os.environ.get("CONTINUUM_REPO", r"C:\Users\John\continuum"))
 LIBRARY_HTML = CONTINUUM_REPO / "library" / "library.html"
-LIBRARY_APP_BASE = os.environ.get("CONTINUUM_LIBRARY_BASE", "http://127.0.0.1:5051").rstrip("/")
+WEBGL_EDITOR_INDEX = CONTINUUM_REPO / "library" / "continuum_editor_webgl" / "index.html"
+LIBRARY_STATIC = CONTINUUM_REPO / "library"
+_INLINE_LIBRARY_MOUNTED = False
 
 
-def _proxy_request(method: str, url: str, body: bytes | None = None, headers: dict | None = None) -> tuple[int, bytes, list[tuple[str, str]]]:
+def _continuum_db_path() -> str:
+    scripts = Path(__file__).resolve().parents[1]
+    drawer = Path(__file__).resolve().parents[2]
+    for candidate in (
+        os.environ.get("CONTINUUM_DB"),
+        os.environ.get("CONTINUUM_DB_PATH"),
+        str(drawer / "continuum.db"),
+        str(scripts / "continuum.db"),
+    ):
+        if candidate:
+            return candidate
+    return str(scripts / "continuum.db")
+
+
+def _library_proxy_base() -> str | None:
+    """External library server URL, or None to use inline handlers."""
+    env = os.environ.get("CONTINUUM_LIBRARY_BASE", "").strip()
+    if env.lower() in ("", "same-origin", "inline", "self"):
+        return None
+    return env.rstrip("/")
+
+
+def _proxy_request(
+    method: str, url: str, body: bytes | None = None, headers: dict | None = None
+) -> tuple[int, bytes, list[tuple[str, str]]]:
     req = urllib.request.Request(url, data=body, method=method)
     skip = {"host", "content-length", "connection"}
     for k, v in (headers or {}).items():
@@ -29,7 +55,8 @@ def _proxy_request(method: str, url: str, body: bytes | None = None, headers: di
     except urllib.error.HTTPError as e:
         return e.code, e.read(), list(e.headers.items())
     except urllib.error.URLError as e:
-        return 502, f'{{"error":"library backend unavailable at {LIBRARY_APP_BASE}","detail":"{e}"}}'.encode(), [
+        base = _library_proxy_base() or "inline"
+        return 502, f'{{"error":"library backend unavailable at {base}","detail":"{e}"}}'.encode(), [
             ("Content-Type", "application/json")
         ]
 
@@ -40,46 +67,116 @@ def _flask_response(status: int, body: bytes, resp_headers: list[tuple[str, str]
     return Response(body, status=status, headers=headers)
 
 
+def _mount_inline_library_api(app) -> bool:
+    """Register serve_library API routes on this Flask app (single-server dev)."""
+    global _INLINE_LIBRARY_MOUNTED
+    if _INLINE_LIBRARY_MOUNTED:
+        return True
+    if _library_proxy_base() is not None:
+        return False
+    if not CONTINUUM_REPO.is_dir():
+        return False
+
+    repo_path = str(CONTINUUM_REPO)
+    if repo_path not in sys.path:
+        sys.path.insert(0, repo_path)
+
+    try:
+        import serve_library as sl  # noqa: WPS433
+        from spatial_routes import register_spatial_routes  # noqa: WPS433
+    except ImportError:
+        return False
+
+    db_path = _continuum_db_path()
+    os.environ.setdefault("CONTINUUM_DB_PATH", db_path)
+    sl.DB_PATH = db_path
+    sl._db = None  # noqa: SLF001
+    sl.UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+    register_spatial_routes(app, lambda: db_path)
+
+    for rule in sl.app.url_map.iter_rules():
+        if not rule.rule.startswith(("/api/library", "/api/geocode")):
+            continue
+        view_func = sl.app.view_functions.get(rule.endpoint)
+        if view_func is None:
+            continue
+        endpoint = "inline_usc_" + rule.endpoint.replace(".", "_")
+        if endpoint in app.view_functions:
+            continue
+        methods = sorted(m for m in rule.methods if m not in {"HEAD", "OPTIONS"})
+        app.add_url_rule(rule.rule, endpoint=endpoint, view_func=view_func, methods=methods)
+
+    _INLINE_LIBRARY_MOUNTED = True
+    return True
+
+
 def register_library_routes(app) -> None:
+    use_inline = _mount_inline_library_api(app)
+    proxy_base = _library_proxy_base() or "http://127.0.0.1:5051"
+
     @app.route("/library")
     @app.route("/library/")
     def serve_library_spa():
         if LIBRARY_HTML.is_file():
             return send_file(str(LIBRARY_HTML))
-        # fallback: proxy HTML from backend
-        status, body, hdrs = _proxy_request("GET", f"{LIBRARY_APP_BASE}/library")
+        status, body, hdrs = _proxy_request("GET", f"{proxy_base}/library")
         return _flask_response(status, body, hdrs)
 
-    @app.route("/api/library/<path:subpath>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
-    def proxy_library_api(subpath: str):
-        qs = request.query_string.decode() if request.query_string else ""
-        url = f"{LIBRARY_APP_BASE}/api/library/{subpath}"
-        if qs:
-            url = f"{url}?{qs}"
-        status, body, hdrs = _proxy_request(request.method, url, request.get_data(), dict(request.headers))
+    @app.route("/library/<path:asset>")
+    def serve_library_assets(asset: str):
+        if LIBRARY_STATIC.is_dir():
+            target = (LIBRARY_STATIC / asset).resolve()
+            try:
+                target.relative_to(LIBRARY_STATIC.resolve())
+            except ValueError:
+                return Response("Not found", status=404)
+            if target.is_file():
+                return send_from_directory(LIBRARY_STATIC, asset)
+        status, body, hdrs = _proxy_request("GET", f"{proxy_base}/library/{asset}")
         return _flask_response(status, body, hdrs)
 
-    @app.route("/api/spatial/<path:subpath>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
-    def proxy_spatial_api(subpath: str):
-        qs = request.query_string.decode() if request.query_string else ""
-        url = f"{LIBRARY_APP_BASE}/api/spatial/{subpath}"
-        if qs:
-            url = f"{url}?{qs}"
-        status, body, hdrs = _proxy_request(request.method, url, request.get_data(), dict(request.headers))
-        return _flask_response(status, body, hdrs)
+    if not use_inline:
+
+        @app.route("/api/library/<path:subpath>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+        def proxy_library_api(subpath: str):
+            qs = request.query_string.decode() if request.query_string else ""
+            url = f"{proxy_base}/api/library/{subpath}"
+            if qs:
+                url = f"{url}?{qs}"
+            status, body, hdrs = _proxy_request(request.method, url, request.get_data(), dict(request.headers))
+            return _flask_response(status, body, hdrs)
+
+        @app.route("/api/spatial/<path:subpath>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+        def proxy_spatial_api(subpath: str):
+            qs = request.query_string.decode() if request.query_string else ""
+            url = f"{proxy_base}/api/spatial/{subpath}"
+            if qs:
+                url = f"{url}?{qs}"
+            status, body, hdrs = _proxy_request(request.method, url, request.get_data(), dict(request.headers))
+            return _flask_response(status, body, hdrs)
 
     @app.route("/continuum_editor/")
     @app.route("/continuum_editor/<path:subpath>")
-    def proxy_continuum_editor(subpath: str | None = None):
-        suffix = subpath or ""
-        url = f"{LIBRARY_APP_BASE}/continuum_editor/{suffix}".rstrip("/") + "/"
+    def serve_continuum_editor(subpath: str | None = None):
+        if WEBGL_EDITOR_INDEX.is_file() and (subpath is None or subpath in ("", "index.html")):
+            return redirect("/library/continuum_editor_webgl/index.html")
+        if subpath and (LIBRARY_STATIC / subpath).is_file():
+            return send_from_directory(LIBRARY_STATIC, subpath)
+        if subpath is None or subpath == "":
+            from urllib.parse import urlencode
+
+            params = request.args.to_dict(flat=True)
+            params["panel"] = "upload"
+            return redirect("/library?" + urlencode(params))
+        if use_inline:
+            return Response("Not found", status=404)
+        url = f"{proxy_base}/continuum_editor/{subpath}".rstrip("/") + "/"
         if request.query_string:
             url = f"{url}?{request.query_string.decode()}"
         status, body, hdrs = _proxy_request("GET", url)
         if status in (301, 302, 303, 307, 308):
             location = next((v for k, v in hdrs if k.lower() == "location"), None)
-            if location and location.startswith(LIBRARY_APP_BASE):
-                from flask import redirect
-
-                return redirect(location.replace(LIBRARY_APP_BASE, "", 1) or "/library")
+            if location and location.startswith(proxy_base):
+                return redirect(location.replace(proxy_base, "", 1) or "/library")
         return _flask_response(status, body, hdrs)

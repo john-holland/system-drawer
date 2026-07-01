@@ -1,0 +1,360 @@
+schema_version: cave-manifest/1
+service: continuum
+cave_robit:
+  middleware:
+    - envelope_v2
+    - trace_loop_guard
+messages:
+  # SQL Viewer
+  sql_viewer_schema: sql-viewer/schema
+  sql_viewer_preview: sql-viewer/preview
+  sql_viewer_query: sql-viewer/query
+  sql_viewer_validate: sql-viewer/validate
+  sql_viewer_recipes: sql-viewer/recipes
+  # Stories / work orders
+  list_stories: stories/list
+  create_story: stories/create
+  get_story: stories/get
+  patch_story: stories/patch
+  story_assignees_add: stories/assignees/add
+  story_assignees_remove: stories/assignees/remove
+  story_watchers_add: stories/watchers/add
+  story_watchers_remove: stories/watchers/remove
+  story_validate_causality: stories/validate-causality
+  list_work_orders: work-orders/list
+  create_work_order: work-orders/create
+  run_work_order_causality: work-orders/run-causality
+  # Legal
+  list_legal_cases: legal/cases/list
+  create_legal_case: legal/cases/create
+  get_legal_case: legal/cases/get
+  patch_legal_case: legal/cases/patch
+  legal_case_resolution: legal/cases/resolution
+  legal_preordering_gate: legal/platform-features/preordering
+  legal_feature_gates: legal/feature-gates/list
+  legal_case_code_lines: legal/cases/code-lines
+  narrative_overlay_get: narrative/overlay/get
+  narrative_overlay_save: narrative/overlay/save
+  calendar_subscriptions_list: calendar/subscriptions/list
+  calendar_subscriptions_create: calendar/subscriptions/create
+  calendar_sync_now: calendar/sync-now
+  # Table read
+  table_read_session_open: table-read/session/open
+  table_read_session_end: table-read/session/end
+  table_read_chat_ensure: table-read/chat/ensure
+  table_read_invite: table-read/invite
+  table_read_messages_list: table-read/messages/list
+  table_read_messages_send: table-read/messages/send
+  # Lemma
+  lemma_browse: thesaurus/entries/search
+  # Production (federated resaurce)
+  production_budget_list: production/budget/list
+  production_budget_create: production/budget/create
+  production_budget_get: production/budget/get
+  production_budget_journal_list: production/budget/journal/list
+  production_budget_journal_post: production/budget/journal/post
+  production_budget_water_level: production/budget/water-level
+  production_budget_allocate_story: production/budget/allocate-story
+  production_budget_publish_sheets: production/budget/publish-sheets
+  production_schedule_list: production/schedule/list
+  production_schedule_create: production/schedule/create
+  production_schedule_get: production/schedule/get
+  production_schedule_milestone_stories: production/schedule/milestone/stories
+  # Chat (federated)
+  chat_messages_list: chat/messages/list
+  chat_messages_send: chat/messages/send
+mutating_routes:
+  - stories/create
+  - stories/patch
+  - stories/assignees/add
+  - stories/assignees/remove
+  - stories/watchers/add
+  - stories/watchers/remove
+  - stories/validate-causality
+  - work-orders/create
+  - work-orders/run-causality
+  - legal/cases/create
+  - legal/cases/patch
+  - legal/cases/resolution
+  - legal/platform-features/preordering
+  - table-read/session/open
+  - table-read/session/end
+  - table-read/chat/ensure
+  - table-read/invite
+  - table-read/messages/send
+  - sql-viewer/query
+structural:
+  sql-viewer/**:
+    machine: continuum:sqlViewer
+  stories/**:
+    machine: continuum:storyBoard
+  work-orders/**:
+    machine: continuum:storyBoard
+  legal/**:
+    machine: continuum:legalTracker
+  table-read/**:
+    machine: continuum:tableRead
+  thesaurus/**:
+    machine: continuum:lemmaLibrary
+handlers:
+  sql-viewer/schema:
+    internal:
+      method: GET
+      path: /api/sql-viewer/schema
+      headers: [X-User-ID]
+  sql-viewer/preview:
+    internal:
+      method: GET
+      path: /api/sql-viewer/tables/{tableName}/preview
+      query_from_payload: [limit, offset]
+      headers: [X-User-ID]
+  sql-viewer/query:
+    internal:
+      method: POST
+      path: /api/sql-viewer/query
+      headers: [X-User-ID]
+    mutating: true
+    lvm_events: [SqlQueryExecuted, TransitionCommitted]
+  sql-viewer/validate:
+    internal:
+      method: POST
+      path: /api/sql-viewer/validate
+      headers: [X-User-ID]
+  sql-viewer/recipes:
+    internal:
+      method: GET
+      path: /api/sql-viewer/recipes
+      headers: [X-User-ID]
+  stories/list:
+    internal:
+      method: GET
+      path: /api/stories
+      query_from_payload: [tenant_id, status, scheduleId, resaurce_schedule_id, project_id]
+  stories/create:
+    internal:
+      method: POST
+      path: /api/stories
+    mutating: true
+    lvm_events: [StoryCreated, TransitionCommitted]
+  stories/get:
+    internal:
+      method: GET
+      path: /api/stories/{story_id}
+  stories/patch:
+    internal:
+      method: PATCH
+      path: /api/stories/{story_id}
+    mutating: true
+    lvm_events: [StoryUpdated, TransitionCommitted]
+  stories/assignees/add:
+    internal:
+      method: POST
+      path: /api/stories/{story_id}/assignees
+    mutating: true
+    lvm_events: [StoryAssigneeAdded, TransitionCommitted]
+  stories/assignees/remove:
+    internal:
+      method: DELETE
+      path: /api/stories/{story_id}/assignees
+    mutating: true
+    lvm_events: [StoryAssigneeRemoved, TransitionCommitted]
+  stories/watchers/add:
+    internal:
+      method: POST
+      path: /api/stories/{story_id}/watchers
+    mutating: true
+    lvm_events: [StoryWatcherAdded, TransitionCommitted]
+  stories/watchers/remove:
+    internal:
+      method: DELETE
+      path: /api/stories/{story_id}/watchers
+    mutating: true
+    lvm_events: [StoryWatcherRemoved, TransitionCommitted]
+  stories/validate-causality:
+    internal:
+      method: POST
+      path: /api/stories/{story_id}/validate-causality
+    mutating: true
+    lvm_events: [StoryCausalityValidated, TransitionCommitted]
+  work-orders/list:
+    internal:
+      method: GET
+      path: /api/work-orders
+      query_from_payload: [story_id]
+  work-orders/create:
+    internal:
+      method: POST
+      path: /api/work-orders
+    mutating: true
+    lvm_events: [WorkOrderCreated, TransitionCommitted]
+  work-orders/run-causality:
+    internal:
+      method: POST
+      path: /api/work-orders/{work_order_id}/run-causality-test
+    mutating: true
+    lvm_events: [WorkOrderCausalityRun, TransitionCommitted]
+  legal/cases/list:
+    internal:
+      method: GET
+      path: /api/legal/cases
+      query_from_payload: [status]
+  legal/cases/create:
+    internal:
+      method: POST
+      path: /api/legal/cases
+    mutating: true
+    lvm_events: [LegalCaseCreated, TransitionCommitted]
+  legal/cases/get:
+    internal:
+      method: GET
+      path: /api/legal/cases/{case_id}
+  legal/cases/patch:
+    internal:
+      method: PATCH
+      path: /api/legal/cases/{case_id}
+    mutating: true
+    lvm_events: [LegalCaseUpdated, TransitionCommitted]
+  legal/cases/resolution:
+    internal:
+      method: POST
+      path: /api/legal/cases/{case_id}/resolutions
+    mutating: true
+    lvm_events: [LegalResolutionAdded, TransitionCommitted]
+  legal/platform-features/preordering:
+    internal:
+      method: GET
+      path: /api/legal/platform-features/preordering
+  legal/feature-gates/list:
+    internal:
+      method: GET
+      path: /api/legal/feature-gates
+  legal/cases/code-lines:
+    internal:
+      method: GET
+      path: /api/legal/cases/{case_id}/code-lines
+  narrative/overlay/get:
+    internal:
+      method: GET
+      path: /api/narrative-timeline-overlay
+      query_from_payload: [resaurceScheduleId, scheduleId]
+  narrative/overlay/save:
+    internal:
+      method: POST
+      path: /api/narrative-timeline-overlay
+    mutating: true
+    lvm_events: [NarrativeOverlaySaved, TransitionCommitted]
+  calendar/subscriptions/list:
+    internal:
+      method: GET
+      path: /api/calendar/subscriptions
+  calendar/subscriptions/create:
+    internal:
+      method: POST
+      path: /api/calendar/subscriptions
+    mutating: true
+    lvm_events: [CalendarSubscriptionCreated, TransitionCommitted]
+  calendar/sync-now:
+    internal:
+      method: POST
+      path: /api/calendar/sync-now
+    mutating: true
+    lvm_events: [CalendarSyncTriggered, TransitionCommitted]
+  thesaurus/entries/search:
+    internal:
+      method: GET
+      path: /api/thesaurus/entries
+      query_from_payload: [q, limit]
+  table-read/session/open:
+    handler: table_read.session_open
+    mutating: true
+    lvm_events: [TableReadSessionOpened, TransitionCommitted]
+  table-read/session/end:
+    internal:
+      method: POST
+      path: /api/table-read/sessions/{sessionId}/end
+    mutating: true
+    lvm_events: [TableReadSessionEnded, TransitionCommitted]
+  table-read/chat/ensure:
+    internal:
+      method: POST
+      path: /api/table-read/sessions/{sessionId}/ensure-chat
+    mutating: true
+    lvm_events: [TableReadChatEnsured, TransitionCommitted]
+  table-read/invite:
+    internal:
+      method: POST
+      path: /api/table-read/sessions/{sessionId}/invite
+    mutating: true
+    lvm_events: [TableReadInviteSent, TransitionCommitted]
+  table-read/messages/list:
+    internal:
+      method: GET
+      path: /api/chat/messages
+      query_from_payload: [chatRoomId]
+      headers: [X-User-ID]
+  table-read/messages/send:
+    internal:
+      method: POST
+      path: /api/chat/messages
+      headers: [X-User-ID]
+    mutating: true
+    lvm_events: [TableReadMessageSent, TransitionCommitted]
+  production/budget/list:
+    proxy: resaurce
+  production/budget/create:
+    proxy: resaurce
+  production/budget/get:
+    proxy: resaurce
+  production/budget/journal/list:
+    proxy: resaurce
+  production/budget/journal/post:
+    proxy: resaurce
+  production/budget/water-level:
+    proxy: resaurce
+  production/budget/allocate-story:
+    proxy: resaurce
+  production/budget/publish-sheets:
+    internal:
+      method: POST
+      path: /api/production/budget/{budget_plan_id}/publish-sheets
+    mutating: true
+    lvm_events: [BudgetSheetsPublished, TransitionCommitted]
+  production/schedule/list:
+    proxy: resaurce
+  production/schedule/create:
+    proxy: resaurce
+  production/schedule/get:
+    proxy: resaurce
+  production/schedule/milestone/stories:
+    proxy: resaurce
+  chat/messages/list:
+    proxy: resaurce
+  chat/messages/send:
+    proxy: resaurce
+lvm:
+  machines:
+    - id: continuum:sqlViewer
+      prefixes: [sql-viewer/]
+      structural_routes:
+        - sql-viewer/schema
+        - sql-viewer/preview
+        - sql-viewer/query
+        - sql-viewer/validate
+        - sql-viewer/recipes
+    - id: continuum:storyBoard
+      prefixes: [stories/, work-orders/]
+      structural_routes:
+        - stories/list
+        - stories/create
+        - stories/get
+        - stories/patch
+    - id: continuum:legalTracker
+      prefixes: [legal/]
+      structural_routes:
+        - legal/cases/list
+        - legal/cases/get
+    - id: continuum:tableRead
+      prefixes: [table-read/]
+      structural_routes:
+        - table-read/session/open
+        - table-read/chat/ensure

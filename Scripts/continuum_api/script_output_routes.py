@@ -49,6 +49,16 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _audit_script_edit(conn, draft_id: str, old_text: str, new_text: str, bindings):
+    required, warnings, updated = audit_edit(old_text, new_text, bindings)
+    try:
+        from continuum_api.mod_db import audit_mayor_dog_mod_sections
+    except ImportError:
+        from mod_db import audit_mayor_dog_mod_sections
+    required = list(required) + audit_mayor_dog_mod_sections(conn, draft_id, old_text, new_text)
+    return required, warnings, updated
+
+
 def _ensure_comment_columns(conn: sqlite3.Connection) -> None:
     _ensure_review_columns(conn)
     alters = [
@@ -290,7 +300,9 @@ def register_script_output_routes(app, get_conn: GetConn, get_user: GetUser) -> 
                 conn.close()
                 return jsonify({"error": "suggestion not found"}), 404
             bindings = _load_bindings_for_draft(conn, draft_id)
-            required, warnings, updated = audit_edit(
+            required, warnings, updated = _audit_script_edit(
+                conn,
+                draft_id,
                 row["base_script_text"] or "",
                 row["suggested_script_text"] or "",
                 bindings,
@@ -360,7 +372,9 @@ def register_script_output_routes(app, get_conn: GetConn, get_user: GetUser) -> 
                 conn.close()
                 return jsonify({"error": f"draft change list is {blocked}; withdraw before accepting"}), 409
             bindings = _load_bindings_for_draft(conn, draft_id)
-            required, warnings, updated = audit_edit(
+            required, warnings, updated = _audit_script_edit(
+                conn,
+                draft_id,
                 row["base_script_text"] or "",
                 row["suggested_script_text"] or "",
                 bindings,

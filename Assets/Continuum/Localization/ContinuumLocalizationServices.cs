@@ -38,4 +38,8 @@ public static class ContinuumLocalizationServices
         _cached = null;
         _notifCached = null;
     }
+
+    /// <summary>Apply Mayor Dog Mod lemma placeholders to expanded prompt text.</summary>
+    public static string ApplyModPlaceholders(string expandedText) =>
+        Continuum.Mods.MayorDogModApplicator.ResolveModPlaceholders(expandedText);
 }

@@ -3,7 +3,8 @@
     "rootNamespace": "SdfMax.Editor",
     "references": [
         "SdfMax",
-        "HierarchicalPathFinding"
+        "HierarchicalPathFinding",
+        "Planetary"
     ],
     "includePlatforms": [
         "Editor"

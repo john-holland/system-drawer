@@ -1,17 +1,23 @@
 id: table-read-tome
 name: Table Read Tome
-routing:
-  basePath: /api/tomes/table-read-tome
-  routes:
-    sessionMachine:
-      path: /session
-      method: POST
-    chatEnsureMachine:
-      path: /chat/ensure
-      method: POST
-    inviteMachine:
-      path: /invite
-      method: POST
-    messagesMachine:
-      path: /chat/messages
-      method: POST
+machines:
+  sessionMachine:
+    events:
+      SESSION_OPEN: table_read_session_open
+      SESSION_END: table_read_session_end
+  chatEnsureMachine:
+    events:
+      ENSURE_CHAT: table_read_chat_ensure
+  inviteMachine:
+    events:
+      INVITE_USER: table_read_invite
+  messagesMachine:
+    events:
+      LIST_MESSAGES: table_read_messages_list
+      SEND_MESSAGE: table_read_messages_send
+robotCopy:
+  flows:
+    session_open:
+      message: table_read_session_open
+    invite_user:
+      message: table_read_invite

@@ -11,6 +11,25 @@ namespace Planetary.Tectonics
         public LoopEdgeMap loopEdges = new LoopEdgeMap();
         public float gravitationalConstant = 6.674e-11f;
 
+        /// <summary>Clears plate state so the next regression starts from a clean slate.</summary>
+        public void ClearPlates()
+        {
+            plates = System.Array.Empty<PlateDefinition>();
+            loopEdges = new LoopEdgeMap();
+        }
+
+        public static void ResetPlateStress(PlateDefinition[] plateArray)
+        {
+            if (plateArray == null)
+                return;
+            for (int i = 0; i < plateArray.Length; i++)
+            {
+                var p = plateArray[i];
+                p.stressAccumulator = 0f;
+                plateArray[i] = p;
+            }
+        }
+
         public void Step(float deltaTime, Vector3 playerWorld)
         {
             if (plates == null || plates.Length < 2)

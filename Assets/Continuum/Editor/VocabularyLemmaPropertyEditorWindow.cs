@@ -83,6 +83,9 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         GUI.enabled = !string.IsNullOrEmpty(_entryId) && !string.IsNullOrEmpty(_clauseDraftId) && _clauseCharEnd > _clauseCharStart;
         if (GUILayout.Button("Attach entry to clause span"))
             _ = AttachEntryToClauseAsync();
+        GUI.enabled = !string.IsNullOrEmpty(_entryId) && _clauseCharEnd > _clauseCharStart;
+        if (GUILayout.Button("Mark Mayor Dog mod slot"))
+            _ = MarkMayorDogModSlotAsync();
         GUI.enabled = true;
 
         _scroll = EditorGUILayout.BeginScrollView(_scroll);
@@ -342,6 +345,37 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
             _entryId,
             scriptText);
         EditorUtility.DisplayDialog("Lemma Properties", "Lemma attached to clause span.", "OK");
+    }
+
+    async Task MarkMayorDogModSlotAsync()
+    {
+        if (string.IsNullOrEmpty(_entryId) || _clauseCharEnd <= _clauseCharStart)
+            return;
+        var label = string.IsNullOrEmpty(_clauseSelection)
+            ? _entryId
+            : _clauseSelection.Trim();
+        if (label.Length > 48)
+            label = label.Substring(0, 48);
+        var slotKey = System.Text.RegularExpressions.Regex.Replace(label.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        if (string.IsNullOrEmpty(slotKey))
+            slotKey = "lemma-slot";
+        slotKey = $"{slotKey}-{System.Guid.NewGuid().ToString("N").Substring(0, 4)}";
+        var draft = await ContinuumEditorLocalizationClient.Instance.GetDraftScriptAsync(_clauseDraftId);
+        var scriptText = draft?.scriptText ?? "";
+        var body = $@"{{""targetKind"":""lemma_prompt"",""entryId"":""{_entryId}"",""charStart"":{_clauseCharStart},""charEnd"":{_clauseCharEnd},""slotKey"":""{slotKey}"",""label"":""{label.Replace("\"", "\\\"")}"",""sourceText"":{JsonEscape(scriptText)}}}";
+        var resp = await ContinuumEditorLocalizationClient.Instance.CallRawAsync("POST", "/api/mods/moddable-targets", body);
+        if (!resp.success)
+        {
+            EditorUtility.DisplayDialog("Mayor Dog Mods", resp.error ?? "Failed to create mod slot.", "OK");
+            return;
+        }
+        EditorUtility.DisplayDialog("Mayor Dog Mods", $"Mod slot created: {slotKey}\nInsert {{M:{slotKey}}} in lemma prompt.", "OK");
+    }
+
+    static string JsonEscape(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "\"\"";
+        return "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r") + "\"";
     }
 
     void PushToRuntime()

@@ -612,13 +612,19 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
 
     @app.route("/api/thesaurus/entries/<path:entry_id>/expand-prompt", methods=["POST"])
     def post_expand_prompt(entry_id: str):
+        body = request.get_json(silent=True) or {}
+        mod_context = body.get("modContext") or body.get("mod_context")
         try:
             conn = get_conn()
             try:
                 from continuum_api.lemma_prompt import expand_lemma_prompt
+                from continuum_api.mod_db import build_mod_context_from_manifest
             except ImportError:
                 from lemma_prompt import expand_lemma_prompt
-            data = expand_lemma_prompt(conn, entry_id)
+                from mod_db import build_mod_context_from_manifest
+            if mod_context and mod_context.get("lemmaOverrides"):
+                mod_context = build_mod_context_from_manifest(mod_context)
+            data = expand_lemma_prompt(conn, entry_id, mod_context=mod_context)
             conn.close()
             return jsonify(data), 200
         except sqlite3.OperationalError as e:

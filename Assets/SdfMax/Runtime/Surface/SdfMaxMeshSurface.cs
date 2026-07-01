@@ -121,7 +121,7 @@ namespace SdfMax
             if (profile != null && profile.generateColliderMesh)
                 ApplyColliderMesh(profile);
 
-            _host.EnsureVolumeBuilt(true);
+            _host.EnsureVolumeBuilt(false);
             _meshDirty = false;
         }
 

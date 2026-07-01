@@ -9,28 +9,31 @@
   const modalTitle = document.getElementById('story-modal-title');
 
   let dragStoryId = null;
-  let dragMoved = false;
   let activeStoryId = null;
 
   if (window.ContinuumNav) {
     ContinuumNav.mount(document.getElementById('continuum-nav-root'), { app: 'story-board' });
   }
 
-  function esc(s) {
+  var caveShell = window.ContinuumCaveShell
+    ? window.ContinuumCaveShell.init({ tomeId: 'story-board-tome', presence: false })
+    : null;
+
+  async function caveMsg(message, payload) {
+    if (!caveShell) throw new Error('ContinuumCaveShell not loaded');
+    try {
+      return await caveShell.caveMessage(message, payload || {});
+    } catch (e) {
+      throw { status: e.status, body: e.body || {} };
+    }
+  }
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/"/g, '&quot;');
   }
 
-  async function api(path, opts) {
-    const r = await fetch(path, opts);
-    const j = await r.json().catch(function () { return {}; });
-    if (!r.ok) throw { status: r.status, body: j };
-    return j;
-  }
-
-  function formatError(e) {
+  function esc(s) {
     if (e.body && e.body.buildErrors) return JSON.stringify(e.body.buildErrors);
     if (e.body && e.body.legalCollisionWarnings) return JSON.stringify(e.body.legalCollisionWarnings);
     return (e.body && e.body.error) || 'Request failed';
@@ -46,11 +49,27 @@
     modalOverlay.setAttribute('aria-hidden', 'true');
     modalBody.innerHTML = '';
     activeStoryId = null;
+    setStoryQuery(null, true);
+  }
+
+  function setStoryQuery(storyId, replace) {
+    var url = new URL(location.href);
+    if (storyId) {
+      url.searchParams.set('story', storyId);
+    } else {
+      url.searchParams.delete('story');
+    }
+    var method = replace ? 'replaceState' : 'pushState';
+    history[method]({ storyId: storyId || null }, '', url.pathname + url.search);
   }
 
   modalOverlay.addEventListener('click', function (ev) {
     if (ev.target === modalOverlay) closeModal();
   });
+  var modalPanel = modalOverlay.querySelector('.story-modal');
+  if (modalPanel) {
+    modalPanel.addEventListener('click', function (ev) { ev.stopPropagation(); });
+  }
   document.getElementById('story-modal-close').onclick = closeModal;
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape' && modalOverlay.classList.contains('open')) closeModal();
@@ -90,11 +109,7 @@
       var storyId = ev.dataTransfer.getData('text/story-id') || dragStoryId;
       if (!storyId) return;
       try {
-        await api('/api/stories/' + encodeURIComponent(storyId), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: status }),
-        });
+        await caveMsg('patch_story', { story_id: storyId, status: status });
         await loadStories();
         if (activeStoryId === storyId) showDetail(storyId);
       } catch (e) {
@@ -105,28 +120,29 @@
   }
 
   function setupCardDrag(card, story) {
-    card.draggable = true;
     card.dataset.storyId = story.id;
+    var handle = card.querySelector('.card-drag-handle');
+    if (!handle) return;
 
-    card.addEventListener('dragstart', function (ev) {
-      dragMoved = true;
+    handle.draggable = true;
+
+    handle.addEventListener('dragstart', function (ev) {
       dragStoryId = story.id;
       card.classList.add('card-dragging');
       ev.dataTransfer.effectAllowed = 'move';
       ev.dataTransfer.setData('text/story-id', story.id);
     });
 
-    card.addEventListener('dragend', function () {
+    handle.addEventListener('dragend', function () {
       card.classList.remove('card-dragging');
       dragStoryId = null;
       board.querySelectorAll('.col-drop-target').forEach(function (el) {
         el.classList.remove('col-drop-target');
       });
-      setTimeout(function () { dragMoved = false; }, 100);
     });
 
-    card.addEventListener('click', function () {
-      if (dragMoved) return;
+    card.addEventListener('click', function (ev) {
+      if (ev.target.closest('.card-drag-handle')) return;
       showDetail(story.id);
     });
   }
@@ -146,8 +162,10 @@
         var card = document.createElement('div');
         card.className = 'card';
         var errHint = (s.buildErrors && s.buildErrors.length) ? ' <span class="errors" title="Build errors">⚠</span>' : '';
-        card.innerHTML = '<strong>' + esc(s.summary || s.id) + '</strong>' + errHint +
-          '<br><small>value: ' + esc(s.story_value || 0) + '</small>';
+        card.innerHTML =
+          '<span class="card-drag-handle" title="Drag to move column" aria-label="Drag">⠿</span>' +
+          '<div class="card-body"><strong>' + esc(s.summary || s.id) + '</strong>' + errHint +
+          '<br><small>value: ' + esc(s.story_value || 0) + '</small></div>';
         setupCardDrag(card, s);
         cardsHost.appendChild(card);
       });
@@ -159,37 +177,34 @@
 
   async function loadStories() {
     var sched = document.getElementById('filter-schedule').value.trim();
-    var url = '/api/stories';
-    if (sched) url += '?resaurce_schedule_id=' + encodeURIComponent(sched);
-    var data = await api(url);
+    var payload = {};
+    if (sched) payload.resaurce_schedule_id = sched;
+    var data = await caveMsg('list_stories', payload);
     renderBoard(data.stories || []);
   }
 
   async function loadWorkOrders(storyId) {
-    var data = await api('/api/work-orders?story_id=' + encodeURIComponent(storyId));
+    var data = await caveMsg('list_work_orders', { story_id: storyId });
     return data.workOrders || [];
   }
 
   function bindDetailHandlers(id, s) {
     document.getElementById('btn-save').onclick = async function () {
       try {
-        await api('/api/stories/' + id, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: document.getElementById('detail-status').value,
-            description: document.getElementById('detail-desc').value,
-            storyValue: parseFloat(document.getElementById('detail-value').value) || 0,
-            externalProvider: document.getElementById('detail-ext-provider').value,
-            externalKey: document.getElementById('detail-ext-key').value,
-            externalUrl: document.getElementById('detail-ext-url').value,
-            githubProjectNumber: document.getElementById('detail-gh-proj').value
-              ? parseInt(document.getElementById('detail-gh-proj').value, 10) : null,
-            jiraProjectKey: document.getElementById('detail-jira-proj').value,
-            jiraIssueType: document.getElementById('detail-jira-type').value,
-            resaurceScheduleId: document.getElementById('detail-schedule').value || null,
-            resaurceBudgetPlanId: document.getElementById('detail-budget').value || null,
-          }),
+        await caveMsg('patch_story', {
+          story_id: id,
+          status: document.getElementById('detail-status').value,
+          description: document.getElementById('detail-desc').value,
+          storyValue: parseFloat(document.getElementById('detail-value').value) || 0,
+          externalProvider: document.getElementById('detail-ext-provider').value,
+          externalKey: document.getElementById('detail-ext-key').value,
+          externalUrl: document.getElementById('detail-ext-url').value,
+          githubProjectNumber: document.getElementById('detail-gh-proj').value
+            ? parseInt(document.getElementById('detail-gh-proj').value, 10) : null,
+          jiraProjectKey: document.getElementById('detail-jira-proj').value,
+          jiraIssueType: document.getElementById('detail-jira-type').value,
+          resaurceScheduleId: document.getElementById('detail-schedule').value || null,
+          resaurceBudgetPlanId: document.getElementById('detail-budget').value || null,
         });
         await loadStories();
         showDetail(id);
@@ -201,43 +216,27 @@
     document.getElementById('btn-assign').onclick = async function () {
       var uid = document.getElementById('detail-assignee').value.trim();
       if (!uid) return;
-      await api('/api/stories/' + id + '/assignees', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: uid }),
-      });
+      await caveMsg('story_assignees_add', { story_id: id, userId: uid });
       showDetail(id);
     };
 
     document.getElementById('btn-watcher').onclick = async function () {
       var uid = document.getElementById('detail-watcher').value.trim();
       if (!uid) return;
-      await api('/api/stories/' + id + '/watchers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: uid }),
-      });
+      await caveMsg('story_watchers_add', { story_id: id, userId: uid });
       showDetail(id);
     };
 
     modalBody.querySelectorAll('.btn-rm-assignee').forEach(function (btn) {
       btn.onclick = async function () {
-        await api('/api/stories/' + id + '/assignees', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: btn.dataset.uid }),
-        });
+        await caveMsg('story_assignees_remove', { story_id: id, userId: btn.dataset.uid });
         showDetail(id);
       };
     });
 
     modalBody.querySelectorAll('.btn-rm-watcher').forEach(function (btn) {
       btn.onclick = async function () {
-        await api('/api/stories/' + id + '/watchers', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: btn.dataset.uid }),
-        });
+        await caveMsg('story_watchers_remove', { story_id: id, userId: btn.dataset.uid });
         showDetail(id);
       };
     });
@@ -257,7 +256,7 @@
 
     document.getElementById('btn-validate').onclick = async function () {
       try {
-        var r = await api('/api/stories/' + id + '/validate-causality', { method: 'POST' });
+        var r = await caveMsg('story_validate_causality', { story_id: id });
         alert(r.ok ? 'OK' : JSON.stringify(r.buildErrors));
       } catch (e) {
         alert(JSON.stringify((e.body && e.body.buildErrors) || e.body || e));
@@ -271,17 +270,13 @@
       if (refRaw) {
         try { assetRef = JSON.parse(refRaw); } catch (_) { alert('Invalid asset ref JSON'); return; }
       }
-      var wo = await api('/api/work-orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storyId: id,
-          episodeId: document.getElementById('wo-episode').value.trim() || undefined,
-          assetKind: document.getElementById('wo-asset-kind').value,
-          assetRef: assetRef,
-          narrativeType: 'linear',
-          status: 'pending',
-        }),
+      var wo = await caveMsg('create_work_order', {
+        storyId: id,
+        episodeId: document.getElementById('wo-episode').value.trim() || undefined,
+        assetKind: document.getElementById('wo-asset-kind').value,
+        assetRef: assetRef,
+        narrativeType: 'linear',
+        status: 'pending',
       });
       if (wo.legalCollisionWarnings && wo.legalCollisionWarnings.length) {
         alert('Legal warnings: ' + wo.legalCollisionWarnings.map(function (w) { return w.message; }).join('; '));
@@ -292,7 +287,7 @@
     modalBody.querySelectorAll('.btn-wo-test').forEach(function (btn) {
       btn.onclick = async function () {
         try {
-          var r = await api('/api/work-orders/' + btn.dataset.wo + '/run-causality-test', { method: 'POST' });
+          var r = await caveMsg('run_work_order_causality', { work_order_id: btn.dataset.wo });
           alert(r.ok ? 'Pass' : JSON.stringify(r.buildErrors));
         } catch (e) {
           alert(JSON.stringify((e.body && e.body.buildErrors) || e.body || e));
@@ -302,10 +297,22 @@
     });
   }
 
-  async function showDetail(id) {
+  async function showDetail(id, replaceHistory) {
     activeStoryId = id;
-    var s = await api('/api/stories/' + id);
-    var wos = await loadWorkOrders(id);
+    modalTitle.textContent = 'Story';
+    modalBody.innerHTML = '<p>Loading…</p>';
+    openModal();
+    setStoryQuery(id, !!replaceHistory);
+
+    var s;
+    var wos;
+    try {
+      s = await caveMsg('get_story', { story_id: id });
+      wos = await loadWorkOrders(id);
+    } catch (e) {
+      modalBody.innerHTML = '<p class="errors">Failed to load story: ' + esc(formatError(e)) + '</p>';
+      return;
+    }
     if (s.resaurce_chat_room_id) {
       localStorage.setItem('continuumChatStoryRoom', s.resaurce_chat_room_id);
     }
@@ -371,7 +378,6 @@
       '<button type="button" id="btn-save">Save</button></div>';
 
     bindDetailHandlers(id, s);
-    openModal();
   }
 
   document.getElementById('btn-refresh').onclick = loadStories;
@@ -381,11 +387,7 @@
     var summary = prompt('Story summary');
     if (!summary) return;
     try {
-      var r = await api('/api/stories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summary: summary, storyValue: 1 }),
-      });
+      var r = await caveMsg('create_story', { summary: summary, storyValue: 1 });
       if (r.legalCollisionWarnings && r.legalCollisionWarnings.length) {
         alert('Legal warnings: ' + r.legalCollisionWarnings.map(function (w) { return w.message; }).join('; '));
       }
@@ -396,5 +398,19 @@
     }
   };
 
-  loadStories().catch(function (e) { console.error(e); });
+  window.addEventListener('popstate', function () {
+    var storyId = new URLSearchParams(location.search).get('story');
+    if (storyId) {
+      showDetail(storyId, true);
+    } else if (modalOverlay.classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  loadStories()
+    .then(function () {
+      var storyId = new URLSearchParams(location.search).get('story');
+      if (storyId) showDetail(storyId, true);
+    })
+    .catch(function (e) { console.error(e); });
 })();

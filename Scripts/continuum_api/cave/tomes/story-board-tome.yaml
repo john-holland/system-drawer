@@ -1,0 +1,31 @@
+id: story-board-tome
+name: Story Board Tome
+machines:
+  storyMachine:
+    events:
+      LIST: list_stories
+      CREATE: create_story
+      GET: get_story
+      PATCH: patch_story
+      VALIDATE_CAUSALITY: story_validate_causality
+  assigneeMachine:
+    events:
+      ADD: story_assignees_add
+      REMOVE: story_assignees_remove
+  watcherMachine:
+    events:
+      ADD: story_watchers_add
+      REMOVE: story_watchers_remove
+  workOrderMachine:
+    events:
+      LIST: list_work_orders
+      CREATE: create_work_order
+      RUN_CAUSALITY: run_work_order_causality
+robotCopy:
+  flows:
+    list_stories:
+      message: list_stories
+    create_story:
+      message: create_story
+    patch_story:
+      message: patch_story

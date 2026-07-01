@@ -37,23 +37,48 @@ namespace Planetary.Rendering
 
         public void Rebake()
         {
+            EnsureRenderRefs();
+            if (_body == null || _filter == null)
+                return;
+            _baker.RebuildTiers(_body, profile);
+            ApplyHighestTierMesh();
+        }
+
+        /// <summary>Bakes LOD tiers once when missing; safe to call from play-mode startup.</summary>
+        public void EnsureLodMeshes()
+        {
+            EnsureRenderRefs();
+            if (_body == null || _filter == null || profile == null || _body.composition == null)
+                return;
+            if (_baker.TierMeshes.Count == 0)
+                Rebake();
+            else
+                ApplyHighestTierMesh();
+        }
+
+        void EnsureRenderRefs()
+        {
             if (_filter == null)
                 _filter = GetComponent<MeshFilter>();
             if (_renderer == null)
                 _renderer = GetComponent<MeshRenderer>();
             if (_body == null)
                 _body = GetComponentInParent<PlanetBody>();
-            if (_body == null || _filter == null)
+        }
+
+        void ApplyHighestTierMesh()
+        {
+            if (_filter == null || _baker.TierMeshes.Count == 0)
                 return;
-            _baker.RebuildTiers(_body, profile);
-            if (_baker.TierMeshes.Count > 0)
-                _filter.sharedMesh = _baker.TierMeshes[_baker.TierMeshes.Count - 1];
+            _filter.sharedMesh = _baker.TierMeshes[_baker.TierMeshes.Count - 1];
         }
 
         void LateUpdate()
         {
-            if (_body == null || _renderer == null || lodMaterial == null)
+            if (_body == null || _renderer == null)
                 return;
+            if (_baker.TierMeshes.Count == 0)
+                EnsureLodMeshes();
             if (_handoff == null && _body.streamingService != null)
                 _handoff = new PlanetaryLodHandoffController(_body.streamingService);
             _handoff?.Tick(_body, Camera.main);
@@ -83,9 +108,12 @@ namespace Planetary.Rendering
                 _mpb.SetFloat(HorizonStartId, profile.horizonStart);
                 _mpb.SetFloat(HorizonEndId, profile.horizonEnd);
             }
-            _renderer.SetPropertyBlock(_mpb);
-            if (_renderer.sharedMaterial != lodMaterial)
-                _renderer.sharedMaterial = lodMaterial;
+            if (lodMaterial != null)
+            {
+                _renderer.SetPropertyBlock(_mpb);
+                if (_renderer.sharedMaterial != lodMaterial)
+                    _renderer.sharedMaterial = lodMaterial;
+            }
         }
     }
 }

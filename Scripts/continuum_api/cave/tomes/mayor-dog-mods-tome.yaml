@@ -1,0 +1,14 @@
+id: mayor-dog-mods-tome
+name: Mayor Dog Mods Tome
+routing:
+  basePath: /api/tomes/mayor-dog-mods-tome
+  routes:
+    browseMods:
+      path: /mods
+      method: GET
+    uploadMod:
+      path: /mods/upload
+      method: POST
+    uploadSettings:
+      path: /mods/upload/settings
+      method: GET

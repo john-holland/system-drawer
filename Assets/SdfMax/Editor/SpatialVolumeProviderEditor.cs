@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using Planetary;
 using SpatialVolumes;
 using SdfMax;
 using UnityEditor;
@@ -57,7 +58,13 @@ namespace SdfMax.Editor
                 SdfMaxEditorUndo.ApplyAutoCalculate(provider, provider.transform);
 
             if (GUILayout.Button("Rebuild Now", GUILayout.Height(22)))
-                provider.RebuildIfDirty(force: true);
+            {
+                var planet = provider.GetComponentInParent<PlanetBody>();
+                if (planet != null)
+                    planet.RebuildTectonicPlates(stepPhysics: true);
+                else
+                    provider.RebuildIfDirty(force: true);
+            }
             EditorGUILayout.EndHorizontal();
         }
     }

@@ -191,7 +191,14 @@ def register_resaurce_routes(app, get_conn: GetConn) -> None:
                 return jsonify({"error": "cannot delete built-in case"}), 403
             fields = []
             params: list[Any] = []
-            for key, col in [("status", "status"), ("severity", "severity"), ("assignedTo", "assigned_to")]:
+            for key, col in [
+                ("status", "status"),
+                ("severity", "severity"),
+                ("assignedTo", "assigned_to"),
+                ("title", "title"),
+                ("description", "description"),
+                ("category", "category"),
+            ]:
                 if key in body:
                     fields.append(f"{col} = ?")
                     params.append(body[key])
@@ -199,6 +206,7 @@ def register_resaurce_routes(app, get_conn: GetConn) -> None:
                 params.append(case_id)
                 conn.execute(f"UPDATE legal_cases SET {', '.join(fields)} WHERE id = ?", params)
                 conn.commit()
+                row = conn.execute("SELECT * FROM legal_cases WHERE id = ?", (case_id,)).fetchone()
         resolutions = conn.execute(
             "SELECT * FROM legal_resolutions WHERE case_id = ? ORDER BY resolved_at DESC",
             (case_id,),
@@ -253,14 +261,19 @@ def register_resaurce_routes(app, get_conn: GetConn) -> None:
             rtype = body.get("resolutionType") or ""
             summary = (body.get("summary") or "").lower()
             cleared = rtype in ("no_action", "waiver", "fix", "policy_change") and (
-                "clear" in summary or "waiv" in summary or rtype == "waiver"
+                "clear" in summary
+                or "waiv" in summary
+                or "not patent" in summary
+                or "no active patent" in summary
+                or "abstract business" in summary
+                or rtype == "waiver"
             )
             if cleared:
                 conn.execute(
                     "UPDATE platform_feature_gates SET status = ?, updated_at = ? WHERE feature_key = ?",
                     ("cleared", now, PLATFORM_PREORDER_FEATURE),
                 )
-                conn.execute("UPDATE legal_cases SET status = ?, closed_at = ? WHERE id = ?", ("resolved", now, case_id))
+                conn.execute("UPDATE legal_cases SET status = ?, closed_at = ? WHERE id = ?", ("closed", now, case_id))
         conn.commit()
         conn.close()
         return jsonify({"id": rid}), 201

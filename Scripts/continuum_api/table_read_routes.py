@@ -35,7 +35,7 @@ except ImportError:
 GetConn = Callable[[], sqlite3.Connection]
 GetUser = Callable[[], str]
 
-LIBRARY_APP_BASE = os.environ.get("CONTINUUM_LIBRARY_BASE", "http://127.0.0.1:5051").rstrip("/")
+LIBRARY_APP_BASE = os.environ.get("CONTINUUM_LIBRARY_BASE", "").rstrip("/") or "http://127.0.0.1:5050"
 
 
 def _now() -> str:

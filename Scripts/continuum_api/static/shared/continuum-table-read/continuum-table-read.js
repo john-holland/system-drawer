@@ -3,6 +3,21 @@
   'use strict';
 
   var API = '/api';
+  var caveShell = global.ContinuumCaveShell
+    ? global.ContinuumCaveShell.init({ tomeId: 'table-read-tome', presence: false })
+    : null;
+
+  function caveMsg(message, payload) {
+    if (!caveShell) return Promise.reject(new Error('ContinuumCaveShell not loaded'));
+    return caveShell.caveMessage(message, payload || {});
+  }
+
+  function headers(extra) {
+    return global.ContinuumUserSession
+      ? global.ContinuumUserSession.getHeaders(Object.assign({ 'Content-Type': 'application/json' }, extra || {}))
+      : Object.assign({ 'Content-Type': 'application/json', 'X-User-ID': 'anonymous' }, extra || {});
+  }
+
   var socket = null;
   var state = {
     sessionId: null,
@@ -17,12 +32,6 @@
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  }
-
-  function headers(extra) {
-    return global.ContinuumUserSession
-      ? global.ContinuumUserSession.getHeaders(Object.assign({ 'Content-Type': 'application/json' }, extra || {}))
-      : Object.assign({ 'Content-Type': 'application/json', 'X-User-ID': 'anonymous' }, extra || {});
   }
 
   function api(path, opts) {
@@ -342,9 +351,9 @@
   }
 
   function joinSession(sessionId) {
-    return api('/table-read/sessions/' + encodeURIComponent(sessionId) + '/join', {
-      method: 'POST',
-      body: JSON.stringify({ displayName: global.ContinuumUserSession ? global.ContinuumUserSession.getUserId() : 'anonymous' }),
+    return caveMsg('table_read_session_open', {
+      sessionId: sessionId,
+      displayName: global.ContinuumUserSession ? global.ContinuumUserSession.getUserId() : 'anonymous',
     }).then(applySnapshot);
   }
 

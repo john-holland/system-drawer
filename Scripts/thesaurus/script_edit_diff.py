@@ -69,6 +69,16 @@ def parse_prompt_spans(text: str) -> List[SpanRef]:
     return spans
 
 
+M_MOD_RE = re.compile(r"\{\{?M:[^}]+\}?\}?|\{M:[^}]+\}", re.IGNORECASE)
+
+
+def parse_mod_spans(text: str) -> List[SpanRef]:
+    spans: List[SpanRef] = []
+    for m in M_MOD_RE.finditer(text or ""):
+        spans.append(SpanRef(m.start(), m.end(), label=m.group(0), kind="mayorDogModSlot"))
+    return spans
+
+
 def bindings_to_spans(bindings: Sequence[dict], script_text: str = "") -> List[SpanRef]:
     from thesaurus.clause_audit import resolve_binding_char_span
 
@@ -176,7 +186,7 @@ def audit_edit(
     required: List[DiffItem] = []
     warnings: List[DiffItem] = []
     regions = compute_edit_regions(old_text or "", new_text or "")
-    all_spans = bindings_to_spans(bindings, old_text or "") + parse_prompt_spans(old_text or "")
+    all_spans = bindings_to_spans(bindings, old_text or "") + parse_prompt_spans(old_text or "") + parse_mod_spans(old_text or "")
 
     updated_bindings = [dict(b) for b in (bindings or [])]
     binding_by_id = {b.get("id"): b for b in updated_bindings if b.get("id")}

@@ -345,7 +345,9 @@
       .join('');
     const syns = (data.synonyms || []).join(', ') || '—';
     const tags = (data.tags || []).join(', ') || '—';
-    const libBase = localStorage.getItem('continuumLibraryBase') || '';
+    const libBase = window.ContinuumNav
+      ? ContinuumNav.normalizeLibraryBase(localStorage.getItem('continuumLibraryBase') || '', location.origin)
+      : (localStorage.getItem('continuumLibraryBase') || location.origin + '/library');
     const assetLink = (data.linkedAssetIds || [])[0];
     const cc = data.componentCreation || {};
     const compTypes = (cc.componentTypes || []).join(', ') || '—';
@@ -727,7 +729,12 @@
     document.getElementById('btn-refresh-browse')?.addEventListener('click', () => loadBrowse());
     window.addEventListener('hashchange', route);
     const params = new URLSearchParams(location.search);
-    if (params.get('libraryBase')) localStorage.setItem('continuumLibraryBase', params.get('libraryBase'));
+    if (params.get('libraryBase')) {
+      const normalized = window.ContinuumNav
+        ? ContinuumNav.normalizeLibraryBase(params.get('libraryBase'), location.origin)
+        : params.get('libraryBase').replace(/\/$/, '');
+      localStorage.setItem('continuumLibraryBase', normalized);
+    }
     const hashQuery = (location.hash.slice(1).split('?')[1] || '');
     const hashParams = new URLSearchParams(hashQuery);
     const prefillQ = params.get('q') || hashParams.get('q');

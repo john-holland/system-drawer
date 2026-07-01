@@ -8,6 +8,23 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const ACK_ID = 'ack-in-review-cycle';
+  const MAYOR_DOG_MOD_ITEM_TYPE = 'mayor_dog_mod_section_altered';
+
+  function isMayorDogModItem(item) {
+    return (item && (item.itemType || item.item_type)) === MAYOR_DOG_MOD_ITEM_TYPE;
+  }
+
+  function buildMayorDogModAckItems(hasModSectionChange) {
+    if (!hasModSectionChange) return [];
+    return [{
+      id: 'ack-mayor-dog-mod-section',
+      severity: 'required',
+      itemType: MAYOR_DOG_MOD_ITEM_TYPE,
+      description: 'This edit modifies a Mayor Dog Mod section; verify mod slots remain valid and update slot metadata if ranges changed.',
+      userAcknowledged: false,
+      _synthetic: true,
+    }];
+  }
 
   function changeListNeedsReviewAck(changeList) {
     if (!changeList) return false;
@@ -41,6 +58,9 @@
 
   return {
     ACK_ID,
+    MAYOR_DOG_MOD_ITEM_TYPE,
+    isMayorDogModItem,
+    buildMayorDogModAckItems,
     changeListNeedsReviewAck,
     buildChangeListAckItems,
     mergeAckIntoChangeListData,

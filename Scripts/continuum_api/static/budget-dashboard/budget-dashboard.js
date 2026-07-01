@@ -5,11 +5,18 @@
     ContinuumNav.mount(document.getElementById('continuum-nav-root'), { app: 'budget-dashboard' });
   }
 
+  var caveShell = window.ContinuumCaveShell
+    ? window.ContinuumCaveShell.init({ tomeId: 'budget-tome', presence: false })
+    : null;
+
+  function caveMsg(message, payload) {
+    if (!caveShell) return Promise.reject(new Error('ContinuumCaveShell not loaded'));
+    return caveShell.caveMessage(message, payload || {});
+  }
+
   async function loadPlan(planId) {
-    var waterRes = await fetch('/api/production/budget/' + encodeURIComponent(planId) + '/water-level');
-    var water = await waterRes.json();
-    var planRes = await fetch('/api/production/budget/' + encodeURIComponent(planId));
-    var planBody = await planRes.json();
+    var water = await caveMsg('production_budget_water_level', { budget_plan_id: planId });
+    var planBody = await caveMsg('production_budget_get', { budget_plan_id: planId });
     var plan = planBody.budget_plan || planBody;
     var wl = water.water_level || water;
     var capacity = wl.capacity_usd || plan.capacity_usd || plan.total_usd || 1;
@@ -25,8 +32,7 @@
       'Level $' + level.toFixed(2) + ' / capacity $' + capacity.toFixed(2) +
       (wl.alerts && wl.alerts.length ? ' — ' + wl.alerts.map(function (a) { return a.type; }).join(', ') : '');
 
-    var jRes = await fetch('/api/production/budget/' + encodeURIComponent(planId) + '/journal');
-    var jBody = await jRes.json();
+    var jBody = await caveMsg('production_budget_journal_list', { budget_plan_id: planId });
     document.getElementById('journal').textContent = JSON.stringify(jBody.journal_entries || jBody, null, 2);
   }
 
@@ -39,8 +45,7 @@
   document.getElementById('btn-sheets').onclick = async function () {
     var id = document.getElementById('plan-id').value.trim();
     if (!id) return;
-    var r = await fetch('/api/production/budget/' + encodeURIComponent(id) + '/publish-sheets', { method: 'POST' });
-    var j = await r.json();
+    var j = await caveMsg('production_budget_publish_sheets', { budget_plan_id: id });
     alert(j.ok ? 'Published (or dry-run OK)' : (j.message || j.error || 'Failed'));
   };
 

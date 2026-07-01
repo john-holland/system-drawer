@@ -78,9 +78,9 @@ def tome_client(monkeypatch):
 def test_routes_overview_includes_table_read_tome_machines():
     overview = build_routes_overview()
     paths = {r["path"] for r in overview.get("tomes", []) if r.get("tomeId") == "table-read-tome"}
-    assert "/api/tomes/table-read-tome/session" in paths
-    assert "/api/tomes/table-read-tome/chat/ensure" in paths
-    assert "/api/tomes/table-read-tome/invite" in paths
+    assert "/api/tomes/table-read-tome/machines/sessionMachine/message" in paths
+    assert "/api/tomes/table-read-tome/machines/chatEnsureMachine/message" in paths
+    assert "/api/tomes/table-read-tome/machines/inviteMachine/message" in paths
 
 
 def test_session_machine_open(tome_client):

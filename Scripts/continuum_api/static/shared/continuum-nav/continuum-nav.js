@@ -35,12 +35,47 @@
     }
   }
 
+  function sameOriginLibraryBase(origin) {
+    return String(origin || location.origin).replace(/\/$/, '') + '/library';
+  }
+
+  /** Migrate deprecated dual-server base (library on :5051) to same-origin /library. */
+  function normalizeLibraryBase(stored, origin) {
+    var fallback = sameOriginLibraryBase(origin);
+    if (!stored) return fallback;
+    stored = String(stored).replace(/\/$/, '');
+    try {
+      var absolute = stored.indexOf('://') >= 0 ? stored : sameOriginLibraryBase(origin);
+      var u = new URL(absolute);
+      var page = new URL(origin || location.origin);
+      if (u.port === '5051' && page.port !== '5051') {
+        localStorage.setItem('continuumLibraryBase', fallback);
+        return fallback;
+      }
+      if (u.origin !== page.origin && page.pathname.indexOf('/library') >= 0) {
+        localStorage.setItem('continuumLibraryBase', fallback);
+        return fallback;
+      }
+      if (absolute.indexOf('/library') < 0) {
+        absolute = u.origin + '/library';
+      }
+      return absolute;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   function persistFromQuery() {
     var params = new URLSearchParams(location.search);
     var lemma = params.get('lemmaApiBase');
     var library = params.get('libraryBase');
     if (lemma) localStorage.setItem('lemmaApiBase', lemma.replace(/\/$/, ''));
-    if (library) localStorage.setItem('continuumLibraryBase', library.replace(/\/$/, ''));
+    if (library) {
+      localStorage.setItem(
+        'continuumLibraryBase',
+        normalizeLibraryBase(library.replace(/\/$/, ''), location.origin)
+      );
+    }
   }
 
   function isViteDevOrigin(origin) {
@@ -55,7 +90,7 @@
   function resolveAppUrls() {
     persistFromQuery();
     var lemmaBase = (localStorage.getItem('lemmaApiBase') || '').replace(/\/$/, '');
-    var libraryBase = (localStorage.getItem('continuumLibraryBase') || '').replace(/\/$/, '');
+    var libraryBase = normalizeLibraryBase(localStorage.getItem('continuumLibraryBase') || '', origin);
     var origin = location.origin;
     var path = location.pathname || '';
 
@@ -72,11 +107,7 @@
       }
     }
     if (!libraryBase) {
-      if (path.indexOf('/library') >= 0 || (path === '/' && path.indexOf('/lemma-library') < 0 && path.indexOf('/ui') < 0)) {
-        libraryBase = origin + (path.indexOf('/library') >= 0 ? path.replace(/\/library.*$/, '/library') : '/library');
-      } else {
-        libraryBase = swapPort(origin, 5051) + '/library';
-      }
+      libraryBase = sameOriginLibraryBase(origin);
     }
     if (libraryBase.indexOf('/library') < 0) libraryBase += '/library';
 
@@ -505,5 +536,7 @@
     mount: mount,
     resolveAppUrls: resolveAppUrls,
     detectApp: detectApp,
+    normalizeLibraryBase: normalizeLibraryBase,
+    sameOriginLibraryBase: sameOriginLibraryBase,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

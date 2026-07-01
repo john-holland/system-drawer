@@ -74,6 +74,7 @@ try:
     from continuum_api.production_proxy_routes import register_production_proxy_routes
     from continuum_api.calendar_routes import register_calendar_routes
     from continuum_api.agile_ui_routes import register_agile_ui_routes
+    from continuum_api.mod_routes import register_mod_routes
 except ImportError:
     from cave_routes import register_cave_routes
     from resaurce_routes import register_resaurce_routes
@@ -86,6 +87,7 @@ except ImportError:
     from production_proxy_routes import register_production_proxy_routes
     from calendar_routes import register_calendar_routes
     from agile_ui_routes import register_agile_ui_routes
+    from mod_routes import register_mod_routes
 
 try:
     from flask_socketio import SocketIO
@@ -106,8 +108,9 @@ DEV_CORS_ORIGINS = {
     "http://127.0.0.1:8080",
 }
 
-# USC spatial library SPA (serve_library.py) — separate process during dual-server dev.
-LIBRARY_APP_BASE = os.environ.get("CONTINUUM_LIBRARY_BASE", "http://127.0.0.1:5051").rstrip("/")
+# USC spatial library — served on same origin via library_routes (inline serve_library API).
+# Set CONTINUUM_LIBRARY_BASE=http://127.0.0.1:5051 only for dual-server dev.
+LIBRARY_APP_BASE = os.environ.get("CONTINUUM_LIBRARY_BASE", "").rstrip("/") or "http://127.0.0.1:5050"
 
 
 def _apply_cors_headers(response):
@@ -222,6 +225,16 @@ def get_conn():
         except ImportError:
             from story_db import ensure_stories_schema
         ensure_stories_schema(conn)
+        try:
+            from continuum_api.mod_db import ensure_mayor_dog_mods_schema
+        except ImportError:
+            from mod_db import ensure_mayor_dog_mods_schema
+        ensure_mayor_dog_mods_schema(conn)
+        try:
+            from continuum_api.audit_db import ensure_audit_schema
+        except ImportError:
+            from audit_db import ensure_audit_schema
+        ensure_audit_schema(conn)
         _schema_initialized = True
     return conn
 
@@ -1259,6 +1272,7 @@ register_chat_routes(app)
 register_production_proxy_routes(app)
 register_calendar_routes(app, get_conn)
 register_agile_ui_routes(app)
+register_mod_routes(app, get_conn, _get_current_user)
 
 
 def _is_approved_to_commit(conn, user_id: str) -> bool:

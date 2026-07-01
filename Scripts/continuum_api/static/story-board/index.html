@@ -17,11 +17,17 @@
     .col-cards { min-height: 80px; }
     .card {
       background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 0.5rem;
-      margin-bottom: 0.5rem; cursor: grab; user-select: none;
+      margin-bottom: 0.5rem; cursor: pointer; user-select: none;
+      display: flex; gap: 0.35rem; align-items: flex-start;
     }
     .card:hover { border-color: #58a6ff; }
-    .card:active { cursor: grabbing; }
     .card.card-dragging { opacity: 0.45; border-style: dashed; }
+    .card-drag-handle {
+      flex: 0 0 auto; cursor: grab; color: #8b949e; padding: 0 0.15rem; line-height: 1.2;
+      font-size: 1rem; touch-action: none;
+    }
+    .card-drag-handle:active { cursor: grabbing; }
+    .card-body { flex: 1; min-width: 0; }
     .toolbar { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
     input, button, select, textarea { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 4px; padding: 0.35rem 0.5rem; }
     button { cursor: pointer; }
@@ -76,6 +82,8 @@
     </div>
   </div>
 
+  <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
+  <script src="/static/shared/continuum-cave-shell/continuum-cave-shell.js"></script>
   <script src="/static/shared/continuum-chat-panel/continuum-chat-panel.js"></script>
   <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
   <script src="/story-board/story-board.js"></script>

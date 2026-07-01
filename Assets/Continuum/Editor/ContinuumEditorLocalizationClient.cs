@@ -129,6 +129,23 @@ public sealed class ContinuumEditorLocalizationClient : IContinuumLocalizationCl
             "{\"approveDelete\":true}", ct);
     }
 
+    public async Task<DraftEpisodeRecord[]> GetDraftEpisodesAsync(CancellationToken ct = default)
+    {
+        var r = await ContinuumEditorApiClient.RequestAsync("GET", "/api/drafts/episodes", null, ct);
+        return r.success ? ParseDraftEpisodeList(r.json) : Array.Empty<DraftEpisodeRecord>();
+    }
+
+    static DraftEpisodeRecord[] ParseDraftEpisodeList(string json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return Array.Empty<DraftEpisodeRecord>();
+        var trimmed = json.TrimStart();
+        if (trimmed.StartsWith("["))
+            return JsonUtility.FromJson<JsonArrayWrapper<DraftEpisodeRecord>>("{\"items\":" + json + "}")?.items
+                   ?? Array.Empty<DraftEpisodeRecord>();
+        return ParseItems<DraftEpisodeRecord>(json);
+    }
+
     public async Task<DraftScriptRecord> GetDraftScriptAsync(string draftEpisodeId, CancellationToken ct = default)
     {
         var r = await ContinuumEditorApiClient.RequestAsync("GET", $"/api/drafts/episodes/{Uri.EscapeDataString(draftEpisodeId ?? "")}/script", null, ct);

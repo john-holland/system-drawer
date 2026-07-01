@@ -46,6 +46,10 @@ namespace Planetary
         public bool drawPhysicsBridgeGizmos = true;
         public PlanetPhysicsManifoldBridge physicsManifoldBridge;
 
+        [Header("Play mode")]
+        [Tooltip("When off, Enter Play uses the assigned composition and skips plate regression + SDF rebake (use Rebuild Planet in editor first).")]
+        public bool rebuildOnPlayAwake;
+
         PlanetPlanarEvaluationContext _planarContext;
         readonly MaterialRegressionService _regression = new MaterialRegressionService();
         int _compositionVersion;
@@ -57,6 +61,18 @@ namespace Planetary
         public int CompositionVersion => _compositionVersion;
 
         void Awake()
+        {
+            EnsureComponentRefs();
+            if (Application.isPlaying && !rebuildOnPlayAwake && HasPlayableComposition())
+            {
+                SyncPlayModeFromBakedComposition();
+                return;
+            }
+
+            RebuildAll();
+        }
+
+        void EnsureComponentRefs()
         {
             if (planetRenderer == null)
                 planetRenderer = GetComponentInChildren<PlanetRenderer>();
@@ -70,7 +86,17 @@ namespace Planetary
                 interiorUpdater = GetComponent<PlanetInteriorPhysicsUpdater>();
             if (physicsManifoldBridge == null)
                 physicsManifoldBridge = GetComponentInChildren<PlanetPhysicsManifoldBridge>();
-            RebuildAll();
+        }
+
+        bool HasPlayableComposition() =>
+            composition != null && composition.nodes != null && composition.nodes.Count > 0;
+
+        void SyncPlayModeFromBakedComposition()
+        {
+            _planarContext = new PlanetPlanarEvaluationContext(this, planarBase);
+            ApplyCompositionToVolumeProvider(false);
+            if (sdfLodRenderer != null)
+                sdfLodRenderer.EnsureLodMeshes();
         }
 
         [ContextMenu("Rebuild Planet")]
@@ -100,6 +126,57 @@ namespace Planetary
         {
             _regression.Engine.SetRules(elementalRules);
             var plates = _regression.RegressPlatesFromSurface(this, 8, elementalRules);
+            PlateTectonicsPhysicsSolver.ResetPlateStress(plates);
+            if (interiorUpdater != null && interiorUpdater.plateSolver != null)
+            {
+                interiorUpdater.plateSolver.ClearPlates();
+                interiorUpdater.plateSolver.plates = plates;
+            }
+            RebakeCompositionCoreWithPlates(plates);
+        }
+
+        public void ApplyCompositionToVolumeProvider() => ApplyCompositionToVolumeProvider(true);
+
+        public void ApplyCompositionToVolumeProvider(bool forceVolumeRebuild)
+        {
+            if (volumeProvider == null)
+                return;
+            volumeProvider.composition = composition;
+            volumeProvider.profile = solverProfile;
+            volumeProvider.RebuildIfDirty(forceVolumeRebuild);
+        }
+
+        /// <summary>Clears solver plates, regresses from surface, rebakes composition. Used by Rebuild Now on volume provider.</summary>
+        public void RebuildTectonicPlates(bool stepPhysics = false)
+        {
+            if (interiorUpdater != null)
+            {
+                interiorUpdater.RebuildTectonicPlates(clearExisting: true, stepPhysics: stepPhysics);
+                interiorUpdater.RebakeFromPlates(interiorUpdater.plateSolver != null
+                    ? interiorUpdater.plateSolver.plates
+                    : System.Array.Empty<PlateDefinition>());
+                return;
+            }
+
+            if (interiorUpdater == null)
+                interiorUpdater = GetComponent<PlanetInteriorPhysicsUpdater>();
+            _regression.Engine.SetRules(elementalRules);
+            var plates = _regression.RegressPlatesFromSurface(this, 8, elementalRules);
+            PlateTectonicsPhysicsSolver.ResetPlateStress(plates);
+            if (interiorUpdater != null && interiorUpdater.plateSolver != null)
+            {
+                interiorUpdater.plateSolver.ClearPlates();
+                interiorUpdater.plateSolver.plates = plates;
+                if (stepPhysics)
+                    interiorUpdater.plateSolver.Step(1f, transform.position);
+            }
+
+            RebakeCompositionCoreWithPlates(plates);
+        }
+
+        void RebakeCompositionCoreWithPlates(PlateDefinition[] plates)
+        {
+            _regression.Engine.SetRules(elementalRules);
             var estimator = new AtmosphereCompositionEstimator();
             WeatherPhysicsManifold weatherManifold = null;
             SceneServiceLookup.TryResolve("weather.physicsManifold", out weatherManifold);
@@ -111,14 +188,7 @@ namespace Planetary
 
             _planarContext = new PlanetPlanarEvaluationContext(this, planarBase);
             _compositionVersion++;
-
-            if (volumeProvider != null)
-            {
-                volumeProvider.composition = composition;
-                volumeProvider.profile = solverProfile;
-                volumeProvider.RebuildIfDirty(true);
-            }
-
+            ApplyCompositionToVolumeProvider();
             if (physicsManifoldBridge != null)
             {
                 physicsManifoldBridge.planet = this;
