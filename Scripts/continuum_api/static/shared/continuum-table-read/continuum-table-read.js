@@ -357,10 +357,64 @@
     }).then(applySnapshot);
   }
 
+  function initDialogueMode(setId) {
+    setStatus('Opening dialogue session…');
+    caveMsg('dialogue_session_open', { setId: setId, traceId: 'web-' + Date.now() })
+      .then(function (snap) {
+        state.dialogueSession = snap;
+        renderDialoguePanel(snap);
+        setStatus('Dialogue: ' + setId);
+      })
+      .catch(function (e) { setStatus(e.message || 'Dialogue open failed', true); });
+  }
+
+  function renderDialoguePanel(snap) {
+    var host = document.getElementById('tr-dialogue-panel') || document.createElement('div');
+    host.id = 'tr-dialogue-panel';
+    host.className = 'tr-dialogue-panel';
+    var node = snap.currentNode || {};
+    var choices = snap.choices || [];
+    host.innerHTML =
+      '<div class="tr-dialogue-line">' + esc(node.text || '') + '</div>' +
+      '<div class="tr-dialogue-choices">' +
+      choices.map(function (c) {
+        return '<button type="button" class="tr-dialogue-choice" data-answer="' + esc(c.answerId) + '">' +
+          esc(c.text || c.answerId) + '</button>';
+      }).join('') +
+      '</div>';
+    document.body.prepend(host);
+    host.querySelectorAll('.tr-dialogue-choice').forEach(function (btn) {
+      btn.onclick = function () {
+        var answerId = btn.getAttribute('data-answer');
+        caveMsg('dialogue_choose', {
+          sessionId: (state.dialogueSession && state.dialogueSession.sessionId) || snap.sessionId,
+          answerId: answerId,
+        })
+          .then(function (next) {
+            state.dialogueSession = next;
+            renderDialoguePanel(next);
+            if (next.currentNode && next.currentNode.audioRef) {
+              var audio = new Audio(next.currentNode.audioRef);
+              audio.play().catch(function () {});
+            }
+          });
+      };
+    });
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+
   function init() {
     var params = new URLSearchParams(location.search);
     state.sessionId = params.get('session');
     state.draftId = params.get('draft');
+    state.dialogueSetId = params.get('dialogueSet');
+    if (state.dialogueSetId) {
+      initDialogueMode(state.dialogueSetId);
+      return;
+    }
     if (!state.sessionId) {
       setStatus('Open with ?session=…&draft=… or start from Script Output', true);
       return;

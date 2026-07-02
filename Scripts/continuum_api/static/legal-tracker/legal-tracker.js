@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.ContinuumNav) {
-    ContinuumNav.mount(document.getElementById('continuum-nav-root'), { app: 'legal-tracker' });
+    ContinuumNav.mount({ root: '#continuum-nav-root', app: 'legal-tracker' });
   }
 
   var caveShell = window.ContinuumCaveShell
@@ -33,6 +33,8 @@
   }
 
   var modalOverlay = document.getElementById('case-modal-overlay');
+
+  function caseUrl(caseId) {
     return '/legal-tracker/?case=' + encodeURIComponent(caseId);
   }
 

@@ -97,6 +97,12 @@ def _sync_story_chat(conn: sqlite3.Connection, story_id: str) -> str | None:
     )
     room = out.get("chat_room") or {}
     room_id = room.get("id")
+    if not room_id:
+        try:
+            from continuum_api.local_chat_store import ensure_story_room
+        except ImportError:
+            from local_chat_store import ensure_story_room
+        room_id = ensure_story_room(conn, story_id, row["summary"], assignees, watchers)
     if room_id:
         conn.execute(
             "UPDATE stories SET resaurce_chat_room_id = ?, updated_at = ? WHERE id = ?",
@@ -104,6 +110,23 @@ def _sync_story_chat(conn: sqlite3.Connection, story_id: str) -> str | None:
         )
         conn.commit()
     return room_id
+
+
+def _append_story_comment(
+    description: str | None,
+    kind: str,
+    text: str,
+    *,
+    user_id: str | None = None,
+) -> str:
+    stamp = _now()
+    actor = (user_id or "system").strip() or "system"
+    block = f"\n\n--- Story comment ({stamp}) — {kind} — {actor} ---\n{text.strip()}\n"
+    return (description or "").rstrip() + block
+
+
+def _user_id_from_request() -> str:
+    return (request.headers.get("X-User-ID") or "anonymous").strip() or "anonymous"
 
 
 def _story_members(conn: sqlite3.Connection, story_id: str) -> dict:
@@ -273,7 +296,7 @@ def register_story_routes(app, get_conn: GetConn) -> None:
                         "SELECT work_order_id FROM story_work_orders WHERE story_id = ?", (story_id,)
                     ).fetchall()
                 ]
-                validation = validate_work_orders(conn, work_order_ids=wo_ids or None)
+                validation = validate_work_orders(conn, work_order_ids=wo_ids)
                 if not validation["ok"]:
                     conn.execute(
                         "UPDATE stories SET build_errors_json = ?, updated_at = ? WHERE id = ?",
@@ -393,6 +416,19 @@ def register_story_routes(app, get_conn: GetConn) -> None:
         conn.close()
         return jsonify({"ok": True})
 
+    @app.route("/api/stories/<story_id>/ensure-chat", methods=["POST"])
+    def story_ensure_chat(story_id: str):
+        conn = get_conn()
+        row = conn.execute("SELECT id FROM stories WHERE id = ?", (story_id,)).fetchone()
+        if not row:
+            conn.close()
+            return jsonify({"error": "not found"}), 404
+        room_id = _sync_story_chat(conn, story_id)
+        conn.close()
+        if not room_id:
+            return jsonify({"ok": False, "error": "chat_room_create_failed"}), 500
+        return jsonify({"ok": True, "chatRoomId": room_id})
+
     @app.route("/api/stories/<story_id>/validate-causality", methods=["POST"])
     def story_validate_causality(story_id: str):
         conn = get_conn()
@@ -409,6 +445,104 @@ def register_story_routes(app, get_conn: GetConn) -> None:
         conn.close()
         status = 200 if result["ok"] else 422
         return jsonify(result), status
+
+    @app.route("/api/stories/<story_id>/clone", methods=["POST"])
+    def story_clone(story_id: str):
+        conn = get_conn()
+        row = conn.execute("SELECT * FROM stories WHERE id = ?", (story_id,)).fetchone()
+        if not row:
+            conn.close()
+            return jsonify({"error": "not_found"}), 404
+        source = dict(row)
+        body = request.get_json(silent=True) or {}
+        sched_id = body.get("resaurceScheduleId") if "resaurceScheduleId" in body else source.get("resaurce_schedule_id")
+        budget_id = body.get("resaurceBudgetPlanId") if "resaurceBudgetPlanId" in body else source.get("resaurce_budget_plan_id")
+        sched_val = validate_schedule_id(sched_id)
+        if not sched_val.get("ok"):
+            conn.close()
+            return jsonify(sched_val), 400
+        budget_val = validate_budget_plan_id(budget_id)
+        if not budget_val.get("ok"):
+            conn.close()
+            return jsonify(budget_val), 400
+        new_id = _new_id()
+        now = _now()
+        user_id = _user_id_from_request()
+        summary = body.get("summary") or f"{source.get('summary') or source['id']} (copy)"
+        comment = (
+            f"Cloned from {source['id']}"
+            f"{(' — ' + source['summary']) if source.get('summary') else ''}."
+        )
+        description = _append_story_comment(source.get("description"), "clone", comment, user_id=user_id)
+        conn.execute(
+            """INSERT INTO stories
+               (id, tenant_id, project_id, resaurce_schedule_id, resaurce_budget_plan_id,
+                external_provider, external_key, external_url, github_project_number,
+                jira_project_key, jira_issue_type, summary, description, story_value, status,
+                episode_id, narrative_t_start, narrative_t_end, calendar_start_date, calendar_end_date,
+                build_errors_json, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                new_id,
+                source.get("tenant_id") or "default",
+                source.get("project_id"),
+                sched_id,
+                budget_id,
+                source.get("external_provider") or "none",
+                None,
+                None,
+                source.get("github_project_number"),
+                source.get("jira_project_key"),
+                source.get("jira_issue_type"),
+                summary,
+                description,
+                float(source.get("story_value") or 0),
+                "new",
+                source.get("episode_id"),
+                source.get("narrative_t_start"),
+                source.get("narrative_t_end"),
+                source.get("calendar_start_date"),
+                source.get("calendar_end_date"),
+                "[]",
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+        _sync_story_chat(conn, new_id)
+        created = conn.execute("SELECT * FROM stories WHERE id = ?", (new_id,)).fetchone()
+        conn.close()
+        return jsonify(_row_story(created)), 201
+
+    @app.route("/api/stories/<story_id>/reopen", methods=["POST"])
+    def story_reopen(story_id: str):
+        conn = get_conn()
+        row = conn.execute("SELECT * FROM stories WHERE id = ?", (story_id,)).fetchone()
+        if not row:
+            conn.close()
+            return jsonify({"error": "not_found"}), 404
+        current = dict(row)
+        if current["status"] == "completed":
+            conn.close()
+            return jsonify({"error": "story_completed_no_reopen"}), 409
+        if current["status"] != "submitted":
+            conn.close()
+            return jsonify({"error": "story_reopen_requires_submitted", "status": current["status"]}), 409
+        body = request.get_json(silent=True) or {}
+        user_id = _user_id_from_request()
+        reason = (body.get("reason") or body.get("comment") or "").strip()
+        comment = reason or f"Reopened from status `{current['status']}`."
+        description = _append_story_comment(current.get("description"), "reopen", comment, user_id=user_id)
+        now = _now()
+        conn.execute(
+            """UPDATE stories SET status = ?, description = ?, build_errors_json = ?,
+               completed_at = NULL, updated_at = ? WHERE id = ?""",
+            ("new", description, "[]", now, story_id),
+        )
+        conn.commit()
+        updated = conn.execute("SELECT * FROM stories WHERE id = ?", (story_id,)).fetchone()
+        conn.close()
+        return jsonify(_row_story(updated))
 
     @app.route("/api/work-orders", methods=["GET", "POST"])
     @app.route("/api/work-orders/<wo_id>", methods=["GET", "PATCH"])

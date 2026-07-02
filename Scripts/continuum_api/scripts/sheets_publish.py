@@ -100,6 +100,69 @@ def _sheets_api_update(spreadsheet_id: str, tabs: dict[str, list[list[Any]]], dr
     return {"ok": True, "mode": "google_sheets", "spreadsheetId": spreadsheet_id}
 
 
+def build_budget_template_tabs() -> dict[str, list[list[Any]]]:
+    """Empty sheet tabs matching publish_budget_plan layout (headers + Budget example row)."""
+    return {
+        "Budget": [
+            ["field", "value"],
+            ["id", "budget_my_plan"],
+            ["name", "My production budget"],
+            ["tenant", "default"],
+            ["currency", "USD"],
+            ["capacity_usd", 100000],
+            ["water_level_usd", 100000],
+            ["low_water_threshold_usd", 10000],
+            ["overflow_policy", "warn"],
+            ["saurce_product_id", ""],
+            ["fiscal_start", ""],
+            ["fiscal_end", ""],
+            ["status", "draft"],
+        ],
+        "Journal": [
+            ["id", "entry_type", "debit", "credit", "amount_usd", "story_id", "memo"],
+            ["", "story_spend", "production_spend", "cash_pool", 0, "", "Example journal line"],
+        ],
+        "Schedule": [
+            ["schedule_id", "milestone", "start", "end", "story_ids"],
+            ["schedule_1", "Milestone 1", "2026-01-01", "2026-03-31", "[]"],
+        ],
+        "Stories": [
+            ["id", "summary", "status", "story_value", "schedule_id"],
+            ["", "Story summary", "open", 0, ""],
+        ],
+        "WorkOrders": [
+            ["id", "story_id", "status", "asset_kind", "asset_ref_json"],
+            ["", "", "pending", "usc_asset", "{}"],
+        ],
+        "Assets": [
+            ["kind", "ref", "label", "cost_usd"],
+            ["usc_asset", "{}", "Example asset", 0],
+        ],
+        "Accounts": [
+            ["account_code", "name"],
+            ["cash_pool", "Cash pool (reservoir)"],
+            ["investor_pool", "Investor pool"],
+            ["production_spend", "Production spend"],
+            ["disbursement", "Disbursement"],
+        ],
+        "LineItems": [
+            ["category", "amount_usd", "notes"],
+            ["general", 0, ""],
+        ],
+    }
+
+
+def budget_template_payload() -> dict[str, Any]:
+    tabs = build_budget_template_tabs()
+    return {
+        "ok": True,
+        "version": 1,
+        "description": "Continuum production budget template (Google Sheets / publish-sheets compatible)",
+        "tabs": tabs,
+        "sheetOrder": list(tabs.keys()),
+    }
+
+
 def build_tabs(plan_id: str, all_linked: bool = True) -> dict[str, list[list[Any]]]:
     plan_out = _cave("production/budget/get", {"budget_plan_id": plan_id})
     plan = plan_out.get("budget_plan") or {}

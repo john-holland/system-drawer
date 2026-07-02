@@ -187,6 +187,18 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       return fetch(API + url, { ...opts, headers: { ...getHeaders(), ...(opts.headers || {}) } });
     }
 
+    async function apiFetchOrThrow(url, opts = {}) {
+      const res = await apiFetch(url, opts);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(body.error || res.statusText || ('HTTP ' + res.status));
+        err.status = res.status;
+        err.body = body;
+        throw err;
+      }
+      return body;
+    }
+
     document.getElementById('script-output-link').href = scriptOutputBase;
 
     function getRoute() {
@@ -303,13 +315,20 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
     };
 
     async function loadNotifications() {
+      const badge = document.getElementById('notif-badge');
+      const panel = document.getElementById('notif-panel');
       try {
         const res = await apiFetch('/notifications?limit=10');
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          panel.innerHTML = '<div class="notif-item error">' + escapeHtml(j.error || res.statusText) +
+            (j.hint ? ' — ' + escapeHtml(j.hint) : '') + '</div>';
+          badge.style.display = 'none';
+          return;
+        }
         const data = await res.json();
-        const badge = document.getElementById('notif-badge');
         badge.textContent = data.unreadCount || 0;
         badge.style.display = (data.unreadCount || 0) > 0 ? 'inline' : 'none';
-        const panel = document.getElementById('notif-panel');
         panel.innerHTML = (data.items || []).map(n => `
           <div class="notif-item ${n.readAt ? '' : 'unread'}" data-id="${n.id}" data-review-id="${n.reviewId || ''}">
             <strong>${n.type || 'notice'}</strong>: ${n.message} <small>${n.createdAt}</small>
@@ -322,7 +341,10 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
             loadNotifications();
           };
         });
-      } catch (_) {}
+      } catch (e) {
+        panel.innerHTML = '<div class="notif-item error">Notifications unavailable</div>';
+        badge.style.display = 'none';
+      }
     }
 
     document.getElementById('notif-btn').onclick = () => {
@@ -331,29 +353,48 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
     };
 
     async function loadEpisodes() {
-      const res = await fetch(API + '/episodes?limit=50');
-      const data = await res.json();
       const tbody = document.getElementById('episodes-tbody');
-      tbody.innerHTML = '';
-      (data.items || []).forEach(ep => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${ep.title}</td><td><code>${ep.id}</code></td><td>${ep.engine}</td><td>${ep.scenePath || '—'}</td>
-          <td><a href="${scriptOutputBase}/?episodeId=${ep.id}">Script</a></td>`;
-        tbody.appendChild(tr);
-      });
+      try {
+        const res = await fetch(API + '/episodes?limit=50');
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          tbody.innerHTML = '<tr><td colspan="5" class="error">' + escapeHtml(j.error || res.statusText) + '</td></tr>';
+          return;
+        }
+        const data = await res.json();
+        tbody.innerHTML = '';
+        (data.items || []).forEach(ep => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${ep.title}</td><td><code>${ep.id}</code></td><td>${ep.engine}</td><td>${ep.scenePath || '—'}</td>
+            <td><a href="${scriptOutputBase}/?episodeId=${ep.id}">Script</a></td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="error">Failed to load episodes</td></tr>';
+      }
     }
 
     async function loadDrafts() {
-      const res = await apiFetch('/drafts/episodes');
-      const items = await res.json();
       const tbody = document.getElementById('drafts-tbody');
-      tbody.innerHTML = '';
-      (Array.isArray(items) ? items : []).forEach(d => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${d.title}</td><td><code>${d.id}</code></td><td>${d.createdBy || '—'}</td><td>${d.committedAt ? 'Committed' : 'Draft'}</td>
-          <td><a href="#review" data-draft-id="${d.id}">Review</a></td>`;
-        tbody.appendChild(tr);
-      });
+      try {
+        const res = await apiFetch('/drafts/episodes');
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          tbody.innerHTML = '<tr><td colspan="5" class="error">' + escapeHtml(j.error || res.statusText) +
+            (j.hint ? ' — ' + escapeHtml(j.hint) : '') + '</td></tr>';
+          return;
+        }
+        const items = await res.json();
+        tbody.innerHTML = '';
+        (Array.isArray(items) ? items : []).forEach(d => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${d.title}</td><td><code>${d.id}</code></td><td>${d.createdBy || '—'}</td><td>${d.committedAt ? 'Committed' : 'Draft'}</td>
+            <td><a href="#review" data-draft-id="${d.id}">Review</a></td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="error">Failed to load drafts</td></tr>';
+      }
     }
 
     document.getElementById('create-episode').onsubmit = async (e) => {
@@ -484,10 +525,13 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         });
         listEl.querySelectorAll('.commit-draft').forEach(btn => {
           btn.onclick = async () => {
-            const res = await apiFetch(`/drafts/episodes/${btn.dataset.draftId}/commit`, { method: 'POST' });
-            const j = await res.json().catch(() => ({}));
-            if (res.ok) alert('Committed'); else alert('Error: ' + (j.error || res.statusText));
-            loadReviewData();
+            try {
+              await apiFetchOrThrow(`/drafts/episodes/${btn.dataset.draftId}/commit`, { method: 'POST' });
+              alert('Committed');
+              loadReviewData();
+            } catch (e) {
+              alert(e.message || 'Commit failed');
+            }
           };
         });
       } catch (e) {
@@ -587,6 +631,8 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
 
       const workflowBlocked = changeList && ['in_review', 'submitted'].includes(changeList.workflowStatus || '');
       const canEdit = !committed && !workflowBlocked;
+      const canReviewDecision = !!reviewId && !committed && (isReviewer || isAdmin);
+      const canWithdrawCl = workflowBlocked && changeList && changeList.id && (isReviewee || isAdmin);
       const hasComment = comments.length > 0;
       const clItems = (changeList && changeList.items) || [];
       const clRequired = clItems.filter(i => i.severity === 'required');
@@ -606,10 +652,12 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
           <h4>Required</h4>
           <ul id="cl-required-list">${clRequired.map(i => `<li><label><input type="checkbox" data-id="${i.id}" ${i.userAcknowledged ? 'checked' : ''}/> ${escapeHtml(i.description || i.itemType)}</label></li>`).join('') || '<li><em>None</em></li>'}</ul>
           <details><summary>Warnings (${clWarnings.length})</summary><ul>${clWarnings.map(i => `<li>${escapeHtml(i.description || '')}</li>`).join('') || '<li>None</li>'}</ul></details>
-          ${canEdit ? '<button id="cl-save-btn">Save change list</button> <button id="cl-submit-btn">Submit for review</button>' : ''}
+          ${(canEdit || workflowBlocked) ? '<button id="cl-save-btn">Save change list</button>' : ''}
+          ${canEdit ? ' <button id="cl-submit-btn">Submit for review</button>' : ''}
+          ${canWithdrawCl ? ' <button id="cl-withdraw-btn" type="button">Withdraw change list</button>' : ''}
           ${workflowBlocked ? '<p style="font-size:13px;color:#666;margin-top:8px">Change list is in review — script is read-only until withdrawn or approved.</p>' : ''}
         </div>` : ''}
-        ${reviewId && canEdit ? `<p><strong>Status:</strong> <select id="review-status">
+        ${canReviewDecision ? `<p><strong>Status:</strong> <select id="review-status">
           <option value="pending">Pending</option>
           <option value="approved">Approve</option>
           <option value="request_changes">Deny</option>
@@ -617,7 +665,7 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
         ${!hasComment ? `<div class="comment-form">
           <label>Add comment (one per review cycle) <textarea id="new-comment" rows="2"></textarea></label>
           <button id="add-comment">Add comment</button>
-        </div>` : '<p><em>Comment posted this cycle — use Approve or Deny for further feedback.</em></p>'}` : (reviewId && workflowBlocked ? '<p><em>Script is read-only while change list is in review. Use Approve/Deny below when assigned as reviewer.</em></p>' : '')}
+        </div>` : '<p><em>Comment posted this cycle — use Approve or Deny for further feedback.</em></p>'}` : (reviewId && workflowBlocked && !canReviewDecision ? '<p><em>Script is read-only while change list is in review.</em></p>' : '')}
         ${committed ? '<p><em>Committed – no edits allowed</em></p>' : ''}
         <h3>Comments — current cycle</h3>
         <ul id="review-comments-list"></ul>
@@ -645,52 +693,77 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
       const clSaveBtn = detail.querySelector('#cl-save-btn');
       if (clSaveBtn && changeList && changeList.id) {
         clSaveBtn.onclick = async () => {
-          const unchecked = clRequired.filter(i => {
-            const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
-            return cb ? !cb.checked : !i.userAcknowledged;
-          });
-          if (unchecked.length) { alert('Acknowledge all required items before save'); return; }
-          const items = [...clRequired, ...clWarnings].map(i => {
-            const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
-            return { id: i.id, userAcknowledged: cb ? cb.checked : !!i.userAcknowledged };
-          }).filter(i => i.id);
-          await apiFetch(`/localization/change-lists/${changeList.id}/save`, {
-            method: 'POST',
-            body: JSON.stringify({ items }),
-          });
-          alert('Change list saved');
-        };
-        const clSubmitBtn = detail.querySelector('#cl-submit-btn');
-        if (clSubmitBtn) {
-          clSubmitBtn.onclick = async () => {
+          try {
             const unchecked = clRequired.filter(i => {
               const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
               return cb ? !cb.checked : !i.userAcknowledged;
             });
-            if (unchecked.length) { alert('Acknowledge all required items before submit'); return; }
-            const items = clRequired.map(i => {
+            if (unchecked.length) { alert('Acknowledge all required items before save'); return; }
+            const items = [...clRequired, ...clWarnings].map(i => {
               const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
-              return { id: i.id, userAcknowledged: cb ? cb.checked : true };
-            });
-            await apiFetch(`/localization/change-lists/${changeList.id}/save`, {
+              return { id: i.id, userAcknowledged: cb ? cb.checked : !!i.userAcknowledged };
+            }).filter(i => i.id);
+            await apiFetchOrThrow(`/localization/change-lists/${changeList.id}/save`, {
               method: 'POST',
               body: JSON.stringify({ items }),
             });
-            await apiFetch(`/localization/change-lists/${changeList.id}/submit-for-review`, { method: 'POST', body: '{}' });
-            loadReviewData();
+            alert('Change list saved');
+          } catch (e) {
+            alert(e.message || 'Save failed');
+          }
+        };
+        const clSubmitBtn = detail.querySelector('#cl-submit-btn');
+        if (clSubmitBtn) {
+          clSubmitBtn.onclick = async () => {
+            try {
+              const unchecked = clRequired.filter(i => {
+                const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
+                return cb ? !cb.checked : !i.userAcknowledged;
+              });
+              if (unchecked.length) { alert('Acknowledge all required items before submit'); return; }
+              const items = clRequired.map(i => {
+                const cb = detail.querySelector(`#cl-required-list input[data-id="${i.id}"]`);
+                return { id: i.id, userAcknowledged: cb ? cb.checked : true };
+              });
+              if (!workflowBlocked) {
+                await apiFetchOrThrow(`/localization/change-lists/${changeList.id}/save`, {
+                  method: 'POST',
+                  body: JSON.stringify({ items }),
+                });
+              }
+              await apiFetchOrThrow(`/localization/change-lists/${changeList.id}/submit-for-review`, { method: 'POST', body: '{}' });
+              loadReviewData();
+            } catch (e) {
+              alert(e.message || 'Submit failed');
+            }
+          };
+        }
+        const clWithdrawBtn = detail.querySelector('#cl-withdraw-btn');
+        if (clWithdrawBtn) {
+          clWithdrawBtn.onclick = async () => {
+            try {
+              await apiFetchOrThrow(`/localization/change-lists/${changeList.id}/withdraw`, { method: 'POST', body: '{}' });
+              loadReviewData();
+            } catch (e) {
+              alert(e.message || 'Withdraw failed');
+            }
           };
         }
       }
 
       const statusSelect = detail.querySelector('#review-status');
-      if (statusSelect && reviewId) {
+      if (statusSelect && reviewId && canReviewDecision) {
         const revRes = await apiFetch('/reviews?asReviewer=true&asReviewee=true');
-        const revData = await revRes.json();
+        const revData = revRes.ok ? await revRes.json() : { items: [] };
         const rev = (revData.items || []).find(x => x.id === reviewId);
         if (rev) statusSelect.value = rev.status;
         detail.querySelector('#save-status').onclick = async () => {
-          await apiFetch(`/reviews/${reviewId}`, { method: 'PATCH', body: JSON.stringify({ status: statusSelect.value }) });
-          loadReviewData();
+          try {
+            await apiFetchOrThrow(`/reviews/${reviewId}`, { method: 'PATCH', body: JSON.stringify({ status: statusSelect.value }) });
+            loadReviewData();
+          } catch (e) {
+            alert(e.message || 'Could not update review status');
+          }
         };
       }
 

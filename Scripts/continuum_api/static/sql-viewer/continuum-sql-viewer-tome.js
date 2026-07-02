@@ -239,6 +239,7 @@
     if (!el || !global.ace) return;
     this.editor = global.ace.edit(el);
     this.editor.setTheme('ace/theme/tomorrow_night');
+    this.editor.session.setMode('ace/mode/sql');
     this.editor.setOptions({
       fontSize: '13px',
       showPrintMargin: false,

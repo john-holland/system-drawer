@@ -128,6 +128,9 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
         GUI.enabled = !_readOnly && !string.IsNullOrEmpty(_draftId);
         if (GUILayout.Button("Attach clause", EditorStyles.toolbarButton, GUILayout.Width(90)))
             OpenAttachClauseDialog();
+        GUI.enabled = !_readOnly && !string.IsNullOrEmpty(_draftId);
+        if (GUILayout.Button("Mayor Dog mod", EditorStyles.toolbarButton, GUILayout.Width(95)))
+            MarkMayorDogModSlotFromSelection();
         GUI.enabled = true;
         if (GUILayout.Button("Submit CL", EditorStyles.toolbarButton, GUILayout.Width(70)))
             SubmitChangeList();
@@ -149,7 +152,7 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
             {
                 _webHost = ContinuumWebViewHost.TryCreate(mainRect, OnWebMessage);
                 _webHost?.LoadBundledHost();
-                _webHost?.MountEditor(_loadedText, _readOnly);
+                _webHost?.MountEditor(_loadedText, _readOnly, _draftId, _draftScriptId);
             }
             _webHost.Draw(mainRect);
         }
@@ -373,12 +376,82 @@ public sealed class ContinuumScriptEditorWindow : EditorWindow
             OpenChangeListModal();
     }
 
+    async void MarkMayorDogModSlotFromSelection()
+    {
+        if (_readOnly)
+        {
+            EditorUtility.DisplayDialog("Mayor Dog Mods", "Script is read-only — withdraw from review first.", "OK");
+            return;
+        }
+        if (string.IsNullOrEmpty(_draftId))
+        {
+            EditorUtility.DisplayDialog("Mayor Dog Mods", "Load a draft episode first.", "OK");
+            return;
+        }
+        if (_useWebView && _webHost != null && _webHost.IsCreated)
+        {
+            _webHost.TriggerMayorDogModSlot();
+            return;
+        }
+        var (start, end, text) = _richEditor.GetSelection();
+        if (end <= start || string.IsNullOrWhiteSpace(text))
+        {
+            EditorUtility.DisplayDialog("Mayor Dog Mods", "Select script text to mark as a Mayor Dog Mod slot.", "OK");
+            return;
+        }
+        var label = text.Trim();
+        if (label.Length > 48) label = label.Substring(0, 48);
+        var slotKey = System.Text.RegularExpressions.Regex.Replace(label.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        if (string.IsNullOrEmpty(slotKey)) slotKey = "mod-slot";
+        slotKey = $"{slotKey}-{System.DateTime.UtcNow.Ticks.ToString("x").Substring(0, 4)}";
+        var body = $@"{{""targetKind"":""episode_section"",""draftEpisodeId"":""{_draftId}"",""charStart"":{start},""charEnd"":{end},""slotKey"":""{slotKey}"",""label"":""{label.Replace("\"", "\\\"")}"",""sourceText"":{JsonEscape(_loadedText)}}}";
+        var resp = await ContinuumEditorLocalizationClient.Instance.CallRawAsync("POST", "/api/mods/moddable-targets", body);
+        if (!resp.success)
+        {
+            EditorUtility.DisplayDialog("Mayor Dog Mods", resp.error ?? "Failed to create mod slot.", "OK");
+            return;
+        }
+        var token = $"{{M:{slotKey}}}";
+        _loadedText = _loadedText.Insert(end, token);
+        _richEditor.SetContent(_loadedText, ContinuumScriptSpanOverlayModel.Build(_loadedText, _bindings, _comments), _readOnly);
+        EditorUtility.DisplayDialog("Mayor Dog Mods", $"Mod slot created: {slotKey}", "OK");
+        Repaint();
+    }
+
+    static string JsonEscape(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "\"\"";
+        return "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r") + "\"";
+    }
+
     async void OnWebMessage(string json)
     {
-        var resp = await ContinuumEditorBridge.HandleAsync(json);
+        ContinuumEditorBridge.BridgeResponse resp;
+        try
+        {
+            var req = JsonUtility.FromJson<ContinuumEditorBridge.BridgeRequest>(json);
+            if (req != null && req.action == "scriptChanged" && !string.IsNullOrEmpty(req.body))
+            {
+                var sync = JsonUtility.FromJson<ScriptTextSyncBody>(req.body);
+                if (sync != null && sync.text != null)
+                    _loadedText = sync.text;
+                resp = new ContinuumEditorBridge.BridgeResponse { requestId = req.requestId, ok = true };
+            }
+            else
+            {
+                resp = await ContinuumEditorBridge.HandleAsync(json);
+            }
+        }
+        catch (Exception ex)
+        {
+            resp = new ContinuumEditorBridge.BridgeResponse { ok = false, error = ex.Message };
+        }
         _webHost?.DeliverBridgeResponse(ContinuumEditorBridge.ToJson(resp));
         Repaint();
     }
+
+    [Serializable]
+    class ScriptTextSyncBody { public string text; }
 }
 
 #endif

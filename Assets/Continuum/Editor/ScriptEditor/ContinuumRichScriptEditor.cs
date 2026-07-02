@@ -10,6 +10,7 @@ public sealed class ContinuumRichScriptEditor
     Vector2 _scroll;
     List<ContinuumScriptSpanOverlayModel.OverlaySpan> _spans = new List<ContinuumScriptSpanOverlayModel.OverlaySpan>();
     bool _readOnly;
+    GUIStyle _textStyle;
 
     public string Text => _text;
     public bool ReadOnly => _readOnly;
@@ -39,32 +40,61 @@ public sealed class ContinuumRichScriptEditor
         return (0, 0, "");
     }
 
+    GUIStyle TextStyle()
+    {
+        if (_textStyle != null)
+            return _textStyle;
+
+        const float ScriptTextGray = 34f / 255f;
+        var scriptTextColor = new Color(ScriptTextGray, ScriptTextGray, ScriptTextGray);
+        _textStyle = new GUIStyle(EditorStyles.textArea)
+        {
+            font = EditorStyles.standardFont,
+            wordWrap = true,
+            richText = false,
+        };
+        _textStyle.normal.textColor = scriptTextColor;
+        _textStyle.normal.background = Texture2D.whiteTexture;
+        _textStyle.focused.textColor = scriptTextColor;
+        _textStyle.hover.textColor = scriptTextColor;
+        _textStyle.active.textColor = scriptTextColor;
+        return _textStyle;
+    }
+
     public string Draw(Rect area)
     {
         const float lineHeight = SpanOverlayPainter.DefaultLineHeight;
         const float charWidth = SpanOverlayPainter.DefaultCharWidth;
         int lineCount = string.IsNullOrEmpty(_text) ? 1 : _text.Split('\n').Length;
         float contentHeight = Mathf.Max(area.height - 4, lineCount * lineHeight + 8);
+        float contentWidth = Mathf.Max(64f, area.width - 24f);
 
-        var inner = new Rect(area.x + 4, area.y + 4, area.width - 8, contentHeight);
-        _scroll = GUI.BeginScrollView(area, _scroll, new Rect(0, 0, inner.width - 16, contentHeight));
+        _scroll = GUI.BeginScrollView(area, _scroll, new Rect(0, 0, contentWidth, contentHeight));
 
-        var overlayRect = new Rect(4, 4, inner.width, contentHeight);
-        foreach (var span in _spans)
+        var textRect = new Rect(4, 4, contentWidth - 8, contentHeight - 8);
+        var style = TextStyle();
+        string before = _text;
+
+        if (Event.current.type == EventType.Repaint)
         {
-            var color = ContinuumScriptSpanOverlayModel.ColorFor(span.kind);
-            SpanOverlayPainter.DrawDottedSpan(overlayRect, _text, span.charStart, span.charEnd, color, charWidth, lineHeight);
+            var bgColor = new Color(238f / 255f, 238f / 255f, 238f / 255f);
+            EditorGUI.DrawRect(textRect, bgColor);
+
+            Handles.BeginGUI();
+            foreach (var span in _spans)
+            {
+                var color = ContinuumScriptSpanOverlayModel.ColorFor(span.kind);
+                SpanOverlayPainter.DrawDottedSpan(textRect, before, span.charStart, span.charEnd, color, charWidth, lineHeight);
+            }
+            Handles.EndGUI();
         }
 
-        GUI.color = new Color(1, 1, 1, 0.01f);
-        EditorGUI.BeginDisabledGroup(_readOnly);
-        var style = new GUIStyle(EditorStyles.textArea) { font = EditorStyles.standardFont, wordWrap = true };
-        _text = EditorGUI.TextArea(overlayRect, _text, style);
-        EditorGUI.EndDisabledGroup();
-        GUI.color = Color.white;
+        _text = EditorGUI.TextArea(textRect, _text, style);
+        if (_readOnly)
+            _text = before;
 
         GUI.EndScrollView();
-        return _text;
+        return _readOnly ? before : _text;
     }
 }
 

@@ -109,6 +109,7 @@
       '</div>' +
       '<div class="continuum-prompt-actions">' +
       '<button type="button" class="prompt-save primary">Save</button>' +
+      '<button type="button" class="prompt-compile-dialogue secondary">Compile Dialogue</button>' +
       '<button type="button" class="prompt-close secondary">Close</button>' +
       '<span class="prompt-msg" style="font-size:13px;margin-left:8px"></span>' +
       '</div>';
@@ -301,6 +302,28 @@
         if (opts.onSaved) opts.onSaved(saved);
       } catch (e) {
         msgEl.textContent = e.message || 'Save failed';
+        msgEl.style.color = '#c62828';
+      }
+    };
+
+    container.querySelector('.prompt-compile-dialogue').onclick = async () => {
+      if (state.aceEditor) state.promptText = state.aceEditor.getValue();
+      msgEl.textContent = 'Compiling dialogue…';
+      msgEl.style.color = '';
+      try {
+        const data = await callApi(
+          'POST',
+          `/api/thesaurus/entries/${encodeURIComponent(state.entryId)}/compile-dialogue`,
+          { text: state.promptText, persist: true },
+        );
+        const issues = (data.compiled && data.compiled.issues) || [];
+        const errs = issues.filter((i) => i.level === 'error');
+        msgEl.textContent = errs.length
+          ? 'Compile errors: ' + errs.map((e) => e.message).join('; ')
+          : 'Dialogue compiled (set ' + (data.compiled.setId || '') + ').';
+        msgEl.style.color = errs.length ? '#c62828' : '#2e7d32';
+      } catch (e) {
+        msgEl.textContent = e.message || 'Compile failed';
         msgEl.style.color = '#c62828';
       }
     };

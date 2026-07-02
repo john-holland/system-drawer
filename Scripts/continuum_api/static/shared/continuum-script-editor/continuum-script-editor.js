@@ -62,6 +62,10 @@
     if (!editor || !editor.setValue) return;
     editor.setValue(scriptText || '', -1);
     editor.clearSelection();
+    try {
+      editor.setTheme('ace/theme/textmate');
+      editor.session.setMode('ace/mode/text');
+    } catch (_) { /* theme/mode optional */ }
     editor.setOptions({
       useWorker: false,
       fontSize: '13px',
@@ -101,9 +105,14 @@
       if (this._bridge && this._bridge.callApi) {
         return this._bridge.callApi(method, path, body);
       }
+      const headers = { 'Content-Type': 'application/json' };
+      if (global.ContinuumUserSession && global.ContinuumUserSession.getHeaders) {
+        Object.assign(headers, global.ContinuumUserSession.getHeaders());
+      }
       const res = await fetch(path, {
         method: method || 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: body && method !== 'GET' ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
       });
       const text = await res.text();
@@ -132,7 +141,6 @@
       modSlotBtn.type = 'button';
       modSlotBtn.textContent = 'Mark Mayor Dog mod slot';
       modSlotBtn.setAttribute('aria-label', 'Mark selection as Mayor Dog Mod slot for player overrides');
-      modSlotBtn.onclick = () => this.markMayorDogModSlot(inst);
       toolbar.appendChild(modSlotBtn);
       const suggestionsEl = document.createElement('div');
       suggestionsEl.className = 'continuum-clause-suggestions';
@@ -181,7 +189,7 @@
         editor = { _ta: ta, getValue: () => ta.value, setValue: v => { ta.value = v; }, getSession: () => null, selection: { getRange: () => null } };
       }
 
-      const inst = { el, editor, options, aceLoaded, toolbar, attachBtn, suggestionsEl, clausePanel, readOnly };
+      const inst = { el, editor, options, aceLoaded, toolbar, attachBtn, modSlotBtn, suggestionsEl, clausePanel, readOnly };
       inst.overlaySnapshotText = options.overlaySnapshotText ?? options.scriptText ?? '';
       inst._suggestionSeq = 0;
       this._instance = inst;
@@ -234,6 +242,9 @@
           },
         });
       };
+
+      modSlotBtn.disabled = !!readOnly;
+      modSlotBtn.onclick = () => this.markMayorDogModSlot(inst);
 
       return inst;
     },
@@ -368,7 +379,7 @@
           btn.type = 'button';
           const kind = tpl._bundle ? 'bundle' : (tpl.bindingKind || tpl.binding_kind || 'property');
           btn.className = `continuum-clause-suggestion-btn continuum-clause-suggestion-${kind}`;
-          btn.textContent = tpl._label || (CS ? CS.suggestionLabel(tpl) : bindingSummary(tpl));
+          btn.textContent = 'Apply: ' + (tpl._label || (CS ? CS.suggestionLabel(tpl) : bindingSummary(tpl)));
           btn.title = tpl._tooltip || (CS ? CS.suggestionTooltip(tpl) : bindingSummary(tpl));
           btn.onclick = async () => {
             if (!CS) {
@@ -552,7 +563,11 @@
 
     async markMayorDogModSlot(inst) {
       inst = inst || this._instance;
-      if (!inst || inst.readOnly) return;
+      if (!inst) return;
+      if (inst.readOnly) {
+        alert('Script is read-only — withdraw from review or switch to edit mode first.');
+        return;
+      }
       const sel = this.getSelection(inst);
       if (sel.charEnd <= sel.charStart || !(sel.text || '').trim()) {
         alert('Select script text to mark as a Mayor Dog Mod slot.');
@@ -590,6 +605,7 @@
           ta.value = v.slice(0, sel.charEnd) + token + v.slice(sel.charEnd);
         }
         inst._overlaySpanSig = null;
+        if (inst.options.onScriptChanged) inst.options.onScriptChanged(this.getValue(inst));
         this.renderOverlays(inst, inst.options);
         alert(`Mayor Dog Mod slot created: ${item.slotKey || body.slotKey}`);
       } catch (err) {

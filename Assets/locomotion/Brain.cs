@@ -50,6 +50,13 @@ public class Brain : MonoBehaviour
     [Tooltip("Optional LSTM for lie evaluation when dual LSTM disabled.")]
     public LSTMPredictor lieDetectionLstm;
 
+    [Header("Dream memory")]
+    [Tooltip("When true, LSTM outputs are dream-memory only (non-authoritative for physics).")]
+    public bool dreamMemoryMode;
+
+    [Tooltip("Optional dream-memory LSTM wrapper.")]
+    public Locomotion.DreamCycle.DreamMemoryLSTM dreamMemoryLstm;
+
     [Header("Thought history (debug / lie policy)")]
     [SerializeField] private int maxThoughtHistory = 16;
 
@@ -380,6 +387,12 @@ public class Brain : MonoBehaviour
     /// </summary>
     private void UpdateDualLSTM()
     {
+        if (dreamMemoryMode)
+        {
+            if (dreamMemoryLstm != null)
+                dreamMemoryLstm.EncodeDreamMemory();
+            return;
+        }
         if (leftLSTM == null || rightLSTM == null)
             return;
 

@@ -21,6 +21,8 @@ messages:
   story_watchers_add: stories/watchers/add
   story_watchers_remove: stories/watchers/remove
   story_validate_causality: stories/validate-causality
+  story_clone: stories/clone
+  story_reopen: stories/reopen
   list_work_orders: work-orders/list
   create_work_order: work-orders/create
   run_work_order_causality: work-orders/run-causality
@@ -47,6 +49,34 @@ messages:
   table_read_messages_send: table-read/messages/send
   # Lemma
   lemma_browse: thesaurus/entries/search
+  # Dialogue
+  dialogue_compile: dialogue/compile
+  dialogue_session_open: dialogue/session/open
+  dialogue_choose: dialogue/choose
+  dialogue_advance: dialogue/advance
+  dialogue_sync_goals: dialogue/goals/sync
+  dialogue_suggest_generate: dialogue/suggest/generate
+  dialogue_suggest_accept: dialogue/suggest/accept
+  dialogue_speech_synthesize: dialogue/speech/synthesize
+  dialogue_speech_inpaint: dialogue/speech/inpaint
+  # Quest
+  quest_compile: quest/compile
+  quest_session_open: quest/session/open
+  quest_objective_activate: quest/objective/activate
+  quest_objective_complete: quest/objective/complete
+  quest_sync_goals: quest/goals/sync
+  quest_map_refresh: quest/map/refresh
+  quest_spatial_nodes: quest/spatial-nodes
+  quest_summary_style_suggest: quest/summary/style-suggest
+  quest_summary_generate: quest/summary/generate
+  quest_summary_accept: quest/summary/accept
+  quest_art_generate: quest/art/generate
+  quest_art_inpaint: quest/art/inpaint
+  # Dream cycle
+  dream_day_complete: dream-cycle/day/complete
+  dream_night_complete: dream-cycle/night/complete
+  dream_memory_recall: dream-cycle/memory/recall
+  dream_sleep_wave_get: dream-cycle/sleep-wave/get
   # Production (federated resaurce)
   production_budget_list: production/budget/list
   production_budget_create: production/budget/create
@@ -71,6 +101,8 @@ mutating_routes:
   - stories/watchers/add
   - stories/watchers/remove
   - stories/validate-causality
+  - stories/clone
+  - stories/reopen
   - work-orders/create
   - work-orders/run-causality
   - legal/cases/create
@@ -82,6 +114,26 @@ mutating_routes:
   - table-read/chat/ensure
   - table-read/invite
   - table-read/messages/send
+  - dialogue/session/open
+  - dialogue/choose
+  - dialogue/advance
+  - dialogue/goals/sync
+  - dialogue/suggest/generate
+  - dialogue/suggest/accept
+  - dialogue/speech/synthesize
+  - dialogue/speech/inpaint
+  - quest/session/open
+  - quest/objective/activate
+  - quest/objective/complete
+  - quest/goals/sync
+  - quest/map/refresh
+  - quest/summary/generate
+  - quest/summary/accept
+  - quest/art/generate
+  - quest/art/inpaint
+  - dream-cycle/day/complete
+  - dream-cycle/night/complete
+  - dream-cycle/memory/recall
   - sql-viewer/query
 structural:
   sql-viewer/**:
@@ -96,6 +148,10 @@ structural:
     machine: continuum:tableRead
   thesaurus/**:
     machine: continuum:lemmaLibrary
+  dialogue/**:
+    machine: continuum:dialogue
+  quest/**:
+    machine: continuum:quest
 handlers:
   sql-viewer/schema:
     internal:
@@ -176,6 +232,18 @@ handlers:
       path: /api/stories/{story_id}/validate-causality
     mutating: true
     lvm_events: [StoryCausalityValidated, TransitionCommitted]
+  stories/clone:
+    internal:
+      method: POST
+      path: /api/stories/{story_id}/clone
+    mutating: true
+    lvm_events: [StoryCreated, TransitionCommitted]
+  stories/reopen:
+    internal:
+      method: POST
+      path: /api/stories/{story_id}/reopen
+    mutating: true
+    lvm_events: [StoryUpdated, TransitionCommitted]
   work-orders/list:
     internal:
       method: GET
@@ -236,7 +304,7 @@ handlers:
     internal:
       method: GET
       path: /api/narrative-timeline-overlay
-      query_from_payload: [resaurceScheduleId, scheduleId]
+      query_from_payload: [resaurceScheduleId, scheduleId, schedule_id, resaurce_schedule_id, project_id]
   narrative/overlay/save:
     internal:
       method: POST
@@ -331,6 +399,125 @@ handlers:
     proxy: resaurce
   chat/messages/send:
     proxy: resaurce
+  dialogue/compile:
+    internal:
+      method: POST
+      path: /api/dialogue/compile
+  dialogue/session/open:
+    internal:
+      method: POST
+      path: /api/dialogue/session/open
+    mutating: true
+    lvm_events: [DialogueSessionOpened, TransitionCommitted]
+  dialogue/choose:
+    internal:
+      method: POST
+      path: /api/dialogue/session/{sessionId}/choose
+    mutating: true
+    lvm_events: [DialogueChoiceMade, TransitionCommitted]
+  dialogue/advance:
+    internal:
+      method: POST
+      path: /api/dialogue/session/{sessionId}/advance
+    mutating: true
+    lvm_events: [DialogueAdvanced, TransitionCommitted]
+  dialogue/goals/sync:
+    internal:
+      method: POST
+      path: /api/dialogue/session/{sessionId}/goals/sync
+    mutating: true
+    lvm_events: [DialogueGoalsSynced, TransitionCommitted]
+  dialogue/suggest/generate:
+    internal:
+      method: POST
+      path: /api/dialogue/suggest/generate
+    mutating: true
+    lvm_events: [DialogueSuggestionGenerated, TransitionCommitted]
+  dialogue/suggest/accept:
+    internal:
+      method: POST
+      path: /api/dialogue/suggest/accept
+    mutating: true
+    lvm_events: [DialogueSuggestionAccepted, TransitionCommitted]
+  dialogue/speech/synthesize:
+    internal:
+      method: POST
+      path: /api/dialogue/speech/synthesize
+    mutating: true
+    lvm_events: [DialogueSpeechGenerated, TransitionCommitted]
+  dialogue/speech/inpaint:
+    internal:
+      method: POST
+      path: /api/dialogue/speech/inpaint
+    mutating: true
+    lvm_events: [DialogueSpeechInpainted, TransitionCommitted]
+  quest/compile:
+    internal:
+      method: POST
+      path: /api/quest/compile
+  quest/spatial-nodes:
+    internal:
+      method: GET
+      path: /api/quest/spatial-nodes
+      query_from_payload: [spatial4dId, spatial_4d_id, mode, narrativeT, narrative_t, project_id]
+  quest/session/open:
+    internal:
+      method: POST
+      path: /api/quest/session/open
+    mutating: true
+    lvm_events: [QuestSessionOpened, TransitionCommitted]
+  quest/objective/activate:
+    internal:
+      method: POST
+      path: /api/quest/session/{sessionId}/objective/activate
+    mutating: true
+    lvm_events: [QuestObjectiveActivated, TransitionCommitted]
+  quest/objective/complete:
+    internal:
+      method: POST
+      path: /api/quest/session/{sessionId}/objective/complete
+    mutating: true
+    lvm_events: [QuestObjectiveCompleted, TransitionCommitted]
+  quest/goals/sync:
+    internal:
+      method: POST
+      path: /api/quest/session/{sessionId}/goals/sync
+    mutating: true
+    lvm_events: [QuestGoalsSynced, TransitionCommitted]
+  quest/map/refresh:
+    internal:
+      method: POST
+      path: /api/quest/map/refresh
+    mutating: true
+    lvm_events: [QuestMapRefreshed, TransitionCommitted]
+  quest/summary/style-suggest:
+    internal:
+      method: POST
+      path: /api/quest/summary/style-suggest
+  quest/summary/generate:
+    internal:
+      method: POST
+      path: /api/quest/summary/generate
+    mutating: true
+    lvm_events: [QuestSummaryGenerated, TransitionCommitted]
+  quest/summary/accept:
+    internal:
+      method: POST
+      path: /api/quest/summary/accept
+    mutating: true
+    lvm_events: [QuestSummaryAccepted, TransitionCommitted]
+  quest/art/generate:
+    internal:
+      method: POST
+      path: /api/quest/art/generate
+    mutating: true
+    lvm_events: [QuestArtGenerated, TransitionCommitted]
+  quest/art/inpaint:
+    internal:
+      method: POST
+      path: /api/quest/art/inpaint
+    mutating: true
+    lvm_events: [QuestArtInpainted, TransitionCommitted]
 lvm:
   machines:
     - id: continuum:sqlViewer
@@ -358,3 +545,16 @@ lvm:
       structural_routes:
         - table-read/session/open
         - table-read/chat/ensure
+    - id: continuum:dialogue
+      prefixes: [dialogue/]
+      structural_routes:
+        - dialogue/session/open
+        - dialogue/choose
+        - dialogue/advance
+    - id: continuum:quest
+      prefixes: [quest/]
+      structural_routes:
+        - quest/session/open
+        - quest/objective/activate
+        - quest/objective/complete
+        - quest/spatial-nodes

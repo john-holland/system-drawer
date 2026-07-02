@@ -38,6 +38,21 @@ namespace Planetary
             });
         }
 
+        public void Untrack(Transform t)
+        {
+            if (t == null)
+                return;
+            foreach (var kv in _gravityBins)
+            {
+                var list = kv.Value;
+                for (int i = list.Count - 1; i >= 0; i--)
+                {
+                    if (list[i].Transform == t)
+                        list.RemoveAt(i);
+                }
+            }
+        }
+
         long GravityBinKey(Vector3 pos, float mass)
         {
             long spatial = AngularGradientSearchTargetCachingService.BinKeyFromPosition(pos, binSizeMeters);

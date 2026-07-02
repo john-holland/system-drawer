@@ -189,6 +189,7 @@
       const section = document.getElementById('so-suggestions-section');
       if (!el) return;
       const items = this._state.suggestions || [];
+      const p = this._state.permissions || {};
       if (!items.length) {
         if (section) section.hidden = true;
         el.innerHTML = '';
@@ -198,15 +199,42 @@
       el.innerHTML = items.map((s) => {
         const snippet = (s.suggestedScriptText || '').slice(0, 60).replace(/\n/g, ' ');
         const active = this._state.activeSuggestion && this._state.activeSuggestion.id === s.id;
+        const actions = p.canAcceptSuggestion
+          ? `<div class="so-suggestion-actions">
+              <button type="button" class="so-accept-inline" data-id="${escHtml(s.id)}">Accept</button>
+              <button type="button" class="so-reject-inline" data-id="${escHtml(s.id)}">Reject</button>
+            </div>`
+          : (p.canSuggestEdit
+            ? '<p class="so-panel-empty" style="margin:4px 0 0">Awaiting author review.</p>'
+            : '');
         return `<div class="so-suggestion-card${active ? ' is-active' : ''}" data-id="${escHtml(s.id)}" role="button" tabindex="0">
           <span class="so-snippet">"${escHtml(snippet)}"</span>
           <span class="so-meta-line">${escHtml(s.suggestedBy)} · ${escHtml(s.createdAt || '')}</span>
+          ${actions}
         </div>`;
       }).join('');
       el.querySelectorAll('.so-suggestion-card').forEach((card) => {
         const open = () => this.selectSuggestion(card.dataset.id);
-        card.onclick = open;
+        card.onclick = (ev) => {
+          if (ev.target.closest('.so-suggestion-actions')) return;
+          open();
+        };
         card.onkeydown = (ev) => { if (ev.key === 'Enter') open(); };
+      });
+      el.querySelectorAll('.so-accept-inline').forEach((btn) => {
+        btn.onclick = async (ev) => {
+          ev.stopPropagation();
+          await this.selectSuggestion(btn.dataset.id);
+          if (this._state.suggestionDiff && !this._checkSuggestionAcks()) return;
+          await this.acceptSuggestion();
+        };
+      });
+      el.querySelectorAll('.so-reject-inline').forEach((btn) => {
+        btn.onclick = async (ev) => {
+          ev.stopPropagation();
+          await this.selectSuggestion(btn.dataset.id);
+          await this.rejectSuggestion();
+        };
       });
     },
 
@@ -229,6 +257,10 @@
       this.renderDiffPanel();
       this.renderAcceptBar();
       this.renderSuggestionComments();
+      const acceptSection = document.getElementById('so-accept-section');
+      if (acceptSection && this._state.permissions?.canAcceptSuggestion) {
+        acceptSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     },
 
     renderDiffPanel() {
@@ -262,15 +294,21 @@
       const p = this._state.permissions || {};
       const diff = this._state.suggestionDiff;
       const sug = this._state.activeSuggestion;
-      if (!p.canAcceptSuggestion || !sug || !diff) {
+      if (!p.canAcceptSuggestion || !sug) {
         if (section) section.hidden = true;
         el.innerHTML = '';
         return;
       }
       if (section) section.hidden = false;
-      const required = (diff.required || []).filter((i) => i.severity !== 'warning');
-      const warnings = (diff.warnings || []).concat((diff.required || []).filter((i) => i.severity === 'warning'));
+      const required = diff ? (diff.required || []).filter((i) => i.severity !== 'warning') : [];
+      const warnings = diff
+        ? (diff.warnings || []).concat((diff.required || []).filter((i) => i.severity === 'warning'))
+        : [];
+      const diffNote = diff
+        ? ''
+        : '<p class="so-panel-empty">Diff could not be loaded — you can still accept or reject the suggested script text.</p>';
       el.innerHTML = `
+        ${diffNote}
         <ul class="so-ack-list" id="so-suggestion-acks">
           ${required.map((i, idx) =>
             `<li><label><input type="checkbox" data-idx="${idx}" data-kind="required"/> ${escHtml(i.description)}</label></li>`,

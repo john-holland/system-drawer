@@ -24,6 +24,8 @@ namespace Locomotion.Narrative.EditorTools
         private Vector2 _listScroll;
         private Vector2 _mainScroll;
         private int _selectedBindingIndex = -1;
+        readonly Dictionary<string, string> _bindingDialogueGoals = new Dictionary<string, string>();
+        readonly Dictionary<string, string> _bindingDialogueQuoteSnippet = new Dictionary<string, string>();
         private int _scrollToBindingIndex = -1;
 
         private struct ParagraphSegment
@@ -383,6 +385,34 @@ namespace Locomotion.Narrative.EditorTools
                 }
             }
             AssetPropertyViewWizards.DrawFillSelectionProgression(binding, _registry, entry, stylesheet, key);
+
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Dialogue goal (lemma branch)", EditorStyles.boldLabel);
+            int goalIndex = EditorGUILayout.Popup("Goal",
+                IndexOfGoal(_bindingDialogueGoals.TryGetValue(key, out var gk) ? gk : ""),
+                DialogueGoalPopupLabels());
+            if (goalIndex > 0)
+                _bindingDialogueGoals[key] = DialogueGoalNames.All[goalIndex - 1];
+            else
+                _bindingDialogueGoals.Remove(key);
+            _bindingDialogueQuoteSnippet[key] = EditorGUILayout.TextField("Dialogue quote snippet", _bindingDialogueQuoteSnippet.TryGetValue(key, out var qs) ? qs : binding.phrase);
+        }
+
+        static string[] DialogueGoalPopupLabels()
+        {
+            var labels = new string[DialogueGoalNames.All.Length + 1];
+            labels[0] = "(none)";
+            for (int i = 0; i < DialogueGoalNames.All.Length; i++)
+                labels[i + 1] = DialogueGoalNames.All[i];
+            return labels;
+        }
+
+        static int IndexOfGoal(string goal)
+        {
+            if (string.IsNullOrEmpty(goal)) return 0;
+            for (int i = 0; i < DialogueGoalNames.All.Length; i++)
+                if (DialogueGoalNames.All[i] == goal) return i + 1;
+            return 0;
         }
 
         private InterpretationResult GetResult()

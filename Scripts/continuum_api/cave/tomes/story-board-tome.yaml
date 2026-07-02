@@ -8,6 +8,8 @@ machines:
       GET: get_story
       PATCH: patch_story
       VALIDATE_CAUSALITY: story_validate_causality
+      CLONE: story_clone
+      REOPEN: story_reopen
   assigneeMachine:
     events:
       ADD: story_assignees_add
@@ -21,6 +23,10 @@ machines:
       LIST: list_work_orders
       CREATE: create_work_order
       RUN_CAUSALITY: run_work_order_causality
+  productionMachine:
+    events:
+      SCHEDULE_LIST: production_schedule_list
+      BUDGET_LIST: production_budget_list
 robotCopy:
   flows:
     list_stories:
@@ -29,3 +35,7 @@ robotCopy:
       message: create_story
     patch_story:
       message: patch_story
+    story_clone:
+      message: story_clone
+    story_reopen:
+      message: story_reopen

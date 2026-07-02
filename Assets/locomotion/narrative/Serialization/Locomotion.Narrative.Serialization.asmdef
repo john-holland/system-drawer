@@ -4,6 +4,7 @@
   "references": [
     "Locomotion.Narrative.Runtime",
     "Locomotion.Runtime",
+    "Planetary",
     "Unity.Newtonsoft.Json"
   ],
   "includePlatforms": [],

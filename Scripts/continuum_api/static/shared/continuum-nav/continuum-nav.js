@@ -118,6 +118,8 @@
       hub: lemmaBase + '/ui',
       'story-board': lemmaBase + '/story-board',
       'project-calendar': lemmaBase + '/project-calendar',
+      'budget-dashboard': lemmaBase + '/budget-dashboard',
+      'legal-tracker': lemmaBase + '/legal-tracker',
       network: lemmaBase + '/network-definitions',
       cities: lemmaBase + '/city-config',
       society: lemmaBase + '/society-dashboard',
@@ -147,6 +149,8 @@
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';
     if (path.indexOf('/story-board') >= 0) return 'story-board';
     if (path.indexOf('/project-calendar') >= 0) return 'project-calendar';
+    if (path.indexOf('/budget-dashboard') >= 0) return 'budget-dashboard';
+    if (path.indexOf('/legal-tracker') >= 0) return 'legal-tracker';
     if (path.indexOf('/ui') >= 0) return 'hub';
     if (path.indexOf('/library') >= 0 || path === '/') return 'library';
     return fallback || 'library';
@@ -350,13 +354,23 @@
       };
       panel.querySelector('#continuum-chat-send').onclick = function () {
         var room = panel.querySelector('#continuum-chat-room').value.trim();
+        if (!room) {
+          room = localStorage.getItem('continuumChatTableReadRoom') || localStorage.getItem('continuumChatStoryRoom') || '';
+        }
         var text = panel.querySelector('#continuum-chat-input').value.trim();
         if (!room || !text) return;
         fetch('/api/chat/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-User-ID': (window.ContinuumUserSession && ContinuumUserSession.getUserId()) || 'user' },
           body: JSON.stringify({ chatRoomId: room, content: text, sender: (window.ContinuumUserSession && ContinuumUserSession.getUserId()) || 'user' }),
-        }).then(function () {
+        }).then(function (r) {
+          if (!r.ok) {
+            return r.json().catch(function () { return {}; }).then(function (data) {
+              var box = panel.querySelector('#continuum-chat-messages');
+              box.innerHTML = '<div class="continuum-chat-msg continuum-chat-msg--system">' +
+                esc(data.detail || data.error || ('Send failed (' + r.status + ')')) + '</div>';
+            });
+          }
           panel.querySelector('#continuum-chat-input').value = '';
           loadChatMessages(room);
         });
@@ -365,9 +379,8 @@
     function bindRoomUi(activeRoom, roomKind) {
       var roomInput = panel.querySelector('#continuum-chat-room');
       var roomLabel = panel.querySelector('#continuum-chat-room-label');
-      var roomRow = panel.querySelector('#continuum-chat-room-row');
       if (!roomInput) return;
-      if (activeRoom && (storyRoom || tableReadRoom)) {
+      if (activeRoom && roomKind) {
         roomInput.value = activeRoom;
         roomInput.style.display = 'none';
         if (roomLabel) {
@@ -382,34 +395,65 @@
     function loadChatMessages(roomId) {
       if (!roomId) return;
       fetch('/api/chat/messages?chatRoomId=' + encodeURIComponent(roomId))
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (data) {
+            return { ok: r.ok, status: r.status, data: data };
+          });
+        })
+        .then(function (result) {
           var box = panel.querySelector('#continuum-chat-messages');
-          box.innerHTML = (data.messages || []).map(function (m) {
+          if (!result.ok) {
+            box.innerHTML = '<div class="continuum-chat-msg continuum-chat-msg--system">' +
+              esc(result.data.detail || result.data.error || ('Chat unavailable (' + result.status + ')')) + '</div>';
+            return;
+          }
+          box.innerHTML = (result.data.messages || []).map(function (m) {
             var cls = m.type === 'system' ? ' continuum-chat-msg--system' : '';
             return '<div class="continuum-chat-msg' + cls + '"><b>' + esc(m.sender) + '</b>: ' + renderChatContent(m.content) + '</div>';
           }).join('');
           box.scrollTop = box.scrollHeight;
         });
     }
-    panel.style.display = open ? 'flex' : 'none';
-    var tableReadRoom = localStorage.getItem('continuumChatTableReadRoom');
-    var storyRoom = localStorage.getItem('continuumChatStoryRoom');
-    var activeRoom = tableReadRoom || storyRoom;
-    applyInventoryChatTheme(panel, !!tableReadRoom);
-    bindRoomUi(activeRoom, tableReadRoom ? 'table_read' : 'story');
-    if (activeRoom) {
-      loadChatMessages(activeRoom);
+    function refreshChatState() {
+      var tableReadRoom = localStorage.getItem('continuumChatTableReadRoom');
+      var storyRoom = localStorage.getItem('continuumChatStoryRoom');
+      var activeRoom = tableReadRoom || storyRoom;
+      applyInventoryChatTheme(panel, !!tableReadRoom);
+      bindRoomUi(activeRoom, tableReadRoom ? 'table_read' : (storyRoom ? 'story' : null));
+      if (activeRoom) loadChatMessages(activeRoom);
+      return activeRoom;
     }
+    panel._continuumRefreshChat = refreshChatState;
+    panel._continuumLoadChatMessages = loadChatMessages;
+    panel.style.display = open ? 'flex' : 'none';
+    refreshChatState();
     var pollMs = parseInt(localStorage.getItem('continuumChatPollMs') || '8000', 10) || 8000;
     if (panel._continuumChatPoll) clearInterval(panel._continuumChatPoll);
     panel._continuumChatPoll = setInterval(function () {
       if (panel.style.display === 'none') return;
       var room = (panel.querySelector('#continuum-chat-room') || {}).value;
-      if (!room && activeRoom) room = activeRoom;
+      if (!room) {
+        room = localStorage.getItem('continuumChatTableReadRoom') || localStorage.getItem('continuumChatStoryRoom') || '';
+      }
       if (room) loadChatMessages(room);
       pollTableReadInvites(panel, loadChatMessages);
     }, pollMs);
+    return panel;
+  }
+
+  function openChat(opts) {
+    opts = opts || {};
+    if (opts.kind === 'story') {
+      localStorage.removeItem('continuumChatTableReadRoom');
+      if (opts.roomId) localStorage.setItem('continuumChatStoryRoom', opts.roomId);
+    } else if (opts.kind === 'table_read') {
+      localStorage.removeItem('continuumChatStoryRoom');
+      if (opts.roomId) localStorage.setItem('continuumChatTableReadRoom', opts.roomId);
+    }
+    localStorage.setItem('continuumChatOpen', '1');
+    var panel = mountChatPanel(document.body);
+    panel.style.display = 'flex';
+    if (panel._continuumRefreshChat) panel._continuumRefreshChat();
     return panel;
   }
 
@@ -452,8 +496,20 @@
     extraHost.appendChild(btn);
   }
 
-  function mount(opts) {
-    opts = opts || {};
+  function mount(optsOrRoot, maybeOpts) {
+    var opts = {};
+    if (
+      optsOrRoot &&
+      typeof optsOrRoot === 'object' &&
+      optsOrRoot.nodeType !== 1 &&
+      !(optsOrRoot instanceof HTMLElement)
+    ) {
+      opts = optsOrRoot;
+    } else {
+      opts = maybeOpts || {};
+      if (typeof optsOrRoot === 'string') opts.root = optsOrRoot;
+      else if (optsOrRoot && optsOrRoot.nodeType === 1) opts.root = optsOrRoot;
+    }
     var root = opts.root;
     if (typeof root === 'string') root = document.querySelector(root);
     if (!root) root = document.getElementById('continuum-nav-root');
@@ -534,6 +590,7 @@
 
   global.ContinuumNav = {
     mount: mount,
+    openChat: openChat,
     resolveAppUrls: resolveAppUrls,
     detectApp: detectApp,
     normalizeLibraryBase: normalizeLibraryBase,

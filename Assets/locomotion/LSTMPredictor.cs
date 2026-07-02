@@ -23,13 +23,22 @@ public class LSTMPredictor : MonoBehaviour
     [Tooltip("Maximum sequence history length")]
     public int maxHistoryLength = 10;
 
+    [Header("Dream memory")]
+    [Tooltip("When true, predictor serves dream-memory reconstruction instead of live gameplay.")]
+    public bool dreamMemoryMode;
+
+    public int dreamSeed;
+
     private float confidence = 0.5f;
 
     /// <summary>
     /// Predict next card in sequence given current card and state.
+    /// Skipped when dreamMemoryMode is active (outputs are non-authoritative dream recall).
     /// </summary>
     public GoodSection PredictNextCard(GoodSection currentCard, RagdollState state)
     {
+        if (dreamMemoryMode)
+            return null;
         if (model == null)
         {
             // Fallback: simple heuristic prediction

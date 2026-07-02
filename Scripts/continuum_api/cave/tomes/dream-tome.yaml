@@ -1,0 +1,15 @@
+id: dream-tome
+name: Dream Cycle Tome
+machines:
+  dreamMachine:
+    events:
+      DAY_COMPLETE: dream_day_complete
+      NIGHT_COMPLETE: dream_night_complete
+      MEMORY_RECALL: dream_memory_recall
+      SLEEP_WAVE_GET: dream_sleep_wave_get
+robotCopy:
+  flows:
+    dream_day_complete:
+      message: dream_day_complete
+    dream_night_complete:
+      message: dream_night_complete

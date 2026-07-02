@@ -58,6 +58,34 @@
     return err;
   }
 
+  function finishAceEditorLayout(editor, scriptText) {
+    if (!editor || !editor.setValue) return;
+    editor.setValue(scriptText || '', -1);
+    editor.clearSelection();
+    try {
+      editor.setTheme('ace/theme/textmate');
+      editor.session.setMode('ace/mode/text');
+    } catch (_) { /* theme/mode optional */ }
+    editor.setOptions({
+      useWorker: false,
+      fontSize: '13px',
+      showPrintMargin: false,
+      wrap: true,
+    });
+    editor.setReadOnly(!!editor._continuumReadOnly);
+    const resize = () => {
+      try {
+        editor.resize(true);
+        editor.renderer.updateFull(true);
+      } catch (_) { /* ace not ready */ }
+    };
+    if (typeof requestAnimationFrame !== 'undefined') {
+      requestAnimationFrame(resize);
+    } else {
+      resize();
+    }
+  }
+
   const ContinuumScriptEditor = {
     _instance: null,
     _bridge: null,
@@ -96,6 +124,7 @@
       if (!el) return null;
       options = options || {};
       el.innerHTML = '';
+      el.classList.add('continuum-script-editor-host');
       const toolbar = document.createElement('div');
       toolbar.className = 'continuum-script-toolbar';
       const attachBtn = document.createElement('button');
@@ -103,6 +132,11 @@
       attachBtn.textContent = 'Attach clause';
       attachBtn.setAttribute('aria-label', 'Attach property, lemma, or localization to selection');
       toolbar.appendChild(attachBtn);
+      const modSlotBtn = document.createElement('button');
+      modSlotBtn.type = 'button';
+      modSlotBtn.textContent = 'Mark Mayor Dog mod slot';
+      modSlotBtn.setAttribute('aria-label', 'Mark selection as Mayor Dog Mod slot for player overrides');
+      toolbar.appendChild(modSlotBtn);
       const suggestionsEl = document.createElement('div');
       suggestionsEl.className = 'continuum-clause-suggestions';
       suggestionsEl.setAttribute('aria-label', 'Reuse lemma or property configs for selected text');
@@ -137,10 +171,8 @@
       let editor;
       if (aceLoaded) {
         editor = ace.edit(editorEl);
-        editor.setTheme('ace/theme/textmate');
-        editor.session.setMode('ace/mode/plain_text');
-        editor.setValue(options.scriptText || '', -1);
-        editor.setReadOnly(readOnly);
+        editor._continuumReadOnly = readOnly;
+        finishAceEditorLayout(editor, options.scriptText || '');
       } else {
         const ta = document.createElement('textarea');
         ta.className = 'script-viewer';
@@ -205,6 +237,9 @@
           },
         });
       };
+
+      modSlotBtn.disabled = !!readOnly;
+      modSlotBtn.onclick = () => this.markMayorDogModSlot(inst);
 
       return inst;
     },
@@ -339,7 +374,7 @@
           btn.type = 'button';
           const kind = tpl._bundle ? 'bundle' : (tpl.bindingKind || tpl.binding_kind || 'property');
           btn.className = `continuum-clause-suggestion-btn continuum-clause-suggestion-${kind}`;
-          btn.textContent = tpl._label || (CS ? CS.suggestionLabel(tpl) : bindingSummary(tpl));
+          btn.textContent = 'Apply: ' + (tpl._label || (CS ? CS.suggestionLabel(tpl) : bindingSummary(tpl)));
           btn.title = tpl._tooltip || (CS ? CS.suggestionTooltip(tpl) : bindingSummary(tpl));
           btn.onclick = async () => {
             if (!CS) {
@@ -492,6 +527,10 @@
         if (kind === 'lemma' && global.ContinuumLemmaPromptEditor) {
           const entryId = b.entryId || b.entry_id || b.propertyValue || b.property_value;
           if (entryId) {
+            const snippet = (b.selectionText || b.selection_text || text.substring(
+              b.charStart ?? b.char_start ?? 0,
+              b.charEnd ?? b.char_end ?? 0,
+            ) || '').trim();
             const compBtn = document.createElement('button');
             compBtn.type = 'button';
             compBtn.textContent = 'Composition';
@@ -503,7 +542,7 @@
                 parentEntryId: entryId,
                 draftEpisodeId: options.draftEpisodeId || options.draftId,
                 scriptText: text,
-                seedPhrase: (snippet || '').trim(),
+                seedPhrase: snippet,
                 onSaved: () => {
                   if (options.onBindingsChanged) options.onBindingsChanged();
                 },
@@ -517,17 +556,70 @@
       panel.appendChild(list);
     },
 
+    async markMayorDogModSlot(inst) {
+      inst = inst || this._instance;
+      if (!inst) return;
+      if (inst.readOnly) {
+        alert('Script is read-only — withdraw from review or switch to edit mode first.');
+        return;
+      }
+      const sel = this.getSelection(inst);
+      if (sel.charEnd <= sel.charStart || !(sel.text || '').trim()) {
+        alert('Select script text to mark as a Mayor Dog Mod slot.');
+        return;
+      }
+      const options = inst.options || {};
+      const draftId = options.draftEpisodeId || options.draftId;
+      if (!draftId) {
+        alert('Draft episode ID is required to mark episode mod slots.');
+        return;
+      }
+      const label = (sel.text || '').trim().slice(0, 48);
+      const slotKey = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'mod-slot';
+      const body = {
+        targetKind: 'episode_section',
+        draftEpisodeId: draftId,
+        charStart: sel.charStart,
+        charEnd: sel.charEnd,
+        slotKey: `${slotKey}-${Date.now().toString(36).slice(-4)}`,
+        label,
+        sourceText: this.getValue(inst),
+      };
+      try {
+        const resp = await this.callApi('POST', '/api/mods/moddable-targets', body);
+        const item = resp.item || resp;
+        const token = `{M:${item.slotKey || body.slotKey}}`;
+        if (inst.aceLoaded && inst.editor) {
+          const Range = ace.require('ace/range').Range;
+          const session = inst.editor.getSession();
+          const start = session.doc.indexToPosition(sel.charEnd);
+          session.insert(start, token);
+        } else if (inst.editor && inst.editor._ta) {
+          const ta = inst.editor._ta;
+          const v = ta.value;
+          ta.value = v.slice(0, sel.charEnd) + token + v.slice(sel.charEnd);
+        }
+        inst._overlaySpanSig = null;
+        if (inst.options.onScriptChanged) inst.options.onScriptChanged(this.getValue(inst));
+        this.renderOverlays(inst, inst.options);
+        alert(`Mayor Dog Mod slot created: ${item.slotKey || body.slotKey}`);
+      } catch (err) {
+        alert(err.message || 'Failed to create mod slot');
+      }
+    },
+
     renderOverlays(inst, options) {
       inst = inst || this._instance;
       options = options || inst?.options || {};
       if (!inst || !inst.aceLoaded) return;
       const session = inst.editor.getSession();
       const text = inst.editor.getValue();
+      const docLen = text.length;
       const snapshot = inst.overlaySnapshotText ?? options.overlaySnapshotText ?? options.scriptText ?? text;
       const spans = Spans
         ? Spans.buildOverlaySpans(text, snapshot, options.clauseBindings, options.reviewComments)
         : [];
-      const sig = spans.map((s) => `${s.kind}:${s.charStart}:${s.charEnd}`).join('|');
+      const sig = `${docLen}|` + spans.map((s) => `${s.kind}:${s.charStart}:${s.charEnd}`).join('|');
       if (inst._overlaySpanSig === sig && inst._markers && inst._markers.length) return;
       inst._overlaySpanSig = sig;
 
@@ -536,18 +628,53 @@
         inst._markers = inst._markers || [];
         inst._markers.forEach(id => session.removeMarker(id));
         inst._markers = [];
+        if (!docLen) return;
         spans.forEach(span => {
-          if (span.charEnd <= span.charStart) return;
+          let cs = Math.max(0, Math.min(span.charStart, docLen));
+          let ce = Math.max(cs, Math.min(span.charEnd, docLen));
+          if (ce <= cs) return;
           const Range = ace.require('ace/range').Range;
-          const start = session.doc.indexToPosition(span.charStart);
-          const end = session.doc.indexToPosition(span.charEnd);
-          const cls = span.kind === 'prompt' ? 'ace-prompt-placeholder' : span.kind === 'clause' ? 'ace-loc-clause' : 'ace-review-comment';
+          const start = session.doc.indexToPosition(cs);
+          const end = session.doc.indexToPosition(ce);
+          if (start.row === end.row && start.column === end.column) return;
+          const cls = span.kind === 'prompt'
+            ? 'ace-prompt-placeholder'
+            : span.kind === 'mayorDogModSlot'
+              ? 'ace-mayor-dog-mod-slot'
+              : span.kind === 'clause'
+                ? 'ace-loc-clause'
+                : 'ace-review-comment';
           const id = session.addMarker(new Range(start.row, start.column, end.row, end.column), cls, 'text', false);
           inst._markers.push(id);
         });
       } finally {
         inst._overlayUpdating = false;
       }
+    },
+
+    resize(inst) {
+      inst = inst || this._instance;
+      if (!inst || !inst.aceLoaded || !inst.editor) return;
+      try {
+        inst.editor.resize(true);
+        inst.editor.renderer.updateFull(true);
+      } catch (_) { /* ignore */ }
+    },
+
+    setScriptText(inst, scriptText) {
+      inst = inst || this._instance;
+      if (!inst) return;
+      const text = scriptText || '';
+      inst.options.scriptText = text;
+      inst.overlaySnapshotText = text;
+      if (inst.aceLoaded) {
+        finishAceEditorLayout(inst.editor, text);
+      } else if (inst.editor && inst.editor._ta) {
+        inst.editor._ta.value = text;
+      }
+      inst._overlaySpanSig = null;
+      this.renderOverlays(inst, inst.options);
+      this.renderClausePanel(inst);
     },
 
     getValue(inst) {

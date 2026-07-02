@@ -98,6 +98,11 @@ def register_localization_routes(
         key = request.args.get("key")
         try:
             conn = get_conn()
+            try:
+                from continuum_api.spatial_generator_specs import ensure_spatial_property_specs
+            except ImportError:
+                from spatial_generator_specs import ensure_spatial_property_specs
+            ensure_spatial_property_specs(conn)
             if key:
                 cur = conn.execute(
                     "SELECT key, value_type, allowed_values_json, default_value, description FROM localization_property_specs WHERE key = ?",
@@ -571,9 +576,7 @@ def register_localization_routes(
             if not row:
                 conn.close()
                 return jsonify({"error": "not found"}), 404
-            if row["workflow_status"] == "in_review":
-                conn.close()
-                return jsonify({"error": "cannot save while in_review; withdraw first"}), 409
+            status = row["workflow_status"]
             now = _now()
             for item in body.get("items") or []:
                 if item.get("id"):
@@ -581,6 +584,10 @@ def register_localization_routes(
                         "UPDATE localization_change_list_items SET user_acknowledged = ? WHERE id = ? AND change_list_id = ?",
                         (1 if item.get("userAcknowledged") else 0, item["id"], change_list_id),
                     )
+            if status == "in_review":
+                conn.commit()
+                conn.close()
+                return jsonify({"ok": True, "ackOnly": True}), 200
             conn.execute(
                 "UPDATE localization_change_lists SET last_saved_at = ?, updated_at = ? WHERE id = ? AND workflow_status IN ('new', 'in_progress')",
                 (now, now, change_list_id),
@@ -595,6 +602,16 @@ def register_localization_routes(
     def submit_change_list_for_review(change_list_id: str):
         try:
             conn = get_conn()
+            row = conn.execute(
+                "SELECT workflow_status, draft_episode_id FROM localization_change_lists WHERE id = ?",
+                (change_list_id,),
+            ).fetchone()
+            if not row:
+                conn.close()
+                return jsonify({"error": "not found"}), 404
+            if row["workflow_status"] in ("in_review", "submitted"):
+                conn.close()
+                return jsonify({"ok": True, "alreadySubmitted": True, "workflowStatus": row["workflow_status"]}), 200
             pending = conn.execute(
                 """SELECT COUNT(*) AS c FROM localization_change_list_items
                    WHERE change_list_id = ? AND severity = 'required' AND user_acknowledged = 0 AND superseded_at IS NULL""",

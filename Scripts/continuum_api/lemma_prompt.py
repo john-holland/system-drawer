@@ -456,7 +456,7 @@ def expand_lemma_prompt(
         if isinstance(sub, dict) and sub.get("mergedProperties"):
             merged_props.update(sub["mergedProperties"])
 
-    return {
+    result = {
         "expandedText": expanded,
         "tree": {
             "entryId": entry_id,
@@ -468,6 +468,25 @@ def expand_lemma_prompt(
         "spatial": spatial,
         "issues": issues,
     }
+    if "{P:dialogue" in template.lower():
+        try:
+            from continuum_api.dialogue_parser import compile_dialogue_to_json
+        except ImportError:
+            from dialogue_parser import compile_dialogue_to_json
+        result["dialogueSubtree"] = compile_dialogue_to_json(template, entry_id)
+    if "{P:quest" in template.lower():
+        try:
+            from continuum_api.quest_parser import compile_quest_to_json
+        except ImportError:
+            from quest_parser import compile_quest_to_json
+        result["questSubtree"] = compile_quest_to_json(template, entry_id)
+    if "{P:dream-day" in template.lower():
+        try:
+            from continuum_api.dream_day_parser import compile_dream_day_hints
+        except ImportError:
+            from dream_day_parser import compile_dream_day_hints
+        result["dreamDaySubtree"] = compile_dream_day_hints(template)
+    return result
 
 
 def load_prompt_bundle(conn: sqlite3.Connection, entry_id: str) -> dict[str, Any]:

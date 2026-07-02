@@ -21,6 +21,13 @@ public class DynamicSoundToMLGenerator : DynamicGeneratorBase
     [TextArea(2, 6)]
     public string textScript = "";
 
+    [Header("Continuum dialogue API")]
+    [Tooltip("When true, Respeaking mode should call Continuum dialogue_speech_synthesize (see ContinuumDialogueSpeechClient).")]
+    public bool useContinuumDialogueApi = true;
+
+    [Tooltip("NarrativeBindings speaker key passed to synthesize + ActorSpeechPlayback.")]
+    public string speakerKey = "actor";
+
     [Header("Output")]
     [Tooltip("Length in seconds for generated audio.")]
     public float lengthSeconds = 5f;

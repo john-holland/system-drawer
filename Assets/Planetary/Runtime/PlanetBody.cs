@@ -32,6 +32,10 @@ namespace Planetary
         [Tooltip("Matches society_planets.planet_id in continuum API")]
         public string societyPlanetId = "earth";
 
+        [Header("Galactic registry")]
+        [Tooltip("Optional galactic_bodies.body_id for night sky and relativity")]
+        public string galacticBodyId;
+
         public int meshResolution = 32;
         public int chunksPerFace = 2;
 

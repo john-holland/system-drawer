@@ -66,5 +66,6 @@ Planet and weather code resolve dependencies through canonical keys (not `FindOb
 - `Window/System Drawer/Planet/Bake Composition`
 - `PlanetBody` inspector: Rebuild Planet, Rebake SDF LOD Mesh, Update Interior Planet Physics
 - `Window/System Drawer/Physics/Physics Bridge Editor` — validate bridges and shell grid
+- [PlanetSdfDiagnostics.md](./PlanetSdfDiagnostics.md) — debug invisible SDF / play-mode churn
 
 See [SdfMaxArchitecture.md](../../SdfMax/docs/SdfMaxArchitecture.md) for SDF-as-source-of-truth.

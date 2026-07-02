@@ -522,5 +522,122 @@ namespace Locomotion.Narrative
             }
         }
     }
+
+    /// <summary>
+    /// Opens a dialogue session and optionally waits for first line audio.
+    /// </summary>
+    [Serializable]
+    public class RunDialogueAction : NarrativeActionSpec
+    {
+        public string setId = "book-concert";
+        public string speakerKeyFallback = "actor";
+        public bool openOnExecute = true;
+        public bool waitForLineAudio = true;
+
+        [NonSerialized] DialogueRunner _runner;
+        [NonSerialized] bool _started;
+
+        public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (!contingency.Evaluate(ctx))
+                return BehaviorTreeStatus.Success;
+
+            if (_runner == null)
+            {
+                _runner = UnityEngine.Object.FindAnyObjectByType<DialogueRunner>();
+                if (_runner == null)
+                {
+                    var go = new GameObject("DialogueRunner");
+                    _runner = go.AddComponent<DialogueRunner>();
+                }
+                _runner.setId = setId;
+                _runner.executor = UnityEngine.Object.FindAnyObjectByType<NarrativeExecutor>();
+                _runner.bindings = ctx.bindings;
+            }
+
+            if (!_started && openOnExecute)
+            {
+                _runner.OpenSession();
+                _started = true;
+                return BehaviorTreeStatus.Running;
+            }
+
+            if (waitForLineAudio && _runner.IsAudioPlaying())
+                return BehaviorTreeStatus.Running;
+
+            return BehaviorTreeStatus.Success;
+        }
+    }
+
+    /// <summary>Opens a quest session and activates first objective.</summary>
+    [Serializable]
+    public class RunQuestObjectiveActionSpec : NarrativeActionSpec
+    {
+        public string setId = "little-prince-tour";
+        public string objectiveId;
+        public bool openOnExecute = true;
+
+        [NonSerialized] QuestRunner _runner;
+        [NonSerialized] bool _started;
+
+        public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (!contingency.Evaluate(ctx))
+                return BehaviorTreeStatus.Success;
+
+            if (_runner == null)
+            {
+                _runner = UnityEngine.Object.FindAnyObjectByType<QuestRunner>();
+                if (_runner == null)
+                {
+                    var go = new GameObject("QuestRunner");
+                    _runner = go.AddComponent<QuestRunner>();
+                }
+                _runner.setId = setId;
+                _runner.executor = UnityEngine.Object.FindAnyObjectByType<NarrativeExecutor>();
+                _runner.bindings = ctx.bindings;
+            }
+
+            if (!_started && openOnExecute)
+            {
+                _runner.OpenQuestSet(resp =>
+                {
+                    if (resp != null && resp.ok && !string.IsNullOrEmpty(objectiveId))
+                        _runner.ActivateObjective(objectiveId);
+                });
+                _started = true;
+                return BehaviorTreeStatus.Running;
+            }
+
+            return BehaviorTreeStatus.Success;
+        }
+    }
+
+    /// <summary>Run night sleep sim → populate dream buffer → recall fragment on wake.</summary>
+    [Serializable]
+    public class DreamMemoryNarrativeAction : NarrativeActionSpec
+    {
+        public MonoBehaviour dayRunner;
+        public MonoBehaviour nightRunner;
+        public MonoBehaviour dreamMemoryLstm;
+        public bool recallOnWake = true;
+
+        public override BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            if (!contingency.Evaluate(ctx))
+                return BehaviorTreeStatus.Success;
+
+            dayRunner?.GetType().GetMethod("RunDayComplete")?.Invoke(dayRunner, null);
+            nightRunner?.GetType().GetMethod("RunNightComplete")?.Invoke(nightRunner, null);
+
+            if (recallOnWake && dreamMemoryLstm != null)
+            {
+                var recall = dreamMemoryLstm.GetType().GetMethod("RecallDreamFragment");
+                recall?.Invoke(dreamMemoryLstm, null);
+            }
+
+            return BehaviorTreeStatus.Success;
+        }
+    }
 }
 

@@ -17,6 +17,8 @@ internal static class SystemDrawerHubMenuCatalog
 
     internal static readonly Entry[] All =
     {
+        new Entry("Narrative", "Quest Map", "Window/System Drawer/Quest Map"),
+        new Entry("Narrative", "Dream Cycle", "Window/System Drawer/Dream Cycle"),
         new Entry("Narrative", "Tree Editor", "Window/System Drawer/Narrative/Tree Editor"),
         new Entry("Narrative", "Calendar Wizard", "Window/System Drawer/Narrative/Calendar Wizard"),
         new Entry("Narrative", "Calendar Timeline", "Window/System Drawer/Narrative/Calendar Timeline"),

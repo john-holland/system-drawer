@@ -498,7 +498,7 @@
         fareyRightNum: ce / g2,
         fareyRightDen: n / g2,
         draftScriptId: editorInst?.options?.draftScriptId,
-        draftEpisodeId: editorInst?.options?.draftId,
+        draftEpisodeId: editorInst?.options?.draftEpisodeId || editorInst?.options?.draftId,
       };
     },
 

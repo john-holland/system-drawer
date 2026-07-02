@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+log = logging.getLogger(__name__)
 
 CAVE_DIR = Path(__file__).resolve().parent / "cave"
 BUILTIN_PREORDER_CASE_ID = "00000000-0000-4000-8000-000000000001"
@@ -16,8 +19,12 @@ PLATFORM_PREORDER_FEATURE = "platform.preordering"
 def _load_yaml(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
-    with path.open(encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
+    try:
+        with path.open(encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except yaml.YAMLError as exc:
+        log.warning("Skipping invalid YAML tome %s: %s", path.name, exc)
+        return {}
     return data if isinstance(data, dict) else {}
 
 

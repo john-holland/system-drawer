@@ -1,3 +1,4 @@
+using Planetary.Celestial;
 using UnityEngine;
 
 namespace Planetary
@@ -21,6 +22,38 @@ namespace Planetary
             boost = velocityBoost;
             emissionZone.radiationOffset -= shipZone.radiationOffset;
             return true;
+        }
+
+        public void ApplyCoupledForce(
+            ICelestialBody target,
+            Transform shipTransform,
+            QuantumTractorBeamPolicy policy,
+            float gain)
+        {
+            if (target?.BodyTransform == null || shipTransform == null)
+                return;
+            Vector3 toShip = shipTransform.position - target.BodyTransform.position;
+            float dist = toShip.magnitude;
+            if (dist < 1e-3f)
+                return;
+            Vector3 dir = toShip / dist;
+            float forceMag = gain * target.Mass * 1e-20f / dist;
+            if (policy != null && policy.enforceLimits)
+                forceMag = Mathf.Min(forceMag, policy.maxCouplingForceN);
+
+            var shipRb = shipTransform.GetComponent<Rigidbody>();
+            if (shipRb != null)
+                shipRb.AddForce(-dir * forceMag, ForceMode.Force);
+
+            var targetRb = target.BodyTransform.GetComponent<Rigidbody>();
+            if (targetRb != null)
+                targetRb.AddForce(dir * forceMag, ForceMode.Force);
+            else
+            {
+                var orbit = target.BodyTransform.GetComponent<PlanetOrbitDriver>();
+                if (orbit != null)
+                    orbit.ApplyDelta(dir * (forceMag * Time.fixedDeltaTime * 1e-6f));
+            }
         }
     }
 }

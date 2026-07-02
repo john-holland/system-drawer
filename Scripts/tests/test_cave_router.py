@@ -36,7 +36,9 @@ def test_manifest_loads_handlers():
     handlers = manifest.get("handlers") or {}
     assert "stories/list" in handlers
     assert "sql-viewer/schema" in handlers
+    assert "dialogue/session/open" in handlers
     assert message_to_structural(manifest, "list_stories") == "stories/list"
+    assert message_to_structural(manifest, "dialogue_session_open") == "dialogue/session/open"
 
 
 def test_cave_route_unknown():

@@ -70,6 +70,8 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     [Header("In-Game Spatial 4D Editor")]
     [Tooltip("When true, the in-game UI is shown in Play mode for placing markers, start/stop, and saving to file.")]
     public bool showInGameSpatial4DEditor = false;
+    [Tooltip("When true, Spatial4DInGameUI shows quest minimap / journal overlay tab.")]
+    public bool showQuestMapOverlay = false;
     [Tooltip("When true, recording (and minute bar) auto-starts when player position enters a narrative volume (causality).")]
     public bool autoStartWithCausality = false;
     [Tooltip("When true, record each causality trigger (entry into narrative volume) in causalityTriggersTripped.")]
@@ -86,6 +88,16 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     public bool inGameUIAppendToFile = false;
     [Tooltip("Output format for the flat file.")]
     public Spatial4DOutputFormat inGameUIOutputFormat = Spatial4DOutputFormat.Json;
+
+    [Header("Seed dependency")]
+    [Tooltip("When true, generator and downstream seeds derive from masterSeed + seedTree; manual SetSeed is reverted.")]
+    public bool lockSeedDependencyTree;
+    public int masterSeed = 42;
+    public SeedDependencyTreeAsset seedTree;
+    [Tooltip("Day quad-tree collapse seed (child of master when locked).")]
+    public int dayCollapseSeed;
+    [Tooltip("Sleep wave seed (child of day collapse when locked).")]
+    public int sleepSeed;
 
     private void OnValidate()
     {
@@ -180,7 +192,66 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
 
         if (roadBakeBridge != null)
             roadBakeBridge.SendMessage("BakeAllRoads", SendMessageOptions.DontRequireReceiver);
+
+        if (lockSeedDependencyTree)
+            ApplySeedDependencyTree();
+        else
+            SeedDependencyLockRegistry.Register(null);
     }
+
+    /// <summary>Propagate derived seeds to 3D generators, causality layout, sleep, and dream LSTM nodes.</summary>
+    public void ApplySeedDependencyTree()
+    {
+        SeedDependencyLockRegistry.Register(this);
+        if (seedTree != null)
+            seedTree.masterSeed = masterSeed;
+
+        SeedDependencyLockRegistry.BeginApply();
+        try
+        {
+            if (spatialGenerators != null)
+            {
+                for (int i = 0; i < spatialGenerators.Count; i++)
+                {
+                    if (spatialGenerators[i] is not SpatialGenerator sg)
+                        continue;
+                    sg.SetSeed(GetDerivedSeedForGeneratorIndex(i));
+                }
+            }
+        }
+        finally
+        {
+            SeedDependencyLockRegistry.EndApply();
+        }
+    }
+
+    public int GetDerivedSeed(string nodeId)
+    {
+        if (seedTree != null)
+            return seedTree.DeriveSeed(nodeId, dayCollapseSeed, sleepSeed);
+        return SeedDependencyTreeAsset.HashCombine(masterSeed, nodeId != null ? nodeId.GetHashCode() : 0);
+    }
+
+    public int GetDerivedSeedForGeneratorIndex(int index) => GetDerivedSeed($"generator_{index}");
+
+    public int GetDerivedSeedFor(SpatialGenerator generator)
+    {
+        if (spatialGenerators == null || generator == null)
+            return GetDerivedSeed("generator_0");
+        for (int i = 0; i < spatialGenerators.Count; i++)
+        {
+            if (spatialGenerators[i] == generator)
+                return GetDerivedSeedForGeneratorIndex(i);
+        }
+        return GetDerivedSeedForGeneratorIndex(0);
+    }
+
+    public int GetCausalityRandomSeed() => GetDerivedSeed("causality");
+
+    public int GetDreamLstmSeed() => GetDerivedSeed("dream_lstm");
+
+    [ContextMenu("Re-derive all seeds")]
+    void ContextReDeriveSeeds() => ApplySeedDependencyTree();
 
     /// <summary>Append one observation row (e.g. volume entry); prior rows are never modified.</summary>
     public void AppendCausalityHistorySnapshot(string leafBack, string leafPause, string leafForward, long flags,
@@ -333,7 +404,7 @@ public class CausalityPlacementCoordinator : MonoBehaviour
         {
             defaultCenter = transform.position,
             defaultSize = Vector3.one * 20f,
-            randomSeed = orchestrator != null ? 42 : 0
+            randomSeed = orchestrator != null ? orchestrator.GetCausalityRandomSeed() : 0
         };
 
         if (orchestrator?.causalityHistory?.rows != null && orchestrator.causalityHistory.rows.Count > 0)

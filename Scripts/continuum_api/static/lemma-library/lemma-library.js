@@ -131,6 +131,11 @@
     { id: 'alpha', label: 'Alphabetical', field: 'alpha', visible: true, asc: true },
     { id: 'pos', label: 'Part of speech', field: 'posTag', visible: true, asc: true },
     { id: 'source', label: 'Built-in vs custom', field: 'isBuiltIn', visible: true, asc: true },
+    { id: 'builtInCat', label: 'Built-in category', field: 'builtInCategory', visible: false, asc: true },
+    { id: 'spatialDims', label: 'Spatial generator dims', field: 'spatialGenDims', visible: false, asc: true },
+    { id: 'spatial2d', label: '2D spatial generator', field: 'spatialGen2d', visible: false, asc: true },
+    { id: 'spatial3d', label: '3D spatial generator', field: 'spatialGen3d', visible: false, asc: true },
+    { id: 'spatial4d', label: '4D spatial generator', field: 'spatialGen4d', visible: false, asc: true },
     { id: 'components', label: 'Property keys', field: 'components', visible: false, asc: true },
     { id: 'compTypes', label: 'Component types', field: 'componentTypes', visible: false, asc: true },
   ];
@@ -139,6 +144,7 @@
     { id: 'propKey', label: 'Property key', field: 'propertyKey', visible: true, asc: true },
     { id: 'lemma', label: 'Lemma term', field: 'lemmaTerm', visible: true, asc: true },
     { id: 'spec', label: 'Spec type', field: 'specType', visible: false, asc: true },
+    { id: 'spatialSpec', label: 'Spatial generator spec', field: 'spatialSpecGroup', visible: false, asc: true },
     { id: 'component', label: 'Component', field: 'component', visible: true, asc: true },
     { id: 'source', label: 'Built-in vs custom', field: 'isBuiltIn', visible: false, asc: true },
   ];
@@ -194,6 +200,13 @@
           ch.className = 'chip chip-prop';
           ch.textContent = c;
           ch.title = 'Property key';
+          chips.appendChild(ch);
+        });
+        (item.spatialGeneratorDefinitions || []).slice(0, 3).forEach(function (sg) {
+          const ch = document.createElement('span');
+          ch.className = 'chip chip-spatial';
+          ch.textContent = (sg.dimension || '?').toUpperCase() + ': ' + (sg.label || sg.id || 'gen');
+          ch.title = 'Spatial generator definition';
           chips.appendChild(ch);
         });
         if (item.clauseCount > 0) {
@@ -258,6 +271,7 @@
     const componentType = document.getElementById('filter-component-type')?.value?.trim() || '';
     const bucketId = document.getElementById('filter-bucket-id')?.value?.trim() || '';
     const hasMetadata = document.getElementById('filter-has-metadata')?.checked;
+    const spatialDim = document.getElementById('filter-spatial-dim')?.value || '';
     const params = new URLSearchParams({ limit: '2000' });
     if (q) params.set('q', q);
     if (language) params.set('language', language);
@@ -265,6 +279,7 @@
     if (componentType) params.set('componentType', componentType);
     if (bucketId) params.set('bucketId', bucketId);
     if (hasMetadata) params.set('hasComponentMetadata', 'true');
+    if (spatialDim) params.set('spatialDimension', spatialDim);
     const data = await api('/api/thesaurus/entries?' + params);
     browseItems = data.items || [];
     renderBrowseList();
@@ -308,7 +323,18 @@
     if (q) params.set('q', q);
     if (propertyKey) params.set('propertyKey', propertyKey);
     const data = await api('/api/thesaurus/localization-view?' + params);
-    locRows = data.rows || [];
+    locRows = (data.rows || []).map(function (row) {
+      var pk = row.propertyKey || '';
+      var spatialSpecGroup = '(other)';
+      if (pk.indexOf('spatial-gen-') === 0 || pk === 'spatial-generator-definitions') {
+        if (pk.indexOf('2d') >= 0 || pk === 'spatial-generator-definitions') spatialSpecGroup = '2D spatial generator';
+        else if (pk.indexOf('3d') >= 0) spatialSpecGroup = '3D spatial generator';
+        else if (pk.indexOf('4d') >= 0 || pk.indexOf('spatial-4d') >= 0 || pk.indexOf('spatial-t-') >= 0) {
+          spatialSpecGroup = '4D spatial generator';
+        } else spatialSpecGroup = 'Spatial generator';
+      }
+      return Object.assign({}, row, { spatialSpecGroup: spatialSpecGroup });
+    });
     renderLocList();
   }
 
@@ -388,6 +414,22 @@
     }
     const backTarget = routeInfo.from || 'browse';
     const backLabel = backTarget === 'localization' ? '← Back to localization' : '← Back to browse';
+    const spatialDefs = data.spatialGeneratorDefinitions || [];
+    let spatialSection = '<h3>Spatial generator definitions</h3>';
+    if (!spatialDefs.length) {
+      spatialSection += '<p class="muted">None — add via Properties as JSON key <code>spatial-generator-definitions</code> or per-dimension <code>spatial-gen-2d-label</code> keys.</p>';
+    } else {
+      spatialSection += '<table class="preview"><thead><tr><th>Dim</th><th>Label</th><th>Spec</th></tr></thead><tbody>';
+      spatialDefs.forEach(function (sg) {
+        var specBits = [];
+        if (sg.gridResX != null) specBits.push('grid ' + sg.gridResX + (sg.gridResY ? '×' + sg.gridResY : '') + (sg.gridResZ ? '×' + sg.gridResZ : ''));
+        if (sg.sliceCount != null) specBits.push('slices ' + sg.sliceCount);
+        if (sg.spatial4dId) specBits.push('vol ' + sg.spatial4dId);
+        if (sg.tMin != null || sg.tMax != null) specBits.push('t ' + (sg.tMin != null ? sg.tMin : '?') + '–' + (sg.tMax != null ? sg.tMax : '?'));
+        spatialSection += '<tr><td>' + esc((sg.dimension || '').toUpperCase()) + '</td><td>' + esc(sg.label || sg.id || '—') + '</td><td>' + esc(specBits.join(' · ') || '—') + '</td></tr>';
+      });
+      spatialSection += '</tbody></table>';
+    }
     el.innerHTML =
       '<h2>' + esc(data.term) + '</h2>' +
       (highlightKey ? '<p class="muted">Opened from localization · property <code>' + esc(highlightKey) + '</code></p>' : '') +
@@ -411,6 +453,7 @@
       '<p id="entry-composed-lemmas"></p>' +
       '<button type="button" id="edit-lemma-entry">Edit lemma</button> ' +
       '<button type="button" id="edit-composition">Composition</button> ' +
+      spatialSection +
       '<h3>Properties</h3><table class="preview"><tbody>' + (props || '<tr><td colspan=2>None</td></tr>') + '</tbody></table>' +
       componentSection +
       '<p style="margin-top:16px">' +
@@ -724,6 +767,7 @@
     document.getElementById('search-q')?.addEventListener('input', debounce(() => loadBrowse(), 300));
     document.getElementById('filter-lang')?.addEventListener('change', () => loadBrowse());
     document.getElementById('filter-source')?.addEventListener('change', () => loadBrowse());
+    document.getElementById('filter-spatial-dim')?.addEventListener('change', () => loadBrowse());
     document.getElementById('loc-search-q')?.addEventListener('input', debounce(() => loadLocalization(), 300));
     document.getElementById('loc-filter-key')?.addEventListener('change', () => loadLocalization());
     document.getElementById('btn-refresh-browse')?.addEventListener('click', () => loadBrowse());

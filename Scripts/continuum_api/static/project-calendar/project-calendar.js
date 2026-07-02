@@ -189,7 +189,11 @@
       if (filterSched && sch.id !== filterSched) return;
       (sch.milestones || []).forEach(function (m) {
         var row = document.createElement('div');
-        row.innerHTML = '<div style="font-size:0.85rem;margin-top:0.5rem;color:#58a6ff">Milestone: ' + esc(m.label) + '</div>';
+        var storyLinks = (m.continuum_story_ids || []).map(function (sid) {
+          return '<a href="/story-board/?story=' + encodeURIComponent(sid) + '" style="color:#58a6ff;margin-right:0.35rem">' + esc(sid.slice(0, 14)) + '…</a>';
+        }).join('') || '';
+        row.innerHTML = '<div style="font-size:0.85rem;margin-top:0.5rem;color:#58a6ff">Milestone: ' + esc(m.label) +
+          (storyLinks ? ' · ' + storyLinks : '') + '</div>';
         if (m.start_date) {
           var mb = document.createElement('div');
           mb.className = 'bar milestone';
@@ -271,20 +275,28 @@
     var storiesPayload = {};
     if (schedFilter) storiesPayload.resaurce_schedule_id = schedFilter;
 
-    var results = await Promise.all([
+    var settled = await Promise.allSettled([
       api('list_stories', storiesPayload),
       api('narrative_overlay_get', overlayPayload),
       api('production_schedule_list', {}),
-      api('production_budget_list', {}).catch(function () { return { budget_plans: [] }; }),
-      api('calendar_subscriptions_list', {}).catch(function () { return { subscriptions: [] }; }),
+      api('production_budget_list', {}),
+      api('calendar_subscriptions_list', {}),
     ]);
 
-    state.stories = results[0].stories || [];
-    state.overlay = results[1].overlay;
-    state.context = results[1].context || null;
-    state.schedules = results[2].production_schedules || [];
-    state.budgetPlans = results[3].budget_plans || [];
-    var subs = results[4].subscriptions || [];
+    function pick(idx, fallback) {
+      var r = settled[idx];
+      if (r.status === 'fulfilled') return r.value;
+      console.warn('project-calendar load partial failure', idx, r.reason);
+      return fallback;
+    }
+
+    state.stories = (pick(0, {}).stories) || [];
+    var overlayResult = pick(1, {});
+    state.overlay = overlayResult.overlay;
+    state.context = overlayResult.context || null;
+    state.schedules = (pick(2, {}).production_schedules) || [];
+    state.budgetPlans = (pick(3, {}).budget_plans) || [];
+    var subs = (pick(4, {}).subscriptions) || [];
 
     populateScheduleDropdown();
     populateBudgetDropdown();
@@ -360,6 +372,134 @@
       }
       updateOriginPanel(state.context);
       renderStories(state.stories, state.context, state.schedules);
+    }
+  };
+
+  var scheduleModal = document.getElementById('schedule-modal-overlay');
+  var milestoneHost = document.getElementById('milestone-rows');
+
+  function selectedOptions(sel) {
+    return Array.from(sel.selectedOptions || []).map(function (o) { return o.value; }).filter(Boolean);
+  }
+
+  function addMilestoneRow(data) {
+    data = data || {};
+    var row = document.createElement('div');
+    row.className = 'milestone-row';
+    row.innerHTML =
+      '<label>Label<input class="ms-label" value="' + esc(data.label || '') + '" placeholder="Act I lock" /></label>' +
+      '<label>Start<input type="date" class="ms-start" value="' + esc(data.startDate || '') + '" /></label>' +
+      '<label>End<input type="date" class="ms-end" value="' + esc(data.endDate || '') + '" /></label>' +
+      '<label><input type="checkbox" class="ms-create-story"' + (data.createStory !== false ? ' checked' : '') + ' /> Create story</label>' +
+      '<button type="button" class="ms-remove">×</button>';
+    row.querySelector('.ms-remove').onclick = function () { row.remove(); };
+    milestoneHost.appendChild(row);
+  }
+
+  async function loadScheduleModalOptions() {
+    var epSel = document.getElementById('sched-episodes');
+    var drSel = document.getElementById('sched-drafts');
+    var budSel = document.getElementById('sched-budget');
+    epSel.innerHTML = '';
+    drSel.innerHTML = '';
+    budSel.innerHTML = '<option value="">— none —</option>';
+    state.budgetPlans.forEach(function (p) {
+      var opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = (p.name || p.id);
+      budSel.appendChild(opt);
+    });
+    try {
+      var eps = await fetch('/api/episodes').then(function (r) { return r.json(); });
+      (eps.items || eps.episodes || []).forEach(function (ep) {
+        var opt = document.createElement('option');
+        opt.value = ep.id;
+        opt.textContent = (ep.title || ep.id) + ' [' + ep.id.slice(0, 8) + '…]';
+        epSel.appendChild(opt);
+      });
+    } catch (_) { /* ignore */ }
+    try {
+      var drafts = await fetch('/api/drafts/episodes').then(function (r) { return r.json(); });
+      (Array.isArray(drafts) ? drafts : (drafts.items || [])).forEach(function (d) {
+        var opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = (d.title || d.summary || d.id) + ' [draft]';
+        drSel.appendChild(opt);
+      });
+    } catch (_) { /* ignore */ }
+  }
+
+  function openScheduleModal() {
+    document.getElementById('sched-name').value = '';
+    document.getElementById('sched-start').value = '';
+    document.getElementById('sched-end').value = '';
+    document.getElementById('schedule-modal-msg').textContent = '';
+    milestoneHost.innerHTML = '';
+    addMilestoneRow({ label: 'Kickoff', createStory: true });
+    loadScheduleModalOptions();
+    scheduleModal.classList.add('open');
+    scheduleModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeScheduleModal() {
+    scheduleModal.classList.remove('open');
+    scheduleModal.setAttribute('aria-hidden', 'true');
+  }
+
+  document.getElementById('btn-new-schedule').onclick = openScheduleModal;
+  document.getElementById('btn-cancel-schedule').onclick = closeScheduleModal;
+  document.getElementById('btn-add-milestone').onclick = function () { addMilestoneRow({ createStory: true }); };
+  scheduleModal.addEventListener('click', function (ev) {
+    if (ev.target === scheduleModal) closeScheduleModal();
+  });
+
+  document.getElementById('btn-create-schedule').onclick = async function () {
+    var msg = document.getElementById('schedule-modal-msg');
+    msg.textContent = 'Creating…';
+    var milestones = Array.from(milestoneHost.querySelectorAll('.milestone-row')).map(function (row) {
+      return {
+        label: row.querySelector('.ms-label').value.trim(),
+        startDate: row.querySelector('.ms-start').value,
+        endDate: row.querySelector('.ms-end').value,
+        createStory: row.querySelector('.ms-create-story').checked,
+      };
+    }).filter(function (m) { return m.label; });
+    if (!document.getElementById('sched-name').value.trim()) {
+      msg.textContent = 'Schedule name is required.';
+      return;
+    }
+    if (!document.getElementById('sched-start').value) {
+      msg.textContent = 'Production start date is required.';
+      return;
+    }
+    var body = {
+      name: document.getElementById('sched-name').value.trim(),
+      startDate: document.getElementById('sched-start').value,
+      endDate: document.getElementById('sched-end').value || null,
+      budgetPlanId: document.getElementById('sched-budget').value || null,
+      episodeIds: selectedOptions(document.getElementById('sched-episodes')),
+      draftEpisodeIds: selectedOptions(document.getElementById('sched-drafts')),
+      milestones: milestones,
+    };
+    try {
+      var res = await fetch('/api/production/schedules/create-with-stories', {
+        method: 'POST',
+        headers: Object.assign(
+          { 'Content-Type': 'application/json' },
+          window.ContinuumUserSession ? ContinuumUserSession.getHeaders() : {},
+        ),
+        body: JSON.stringify(body),
+      });
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok) throw new Error(data.error || data.detail || res.statusText);
+      closeScheduleModal();
+      document.getElementById('filter-schedule').value = (data.production_schedule && data.production_schedule.id) || '';
+      await load();
+      if ((data.createdStories || []).length) {
+        alert('Created schedule with ' + data.createdStories.length + ' milestone story/stories.');
+      }
+    } catch (e) {
+      msg.textContent = e.message || 'Create failed';
     }
   };
 

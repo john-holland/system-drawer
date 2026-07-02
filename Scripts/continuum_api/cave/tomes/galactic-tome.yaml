@@ -1,0 +1,19 @@
+id: galactic-tome
+name: Galactic Body Registry Tome
+machines:
+  galacticMachine:
+    events:
+      LIST_BODIES: galactic_bodies_list
+      GET_BODY: galactic_body_get
+      NIGHT_SKY_CACHES: galactic_night_sky_caches
+      SKY_LATTICE: galactic_sky_lattice
+robotCopy:
+  flows:
+    galactic_bodies_list:
+      message: galactic_bodies_list
+    galactic_body_get:
+      message: galactic_body_get
+    galactic_night_sky_caches:
+      message: galactic_night_sky_caches
+    galactic_sky_lattice:
+      message: galactic_sky_lattice

@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 049e428b52c34b348a7d56290a7e6c9a, type: 3}
+  m_Name: PlanetaryCompositionProfile
+  m_EditorClassIdentifier: Planetary::Planetary.Composition.PlanetaryCompositionProfile
+  layers:
+  - layer: 0
+    enabled: 1
+    shellOffsetMeters: -375
+    shellThicknessMeters: 125
+    smoothRadius: 10
+    weight: 1
+  - layer: 1
+    enabled: 1
+    shellOffsetMeters: -75
+    shellThicknessMeters: 300
+    smoothRadius: 15
+    weight: 1
+  - layer: 2
+    enabled: 1
+    shellOffsetMeters: -25
+    shellThicknessMeters: 50
+    smoothRadius: 5
+    weight: 0.85
+  - layer: 3
+    enabled: 1
+    shellOffsetMeters: 0
+    shellThicknessMeters: 25
+    smoothRadius: 3
+    weight: 1
+  - layer: 4
+    enabled: 0
+    shellOffsetMeters: 0
+    shellThicknessMeters: 10
+    smoothRadius: 2
+    weight: 0.3
+  - layer: 5
+    enabled: 1
+    shellOffsetMeters: 0
+    shellThicknessMeters: 400
+    smoothRadius: 20
+    weight: 0.25
+  - layer: 6
+    enabled: 1
+    shellOffsetMeters: 0
+    shellThicknessMeters: 150
+    smoothRadius: 10
+    weight: 0.4

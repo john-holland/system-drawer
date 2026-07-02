@@ -57,6 +57,8 @@ def validate_work_orders(
     episode_id: str | None = None,
 ) -> dict[str, Any]:
     """Return { ok, buildErrors: [{ code, message, workOrderId? }] }."""
+    if work_order_ids is not None and len(work_order_ids) == 0:
+        return {"ok": True, "buildErrors": []}
     errors: list[dict[str, str]] = []
     params: list[Any] = []
     where = "1=1"

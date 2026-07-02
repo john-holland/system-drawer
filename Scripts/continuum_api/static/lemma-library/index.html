@@ -37,6 +37,12 @@
           </select>
           <input type="text" id="filter-component-type" placeholder="Component type">
           <input type="text" id="filter-bucket-id" placeholder="Bucket id prefix">
+          <select id="filter-spatial-dim">
+            <option value="">Any spatial dim</option>
+            <option value="2d">2D generator</option>
+            <option value="3d">3D generator</option>
+            <option value="4d">4D generator</option>
+          </select>
           <label><input type="checkbox" id="filter-has-metadata"> Has component metadata</label>
           <button type="button" id="btn-refresh-browse" class="secondary">Refresh</button>
         </div>

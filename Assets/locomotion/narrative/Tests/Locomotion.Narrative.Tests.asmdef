@@ -9,6 +9,7 @@
         "Locomotion.Narrative.Runtime",
         "Locomotion.Narrative.Serialization",
         "Locomotion.Runtime",
+        "SystemDrawer",
         "com.unity.barracuda"
     ],
     "includePlatforms": [],

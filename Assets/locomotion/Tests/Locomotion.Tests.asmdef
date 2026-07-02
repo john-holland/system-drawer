@@ -8,6 +8,7 @@
     "Locomotion.Runtime",
     "Continuum.Runtime",
     "HierarchicalPathFinding",
+    "Planetary",
     "SystemDrawer",
     "Weather.Runtime"
   ],

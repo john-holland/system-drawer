@@ -1,0 +1,18 @@
+id: quest-tome
+name: Quest Tome
+machines:
+  questMachine:
+    events:
+      COMPILE: quest_compile
+      OPEN: quest_session_open
+      ACTIVATE: quest_objective_activate
+      COMPLETE: quest_objective_complete
+      SYNC_GOALS: quest_sync_goals
+      MAP_REFRESH: quest_map_refresh
+      SPATIAL_NODES: quest_spatial_nodes
+robotCopy:
+  flows:
+    quest_compile:
+      message: quest_compile
+    quest_session_open:
+      message: quest_session_open

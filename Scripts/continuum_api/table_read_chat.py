@@ -96,7 +96,16 @@ def sync_table_read_chat(
     room = out.get("chat_room") or {}
     room_id = room.get("id")
     if not room_id:
-        return None
+        try:
+            from continuum_api.local_chat_store import ensure_table_read_room
+        except ImportError:
+            from local_chat_store import ensure_table_read_room
+        room_id = ensure_table_read_room(
+            conn,
+            session_id,
+            f"Table read {session_id[:8]}",
+            participants,
+        )
 
     conn.execute(
         "UPDATE table_read_sessions SET resaurce_chat_room_id = ? WHERE id = ?",

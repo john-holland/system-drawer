@@ -12,6 +12,9 @@ EARTH_PLANETARY_AREA = 1
 _DISPLAY_RE = re.compile(
     r"^(?P<galactic>\d+)-(?P<planetary>\d+)-(?P<exchange>\d{3})-(?P<subscriber>\d{3}-\d{4})$"
 )
+_DISPLAY_SHORT_RE = re.compile(
+    r"^(?P<galactic>\d+)-(?P<planetary>\d+)-(?P<exchange>\d{3})-(?P<shortsub>\d{4})$"
+)
 _E164_RE = re.compile(
     r"^\+G(?P<galactic>\d+)\.(?P<planetary>\d+)\.(?P<subscriber>\d{10})$"
 )
@@ -36,16 +39,26 @@ class GalacticPhone:
 
 
 def parse_display(value: str) -> GalacticPhone:
-    m = _DISPLAY_RE.match(value.strip())
-    if not m:
-        raise ValueError(f"invalid display phone: {value!r}")
-    sub_raw = m.group("subscriber").replace("-", "")
-    return GalacticPhone(
-        galactic=int(m.group("galactic")),
-        planetary=int(m.group("planetary")),
-        exchange=int(m.group("exchange")),
-        subscriber=int(sub_raw),
-    )
+    v = value.strip()
+    m = _DISPLAY_RE.match(v)
+    if m:
+        sub_raw = m.group("subscriber").replace("-", "")
+        return GalacticPhone(
+            galactic=int(m.group("galactic")),
+            planetary=int(m.group("planetary")),
+            exchange=int(m.group("exchange")),
+            subscriber=int(sub_raw),
+        )
+    m_short = _DISPLAY_SHORT_RE.match(v)
+    if m_short:
+        # Shorthand extension (e.g. 1-1-555-0100) — pad to 7-digit subscriber.
+        return GalacticPhone(
+            galactic=int(m_short.group("galactic")),
+            planetary=int(m_short.group("planetary")),
+            exchange=int(m_short.group("exchange")),
+            subscriber=int(m_short.group("shortsub")),
+        )
+    raise ValueError(f"invalid display phone: {value!r}")
 
 
 def parse_e164(value: str) -> GalacticPhone:

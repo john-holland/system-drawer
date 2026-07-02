@@ -1,10 +1,10 @@
 ﻿<Solution>
   <Project Path="Locomotion.Runtime.csproj" />
   <Project Path="Weather.Runtime.csproj" />
+  <Project Path="Planetary.csproj" />
   <Project Path="Continuum.Runtime.csproj" />
   <Project Path="Locomotion.Editor.csproj" />
   <Project Path="Environment.Destructible.Runtime.csproj" />
-  <Project Path="Planetary.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
   <Project Path="SdfMax.Tests.csproj" />
   <Project Path="BedogaGenerator.csproj" />
@@ -16,6 +16,7 @@
   <Project Path="BedogaGenerator.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.csproj" />
+  <Project Path="Continuum.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Runtime.csproj" />
   <Project Path="Locomotion.Narrative.Inference.csproj" />
   <Project Path="Roads.Runtime.csproj" />
@@ -32,11 +33,10 @@
   <Project Path="Continuum.Library.Runtime.csproj" />
   <Project Path="SdfMax.Editor.csproj" />
   <Project Path="SystemDrawer.Networking.csproj" />
-  <Project Path="Continuum.Tests.csproj" />
   <Project Path="Environment.Destructible.Editor.csproj" />
   <Project Path="SystemDrawer.PerfTrace.csproj" />
-  <Project Path="SystemDrawer.MemorySwizzle.Editor.csproj" />
   <Project Path="Planetary.Editor.csproj" />
+  <Project Path="SystemDrawer.MemorySwizzle.Editor.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />
   <Project Path="Continuum.Society.csproj" />
   <Project Path="Roads.Tests.csproj" />

@@ -383,6 +383,16 @@ def merge_vocabulary(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
     except sqlite3.OperationalError:
         pass
 
+    try:
+        try:
+            from continuum_api.spatial_generator_specs import enrich_entry_spatial_generators
+        except ImportError:
+            from spatial_generator_specs import enrich_entry_spatial_generators
+        for view in merged.values():
+            enrich_entry_spatial_generators(view)
+    except Exception:
+        pass
+
     return merged
 
 
@@ -400,6 +410,7 @@ def filter_entries(
     bucket_id: str | None = None,
     causality_leaf: str | None = None,
     has_component_metadata: bool | None = None,
+    spatial_dimension: str | None = None,
 ) -> list[dict[str, Any]]:
     q_lc = (q or "").strip().lower()
     lang = (language or "").strip().lower()
@@ -437,6 +448,11 @@ def filter_entries(
                 continue
         if has_component_metadata is True and not cc:
             continue
+        if spatial_dimension:
+            dim = spatial_dimension.strip().lower()
+            defs = e.get("spatialGeneratorDefinitions") or []
+            if not any((d.get("dimension") or "").lower() == dim for d in defs):
+                continue
         if has_component_metadata is False and cc:
             continue
         if has_clause is True and int(e.get("clauseCount") or 0) <= 0:

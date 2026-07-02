@@ -2,7 +2,7 @@
   'use strict';
 
   if (window.ContinuumNav) {
-    ContinuumNav.mount(document.getElementById('continuum-nav-root'), { app: 'budget-dashboard' });
+    ContinuumNav.mount({ root: '#continuum-nav-root', app: 'budget-dashboard' });
   }
 
   var caveShell = window.ContinuumCaveShell
@@ -47,6 +47,26 @@
     if (!id) return;
     var j = await caveMsg('production_budget_publish_sheets', { budget_plan_id: id });
     alert(j.ok ? 'Published (or dry-run OK)' : (j.message || j.error || 'Failed'));
+  };
+
+  document.getElementById('btn-template').onclick = function () {
+    var url = '/api/production/budget/template?download=1';
+    fetch(url, { credentials: 'include' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Template download failed (' + res.status + ')');
+        return res.blob();
+      })
+      .then(function (blob) {
+        var objUrl = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = objUrl;
+        a.download = 'continuum-budget-template.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(objUrl); }, 500);
+      })
+      .catch(function (e) { alert(e.message || e); });
   };
 
   var q = new URLSearchParams(location.search).get('plan');

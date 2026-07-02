@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f44f9ba455e22f46a6e1ad8d63fc6b5, type: 3}
+  m_Name: AtmosphereRegressionProfile
+  m_EditorClassIdentifier: Planetary::Planetary.Composition.AtmosphereRegressionProfile
+  pressureScaleHeightM: 80
+  cloudBaseM: 50
+  cloudTopM: 150
+  cloudDensityCoeff: 0.35
+  troposphereTopM: 400
+  stratosphereShellM: 600
+  cloudTypeWeights:
+  - 1
+  - 0.5
+  - 0.3
+  - 0.8
+  - 0.6
+  - 0.4
+  - 0.4

@@ -90,6 +90,7 @@ button.secondary { background: var(--panel); color: var(--text); border: 1px sol
 .chip-blueprint { background: #2d3a4a; color: #8fc4f4; }
 .chip-runtime { background: #4a3a2d; color: #f4c48f; }
 .chip-prop { background: #3a3a52; color: var(--muted); }
+.chip-spatial { background: #2d4a3e; color: #9be7b5; }
 .comp-tree { font-size: 12px; list-style: none; padding-left: 0; }
 .comp-tree li { padding: 4px 0; border-bottom: 1px solid var(--border); }
 .muted { color: var(--muted); font-size: 13px; }

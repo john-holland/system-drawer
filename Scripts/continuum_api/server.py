@@ -48,9 +48,11 @@ except ImportError:
 try:
     from continuum_api.telecom_routes import register_telecom_routes
     from continuum_api.society_routes import register_society_routes
+    from continuum_api.galactic_routes import register_galactic_routes
 except ImportError:
     from telecom_routes import register_telecom_routes
     from society_routes import register_society_routes
+    from galactic_routes import register_galactic_routes
 
 try:
     from continuum_api.camera_routes import register_camera_routes
@@ -211,6 +213,16 @@ def get_conn():
         except ImportError:
             pass
         try:
+            from continuum_api.thesaurus_db import ensure_thesaurus_schema
+        except ImportError:
+            from thesaurus_db import ensure_thesaurus_schema
+        ensure_thesaurus_schema(conn)
+        try:
+            from continuum_api.story_db import ensure_stories_schema
+        except ImportError:
+            from story_db import ensure_stories_schema
+        ensure_stories_schema(conn)
+        try:
             from continuum_api.lemma_composition import ensure_lemma_composition_schema
         except ImportError:
             from lemma_composition import ensure_lemma_composition_schema
@@ -221,10 +233,15 @@ def get_conn():
             from lemma_prompt import ensure_lemma_prompt_schema
         ensure_lemma_prompt_schema(conn)
         try:
-            from continuum_api.story_db import ensure_stories_schema
+            from continuum_api.quest_db import ensure_quest_schema
         except ImportError:
-            from story_db import ensure_stories_schema
-        ensure_stories_schema(conn)
+            from quest_db import ensure_quest_schema
+        ensure_quest_schema(conn)
+        try:
+            from continuum_api.dream_cycle_db import ensure_dream_cycle_schema
+        except ImportError:
+            from dream_cycle_db import ensure_dream_cycle_schema
+        ensure_dream_cycle_schema(conn)
         try:
             from continuum_api.mod_db import ensure_mayor_dog_mods_schema
         except ImportError:
@@ -235,6 +252,11 @@ def get_conn():
         except ImportError:
             from audit_db import ensure_audit_schema
         ensure_audit_schema(conn)
+        try:
+            from continuum_api.draft_review_db import ensure_draft_review_schema
+        except ImportError:
+            from draft_review_db import ensure_draft_review_schema
+        ensure_draft_review_schema(conn)
         _schema_initialized = True
     return conn
 
@@ -1008,6 +1030,7 @@ def create_draft():
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (draft_id, episode_id, tenant_id, title, engine, scene_path, t_start, t_end, plot_description, now, now, created_by),
         )
+        script_seeded = False
         if episode_id:
             cur = conn.execute("SELECT id, script_text, language FROM episode_script WHERE episode_id = ? LIMIT 1", (episode_id,))
             es = cur.fetchone()
@@ -1018,6 +1041,14 @@ def create_draft():
                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
                     (script_id, draft_id, es["id"], es["script_text"], es["language"] or "en", now, now),
                 )
+                script_seeded = True
+        if not script_seeded:
+            script_id = str(uuid.uuid4())
+            conn.execute(
+                """INSERT INTO draft_episode_script (id, draft_episode_id, episode_script_id, script_text, language, created_at, updated_at)
+                   VALUES (?, ?, NULL, ?, ?, ?, ?)""",
+                (script_id, draft_id, "", "en", now, now),
+            )
         conn.commit()
         conn.close()
         return jsonify({"id": draft_id, "episodeId": episode_id}), 201
@@ -1160,29 +1191,71 @@ def publish_draft(draft_id: str):
         return jsonify({"error": str(e)}), 500
 
 
+def _ensure_draft_episode_script(conn, draft_id: str, language: str | None = None):
+    """Return draft_episode_script row, seeding from episode script or an empty row when missing."""
+    draft = conn.execute(
+        "SELECT id, episode_id FROM draft_episodes WHERE id = ?",
+        (draft_id,),
+    ).fetchone()
+    if not draft:
+        return None
+
+    def _fetch_row():
+        if language:
+            return conn.execute(
+                "SELECT id, script_text, language, min_thesaurus_version FROM draft_episode_script WHERE draft_episode_id = ? AND language = ?",
+                (draft_id, language),
+            ).fetchone()
+        return conn.execute(
+            "SELECT id, script_text, language, min_thesaurus_version FROM draft_episode_script WHERE draft_episode_id = ? ORDER BY created_at LIMIT 1",
+            (draft_id,),
+        ).fetchone()
+
+    row = _fetch_row()
+    if row:
+        return row
+
+    script_text = ""
+    episode_script_id = None
+    min_thesaurus_version = None
+    lang = language or "en"
+    if draft["episode_id"]:
+        ep_script = conn.execute(
+            """SELECT id, script_text, language, min_thesaurus_version
+               FROM episode_script WHERE episode_id = ? ORDER BY created_at LIMIT 1""",
+            (draft["episode_id"],),
+        ).fetchone()
+        if ep_script:
+            script_text = ep_script["script_text"] or ""
+            episode_script_id = ep_script["id"]
+            min_thesaurus_version = ep_script["min_thesaurus_version"]
+            lang = language or ep_script["language"] or "en"
+
+    now = __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    script_id = str(uuid.uuid4())
+    conn.execute(
+        """INSERT INTO draft_episode_script
+           (id, draft_episode_id, episode_script_id, script_text, language, min_thesaurus_version, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (script_id, draft_id, episode_script_id, script_text, lang, min_thesaurus_version, now, now),
+    )
+    conn.commit()
+    return _fetch_row()
+
+
 @app.route("/api/drafts/episodes/<draft_id>/script", methods=["GET"])
 def get_draft_script(draft_id: str):
     """Get draft script text. Query: language (optional, default first script)."""
     language = request.args.get("language")
     try:
         conn = get_conn()
-        if language:
-            cur = conn.execute(
-                "SELECT id, script_text, language, min_thesaurus_version FROM draft_episode_script WHERE draft_episode_id = ? AND language = ?",
-                (draft_id, language),
-            )
-        else:
-            cur = conn.execute(
-                "SELECT id, script_text, language, min_thesaurus_version FROM draft_episode_script WHERE draft_episode_id = ? ORDER BY created_at LIMIT 1",
-                (draft_id,),
-            )
-        row = cur.fetchone()
+        row = _ensure_draft_episode_script(conn, draft_id, language)
         conn.close()
         if not row:
-            return jsonify({"error": "draft script not found"}), 404
+            return jsonify({"error": "draft not found"}), 404
         return jsonify({
             "id": row["id"],
-            "scriptText": row["script_text"],
+            "scriptText": row["script_text"] or "",
             "language": row["language"],
             "minThesaurusVersion": row["min_thesaurus_version"],
         }), 200
@@ -1248,11 +1321,28 @@ def _create_notification(conn, user_id: str, ntype: str, message: str, draft_id=
     return nid
 
 
+try:
+    from continuum_api.dialogue_routes import register_dialogue_routes
+except ImportError:
+    from dialogue_routes import register_dialogue_routes
+
 register_localization_routes(app, get_conn, _get_current_user, _create_notification, _is_admin)
 register_script_output_routes(app, get_conn, _get_current_user)
 register_lemma_routes(app, get_conn)
+register_dialogue_routes(app, get_conn, _get_current_user)
+try:
+    from continuum_api.quest_routes import register_quest_routes
+except ImportError:
+    from quest_routes import register_quest_routes
+register_quest_routes(app, get_conn, _get_current_user)
+try:
+    from continuum_api.dream_cycle_routes import register_dream_cycle_routes
+except ImportError:
+    from dream_cycle_routes import register_dream_cycle_routes
+register_dream_cycle_routes(app, get_conn, _get_current_user)
 register_telecom_routes(app, get_conn)
 register_society_routes(app, get_conn)
+register_galactic_routes(app, get_conn)
 register_camera_routes(app, get_conn, _get_current_user)
 
 _socketio_cors = list(DEV_CORS_ORIGINS) + [
@@ -1268,8 +1358,8 @@ register_drawer_game_routes(app, get_conn)
 register_library_routes(app)
 register_sql_viewer_routes(app, get_conn, _get_current_user, get_db_path)
 register_story_routes(app, get_conn)
-register_chat_routes(app)
-register_production_proxy_routes(app)
+register_chat_routes(app, get_conn)
+register_production_proxy_routes(app, get_conn)
 register_calendar_routes(app, get_conn)
 register_agile_ui_routes(app)
 register_mod_routes(app, get_conn, _get_current_user)
@@ -1397,9 +1487,10 @@ def create_review():
             "SELECT id FROM reviewer WHERE draft_episode_id = ? AND reviewer_user_id = ?",
             (draft_id, reviewer_user_id),
         )
-        if cur.fetchone():
+        existing = cur.fetchone()
+        if existing:
             conn.close()
-            return jsonify({"error": "reviewer already assigned"}), 409
+            return jsonify({"id": existing["id"], "alreadyAssigned": True}), 200
         rid = str(uuid.uuid4())
         now = __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         conn.execute(

@@ -257,6 +257,31 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
             }
         }
 
+        var lockProp = serializedObject.FindProperty("lockSeedDependencyTree");
+        var masterProp = serializedObject.FindProperty("masterSeed");
+        var treeProp = serializedObject.FindProperty("seedTree");
+        var dayCollapseProp = serializedObject.FindProperty("dayCollapseSeed");
+        var sleepSeedProp = serializedObject.FindProperty("sleepSeed");
+        if (lockProp != null)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Seed dependency tree", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(lockProp);
+            EditorGUILayout.PropertyField(masterProp);
+            EditorGUILayout.PropertyField(treeProp);
+            EditorGUILayout.PropertyField(dayCollapseProp);
+            EditorGUILayout.PropertyField(sleepSeedProp);
+            if (lockProp.boolValue)
+            {
+                EditorGUILayout.HelpBox("Seed lock active: manual SetSeed on SpatialGenerators will revert to derived values.", MessageType.Info);
+                if (GUILayout.Button("Re-derive all seeds"))
+                {
+                    orch.ApplySeedDependencyTree();
+                    EditorUtility.SetDirty(orch);
+                }
+            }
+        }
+
         serializedObject.ApplyModifiedProperties();
     }
 }

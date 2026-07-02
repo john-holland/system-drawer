@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Locomotion.Narrative;
+using SystemDrawer.Quest;
 
 /// <summary>
 /// In-game UI for the Spatial 4D editor: markers, start/stop, datetime, timeline scrubber,
@@ -59,8 +60,15 @@ public class Spatial4DInGameUI : MonoBehaviour
     private bool hasMarkedLocation;
     private bool useToolOnSpacetimeLocation;
     private float timelineEndT = float.NaN;
-    private GameObject reticleInstance;
+    [Header("Quest overlay (v2)")]
+    [Tooltip("When true, shows quest minimap tab alongside spatial 4D editor.")]
+    public bool showQuestMapOverlay;
+    public QuestMapRenderer questMapRenderer;
+    public QuestRunner questRunner;
+
+    private RawImage questMinimapImage;
     private const float ReticleDistance = 10f;
+    private GameObject reticleInstance;
 
     // UI refs (built at runtime)
     private ScrollRect panelScrollRect;
@@ -223,6 +231,41 @@ public class Spatial4DInGameUI : MonoBehaviour
         AddButton(parent, "Record tool use", () => { Debug.Log("[Spatial4D UI] Button clicked: Record tool use"); OnRecordToolUse(); });
         saveButton = AddButton(parent, "Save to file", () => { Debug.Log("[Spatial4D UI] Button clicked: Save to file"); OnSave(); });
         AddLabel(parent, "Shortcut: Ctrl+S");
+
+        if (orchestrator != null && orchestrator.showQuestMapOverlay)
+            BuildQuestOverlay(parent);
+    }
+
+    private void BuildQuestOverlay(Transform parent)
+    {
+        AddLabel(parent, "— Quest —");
+        if (questRunner == null)
+            questRunner = FindAnyObjectByType<QuestRunner>();
+        if (questMapRenderer == null)
+            questMapRenderer = FindAnyObjectByType<QuestMapRenderer>();
+
+        var minimapGo = new GameObject("QuestMinimap", typeof(RectTransform));
+        minimapGo.transform.SetParent(parent, false);
+        var layout = minimapGo.AddComponent<LayoutElement>();
+        layout.minHeight = 160f;
+        layout.preferredHeight = 160f;
+        questMinimapImage = minimapGo.AddComponent<RawImage>();
+        questMinimapImage.color = Color.white;
+
+        AddButton(parent, "Open quest session", () =>
+        {
+            if (questRunner != null)
+                questRunner.OpenQuestSet();
+        });
+    }
+
+    private void UpdateQuestMinimap()
+    {
+        if (questMinimapImage == null || questMapRenderer == null)
+            return;
+        var tex = questMapRenderer.GetDisplayTexture();
+        if (tex != null)
+            questMinimapImage.texture = tex;
     }
 
     private Text AddLabel(Transform parent, string text)
@@ -335,10 +378,12 @@ public class Spatial4DInGameUI : MonoBehaviour
     {
         ResolveOrchestrator();
         if (orchestrator == null) return;
-        bool shouldShow = orchestrator.showInGameSpatial4DEditor && Application.isPlaying;
+        bool shouldShow = (orchestrator.showInGameSpatial4DEditor || orchestrator.showQuestMapOverlay) && Application.isPlaying;
         if (canvas != null)
             canvas.enabled = shouldShow;
         if (!shouldShow) return;
+
+        UpdateQuestMinimap();
 
         bool altHeld = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
         bool curtainDown = altHeld || spatialEditorModeActive;

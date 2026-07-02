@@ -5,7 +5,7 @@ using Locomotion.Narrative;
 namespace Locomotion.Narrative.EditorTools
 {
     [CustomEditor(typeof(NarrativeTreeAsset))]
-    public class NarrativeTreeAssetEditor : Editor
+    public class NarrativeTreeAssetEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

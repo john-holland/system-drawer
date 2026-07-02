@@ -4,7 +4,7 @@ Guide for configuring asteroid **B-612** from *The Little Prince*: a story-small
 
 Use **`planetRadius = 500`** (1 km diameter, ~3.1 km equatorial walk). Radius 10 is too small for interior shells; radius 500 keeps the fable scale while leaving room for molten layers and a vent you can trigger at runtime.
 
-See also [PlanetaryArchitecture.md](./PlanetaryArchitecture.md).
+See also [PlanetaryArchitecture.md](./PlanetaryArchitecture.md) and **[PlanetSdfDiagnostics.md](./PlanetSdfDiagnostics.md)** (step-by-step debug for invisible SDF / play-mode churn).
 
 ---
 
@@ -35,6 +35,8 @@ Fractions are relative to planet radius **R = 500 m**.
 ---
 
 ## 1. Profile assets
+
+Use **Window → System Drawer → Planet → Composition UI** for ratio-locked tuning with presets (Little Prince, Sol system, asteroids, nebula zones). Checkboxes beside each slider control whether the field scales with planet radius **R**.
 
 Create `Assets/Planetary/LittlePrince/` and add ScriptableObjects (**Create → Planetary → …**).
 
@@ -117,11 +119,28 @@ LittlePrince (root)
 | **planetRadius** | **500** |
 | **planarBase** | `LittlePrincePlanarBase` |
 | **compositionProfile** | `LittlePrinceComposition` |
+| **solverProfile** | Planet SDF solver (grid res, iso level) |
+| **composition** | Filled after **Rebuild Planet** (save scene) |
+| **rebuildOnPlayAwake** | **off** — bake in editor; avoids full rebake every Play |
 | **meshResolution** | **24–32** |
 | **chunksPerFace** | **2** |
 | **societyPlanetId** | `little-prince` |
 
 Assign `interiorUpdater` → `PlanetInteriorPhysicsUpdater` on the same root.
+
+### SpatialVolumeProvider & SDF horizon
+
+| Field | Value |
+|-------|-------|
+| **renderMode** | **None** (horizon drawn by `PlanetarySdfLodRenderer`, not `SdfMaxMeshSurface` on this object) |
+| **backend** | `SdfMaxComposition` |
+
+### PlanetarySdfLodRenderer
+
+| Field | Value |
+|-------|-------|
+| **profile** | Little Prince SDF LOD profile (`tierGridRes` e.g. `{ 12, 24, 32 }`) |
+| **lodMaterial** | Material using **`Planetary/SdfLod`** shader |
 
 ### Planet Shell Manifold Grid
 
@@ -182,10 +201,16 @@ For a single story vent, **PlanetVolcanoController** alone is enough.
 ## 5. Bake workflow
 
 1. Select **PlanetBody** → **Rebuild Planet**.
-2. **Window → System Drawer → Planet → Bake Composition**.
-3. **Update Interior Planet Physics** (if using plates).
-4. Place player near vent lat/lon → **Activate Volcano** on controller.
-5. **Rebake SDF LOD Mesh** if horizon mesh looks stale.
+2. **Rebake SDF LOD Mesh** (inspector button on `PlanetBody`).
+3. Assign **`lodMaterial`** on `PlanetarySdfLodRenderer` if not set.
+4. **Save the scene** (persists baked `composition` for fast Enter Play).
+5. **Update Interior Planet Physics** (if using plates).
+6. Place player near vent lat/lon → **Activate Volcano** on controller.
+7. After composition changes → repeat steps 1–2.
+
+Optional: **Window → System Drawer → Planet → Bake Composition** (composition only, no chunk meshes).
+
+**Play mode:** leave **`rebuildOnPlayAwake` off** unless you need live plate regression every session. See [PlanetSdfDiagnostics.md](./PlanetSdfDiagnostics.md) if SDF is missing or the editor slows to a crawl on Play.
 
 ---
 
@@ -217,14 +242,21 @@ Match `PlanetBody.societyPlanetId`.
 
 ## 8. Troubleshooting
 
+Full walkthrough: **[PlanetSdfDiagnostics.md](./PlanetSdfDiagnostics.md)**.
+
 | Symptom | Fix |
 |---------|-----|
+| SDF invisible in Play | **Rebuild Planet** → **Rebake SDF LOD Mesh** → assign **`lodMaterial`** → save scene |
+| Editor freezes on Enter Play | Turn **`rebuildOnPlayAwake` off**; bake in Edit Mode first |
+| Chunk terrain OK, no horizon shell | `SpatialVolumeProvider.renderMode = None` → fix **PlanetarySdfLodRenderer** (profile + material + mesh) |
+| Pink horizon mesh | Assign material with **Planetary/SdfLod** shader |
 | No interior layers visible | Enable Core/Mantle/Lava in composition; **Rebuild Planet** |
 | Lava band outside planet | Check offsets: lava outer = R + offset must be `< R` |
 | Clouds inside rock | Raise `cloudBaseM`; confirm annular weather bake |
 | Volcano at world origin | Update to controller that passes planet **Transform** to cone bake |
 | Crust SDF huge vs mesh | Relief now scales as `5% × R`; rebake after upgrade |
 | Cone too small/large | Adjust `coneRadiusMeters` (min ~10 from stress solver) |
+| `weather.physicsManifold` warning | Register via **PlanetServiceWizardComponent** / weather setup |
 
 ---
 
@@ -234,8 +266,88 @@ Match `PlanetBody.societyPlanetId`.
 - [ ] Core / Mantle / Lava / Crust enabled with table offsets (or formulas)
 - [ ] `LittlePrinceAtmosphere`: cloud base **50**, top **150**
 - [ ] `PlanetVolcanoController` wired, vent lat/lon set
-- [ ] **Rebuild Planet**
+- [ ] **solverProfile** assigned on `PlanetBody`
+- [ ] **Rebuild Planet** → **Rebake SDF LOD Mesh** → **save scene**
+- [ ] **`lodMaterial`** on `PlanetarySdfLodRenderer`
+- [ ] **`rebuildOnPlayAwake` off**
 - [ ] **Activate Volcano** once to verify vent
 - [ ] Cloud band above **550 m** from center
 
 Still a little prince world — you can walk it in minutes — but now it has a beating core, a lava pocket, and a volcano you can wake on cue.
+
+---
+
+## 10. Galactic star and night sky (optional)
+
+Add a parent **Sol** star and wire galactic registry for night-sky baking from B-612's surface.
+
+### Scene hierarchy addition
+
+```
+SolarSystem (galactic origin transform)
+├── Sol (StarBody + CelestialManifoldHost + PhysicalManifold)
+└── LittlePrince (PlanetBody + PlanetCelestialBridge)
+```
+
+### StarBody (Sol)
+
+| Field | Suggested value |
+|-------|-----------------|
+| **galacticBodyId** | `sol` |
+| **mass** | `1.989e30` |
+| **radius** | scene-scale corona (e.g. `50000` at origin) |
+| **influenceRadius** | `1e12` |
+| **immovable** | **on** (tractor blacklist) |
+| **renderProfile** | Star Render Profile with `bypassBakeForNearbySun` |
+
+### Planet galactic link
+
+| Field | Value |
+|-------|-------|
+| **PlanetBody.galacticBodyId** | `little-prince` |
+| **PlanetCelestialBridge** | density ~5500, influence radius ~3× R |
+
+### Night sky bake
+
+1. **Window → System Drawer → Planet → Galactic Night Sky Bake**
+2. Observer Body Id: `little-prince`, anchor lat/lon at rose/baobab
+3. Assign **Galactic Origin** transform at solar system root
+4. **Bake From Observer** → cache under `Assets/GalacticNightSkyCaches/`
+5. Add **NightSkyBoxGalacticRenderer** on camera rig with `Planetary/GalacticNightSkyBlend` material
+6. Add **AtmosphereSkyController** with `Planetary/AtmosphereSkyComposite` for day/night + live sun disk
+
+### Continuum API
+
+```http
+GET /api/galactic/bodies
+POST /api/galactic/night-sky/caches
+```
+
+Match `societyPlanetId` / `galacticBodyId` with rows seeded in `continuum_galactic_schema.sql`.
+
+### TravelAgent
+
+Enable **emitGalacticPositionEvents** on the player TravelAgent so night-sky caches cross-fade during interplanetary travel.
+
+### Checklist
+
+- [ ] `StarBody` at galactic origin with `CelestialManifoldHost`
+- [ ] `PlanetCelestialBridge` on Little Prince
+- [ ] `GalacticBodyRegistry` + `GalacticBodyClient` in scene (or `PlanetarySystemBootstrap`)
+- [ ] Night sky baked from B-612 POV
+- [ ] `TravelAgent.emitGalacticPositionEvents` enabled
+- [ ] `PhysicalManifoldRelativitySolver` in scene for gravity-aware space pathing
+
+---
+
+## 11. Asteroid belt (optional)
+
+Add an **Asteroid Belt Host** for far-field statistical disc rendering and near-field seeded asteroids with replayable mutations.
+
+1. **Window → System Drawer → Planet → Asteroid Belt** → **Create Belt Host In Scene**
+2. Assign **parent planet**, tune inner/outer radius and mean density
+3. Assign disc material using shader **`Planetary/AsteroidBeltDisc`**
+4. Asteroid prefab: **`AsteroidBody`** + **`AsteroidFastMoverAdapter`** (Locomotion) for weapon intercept
+5. **Planet Service Wizard** → call **`SpawnAsteroidBeltAroundPlanet()`** or assign `asteroidBeltHost`
+
+Mutations (destroy, mine, tractor, teleport mine) persist in **Asteroid Belt Mutation Log** and replay when sectors reload.

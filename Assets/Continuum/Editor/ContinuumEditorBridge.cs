@@ -17,6 +17,7 @@ public static class ContinuumEditorBridge
         public string reviewId;
         public string draftId;
         public string notificationId;
+        public string text;
     }
 
     [Serializable]
@@ -60,6 +61,13 @@ public static class ContinuumEditorBridge
             case "notificationRead":
                 await ContinuumEditorLocalizationClient.Instance.MarkReadAsync(req.notificationId);
                 return new BridgeResponse { requestId = req.requestId, ok = true };
+            case "scriptChanged":
+                return new BridgeResponse
+                {
+                    requestId = req.requestId,
+                    ok = true,
+                    data = req.body
+                };
             default:
                 return new BridgeResponse { requestId = req.requestId, ok = false, error = "unknown action" };
         }

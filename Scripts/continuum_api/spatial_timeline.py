@@ -15,6 +15,18 @@ def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
     return bool(row)
 
 
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    cur = conn.execute(f"PRAGMA table_info({table})")
+    return {row[1] for row in cur.fetchall()}
+
+
+def _spatial_4d_has_narrative_bounds(conn: sqlite3.Connection) -> bool:
+    if not _table_exists(conn, "spatial_4d"):
+        return False
+    cols = _table_columns(conn, "spatial_4d")
+    return "t_min" in cols and "t_max" in cols
+
+
 def _episode_ids_for_scope(
     conn: sqlite3.Connection,
     episode_id: str | None,
@@ -43,7 +55,7 @@ def get_spatial_4d_timeline_origin(
     t_min: float | None = None
     t_max: float | None = None
 
-    if _table_exists(conn, "spatial_4d"):
+    if _spatial_4d_has_narrative_bounds(conn):
         if episode_ids:
             placeholders = ",".join("?" * len(episode_ids))
             row = conn.execute(

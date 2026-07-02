@@ -52,6 +52,14 @@
     if (!field) return '';
     if (field === 'isBuiltIn') return item.isBuiltIn ? 'Built-in' : 'Custom';
     if (field === 'components') return (item.components || []).join(',') || '(none)';
+    if (field === 'componentTypes') return ((item.componentCreation || {}).componentTypes || []).join(',') || '(none)';
+    if (field === 'compTypes') return fieldValue(item, 'componentTypes');
+    if (field === 'builtInCategory') return item.builtInCategory || '(none)';
+    if (field === 'spatialGen2d') return item.spatialGen2d || '(none)';
+    if (field === 'spatialGen3d') return item.spatialGen3d || '(none)';
+    if (field === 'spatialGen4d') return item.spatialGen4d || '(none)';
+    if (field === 'spatialGenDims') return item.spatialGenDims || '(none)';
+    if (field === 'spatialSpecGroup') return item.spatialSpecGroup || '(other)';
     if (field === 'alpha') return (item.term || item.lemmaTerm || '').charAt(0).toUpperCase() || '#';
     return item[field];
   }

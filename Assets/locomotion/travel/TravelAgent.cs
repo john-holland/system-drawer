@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using Planetary.Celestial;
 using Weather;
 
 /// <summary>
@@ -154,6 +155,22 @@ public class TravelAgent : MonoBehaviour
 
     [SerializeField] List<TravelDiscoveredNodeInfo> discoveredNodes = new List<TravelDiscoveredNodeInfo>();
 
+    [Header("Galactic travel / night sky")]
+    [Tooltip("Emit galactic position snapshots for night-sky blending.")]
+    public bool emitGalacticPositionEvents = true;
+    public float galacticSnapshotMinMoveMeters = 5f;
+    public string galacticNearestBodyId;
+
+    [Header("Gravity-aware space pathing")]
+    public bool gravityAwarePathingForPreview;
+    public Locomotion.Spaceship.GravityAwarePathingSolver gravityPathing = new Locomotion.Spaceship.GravityAwarePathingSolver();
+
+    GalacticTravelSnapshot _lastGalacticSnapshot;
+    Vector3 _lastGalacticEmitPos;
+
+    /// <summary>Fired when observer crosses SOI, lattice cell, or significant move.</summary>
+    public event Action<GalacticTravelSnapshot> GalacticPositionChanged;
+
     /// <summary>Last rebuilt multi-modal plan (preview / runtime); multibody-adjusted when multibody is enabled.</summary>
     public GenericMultiModalPathPlan CachedPlan => cachedPlan;
 
@@ -177,6 +194,37 @@ public class TravelAgent : MonoBehaviour
     {
         if (ragdollAnimationSetManager == null)
             ragdollAnimationSetManager = GetComponentInChildren<RagdollAnimationSetManager>();
+    }
+
+    void Update()
+    {
+        if (!emitGalacticPositionEvents)
+            return;
+        Vector3 pos = ResolveMultibodyActorWorld();
+        if ((pos - _lastGalacticEmitPos).sqrMagnitude < galacticSnapshotMinMoveMeters * galacticSnapshotMinMoveMeters
+            && !string.IsNullOrEmpty(_lastGalacticSnapshot.nearestBodyId))
+            return;
+
+        var registry = GalacticBodyRegistry.Instance;
+        string nearestId = galacticNearestBodyId;
+        if (registry != null)
+        {
+            var nearest = registry.FindNearestSceneBody(pos, out _);
+            if (nearest != null)
+                nearestId = nearest.BodyId;
+        }
+
+        var snap = new GalacticTravelSnapshot
+        {
+            worldPos = pos,
+            nearestBodyId = nearestId ?? "",
+            surfaceAnchor = pos,
+            cellBlendWeight = 1f,
+            altitudeBand = Planetary.Composition.LodTier.FullSim
+        };
+        _lastGalacticSnapshot = snap;
+        _lastGalacticEmitPos = pos;
+        GalacticPositionChanged?.Invoke(snap);
     }
 
     public Transform ResolveHierarchyRoot()
@@ -271,8 +319,21 @@ public class TravelAgent : MonoBehaviour
             hints,
             tryToolBridgeWhenNoWalk: true,
             goalTarget,
-            PhysicalPathingMedium.Air,
+            gravityAwarePathingForPreview ? PhysicalPathingMedium.Space : PhysicalPathingMedium.Air,
             in tl);
+
+        if (gravityAwarePathingForPreview && built?.segments != null && gravityPathing != null)
+        {
+            for (int i = 0; i < built.segments.Count; i++)
+            {
+                var seg = built.segments[i];
+                if (seg?.waypoints == null || seg.waypoints.Count < 2)
+                    continue;
+                Vector3 a = seg.waypoints[0];
+                Vector3 b = seg.waypoints[seg.waypoints.Count - 1];
+                seg.waypoints = gravityPathing.FindPath(solver, a, b);
+            }
+        }
 
         if (built == null || built.IsEmpty)
         {

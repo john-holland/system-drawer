@@ -1,0 +1,7 @@
+id: dialogue-tome
+title: Dialogue
+description: Lemma-native interactive dialogue sessions
+routes:
+  - /dialogue
+permissions:
+  - authenticated

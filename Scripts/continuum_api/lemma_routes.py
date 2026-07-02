@@ -122,6 +122,11 @@ def _entry_json(e: dict[str, Any]) -> dict[str, Any]:
         "defaultTiming": e.get("defaultTiming"),
         "patchProperties": e.get("patchProperties") or {},
         "usesOverlay": bool(e.get("usesOverlay")),
+        "spatialGeneratorDefinitions": e.get("spatialGeneratorDefinitions") or [],
+        "spatialGen2d": e.get("spatialGen2d") or "",
+        "spatialGen3d": e.get("spatialGen3d") or "",
+        "spatialGen4d": e.get("spatialGen4d") or "",
+        "spatialGenDims": e.get("spatialGenDims") or "",
     }
 
 
@@ -162,6 +167,7 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
         has_clause = None
         if has_clause_raw is not None:
             has_clause = has_clause_raw.lower() in ("1", "true", "yes")
+        spatial_dimension = request.args.get("spatialDimension") or request.args.get("spatial_dimension")
         limit = min(int(request.args.get("limit", 500)), 2000)
         offset = int(request.args.get("offset", 0))
         entry_id = request.args.get("entryId") or request.args.get("id")
@@ -189,6 +195,7 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                 bucket_id=bucket_id,
                 causality_leaf=causality_leaf,
                 has_component_metadata=has_component_metadata,
+                spatial_dimension=spatial_dimension,
             )
             items.sort(key=lambda x: ((x.get("term") or "").lower(), x.get("id") or ""))
             total = len(items)

@@ -19,3 +19,10 @@ def test_e164_roundtrip():
 
 def test_movie_phone():
     assert parse_display("1-1-555-555-5555").display == "1-1-555-555-5555"
+
+
+def test_short_extension_phone():
+    p = parse_display("1-1-555-0100")
+    assert p.exchange == 555
+    assert p.subscriber == 100
+    assert format_e164(p) == "+G1.1.5550000100"

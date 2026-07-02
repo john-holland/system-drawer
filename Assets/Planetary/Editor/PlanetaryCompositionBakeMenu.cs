@@ -35,6 +35,8 @@ namespace Planetary.Editor
             var body = (PlanetBody)target;
             if (GUILayout.Button("Rebuild Planet"))
                 body.RebuildAll();
+            if (GUILayout.Button("Open Composition UI"))
+                PlanetaryCompositionEditorWindow.Open();
             if (GUILayout.Button("Rebake SDF LOD Mesh"))
             {
                 if (body.sdfLodRenderer != null)

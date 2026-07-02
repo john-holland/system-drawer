@@ -281,12 +281,15 @@ namespace Locomotion.Narrative.Serialization
 
             if (action is NarrativeCalendarLightingAction lighting)
             {
-                // todo: review: consider adding "planetoid visibility" for rendering purposes
-                // todo: review: consider adding "star visibility" for prebaking space game planet side night time light rendering
+                var registry = Planetary.Celestial.GalacticBodyRegistry.Instance;
                 return new NarrativeActionDto
                 {
                     type = nameof(NarrativeCalendarLightingAction),
                     contingency = lighting.contingency,
+                    starVisibility = lighting.sunVisible,
+                    planetoidVisibility = lighting.moonVisible,
+                    galacticObserverBodyId = registry != null ? "scene" : null,
+                    galacticTargetBodyId = null,
                     lightingContextKey = lighting.lightingContextKey,
                     fallbackFindAny = lighting.fallbackFindAny,
                     requireValidity = lighting.requireValidity,

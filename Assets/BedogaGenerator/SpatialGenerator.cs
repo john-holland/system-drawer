@@ -1296,6 +1296,16 @@ public class SpatialGenerator : SpatialGeneratorBase
     
     public void SetSeed(int newSeed)
     {
+        var lockOrch = SeedDependencyLockRegistry.ActiveOrchestrator;
+        if (lockOrch != null && !SeedDependencyLockRegistry.IsApplying)
+        {
+            int enforced = lockOrch.GetDerivedSeedFor(this);
+            if (newSeed != enforced)
+            {
+                Debug.LogWarning($"[SpatialGenerator] Seed lock active on '{name}'; reverting SetSeed({newSeed}) → {enforced}.");
+                newSeed = enforced;
+            }
+        }
         seed = newSeed;
         rng = new System.Random(seed);
         if (treeSolver != null)

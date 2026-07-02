@@ -450,16 +450,23 @@ def register_telecom_routes(app, get_conn: GetConn) -> None:
     def telecom_playbooks():
         items = list_playbook_files()
         sync = request.args.get("sync")
+        sync_errors: list[dict[str, str]] = []
         if sync:
             conn = get_conn()
             try:
                 _ensure(conn)
                 for item in items:
                     if "base/" in item["path"] or item["path"].startswith("base/"):
-                        sync_playbook_to_db(conn, item["path"])
+                        try:
+                            sync_playbook_to_db(conn, item["path"])
+                        except Exception as exc:
+                            sync_errors.append({"path": item["path"], "error": str(exc)})
             finally:
                 conn.close()
-        return jsonify({"items": items, "root": str(PLAYBOOKS_ROOT)})
+        out = {"items": items, "root": str(PLAYBOOKS_ROOT)}
+        if sync_errors:
+            out["syncErrors"] = sync_errors
+        return jsonify(out)
 
     @app.route("/api/telecom/sites/<site_id>/<path:subpath>")
     def telecom_serve_site(site_id: str, subpath: str):

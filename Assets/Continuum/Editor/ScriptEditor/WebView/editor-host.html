@@ -8,6 +8,7 @@
     body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f5; }
     #toolbar { padding: 8px; background: #fff; border-bottom: 1px solid #ddd; }
     #editor-root { padding: 8px; }
+    #continuum-ace-editor { min-height: 240px; border: 1px solid #ccc; border-radius: 4px; }
     .ace-prompt-placeholder,
     .ace-loc-clause,
     .ace-review-comment {
@@ -25,6 +26,7 @@
     <span id="status">Continuum editor host (local bundle)</span>
   </div>
   <div id="editor-root"></div>
+  <script src="vendor/ace.js"></script>
   <script src="continuum-script-spans.js"></script>
   <script src="continuum-script-editor.js"></script>
   <script src="continuum-clause-selector.js"></script>
@@ -81,7 +83,31 @@
           options = options || {};
           var root = document.getElementById('editor-root');
           root.innerHTML = '';
+          var draftId = options.draftEpisodeId || options.draftId || '';
+          options.onScriptChanged = options.onScriptChanged || function (text) {
+            postToUnity({
+              action: 'scriptChanged',
+              requestId: '',
+              body: JSON.stringify({ text: text || '' })
+            });
+          };
+          options.onBindingsChanged = options.onBindingsChanged || async function () {
+            if (!draftId) return;
+            var data = await window.unityBridge.callApi(
+              'GET',
+              '/api/thesaurus/clause-bindings?draftEpisodeId=' + encodeURIComponent(draftId)
+            );
+            var inst = window.continuumHost._inst;
+            if (!inst) return;
+            inst.options.clauseBindings = (data && data.items) || [];
+            ContinuumScriptEditor.renderOverlays(inst, inst.options);
+            ContinuumScriptEditor.renderClausePanel(inst);
+            ContinuumScriptEditor.renderClauseSuggestions(inst);
+          };
           window.continuumHost._inst = ContinuumScriptEditor.mountWithBridge(root, window.unityBridge, options);
+          if (draftId) {
+            window.continuumHost._inst.options.onBindingsChanged().catch(function () { /* ignore */ });
+          }
           return window.continuumHost._inst;
         },
         getValue: function () { return ContinuumScriptEditor.getValue(window.continuumHost._inst); },

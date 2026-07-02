@@ -106,6 +106,12 @@ namespace Locomotion.Narrative.Serialization
         public int minute;
         public int second;
 
+        // Galactic night-sky prebake hints
+        public bool starVisibility;
+        public bool planetoidVisibility;
+        public string galacticObserverBodyId;
+        public string galacticTargetBodyId;
+
         // SendThought brain messages (union-style optional fields)
         public string brainSenderKey;
         public string brainReceiverKey;

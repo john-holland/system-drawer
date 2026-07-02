@@ -95,11 +95,32 @@ public sealed class ContinuumWebViewHost : IDisposable
         _executeJs.Invoke(_webView, new object[] { $"window.unityBridge && window.unityBridge.deliverResponse('{escaped}');" });
     }
 
-    public void MountEditor(string scriptText, bool readOnly)
+    public void MountEditor(string scriptText, bool readOnly, string draftEpisodeId = null, string draftScriptId = null)
     {
         if (_executeJs == null) return;
-        string escaped = (scriptText ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "");
-        _executeJs.Invoke(_webView, new object[] { $"window.continuumHost && window.continuumHost.mount({{ scriptText: '{escaped}', mode: '{(readOnly ? "review" : "edit")}', committed: {(readOnly ? "true" : "false")} }});" });
+        string escaped = EscapeJsString(scriptText ?? "");
+        string draftEsc = EscapeJsString(draftEpisodeId ?? "");
+        string scriptIdEsc = EscapeJsString(draftScriptId ?? "");
+        string js = $@"window.continuumHost && window.continuumHost.mount({{
+          scriptText: '{escaped}',
+          draftEpisodeId: '{draftEsc}',
+          draftId: '{draftEsc}',
+          draftScriptId: '{scriptIdEsc}',
+          readOnly: {(readOnly ? "true" : "false")},
+          mode: '{(readOnly ? "review" : "edit")}'
+        }});";
+        _executeJs.Invoke(_webView, new object[] { js });
+    }
+
+    public void TriggerMayorDogModSlot()
+    {
+        if (_executeJs == null) return;
+        _executeJs.Invoke(_webView, new object[] { "window.continuumHost && window.continuumHost._inst && ContinuumScriptEditor.markMayorDogModSlot(window.continuumHost._inst);" });
+    }
+
+    static string EscapeJsString(string s)
+    {
+        return (s ?? "").Replace("\\", "\\\\").Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "");
     }
 
     public void NotifyMessage(string json) => _onMessage?.Invoke(json);

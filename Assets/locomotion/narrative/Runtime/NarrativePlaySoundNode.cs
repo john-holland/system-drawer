@@ -25,6 +25,9 @@ namespace Locomotion.Narrative
         [Tooltip("Predicted time from timeline (calculated)")]
         public float predictedTime = 0f;
 
+        [Tooltip("NarrativeBindings key for actor speech playback (jaw / wobble DSP)")]
+        public string speakerKey = "";
+
         [Tooltip("Reference to actor sound store")]
         [System.NonSerialized]
         public ActorSoundStore soundStore;
@@ -55,6 +58,9 @@ namespace Locomotion.Narrative
 
         [System.NonSerialized]
         private AudioSource audioSource = null;
+
+        [System.NonSerialized]
+        private SpeechPlaybackHandle _playback;
 
         /// <summary>
         /// Predict timing from narrative calendar.
@@ -156,34 +162,26 @@ namespace Locomotion.Narrative
                 return;
             }
 
-            // Get or create audio source (need to find a GameObject to attach to)
-            // Since this is a NarrativeActionSpec, we need to find a GameObject
-            GameObject targetObject = null;
+            var ctx = new NarrativeExecutionContext(
+                narrativeCalendar != null ? UnityEngine.Object.FindAnyObjectByType<NarrativeClock>() : null,
+                UnityEngine.Object.FindAnyObjectByType<NarrativeBindings>(),
+                null);
 
-            if (targetObject == null)
+            string speaker = !string.IsNullOrWhiteSpace(speakerKey) ? speakerKey : null;
+            if (speaker != null || sound.origin == SoundOrigin.Jaw)
             {
-                // Fallback: find or create a temporary audio source
-                var existingSource = UnityEngine.Object.FindAnyObjectByType<AudioSource>();
-                if (existingSource != null)
-                {
-                    audioSource = existingSource;
-                }
-                else
-                {
-                    GameObject tempGO = new GameObject("TempAudioSource");
-                    audioSource = tempGO.AddComponent<AudioSource>();
-                }
-            }
-            else
-            {
-                audioSource = targetObject.GetComponent<AudioSource>();
-                if (audioSource == null)
-                {
-                    audioSource = targetObject.AddComponent<AudioSource>();
-                }
+                if (string.IsNullOrWhiteSpace(speaker))
+                    speaker = "actor";
+                _playback = ActorSpeechPlayback.Play(ctx, speaker, sound.audioClip, SpeechVisMode.Auto, volume);
+                soundStarted = true;
+                soundStartTime = Time.time;
+                currentClip = sound.audioClip;
+                return;
             }
 
-            // Play sound
+            // Non-speech environmental SFX: generic one-shot source
+            GameObject tempGO = new GameObject("TempAudioSource");
+            audioSource = tempGO.AddComponent<AudioSource>();
             audioSource.clip = sound.audioClip;
             audioSource.volume = volume;
             audioSource.Play();
@@ -198,6 +196,8 @@ namespace Locomotion.Narrative
         /// </summary>
         public bool IsPlaying()
         {
+            if (_playback != null)
+                return _playback.IsPlaying;
             return audioSource != null && audioSource.isPlaying;
         }
 

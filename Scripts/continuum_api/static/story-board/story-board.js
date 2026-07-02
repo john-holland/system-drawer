@@ -10,6 +10,7 @@
 
   let dragStoryId = null;
   let activeStoryId = null;
+  const state = { schedules: [], budgetPlans: [], autocompleteDisposers: [] };
 
   if (window.ContinuumNav) {
     ContinuumNav.mount(document.getElementById('continuum-nav-root'), { app: 'story-board' });
@@ -27,16 +28,207 @@
       throw { status: e.status, body: e.body || {} };
     }
   }
+
+  function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/"/g, '&quot;');
   }
 
-  function esc(s) {
+  function formatError(e) {
     if (e.body && e.body.buildErrors) return JSON.stringify(e.body.buildErrors);
     if (e.body && e.body.legalCollisionWarnings) return JSON.stringify(e.body.legalCollisionWarnings);
     return (e.body && e.body.error) || 'Request failed';
+  }
+
+  function userHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'X-User-ID': (window.ContinuumUserSession && ContinuumUserSession.getUserId()) || 'anonymous',
+    };
+  }
+
+  async function loadProductionCatalog() {
+    var settled = await Promise.allSettled([
+      fetch('/api/production/schedules', { headers: userHeaders() }).then(function (r) { return r.json(); }),
+      fetch('/api/production/budget', { headers: userHeaders() }).then(function (r) { return r.json(); }),
+    ]);
+    var schedBody = settled[0].status === 'fulfilled' ? settled[0].value : {};
+    var budgetBody = settled[1].status === 'fulfilled' ? settled[1].value : {};
+    state.schedules = schedBody.production_schedules || [];
+    state.budgetPlans = budgetBody.budget_plans || [];
+    populateToolbarScheduleDropdown();
+  }
+
+  function scheduleLabel(sched) {
+    if (!sched) return '';
+    var name = sched.name || sched.id;
+    var label = name;
+    if (sched.start_date) label += ' · start ' + sched.start_date;
+    label += ' [' + sched.id + ']';
+    return label;
+  }
+
+  function budgetLabel(plan) {
+    if (!plan) return '';
+    var cap = plan.capacity_usd != null ? plan.capacity_usd : plan.total_usd;
+    var suffix = cap != null ? ' ($' + cap + ')' : '';
+    return (plan.name || plan.id) + suffix + ' [' + plan.id + ']';
+  }
+
+  function populateToolbarScheduleDropdown() {
+    var sel = document.getElementById('filter-schedule');
+    if (!sel) return;
+    var prev = sel.value;
+    sel.innerHTML = '<option value="">All schedules</option>';
+    state.schedules.forEach(function (sched) {
+      var opt = document.createElement('option');
+      opt.value = sched.id;
+      opt.textContent = scheduleLabel(sched);
+      sel.appendChild(opt);
+    });
+    if (prev && state.schedules.some(function (s) { return s.id === prev; })) {
+      sel.value = prev;
+    }
+  }
+
+  function catalogWithStoryFallback(items, currentId, kind) {
+    var list = (items || []).slice();
+    if (!currentId || list.some(function (it) { return it.id === currentId; })) return list;
+    var stub = { id: currentId, name: currentId };
+    if (kind === 'budget') stub.capacity_usd = null;
+    list.unshift(stub);
+    return list;
+  }
+
+  function disposeAutocompletes() {
+    state.autocompleteDisposers.forEach(function (fn) { fn(); });
+    state.autocompleteDisposers = [];
+  }
+
+  function mountAutocomplete(hostEl, options) {
+    hostEl.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.className = 'autocomplete-wrap';
+    var input = document.createElement('input');
+    input.type = 'search';
+    input.autocomplete = 'off';
+    input.placeholder = options.placeholder || 'Search…';
+    input.spellcheck = false;
+    var list = document.createElement('div');
+    list.className = 'autocomplete-list';
+    list.hidden = true;
+    wrap.appendChild(input);
+    wrap.appendChild(list);
+    hostEl.appendChild(wrap);
+
+    var selectedId = options.value || '';
+    var selectedItem = options.items.find(function (item) { return options.getId(item) === selectedId; });
+    input.value = selectedItem ? options.getLabel(selectedItem) : (selectedId || '');
+
+    function setSelection(item) {
+      if (!item) {
+        selectedId = '';
+        input.value = '';
+      } else {
+        selectedId = options.getId(item);
+        input.value = options.getLabel(item);
+      }
+      list.hidden = true;
+      if (options.onChange) options.onChange(selectedId, item || null);
+    }
+
+    function renderList() {
+      var q = input.value.trim().toLowerCase();
+      var matches = options.items.filter(function (item) {
+        var label = options.getLabel(item).toLowerCase();
+        var id = options.getId(item).toLowerCase();
+        return !q || label.indexOf(q) !== -1 || id.indexOf(q) !== -1;
+      }).slice(0, 12);
+      list.innerHTML = '';
+      if (options.allowClear !== false) {
+        var clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'autocomplete-item';
+        clearBtn.textContent = options.clearLabel || '— none —';
+        clearBtn.onclick = function () { setSelection(null); };
+        list.appendChild(clearBtn);
+      }
+      matches.forEach(function (item) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'autocomplete-item';
+        btn.innerHTML = esc(options.getLabel(item)) + '<small>' + esc(options.getId(item)) + '</small>';
+        btn.onclick = function () { setSelection(item); };
+        list.appendChild(btn);
+      });
+      list.hidden = matches.length === 0 && options.allowClear === false;
+    }
+
+    input.addEventListener('focus', function () {
+      renderList();
+      list.hidden = false;
+    });
+    input.addEventListener('input', function () {
+      selectedId = '';
+      renderList();
+      list.hidden = false;
+      if (options.onChange) options.onChange('', null);
+    });
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') {
+        list.hidden = true;
+        input.blur();
+      }
+    });
+    document.addEventListener('click', onDocClick);
+    function onDocClick(ev) {
+      if (!wrap.contains(ev.target)) list.hidden = true;
+    }
+    state.autocompleteDisposers.push(function () {
+      document.removeEventListener('click', onDocClick);
+    });
+
+    return {
+      getValue: function () { return selectedId; },
+      setItems: function (items) { options.items = items || []; },
+      setValue: function (id) {
+        selectedId = id || '';
+        var item = options.items.find(function (it) { return options.getId(it) === selectedId; });
+        input.value = item ? options.getLabel(item) : (selectedId || '');
+      },
+    };
+  }
+
+  async function ensureStoryChatRoom(storyId, story) {
+    if (story && story.resaurce_chat_room_id) return story.resaurce_chat_room_id;
+    var res = await fetch('/api/stories/' + encodeURIComponent(storyId) + '/ensure-chat', {
+      method: 'POST',
+      headers: userHeaders(),
+    });
+    var data = await res.json().catch(function () { return {}; });
+    if (!res.ok) {
+      var msg = data.detail || data.error || ('Chat unavailable (' + res.status + ')');
+      throw new Error(msg);
+    }
+    return data.chatRoomId;
+  }
+
+  function openStoryChatPanel(roomId) {
+    if (!roomId) return;
+    if (window.ContinuumNav && ContinuumNav.openChat) {
+      ContinuumNav.openChat({ roomId: roomId, kind: 'story' });
+      return;
+    }
+    localStorage.removeItem('continuumChatTableReadRoom');
+    localStorage.setItem('continuumChatStoryRoom', roomId);
+    localStorage.setItem('continuumChatOpen', '1');
+    var panel = document.getElementById('continuum-chat-panel');
+    if (panel) {
+      panel.style.display = 'flex';
+      if (panel._continuumRefreshChat) panel._continuumRefreshChat();
+    }
   }
 
   function openModal() {
@@ -48,6 +240,7 @@
     modalOverlay.classList.remove('open');
     modalOverlay.setAttribute('aria-hidden', 'true');
     modalBody.innerHTML = '';
+    disposeAutocompletes();
     activeStoryId = null;
     setStoryQuery(null, true);
   }
@@ -176,6 +369,7 @@
   }
 
   async function loadStories() {
+    await loadProductionCatalog();
     var sched = document.getElementById('filter-schedule').value.trim();
     var payload = {};
     if (sched) payload.resaurce_schedule_id = sched;
@@ -188,7 +382,8 @@
     return data.workOrders || [];
   }
 
-  function bindDetailHandlers(id, s) {
+  function bindDetailHandlers(id, s, refs) {
+    refs = refs || {};
     document.getElementById('btn-save').onclick = async function () {
       try {
         await caveMsg('patch_story', {
@@ -203,8 +398,8 @@
             ? parseInt(document.getElementById('detail-gh-proj').value, 10) : null,
           jiraProjectKey: document.getElementById('detail-jira-proj').value,
           jiraIssueType: document.getElementById('detail-jira-type').value,
-          resaurceScheduleId: document.getElementById('detail-schedule').value || null,
-          resaurceBudgetPlanId: document.getElementById('detail-budget').value || null,
+          resaurceScheduleId: refs.scheduleAc ? refs.scheduleAc.getValue() || null : null,
+          resaurceBudgetPlanId: refs.budgetAc ? refs.budgetAc.getValue() || null : null,
         });
         await loadStories();
         showDetail(id);
@@ -241,16 +436,17 @@
       };
     });
 
-    document.getElementById('btn-open-chat').onclick = function () {
-      localStorage.setItem('continuumChatOpen', '1');
-      if (s.resaurce_chat_room_id) {
-        localStorage.setItem('continuumChatStoryRoom', s.resaurce_chat_room_id);
-      }
-      var panel = document.getElementById('continuum-chat-panel');
-      if (panel) {
-        panel.style.display = 'flex';
-        var roomInp = panel.querySelector('#continuum-chat-room');
-        if (roomInp && s.resaurce_chat_room_id) roomInp.value = s.resaurce_chat_room_id;
+    document.getElementById('btn-open-chat').onclick = async function () {
+      var btn = document.getElementById('btn-open-chat');
+      btn.disabled = true;
+      try {
+        var roomId = await ensureStoryChatRoom(id, s);
+        s.resaurce_chat_room_id = roomId;
+        openStoryChatPanel(roomId);
+      } catch (e) {
+        alert(e.message || 'Could not open story chat');
+      } finally {
+        btn.disabled = false;
       }
     };
 
@@ -295,6 +491,39 @@
         showDetail(id);
       };
     });
+
+    var btnClone = document.getElementById('btn-clone-story');
+    if (btnClone) {
+      btnClone.onclick = async function () {
+        if (!confirm('Clone this story into a new card? Work orders are not copied.')) return;
+        try {
+          var cloned = await caveMsg('story_clone', {
+            story_id: id,
+            resaurceScheduleId: refs.scheduleAc ? refs.scheduleAc.getValue() || null : s.resaurce_schedule_id,
+            resaurceBudgetPlanId: refs.budgetAc ? refs.budgetAc.getValue() || null : s.resaurce_budget_plan_id,
+          });
+          await loadStories();
+          if (cloned && cloned.id) showDetail(cloned.id);
+        } catch (e) {
+          alert(formatError(e));
+        }
+      };
+    }
+
+    var btnReopen = document.getElementById('btn-reopen-story');
+    if (btnReopen) {
+      btnReopen.onclick = async function () {
+        var reason = prompt('Reason for reopening (optional):', 'Reopening submitted story for more work.');
+        if (reason === null) return;
+        try {
+          await caveMsg('story_reopen', { story_id: id, reason: reason });
+          await loadStories();
+          showDetail(id);
+        } catch (e) {
+          alert(formatError(e));
+        }
+      };
+    }
   }
 
   async function showDetail(id, replaceHistory) {
@@ -349,6 +578,11 @@
         return '<option value="' + st + '"' + (st === s.status ? ' selected' : '') + '>' + st.replace(/_/g, ' ') + '</option>';
       }).join('') + '</select></p>' +
       '<p>Story value: <input id="detail-value" type="number" step="0.01" value="' + esc(s.story_value || 0) + '" /></p>' +
+      '<fieldset><legend>Production</legend>' +
+      '<div class="production-row">' +
+      '<div><label for="detail-schedule-host">Schedule</label><div id="detail-schedule-host"></div></div>' +
+      '<div><label for="detail-budget-host">Budget plan</label><div id="detail-budget-host"></div></div>' +
+      '</div></fieldset>' +
       '<fieldset><legend>GitHub / Jira</legend>' +
       '<p>Provider <input id="detail-ext-provider" value="' + esc(s.external_provider || 'none') + '" /> ' +
       'Key <input id="detail-ext-key" value="' + esc(s.external_key || '') + '" /></p>' +
@@ -357,8 +591,6 @@
       'Jira project <input id="detail-jira-proj" value="' + esc(s.jira_project_key || '') + '" /> ' +
       'Issue type <input id="detail-jira-type" value="' + esc(s.jira_issue_type || '') + '" /></p>' +
       '</fieldset>' +
-      '<p>Schedule ID <input id="detail-schedule" value="' + esc(s.resaurce_schedule_id || '') + '" /> ' +
-      'Budget plan <input id="detail-budget" value="' + esc(s.resaurce_budget_plan_id || '') + '" /></p>' +
       '<p>Assignees: ' + assigneeList + '</p>' +
       '<p><input id="detail-assignee" placeholder="user id" /> <button type="button" id="btn-assign">Add assignee</button></p>' +
       '<p>Watchers: ' + watcherList + '</p>' +
@@ -375,9 +607,29 @@
       '<div class="story-modal-actions">' +
       '<button type="button" id="btn-open-chat">Open chat</button> ' +
       '<button type="button" id="btn-validate">Validate causality</button> ' +
+      (s.status === 'submitted' ? '<button type="button" id="btn-reopen-story">Reopen</button> ' : '') +
+      '<button type="button" id="btn-clone-story">Clone to new</button> ' +
       '<button type="button" id="btn-save">Save</button></div>';
 
-    bindDetailHandlers(id, s);
+    disposeAutocompletes();
+    var scheduleAc = mountAutocomplete(document.getElementById('detail-schedule-host'), {
+      items: catalogWithStoryFallback(state.schedules, s.resaurce_schedule_id, 'schedule'),
+      value: s.resaurce_schedule_id || '',
+      placeholder: 'Search schedules…',
+      clearLabel: '— no schedule —',
+      getId: function (item) { return item.id; },
+      getLabel: scheduleLabel,
+    });
+    var budgetAc = mountAutocomplete(document.getElementById('detail-budget-host'), {
+      items: catalogWithStoryFallback(state.budgetPlans, s.resaurce_budget_plan_id, 'budget'),
+      value: s.resaurce_budget_plan_id || '',
+      placeholder: 'Search budget plans…',
+      clearLabel: '— no budget —',
+      getId: function (item) { return item.id; },
+      getLabel: budgetLabel,
+    });
+
+    bindDetailHandlers(id, s, { scheduleAc: scheduleAc, budgetAc: budgetAc });
   }
 
   document.getElementById('btn-refresh').onclick = loadStories;

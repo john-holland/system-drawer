@@ -24,6 +24,25 @@
     label { font-size: 0.85rem; color: #8b949e; display: block; margin-top: 0.5rem; }
     .hint { font-size: 0.78rem; color: #8b949e; margin: 0.25rem 0 0.5rem; line-height: 1.35; }
     #spatial-origin-info { font-size: 0.78rem; color: #8b949e; background: #21262d; padding: 0.5rem; border-radius: 4px; margin-top: 0.25rem; }
+    #sidebar { overflow-y: auto; }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000;
+      display: none; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-panel {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      width: min(720px, 96vw); max-height: 90vh; overflow: auto; padding: 1.25rem;
+    }
+    .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+    .milestone-row {
+      border: 1px solid #30363d; border-radius: 6px; padding: 0.5rem; margin: 0.5rem 0;
+      display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.35rem; align-items: end;
+    }
+    .milestone-row label { margin-top: 0; }
+    .assoc-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    select[multiple] { min-height: 88px; }
+    .toolbar-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; }
   </style>
 </head>
 <body>
@@ -38,8 +57,11 @@
       </div>
       <div id="bars"></div>
     </section>
-    <aside class="sidebar">
-      <h2>Production schedule</h2>
+    <aside class="sidebar" id="sidebar">
+      <div class="toolbar-row">
+        <h2 style="margin:0;flex:1">Production schedule</h2>
+        <button type="button" id="btn-new-schedule">New schedule</button>
+      </div>
       <label for="filter-schedule">Production schedule (id / name)</label>
       <select id="filter-schedule">
         <option value="">— select schedule —</option>
@@ -74,6 +96,41 @@
       <pre id="subs-list" style="font-size:0.75rem"></pre>
     </aside>
   </main>
+
+  <div id="schedule-modal-overlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title">
+      <h2 id="schedule-modal-title">New production schedule</h2>
+      <label for="sched-name">Schedule name</label>
+      <input id="sched-name" placeholder="Season 1 production" />
+      <label for="sched-start">Production start date</label>
+      <input type="date" id="sched-start" />
+      <label for="sched-end">Production end date (optional)</label>
+      <input type="date" id="sched-end" />
+      <label for="sched-budget">Budget plan</label>
+      <select id="sched-budget"><option value="">— none —</option></select>
+      <div class="assoc-lists">
+        <div>
+          <label for="sched-episodes">Episodes (scripts)</label>
+          <select id="sched-episodes" multiple></select>
+        </div>
+        <div>
+          <label for="sched-drafts">Draft episodes</label>
+          <select id="sched-drafts" multiple></select>
+        </div>
+      </div>
+      <p class="hint">Associate one or more published episodes and/or draft scripts with this schedule.</p>
+      <h3>Milestones</h3>
+      <p class="hint">Each milestone can optionally create a continuum story with calendar dates for future work.</p>
+      <div id="milestone-rows"></div>
+      <button type="button" id="btn-add-milestone">+ Add milestone</button>
+      <div class="modal-actions">
+        <button type="button" id="btn-create-schedule">Create schedule</button>
+        <button type="button" id="btn-cancel-schedule" class="secondary">Cancel</button>
+      </div>
+      <p id="schedule-modal-msg" class="hint"></p>
+    </div>
+  </div>
+
   <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
   <script src="/static/shared/continuum-cave-shell/continuum-cave-shell.js"></script>
   <script src="/static/shared/continuum-nav/continuum-nav.js"></script>

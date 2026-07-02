@@ -31,6 +31,17 @@ namespace Planetary
             });
         }
 
+        public void UnregisterObject(Transform t)
+        {
+            if (t == null)
+                return;
+            for (int i = _objects.Count - 1; i >= 0; i--)
+            {
+                if (_objects[i].Transform == t)
+                    _objects.RemoveAt(i);
+            }
+        }
+
         public float GetNarrativeTime() => Time.time;
 
         void Update()

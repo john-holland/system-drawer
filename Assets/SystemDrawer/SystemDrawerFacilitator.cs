@@ -27,6 +27,10 @@ public class SystemDrawerFacilitator : MonoBehaviour
 
     [Tooltip("Assign a Bedoga Spatial4DServiceWizard reference (avoid typed field to prevent asmdef cycle).")]
     [SerializeField] private Object spatial4DServiceWizard;
+    [Tooltip("Assign QuestServiceWizard (SystemDrawer.Quest).")]
+    [SerializeField] private Object questServiceWizard;
+    [Tooltip("Assign DreamCycleServiceWizard (SystemDrawer.DreamCycle).")]
+    [SerializeField] private Object dreamServiceWizard;
 
     [Header("Networking (assign wizards; loose Object avoids asmdef cycle)")]
     [SerializeField] private Object networkServiceWizard;
@@ -76,6 +80,21 @@ public class SystemDrawerFacilitator : MonoBehaviour
                 }
             }
         }
+        if (questServiceWizard == null)
+        {
+            var all = GetComponentsInChildren<MonoBehaviour>(true);
+            for (var i = 0; i < all.Length; i++)
+            {
+                var mb = all[i];
+                if (mb != null && mb.GetType().Name == "QuestServiceWizard")
+                {
+                    questServiceWizard = mb;
+                    break;
+                }
+            }
+        }
+        if (dreamServiceWizard == null)
+            dreamServiceWizard = FindChildWizardByTypeName("DreamCycleServiceWizard");
         if (networkServiceWizard == null)
             networkServiceWizard = FindChildWizardByTypeName("NetworkServiceWizard");
         if (menuRagdollServiceWizard == null)
@@ -115,6 +134,10 @@ public class SystemDrawerFacilitator : MonoBehaviour
         if (menuRagdollServiceWizard != null && TryLooseTryComplete(menuRagdollServiceWizard))
             n++;
         if (TrySpatialLooseTryComplete())
+            n++;
+        if (questServiceWizard != null && TryLooseTryComplete(questServiceWizard))
+            n++;
+        if (dreamServiceWizard != null && TryLooseTryComplete(dreamServiceWizard))
             n++;
         return n;
     }
@@ -184,6 +207,8 @@ public class SystemDrawerFacilitator : MonoBehaviour
         }
 
         count += TryRegisterSpatialLooseInternal(svc, spatial4DServiceWizard);
+        count += TryRegisterSpatialLooseInternal(svc, questServiceWizard);
+        count += TryLooseRegisterAll(svc, dreamServiceWizard);
         count += TryLooseRegisterAll(svc, networkServiceWizard);
         count += TryLooseRegisterMenuRagdoll(svc, menuRagdollServiceWizard);
 

@@ -1,10 +1,14 @@
 .ace-prompt-placeholder,
 .ace-loc-clause,
-.ace-review-comment {
+.ace-review-comment,
+.ace-mayor-dog-mod-slot {
   position: absolute !important;
   background: transparent !important;
   pointer-events: none;
   border-radius: 0 !important;
+}
+.ace-mayor-dog-mod-slot {
+  border-bottom: 2px dashed #7b1fa2 !important;
 }
 .ace-prompt-placeholder {
   border-bottom: 2px dashed #06c !important;
@@ -16,6 +20,16 @@
   border-bottom: 2px dashed #c60 !important;
 }
 #review-script-ace { border: 1px solid #ccc; min-height: 200px; }
+#review-script-ace .ace_editor,
+.continuum-script-editor-host .ace_editor {
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+#review-script-ace .ace_text-layer,
+.continuum-script-editor-host .ace_text-layer {
+  color: #1a1a1a;
+}
 .old-comments { margin-top: 16px; border-top: 1px solid #ddd; padding-top: 8px; }
 .old-comments summary { cursor: pointer; font-weight: 600; }
 .continuum-clause-panel {

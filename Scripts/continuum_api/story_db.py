@@ -6,6 +6,7 @@ import sqlite3
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+EPISODES_SCHEMA = REPO_ROOT / "continuum_episodes_schema.sql"
 STORIES_SCHEMA = REPO_ROOT / "continuum_stories_schema.sql"
 
 WORK_ORDER_COLUMNS = [
@@ -35,7 +36,15 @@ def _add_column_if_missing(conn: sqlite3.Connection, table: str, name: str, decl
     conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
 
 
+def ensure_episodes_schema(conn: sqlite3.Connection) -> None:
+    """Episodes + base work_orders (required before stories schema)."""
+    if EPISODES_SCHEMA.is_file():
+        conn.executescript(EPISODES_SCHEMA.read_text(encoding="utf-8"))
+    conn.commit()
+
+
 def ensure_stories_schema(conn: sqlite3.Connection) -> None:
+    ensure_episodes_schema(conn)
     if STORIES_SCHEMA.is_file():
         conn.executescript(STORIES_SCHEMA.read_text(encoding="utf-8"))
     cur = conn.execute(
