@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "Continuum.Runtime",
-        "Locomotion.Narrative.Runtime"
+        "Locomotion.Narrative.Runtime",
+        "Locomotion.Drink.Runtime"
     ],
     "includePlatforms": [
         "Editor"

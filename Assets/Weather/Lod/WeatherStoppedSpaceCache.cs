@@ -7,6 +7,7 @@ namespace Weather.Lod
     public sealed class WeatherStoppedSpaceCache
     {
         readonly Dictionary<int, SphericalHyperplaneRegression> _regressions = new Dictionary<int, SphericalHyperplaneRegression>();
+        readonly List<(Vector3 center, ManifoldCellData data)> _coarseGuesses = new List<(Vector3, ManifoldCellData)>();
 
         static int KeyFor(Vector3 center)
         {
@@ -27,10 +28,23 @@ namespace Weather.Lod
             _regressions[KeyFor(eggCenter)] = regression;
         }
 
+        public void StoreCoarseGuess(Vector3 eggCenter, ManifoldCellData data)
+        {
+            for (int i = 0; i < _coarseGuesses.Count; i++)
+            {
+                if (Vector3.Distance(_coarseGuesses[i].center, eggCenter) < 0.5f)
+                {
+                    _coarseGuesses[i] = (eggCenter, data);
+                    return;
+                }
+            }
+            _coarseGuesses.Add((eggCenter, data));
+        }
+
         public bool TryEvaluate(Vector3 world, out ManifoldCellData data)
         {
             data = default;
-            if (_regressions.Count == 0)
+            if (_regressions.Count == 0 && _coarseGuesses.Count == 0)
                 return false;
 
             float bestWeight = 0f;
@@ -60,9 +74,33 @@ namespace Weather.Lod
             }
 
             data = blended;
-            return any;
+            if (any)
+                return true;
+
+            if (_coarseGuesses.Count > 0)
+            {
+                float bestDist = float.MaxValue;
+                ManifoldCellData best = default;
+                for (int i = 0; i < _coarseGuesses.Count; i++)
+                {
+                    float d = Vector3.Distance(world, _coarseGuesses[i].center);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        best = _coarseGuesses[i].data;
+                    }
+                }
+                data = best;
+                return true;
+            }
+
+            return false;
         }
 
-        public void Clear() => _regressions.Clear();
+        public void Clear()
+        {
+            _regressions.Clear();
+            _coarseGuesses.Clear();
+        }
     }
 }

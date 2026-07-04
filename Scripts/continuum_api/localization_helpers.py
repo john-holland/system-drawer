@@ -389,6 +389,18 @@ def ensure_script_output_tables(conn: sqlite3.Connection) -> None:
             archived_at TEXT NOT NULL,
             archived_reason TEXT NOT NULL DEFAULT 'resolved'
         );
+        CREATE TABLE IF NOT EXISTS binding_suggestions (
+            id TEXT PRIMARY KEY,
+            draft_episode_id TEXT NOT NULL,
+            binding_id TEXT NOT NULL,
+            suggested_by TEXT NOT NULL,
+            proposed_json TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            resolved_at TEXT,
+            resolved_by TEXT
+        );
         """
     )
 

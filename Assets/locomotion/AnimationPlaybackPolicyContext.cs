@@ -28,9 +28,17 @@ public sealed class AnimationPlaybackPolicyContext : MonoBehaviour
     [SerializeField] LocalizationClauseBindingRecord[] clauseBindings = Array.Empty<LocalizationClauseBindingRecord>();
     [SerializeField] ThesaurusEntryPropertyRecord[] lemmaProperties = Array.Empty<ThesaurusEntryPropertyRecord>();
     [SerializeField] PlaybackPhraseBinding[] activePhraseBindings = Array.Empty<PlaybackPhraseBinding>();
+    [SerializeField] LemmaConsumptionRegistry consumptionRegistry = new LemmaConsumptionRegistry();
 
     public IReadOnlyList<LocalizationClauseBindingRecord> ClauseBindings => clauseBindings;
     public IReadOnlyList<ThesaurusEntryPropertyRecord> LemmaProperties => lemmaProperties;
+    public LemmaConsumptionRegistry ConsumptionRegistry => consumptionRegistry;
+
+    public bool IsPhraseConsumed(string phrase, int eventIndex) =>
+        consumptionRegistry != null && consumptionRegistry.IsConsumed(phrase, eventIndex);
+
+    public void MarkPhraseConsumed(string phrase, int eventIndex) =>
+        consumptionRegistry?.MarkConsumed(phrase, eventIndex);
 
     public string GetActiveScriptText()
     {

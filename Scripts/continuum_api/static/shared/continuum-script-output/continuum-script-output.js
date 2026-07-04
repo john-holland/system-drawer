@@ -59,6 +59,7 @@
         changeList: null,
         reviews: [],
         suggestions: [],
+        bindingSuggestions: [],
         archivedSuggestions: [],
         comments: [],
         archivedComments: [],
@@ -81,11 +82,15 @@
 
     async api(path, opts) {
       opts = opts || {};
+      const sessionHeaders = global.ContinuumUserSession && global.ContinuumUserSession.getHeaders
+        ? global.ContinuumUserSession.getHeaders()
+        : { 'X-User-ID': this._getUserId() };
       const res = await fetch(this._apiBase + path, {
         ...opts,
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-ID': this._getUserId(),
+          ...sessionHeaders,
           ...(opts.headers || {}),
         },
       });
@@ -149,6 +154,7 @@
           <span><strong>Draft updated</strong> ${escHtml(d.updatedAt || '—')}</span>
           <span><strong>Script updated</strong> ${escHtml(scriptUpdated)}</span>
           ${this._state.changeList ? `<span><strong>Change list</strong> ${escHtml(this._state.changeList.workflowStatus || '—')}</span>` : ''}
+          ${this._state.permissions ? `<span><strong>You</strong> ${escHtml(this._state.permissions.userId)}${this._state.permissions.isAuthor ? ' (author)' : ''}</span>` : ''}
           ${reviewHref ? `<span><a href="${escHtml(reviewHref)}" target="_blank" rel="noopener">Open review</a></span>` : ''}
         </div>`;
     },
@@ -176,11 +182,109 @@
       const suggestBtn = document.getElementById('suggest-btn');
       const tableReadBtn = document.getElementById('table-read-btn');
       const p = this._state.permissions || {};
-      if (saveBtn) saveBtn.hidden = !p.canSaveDirect;
+      const hasDraft = !!(this._state.draft && this._state.activeId);
+      if (saveBtn) {
+        saveBtn.hidden = !hasDraft;
+        saveBtn.disabled = !p.canSaveDirect;
+        if (!p.canSaveDirect) {
+          if (p.inReview) saveBtn.title = 'Script is in review — withdraw the change list to edit and save.';
+          else if (p.committed) saveBtn.title = 'Draft is committed — read only.';
+          else if (!p.isAuthor) saveBtn.title = 'Only the draft author can save — use Dev mode in the nav to switch user.';
+          else saveBtn.title = 'Cannot save in the current mode.';
+        } else {
+          saveBtn.title = 'Save script edits (opens change list)';
+        }
+      }
       if (suggestBtn) suggestBtn.hidden = !p.canSuggestEdit;
       if (tableReadBtn) {
         const committed = !!(this._state.draft && this._state.draft.committedAt);
         tableReadBtn.hidden = !this._state.draftId || committed;
+      }
+      this.renderSuggestionSubmitWrap();
+      this.renderSuggestionReviewBar();
+    },
+
+    renderSuggestionSubmitWrap() {
+      const wrap = document.getElementById('so-suggest-submit-wrap');
+      if (!wrap) return;
+      const p = this._state.permissions || {};
+      wrap.hidden = !p.canSuggestEdit;
+    },
+
+    _mergedSuggestions() {
+      const script = (this._state.suggestions || []).map((s) => ({ ...s, suggestionType: s.suggestionType || 'script' }));
+      const binding = (this._state.bindingSuggestions || []).map((s) => ({ ...s, suggestionType: s.suggestionType || 'binding' }));
+      return [...binding, ...script];
+    },
+
+    _suggestionSnippet(s) {
+      if (!s) return '';
+      if (s.suggestionType === 'binding') {
+        const p = s.proposed || {};
+        const sel = (p.selectionText || '').slice(0, 40).replace(/\n/g, ' ');
+        return `Binding [${p.charStart ?? '?'}, ${p.charEnd ?? '?'}) "${sel}"`;
+      }
+      return (s.suggestedScriptText || '').slice(0, 60).replace(/\n/g, ' ');
+    },
+
+    async loadBindingSuggestions(draftId) {
+      const res = await this.api(`/drafts/episodes/${draftId}/binding-suggestions?status=pending`).catch(() => ({ items: [] }));
+      this._state.bindingSuggestions = res.items || [];
+    },
+
+    renderSuggestionReviewBar() {
+      const el = document.getElementById('so-suggestion-review-bar');
+      if (!el) return;
+      const p = this._state.permissions || {};
+      const items = this._mergedSuggestions();
+      const sug = this._state.activeSuggestion;
+      if (!p.canAcceptSuggestion || !items.length) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      el.hidden = false;
+      const diff = this._state.suggestionDiff;
+      const required = diff ? (diff.required || []).filter((i) => i.severity !== 'warning') : [];
+      const warnings = diff
+        ? (diff.warnings || []).concat((diff.required || []).filter((i) => i.severity === 'warning'))
+        : [];
+      const snippet = sug ? this._suggestionSnippet(sug) : '';
+      const diffNote = sug && !diff && sug.suggestionType !== 'binding'
+        ? '<p class="so-panel-empty">Diff could not be loaded — you can still accept or reject the suggested script text.</p>'
+        : '';
+      const selectHint = !sug
+        ? '<p class="so-panel-empty">Select a suggestion above to review it.</p>'
+        : `<p class="so-panel-empty" style="font-style:normal;color:#444">Reviewing ${sug.suggestionType === 'binding' ? 'binding edit' : 'suggestion'} from <strong>${escHtml(sug.suggestedBy || '')}</strong>: "${escHtml(snippet)}"</p>`;
+      el.innerHTML = `
+        <h3>Accept or reject suggestion</h3>
+        ${selectHint}
+        ${diffNote}
+        ${sug ? `
+        <ul class="so-ack-list" id="so-suggestion-review-acks">
+          ${required.map((i, idx) =>
+            `<li><label><input type="checkbox" data-idx="${idx}" data-kind="required"/> ${escHtml(i.description)}</label></li>`,
+          ).join('') || '<li><em>No required acknowledgments</em></li>'}
+        </ul>
+        ${warnings.length ? `<details><summary>Warnings (${warnings.length})</summary><ul>${warnings.map((w) => `<li>${escHtml(w.description)}</li>`).join('')}</ul></details>` : ''}
+        <div class="so-review-actions">
+          <button type="button" id="so-review-accept-btn"${sug ? '' : ' disabled'}>Accept suggestion</button>
+          <button type="button" id="so-review-reject-btn"${sug ? '' : ' disabled'}>Reject</button>
+        </div>` : ''}`;
+      if (sug) {
+        this._state._suggestionAckState = required.map((i) => ({ ...i }));
+        const acceptBtn = el.querySelector('#so-review-accept-btn');
+        const rejectBtn = el.querySelector('#so-review-reject-btn');
+        if (acceptBtn) acceptBtn.onclick = () => this.acceptSuggestion();
+        if (rejectBtn) rejectBtn.onclick = () => this.rejectSuggestion();
+        el.querySelectorAll('#so-suggestion-review-acks input').forEach((inp) => {
+          inp.onchange = () => {
+            const idx = +inp.dataset.idx;
+            if (this._state._suggestionAckState[idx]) {
+              this._state._suggestionAckState[idx].userAcknowledged = inp.checked;
+            }
+          };
+        });
       }
     },
 
@@ -188,7 +292,7 @@
       const el = document.getElementById('so-suggestions');
       const section = document.getElementById('so-suggestions-section');
       if (!el) return;
-      const items = this._state.suggestions || [];
+      const items = this._mergedSuggestions();
       const p = this._state.permissions || {};
       if (!items.length) {
         if (section) section.hidden = true;
@@ -197,8 +301,9 @@
       }
       if (section) section.hidden = false;
       el.innerHTML = items.map((s) => {
-        const snippet = (s.suggestedScriptText || '').slice(0, 60).replace(/\n/g, ' ');
+        const snippet = this._suggestionSnippet(s);
         const active = this._state.activeSuggestion && this._state.activeSuggestion.id === s.id;
+        const kindLabel = s.suggestionType === 'binding' ? '<span class="so-meta-line">Binding edit · </span>' : '';
         const actions = p.canAcceptSuggestion
           ? `<div class="so-suggestion-actions">
               <button type="button" class="so-accept-inline" data-id="${escHtml(s.id)}">Accept</button>
@@ -208,7 +313,7 @@
             ? '<p class="so-panel-empty" style="margin:4px 0 0">Awaiting author review.</p>'
             : '');
         return `<div class="so-suggestion-card${active ? ' is-active' : ''}" data-id="${escHtml(s.id)}" role="button" tabindex="0">
-          <span class="so-snippet">"${escHtml(snippet)}"</span>
+          ${kindLabel}<span class="so-snippet">"${escHtml(snippet)}"</span>
           <span class="so-meta-line">${escHtml(s.suggestedBy)} · ${escHtml(s.createdAt || '')}</span>
           ${actions}
         </div>`;
@@ -239,23 +344,35 @@
     },
 
     async selectSuggestion(id) {
-      const s = (this._state.suggestions || []).find((x) => x.id === id);
+      const s = this._mergedSuggestions().find((x) => x.id === id);
       if (!s) return;
       this._state.activeSuggestion = s;
       this.renderSuggestionsList();
       try {
-        const diff = await this.api(
-          `/drafts/episodes/${this._state.activeId}/script-suggestions/${id}/diff`,
-        );
-        this._state.suggestionDiff = Ack
-          ? Ack.mergeAckIntoChangeListData(diff, this._state.changeList)
-          : diff;
+        if (s.suggestionType === 'binding') {
+          const preview = (s.proposed && s.proposed._preview) || {};
+          const diff = {
+            required: preview.required || [],
+            warnings: preview.warnings || [],
+          };
+          this._state.suggestionDiff = Ack
+            ? Ack.mergeAckIntoChangeListData(diff, this._state.changeList)
+            : diff;
+        } else {
+          const diff = await this.api(
+            `/drafts/episodes/${this._state.activeId}/script-suggestions/${id}/diff`,
+          );
+          this._state.suggestionDiff = Ack
+            ? Ack.mergeAckIntoChangeListData(diff, this._state.changeList)
+            : diff;
+        }
       } catch (e) {
         this._state.suggestionDiff = null;
         this.setStatus(e.message, true);
       }
       this.renderDiffPanel();
       this.renderAcceptBar();
+      this.renderSuggestionReviewBar();
       this.renderSuggestionComments();
       const acceptSection = document.getElementById('so-accept-section');
       if (acceptSection && this._state.permissions?.canAcceptSuggestion) {
@@ -345,13 +462,24 @@
 
     async acceptSuggestion() {
       if (!this._checkSuggestionAcks()) return;
-      const id = this._state.activeSuggestion.id;
+      const sug = this._state.activeSuggestion;
+      if (!sug) return;
+      const id = sug.id;
+      const isBinding = sug.suggestionType === 'binding';
+      const path = isBinding
+        ? `/drafts/episodes/${this._state.activeId}/binding-suggestions/${id}`
+        : `/drafts/episodes/${this._state.activeId}/script-suggestions/${id}`;
       try {
-        await this.api(`/drafts/episodes/${this._state.activeId}/script-suggestions/${id}`, {
+        const result = await this.api(path, {
           method: 'PATCH',
           body: JSON.stringify({ action: 'accept' }),
         });
-        this.setStatus('Suggestion accepted');
+        this.setStatus(isBinding ? 'Binding suggestion accepted' : 'Suggestion accepted');
+        if (isBinding && result && (result.changeListId || (result.required && result.required.length))) {
+          await this.loadDraft();
+          this.openChangeListModal(result);
+          return;
+        }
         await this.loadDraft();
       } catch (e) {
         this.setStatus(e.message, true);
@@ -359,13 +487,19 @@
     },
 
     async rejectSuggestion() {
-      const id = this._state.activeSuggestion.id;
+      const sug = this._state.activeSuggestion;
+      if (!sug) return;
+      const id = sug.id;
+      const isBinding = sug.suggestionType === 'binding';
+      const path = isBinding
+        ? `/drafts/episodes/${this._state.activeId}/binding-suggestions/${id}`
+        : `/drafts/episodes/${this._state.activeId}/script-suggestions/${id}`;
       try {
-        await this.api(`/drafts/episodes/${this._state.activeId}/script-suggestions/${id}`, {
+        await this.api(path, {
           method: 'PATCH',
           body: JSON.stringify({ action: 'reject' }),
         });
-        this.setStatus('Suggestion rejected');
+        this.setStatus(isBinding ? 'Binding suggestion rejected' : 'Suggestion rejected');
         this._state.activeSuggestion = null;
         this._state.suggestionDiff = null;
         await this.loadDraft();
@@ -469,6 +603,7 @@
         draftScriptId: this._state.draftScriptId || undefined,
         mode: readOnly ? 'review' : 'edit',
         readOnly,
+        permissions: p,
         clausePanelHost: '#so-lemma-panel',
         clauseBindings: this._state.clauseBindings,
         onBindingsChanged: async () => {
@@ -476,6 +611,12 @@
           this._refreshEditorBindings();
         },
         onBindingEdited: async (editRes) => {
+          if (editRes && editRes.suggestion) {
+            this.setStatus('Binding edit submitted as a suggestion for the author to accept.');
+            await this.loadBindingSuggestions(this._state.activeId);
+            this.renderSuggestionsList();
+            return;
+          }
           await this.loadClauseBindings(this._state.activeId);
           this._refreshEditorBindings();
           this.openChangeListModal(editRes);
@@ -547,12 +688,13 @@
         this._state.activeId = draftId;
         this._state.draftId = draftId;
 
-        const [draft, scriptRes, clRes, reviewsRes, sugRes, archSugRes, commRes] = await Promise.all([
+        const [draft, scriptRes, clRes, reviewsRes, sugRes, bindSugRes, archSugRes, commRes] = await Promise.all([
           this.api(`/drafts/episodes/${draftId}`),
           this.api(`/drafts/episodes/${draftId}/script`).catch(() => ({ scriptText: '', language: 'en' })),
           this.api(`/localization/change-lists?draftEpisodeId=${encodeURIComponent(draftId)}`).catch(() => null),
           this.api(`/drafts/episodes/${draftId}/reviews`).catch(() => ({ items: [] })),
           this.api(`/drafts/episodes/${draftId}/script-suggestions?status=pending`).catch(() => ({ items: [] })),
+          this.api(`/drafts/episodes/${draftId}/binding-suggestions?status=pending`).catch(() => ({ items: [] })),
           this.api(`/drafts/episodes/${draftId}/script-suggestions?status=archived`).catch(() => ({ items: [] })),
           this.api(`/drafts/episodes/${draftId}/comments?sourcePage=script_output&includeArchived=true`).catch(() => ({ items: [], archived: [] })),
         ]);
@@ -565,6 +707,7 @@
         this._state.changeList = clRes && clRes.id ? clRes : (clRes && clRes.item ? clRes.item : null);
         this._state.reviews = reviewsRes.items || [];
         this._state.suggestions = sugRes.items || [];
+        this._state.bindingSuggestions = bindSugRes.items || [];
         this._state.archivedSuggestions = archSugRes.items || [];
         this._state.comments = commRes.items || [];
         this._state.archivedComments = commRes.archived || [];
@@ -578,13 +721,18 @@
             userId: this._getUserId(),
             review: (this._state.reviews || [])[0],
           })
-          : { canSaveDirect: true, canSuggestEdit: false, editMode: 'author', inReview: false, canComment: true };
+          : { canSaveDirect: true, canSuggestEdit: false, editMode: 'author', inReview: false, canComment: true, isAuthor: true };
 
         await this.loadClauseBindings(draftId);
         this.renderHeader();
         this.renderModeHint();
         this.renderToolbarButtons();
         this.renderSuggestionsList();
+        if (this._state.permissions.canAcceptSuggestion && this._mergedSuggestions().length && !this._state.activeSuggestion) {
+          await this.selectSuggestion(this._mergedSuggestions()[0].id);
+        } else {
+          this.renderSuggestionReviewBar();
+        }
         this.mountEditor(this._state.scriptSnapshot);
         this.renderDiffPanel();
         this.renderAcceptBar();

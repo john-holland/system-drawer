@@ -73,7 +73,7 @@ namespace Planetary.Celestial
             if (hint.mutualGaze)
             {
                 float observerLooks = Vector3.Dot(observerForward.normalized, dir);
-                float targetLooks = Vector3.Dot(-targetForward.normalized, -dir);
+                float targetLooks = Vector3.Dot(targetForward.normalized, -dir);
                 app.stareBackWeight = Mathf.Clamp01(observerLooks * targetLooks);
             }
 

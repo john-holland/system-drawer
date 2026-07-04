@@ -1,0 +1,19 @@
+{
+  "name": "Locomotion.Liquid.Runtime",
+  "rootNamespace": "Locomotion.Liquid",
+  "references": [
+    "Locomotion.Runtime",
+    "Locomotion.Narrative.Runtime",
+    "Weather.Runtime",
+    "Continuum.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

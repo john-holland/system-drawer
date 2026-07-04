@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Locomotion.Drink;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,6 +24,8 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
     LemmaCompositionChildDto[] _compositionChildren = Array.Empty<LemmaCompositionChildDto>();
     string _compositionAddQuery = "";
     bool _nonIkAnimation;
+    DrinkAnimationReference _drinkAnimationRef;
+    DrinkLemmaProperties _drinkProps = DrinkLemmaProperties.Defaults;
     Vector2 _scroll;
     GameObject _pushTarget;
 
@@ -104,6 +107,9 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
                 EditorGUILayout.EndVertical();
             }
         }
+
+        DrawDrinkPropertiesPanel();
+
         EditorGUILayout.EndScrollView();
 
         EditorGUILayout.Space(8);
@@ -122,6 +128,55 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         }
 
         DrawCompositionPanel();
+    }
+
+    void DrawDrinkPropertiesPanel()
+    {
+        EditorGUILayout.Space(8);
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.LabelField("Drink lemma properties", EditorStyles.boldLabel);
+
+        _drinkAnimationRef = (DrinkAnimationReference)EditorGUILayout.ObjectField(
+            "Animation reference", _drinkAnimationRef, typeof(DrinkAnimationReference), false);
+
+        _drinkProps.autoMiddleMouthJaw = EditorGUILayout.Toggle("Auto middle mouth / jaw", _drinkProps.autoMiddleMouthJaw);
+        _drinkProps.jawTiltAnimationAuditInsert = EditorGUILayout.Toggle(
+            "Jaw tilt audit / insert keys", _drinkProps.jawTiltAnimationAuditInsert);
+        _drinkProps.holdWithoutReturn = EditorGUILayout.Toggle("Hold without return", _drinkProps.holdWithoutReturn);
+        _drinkProps.putWithoutRelease = EditorGUILayout.Toggle("Put without release", _drinkProps.putWithoutRelease);
+        _drinkProps.nozzleLoopEnabled = EditorGUILayout.Toggle("Nozzle loop enabled", _drinkProps.nozzleLoopEnabled);
+        _drinkProps.liquidSimulationEnabled = EditorGUILayout.Toggle("Liquid simulation", _drinkProps.liquidSimulationEnabled);
+        _drinkProps.placeNozzleOnMouth = EditorGUILayout.Toggle("Place nozzle on mouth", _drinkProps.placeNozzleOnMouth);
+        _drinkProps.drinkEfficacy = EditorGUILayout.Slider("Drink efficacy", _drinkProps.drinkEfficacy, 0f, 1f);
+        _drinkProps.sipCount = EditorGUILayout.IntField("Sips to imbibe over", _drinkProps.sipCount);
+        _drinkProps.sipCount = Mathf.Max(1, _drinkProps.sipCount);
+        _drinkProps.totalVolumeLiters = EditorGUILayout.FloatField("Total volume (L)", _drinkProps.totalVolumeLiters);
+        _drinkProps.totalVolumeLiters = Mathf.Max(0f, _drinkProps.totalVolumeLiters);
+        if (_drinkProps.totalVolumeLiters > 0f && _drinkProps.sipCount > 0)
+        {
+            float oz = _drinkProps.totalVolumeLiters * DrinkLemmaPropertyKeys.LitersToUsFlOz;
+            float perSipL = _drinkProps.VolumePerSipLiters;
+            EditorGUILayout.LabelField(
+                $"≈ {oz:F1} US fl oz total · {perSipL:F3} L per sip",
+                EditorStyles.miniLabel);
+        }
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Comedy / closure", EditorStyles.boldLabel);
+        _drinkProps.partiallyRaiseAmount = EditorGUILayout.Slider("Partially raise amount", _drinkProps.partiallyRaiseAmount, 0f, 1f);
+        _drinkProps.partialRaiseDefaultWhenStalled = EditorGUILayout.Slider(
+            "Partial raise when stalled", _drinkProps.partialRaiseDefaultWhenStalled, 0f, 1f);
+        _drinkProps.trainForPerfectDrink = EditorGUILayout.Toggle("Train for perfect drink", _drinkProps.trainForPerfectDrink);
+        _drinkProps.maxSpillLitersTolerance = EditorGUILayout.FloatField("Max spill tolerance (L)", _drinkProps.maxSpillLitersTolerance);
+        _drinkProps.maxSpillLitersTolerance = Mathf.Max(0f, _drinkProps.maxSpillLitersTolerance);
+        _drinkProps.closureMode = (DrinkClosureMode)EditorGUILayout.EnumPopup("Closure mode", _drinkProps.closureMode);
+        _drinkProps.mouthVolumeLitersTarget = EditorGUILayout.FloatField("Mouth volume target (L)", _drinkProps.mouthVolumeLitersTarget);
+        _drinkProps.mouthVolumeLitersTarget = Mathf.Max(0f, _drinkProps.mouthVolumeLitersTarget);
+        _drinkProps.infiniteDrain = EditorGUILayout.Toggle("Infinite drain (Fantasia)", _drinkProps.infiniteDrain);
+        _drinkProps.infiniteDrainClosureSeconds = EditorGUILayout.FloatField("Infinite drain closure (s)", _drinkProps.infiniteDrainClosureSeconds);
+        _drinkProps.infiniteDrainClosureSeconds = Mathf.Max(0f, _drinkProps.infiniteDrainClosureSeconds);
+
+        EditorGUILayout.EndVertical();
     }
 
     void DrawCompositionPanel()
@@ -303,13 +358,104 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         if (string.IsNullOrEmpty(_entryId)) return;
         var client = ContinuumEditorLocalizationClient.Instance;
         _properties = await client.GetEntryPropertiesAsync(_entryId);
+        _nonIkAnimation = false;
+        _drinkProps = DrinkLemmaProperties.Defaults;
+        _drinkAnimationRef = null;
         foreach (var p in _properties)
         {
-            if (p != null && p.propertyKey == LocalizationPropertyKeys.NonIkAnimation &&
+            if (p == null) continue;
+            if (p.propertyKey == LocalizationPropertyKeys.NonIkAnimation &&
                 TryParseBool(p.propertyValue, out bool v))
                 _nonIkAnimation = v;
+            ApplyDrinkPropertyFromRecord(p);
+        }
+        if (!string.IsNullOrEmpty(_drinkProps.drinkAnimationRef))
+        {
+            _drinkAnimationRef = AssetDatabase.LoadAssetAtPath<DrinkAnimationReference>(_drinkProps.drinkAnimationRef);
+            if (_drinkAnimationRef == null)
+            {
+                var guids = AssetDatabase.FindAssets($"t:{nameof(DrinkAnimationReference)}");
+                foreach (var guid in guids)
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    var asset = AssetDatabase.LoadAssetAtPath<DrinkAnimationReference>(path);
+                    if (asset != null && (asset.name == _drinkProps.drinkAnimationRef || path == _drinkProps.drinkAnimationRef))
+                    {
+                        _drinkAnimationRef = asset;
+                        break;
+                    }
+                }
+            }
         }
         Repaint();
+    }
+
+    void ApplyDrinkPropertyFromRecord(ThesaurusEntryPropertyRecord p)
+    {
+        switch (p.propertyKey)
+        {
+            case DrinkLemmaPropertyKeys.DrinkAnimationRef:
+                _drinkProps.drinkAnimationRef = p.propertyValue ?? "";
+                break;
+            case DrinkLemmaPropertyKeys.AutoMiddleMouthJaw:
+                if (TryParseBool(p.propertyValue, out bool am)) _drinkProps.autoMiddleMouthJaw = am;
+                break;
+            case DrinkLemmaPropertyKeys.JawTiltAnimationAuditInsert:
+                if (TryParseBool(p.propertyValue, out bool jt)) _drinkProps.jawTiltAnimationAuditInsert = jt;
+                break;
+            case DrinkLemmaPropertyKeys.HoldWithoutReturn:
+                if (TryParseBool(p.propertyValue, out bool hr)) _drinkProps.holdWithoutReturn = hr;
+                break;
+            case DrinkLemmaPropertyKeys.PutWithoutRelease:
+                if (TryParseBool(p.propertyValue, out bool pr)) _drinkProps.putWithoutRelease = pr;
+                break;
+            case DrinkLemmaPropertyKeys.NozzleLoopEnabled:
+                if (TryParseBool(p.propertyValue, out bool nl)) _drinkProps.nozzleLoopEnabled = nl;
+                break;
+            case DrinkLemmaPropertyKeys.LiquidSimulationEnabled:
+                if (TryParseBool(p.propertyValue, out bool ls)) _drinkProps.liquidSimulationEnabled = ls;
+                break;
+            case DrinkLemmaPropertyKeys.PlaceNozzleOnMouth:
+                if (TryParseBool(p.propertyValue, out bool pn)) _drinkProps.placeNozzleOnMouth = pn;
+                break;
+            case DrinkLemmaPropertyKeys.DrinkEfficacy:
+                if (float.TryParse(p.propertyValue, out float de)) _drinkProps.drinkEfficacy = Mathf.Clamp01(de);
+                break;
+            case DrinkLemmaPropertyKeys.SipCount:
+                if (int.TryParse(p.propertyValue, out int sc)) _drinkProps.sipCount = Mathf.Max(1, sc);
+                break;
+            case DrinkLemmaPropertyKeys.TotalVolumeLiters:
+                if (float.TryParse(p.propertyValue, out float tv)) _drinkProps.totalVolumeLiters = Mathf.Max(0f, tv);
+                break;
+            case DrinkLemmaPropertyKeys.PartiallyRaiseAmount:
+                if (float.TryParse(p.propertyValue, out float pra)) _drinkProps.partiallyRaiseAmount = Mathf.Clamp01(pra);
+                break;
+            case DrinkLemmaPropertyKeys.PartialRaiseDefaultWhenStalled:
+                if (float.TryParse(p.propertyValue, out float prs)) _drinkProps.partialRaiseDefaultWhenStalled = Mathf.Clamp01(prs);
+                break;
+            case DrinkLemmaPropertyKeys.TrainForPerfectDrink:
+                if (TryParseBool(p.propertyValue, out bool tfp)) _drinkProps.trainForPerfectDrink = tfp;
+                break;
+            case DrinkLemmaPropertyKeys.MaxSpillLitersTolerance:
+                if (float.TryParse(p.propertyValue, out float mst)) _drinkProps.maxSpillLitersTolerance = Mathf.Max(0f, mst);
+                break;
+            case DrinkLemmaPropertyKeys.ClosureMode:
+                if (Enum.TryParse(p.propertyValue?.Replace("-", ""), true, out DrinkClosureMode cm))
+                    _drinkProps.closureMode = cm;
+                else if (p.propertyValue == "spill-beat") _drinkProps.closureMode = DrinkClosureMode.SpillBeat;
+                else if (p.propertyValue == "empty-vessel") _drinkProps.closureMode = DrinkClosureMode.EmptyVessel;
+                else if (p.propertyValue == "infinite-drain-beat") _drinkProps.closureMode = DrinkClosureMode.InfiniteDrainBeat;
+                break;
+            case DrinkLemmaPropertyKeys.MouthVolumeLitersTarget:
+                if (float.TryParse(p.propertyValue, out float mvt)) _drinkProps.mouthVolumeLitersTarget = Mathf.Max(0f, mvt);
+                break;
+            case DrinkLemmaPropertyKeys.InfiniteDrain:
+                if (TryParseBool(p.propertyValue, out bool id)) _drinkProps.infiniteDrain = id;
+                break;
+            case DrinkLemmaPropertyKeys.InfiniteDrainClosureSeconds:
+                if (float.TryParse(p.propertyValue, out float idc)) _drinkProps.infiniteDrainClosureSeconds = Mathf.Max(0f, idc);
+                break;
+        }
     }
 
     async void SaveProperties()
@@ -317,6 +463,28 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         if (string.IsNullOrEmpty(_entryId)) return;
         var client = ContinuumEditorLocalizationClient.Instance;
         await client.PutEntryPropertyAsync(_entryId, LocalizationPropertyKeys.NonIkAnimation, _nonIkAnimation ? "true" : "false");
+        string animRef = _drinkAnimationRef != null
+            ? AssetDatabase.GetAssetPath(_drinkAnimationRef)
+            : (_drinkProps.drinkAnimationRef ?? "");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.DrinkAnimationRef, animRef ?? "");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.AutoMiddleMouthJaw, _drinkProps.autoMiddleMouthJaw ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.JawTiltAnimationAuditInsert, _drinkProps.jawTiltAnimationAuditInsert ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.HoldWithoutReturn, _drinkProps.holdWithoutReturn ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.PutWithoutRelease, _drinkProps.putWithoutRelease ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.NozzleLoopEnabled, _drinkProps.nozzleLoopEnabled ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.LiquidSimulationEnabled, _drinkProps.liquidSimulationEnabled ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.PlaceNozzleOnMouth, _drinkProps.placeNozzleOnMouth ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.DrinkEfficacy, _drinkProps.drinkEfficacy.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.SipCount, _drinkProps.sipCount.ToString());
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.TotalVolumeLiters, _drinkProps.totalVolumeLiters.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.PartiallyRaiseAmount, _drinkProps.partiallyRaiseAmount.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.PartialRaiseDefaultWhenStalled, _drinkProps.partialRaiseDefaultWhenStalled.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.TrainForPerfectDrink, _drinkProps.trainForPerfectDrink ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.MaxSpillLitersTolerance, _drinkProps.maxSpillLitersTolerance.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.ClosureMode, ClosureModeToString(_drinkProps.closureMode));
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.MouthVolumeLitersTarget, _drinkProps.mouthVolumeLitersTarget.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.InfiniteDrain, _drinkProps.infiniteDrain ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.InfiniteDrainClosureSeconds, _drinkProps.infiniteDrainClosureSeconds.ToString("G"));
         await LoadPropertiesAsync();
     }
 
@@ -404,13 +572,41 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         var list = _properties.ToList();
         if (!string.IsNullOrEmpty(_entryId))
         {
-            list.RemoveAll(p => p != null && p.propertyKey == LocalizationPropertyKeys.NonIkAnimation && p.entryId == _entryId);
+            list.RemoveAll(p => p != null && p.entryId == _entryId && (
+                p.propertyKey == LocalizationPropertyKeys.NonIkAnimation ||
+                DrinkLemmaPropertyKeys.AllKeys.Contains(p.propertyKey)));
             list.Add(new ThesaurusEntryPropertyRecord
             {
                 entryId = _entryId,
                 propertyKey = LocalizationPropertyKeys.NonIkAnimation,
                 propertyValue = _nonIkAnimation ? "true" : "false"
             });
+            void AddDrink(string key, string value)
+            {
+                list.Add(new ThesaurusEntryPropertyRecord { entryId = _entryId, propertyKey = key, propertyValue = value });
+            }
+            string animRef = _drinkAnimationRef != null
+                ? AssetDatabase.GetAssetPath(_drinkAnimationRef)
+                : (_drinkProps.drinkAnimationRef ?? "");
+            AddDrink(DrinkLemmaPropertyKeys.DrinkAnimationRef, animRef ?? "");
+            AddDrink(DrinkLemmaPropertyKeys.AutoMiddleMouthJaw, _drinkProps.autoMiddleMouthJaw ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.JawTiltAnimationAuditInsert, _drinkProps.jawTiltAnimationAuditInsert ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.HoldWithoutReturn, _drinkProps.holdWithoutReturn ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.PutWithoutRelease, _drinkProps.putWithoutRelease ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.NozzleLoopEnabled, _drinkProps.nozzleLoopEnabled ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.LiquidSimulationEnabled, _drinkProps.liquidSimulationEnabled ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.PlaceNozzleOnMouth, _drinkProps.placeNozzleOnMouth ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.DrinkEfficacy, _drinkProps.drinkEfficacy.ToString("G"));
+            AddDrink(DrinkLemmaPropertyKeys.SipCount, _drinkProps.sipCount.ToString());
+            AddDrink(DrinkLemmaPropertyKeys.TotalVolumeLiters, _drinkProps.totalVolumeLiters.ToString("G"));
+            AddDrink(DrinkLemmaPropertyKeys.PartiallyRaiseAmount, _drinkProps.partiallyRaiseAmount.ToString("G"));
+            AddDrink(DrinkLemmaPropertyKeys.PartialRaiseDefaultWhenStalled, _drinkProps.partialRaiseDefaultWhenStalled.ToString("G"));
+            AddDrink(DrinkLemmaPropertyKeys.TrainForPerfectDrink, _drinkProps.trainForPerfectDrink ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.MaxSpillLitersTolerance, _drinkProps.maxSpillLitersTolerance.ToString("G"));
+            AddDrink(DrinkLemmaPropertyKeys.ClosureMode, ClosureModeToString(_drinkProps.closureMode));
+            AddDrink(DrinkLemmaPropertyKeys.MouthVolumeLitersTarget, _drinkProps.mouthVolumeLitersTarget.ToString("G"));
+            AddDrink(DrinkLemmaPropertyKeys.InfiniteDrain, _drinkProps.infiniteDrain ? "true" : "false");
+            AddDrink(DrinkLemmaPropertyKeys.InfiniteDrainClosureSeconds, _drinkProps.infiniteDrainClosureSeconds.ToString("G"));
         }
 
         method.Invoke(ctx, new object[] { list });
@@ -435,6 +631,16 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         }
         return null;
     }
+
+    static string ClosureModeToString(DrinkClosureMode mode) => mode switch
+    {
+        DrinkClosureMode.Mouth => "mouth",
+        DrinkClosureMode.EmptyVessel => "empty-vessel",
+        DrinkClosureMode.Stalled => "stalled",
+        DrinkClosureMode.SpillBeat => "spill-beat",
+        DrinkClosureMode.InfiniteDrainBeat => "infinite-drain-beat",
+        _ => "auto",
+    };
 
     static bool TryParseBool(string value, out bool result)
     {

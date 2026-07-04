@@ -86,6 +86,14 @@
   margin-bottom: 6px;
   flex-wrap: nowrap;
 }
+.continuum-auto-fix-lemma-anchors-btn:not([hidden]) {
+  border: 1px solid #e6a817;
+  background: #fff8e6;
+  color: #8a6100;
+}
+.continuum-auto-fix-lemma-anchors-btn:not([hidden]):hover {
+  background: #ffefc2;
+}
 .continuum-clause-suggestions {
   display: flex;
   flex: 1 1 auto;

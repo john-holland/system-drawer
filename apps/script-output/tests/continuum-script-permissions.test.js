@@ -29,6 +29,26 @@ test('author blocked when in review', () => {
   assert.equal(p.editMode, 'readonly');
 });
 
+test('author resolved from reviewee when draft author missing', () => {
+  const p = resolveScriptPermissions({
+    draft: {},
+    review: { revieweeUserId: 'alice' },
+    changeList: { workflowStatus: 'in_progress' },
+    userId: 'Alice',
+  });
+  assert.equal(p.isAuthor, true);
+  assert.equal(p.canSaveDirect, true);
+});
+
+test('author match is case-insensitive', () => {
+  const p = resolveScriptPermissions({
+    draft: { createdBy: 'Alice' },
+    changeList: { workflowStatus: 'in_progress' },
+    userId: 'alice',
+  });
+  assert.equal(p.isAuthor, true);
+});
+
 test('non-author gets suggest mode', () => {
   const p = resolveScriptPermissions({
     draft: { createdBy: 'alice' },

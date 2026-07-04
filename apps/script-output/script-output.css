@@ -89,6 +89,66 @@
   cursor: pointer;
 }
 
+.so-suggest-comment-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.so-suggest-comment-label input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 6px 8px;
+}
+
+.so-suggestion-review-bar {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.so-suggestion-review-bar h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.so-suggestion-review-bar .so-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.so-suggestion-review-bar .so-review-actions button {
+  font-size: 13px;
+  padding: 6px 14px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.so-suggestion-review-bar #so-review-accept-btn {
+  background: #2e7d32;
+  color: #fff;
+  border: 1px solid #1b5e20;
+}
+
+.so-suggestion-review-bar #so-review-reject-btn {
+  background: #fff;
+  color: #c62828;
+  border: 1px solid #c62828;
+}
+
+.so-toolbar-row button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .so-accept-inline {
   background: #2e7d32;
   color: #fff;

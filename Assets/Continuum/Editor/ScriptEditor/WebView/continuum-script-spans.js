@@ -218,6 +218,49 @@
     );
   }
 
+  function bindingKind(binding) {
+    return binding.bindingKind || binding.binding_kind || 'property';
+  }
+
+  function bindingSelectionText(binding) {
+    return binding.selectionText || binding.selection_text || '';
+  }
+
+  function liveSliceAtBinding(binding, snapshotText, currentText) {
+    const [displayed] = displayBindingSpans(snapshotText ?? currentText, currentText || '', [binding]);
+    const cs = displayed.charStart;
+    const ce = displayed.charEnd;
+    const text = currentText || '';
+    return { charStart: cs, charEnd: ce, slice: text.substring(cs, ce) };
+  }
+
+  function isLemmaAnchorMismatch(binding, snapshotText, currentText) {
+    if (bindingKind(binding) !== 'lemma') return false;
+    const expected = bindingSelectionText(binding);
+    if (!expected) return false;
+    const { slice } = liveSliceAtBinding(binding, snapshotText, currentText);
+    return slice !== expected;
+  }
+
+  function proposeLemmaReanchor(binding, snapshotText, currentText) {
+    if (bindingKind(binding) !== 'lemma') return null;
+    const expected = bindingSelectionText(binding);
+    if (!expected) return null;
+    const { charStart, charEnd } = liveSliceAtBinding(binding, snapshotText, currentText);
+    const reanchored = reanchorSpanByFirstLetter(currentText || '', binding, charStart, charEnd);
+    const text = currentText || '';
+    const slice = text.substring(reanchored.charStart, reanchored.charEnd);
+    if (slice !== expected) return null;
+    if (reanchored.charStart === charStart && reanchored.charEnd === charEnd) return null;
+    return { charStart: reanchored.charStart, charEnd: reanchored.charEnd };
+  }
+
+  function mismatchedLemmaBindingsInRange(snapshotText, currentText, bindings, rangeStart, rangeEnd) {
+    return bindingsAtRange(snapshotText, currentText, bindings, rangeStart, rangeEnd).filter(
+      (b) => isLemmaAnchorMismatch(b, snapshotText, currentText),
+    );
+  }
+
   return {
     computeEditRegions,
     mapPointThroughEdit,
@@ -232,5 +275,9 @@
     buildOverlaySpans,
     spansOverlap,
     bindingsAtRange,
+    liveSliceAtBinding,
+    isLemmaAnchorMismatch,
+    proposeLemmaReanchor,
+    mismatchedLemmaBindingsInRange,
   };
 });

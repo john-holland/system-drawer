@@ -86,6 +86,81 @@ def build_previously_on(comment: dict, script_text: str = "") -> str:
     return text[:80]
 
 
+def execute_binding_edit(conn: sqlite3.Connection, draft_id: str, body: dict) -> tuple[dict | None, str | None]:
+    """Apply a binding edit within an open transaction. Returns (result_dict, error_message)."""
+    binding_id = body.get("bindingId")
+    script_text = body.get("scriptText", "")
+    if not binding_id:
+        return None, "bindingId required"
+    cur = conn.execute(
+        """SELECT b.* FROM localization_clause_bindings b
+           JOIN draft_episode_script s ON s.id = b.draft_script_id
+           WHERE s.draft_episode_id = ? AND b.id = ?""",
+        (draft_id, binding_id),
+    )
+    old_row = cur.fetchone()
+    if not old_row:
+        return None, "binding not found for draft"
+    old = dict(old_row)
+    new_cs = body.get("charStart", old["char_start"])
+    new_ce = body.get("charEnd", old["char_end"])
+    new_pk = body.get("propertyKey", old["property_key"])
+    new_pv = body.get("propertyValue", old["property_value"])
+    new_eid = body.get("entryId", old.get("entry_id"))
+    err = validate_property_value(conn, new_pk, new_pv) if new_pk else None
+    if err:
+        return None, err
+    selection_text = body.get("selectionText")
+    if selection_text is None and script_text and new_ce > new_cs:
+        selection_text = script_text[int(new_cs) : int(new_ce)]
+    elif selection_text is None:
+        selection_text = old["selection_text"]
+    new = {
+        **old,
+        "char_start": int(new_cs),
+        "char_end": int(new_ce),
+        "property_key": new_pk,
+        "property_value": new_pv,
+        "entry_id": new_eid,
+        "selection_text": selection_text,
+    }
+    required, warnings = audit_binding_edit(old, new, script_text)
+    if not required and not warnings:
+        return {"changeListId": None, "revision": 0, "required": [], "warnings": []}, None
+    from thesaurus.clause_audit import char_to_farey
+
+    ln, ld, rn, rd = char_to_farey(script_text or old.get("selection_text", ""), int(new_cs), int(new_ce))
+    now = _now()
+    conn.execute(
+        """UPDATE localization_clause_bindings SET
+           char_start = ?, char_end = ?, farey_left_num = ?, farey_left_den = ?,
+           farey_right_num = ?, farey_right_den = ?, selection_text = ?,
+           property_key = ?, property_value = ?, entry_id = ?, updated_at = ?
+           WHERE id = ?""",
+        (
+            int(new_cs),
+            int(new_ce),
+            ln,
+            ld,
+            rn,
+            rd,
+            selection_text,
+            new_pk,
+            new_pv,
+            new_eid,
+            now,
+            binding_id,
+        ),
+    )
+    cl_id, revision, req_out, warn_out = merge_change_list(conn, draft_id, required, warnings)
+    return {
+        "changeListId": cl_id,
+        "revision": revision,
+        "required": req_out,
+        "warnings": warn_out,
+    }, None
+
+
 def register_localization_routes(
     app,
     get_conn: GetConn,
@@ -452,7 +527,6 @@ def register_localization_routes(
     def apply_binding_edit(draft_id: str):
         body = request.get_json() or {}
         binding_id = body.get("bindingId")
-        script_text = body.get("scriptText", "")
         if not binding_id:
             return jsonify({"error": "bindingId required"}), 400
         try:
@@ -467,80 +541,14 @@ def register_localization_routes(
             if blocked:
                 conn.close()
                 return jsonify({"error": f"draft change list is {blocked}; withdraw before editing"}), 409
-            cur = conn.execute(
-                """SELECT b.* FROM localization_clause_bindings b
-                   JOIN draft_episode_script s ON s.id = b.draft_script_id
-                   WHERE s.draft_episode_id = ? AND b.id = ?""",
-                (draft_id, binding_id),
-            )
-            old_row = cur.fetchone()
-            if not old_row:
-                conn.close()
-                return jsonify({"error": "binding not found for draft"}), 404
-            old = dict(old_row)
-            new_cs = body.get("charStart", old["char_start"])
-            new_ce = body.get("charEnd", old["char_end"])
-            new_pk = body.get("propertyKey", old["property_key"])
-            new_pv = body.get("propertyValue", old["property_value"])
-            new_eid = body.get("entryId", old.get("entry_id"))
-            err = validate_property_value(conn, new_pk, new_pv) if new_pk else None
+            result, err = execute_binding_edit(conn, draft_id, body)
             if err:
                 conn.close()
-                return jsonify({"error": err}), 400
-            selection_text = body.get("selectionText")
-            if selection_text is None and script_text and new_ce > new_cs:
-                selection_text = script_text[int(new_cs) : int(new_ce)]
-            elif selection_text is None:
-                selection_text = old["selection_text"]
-            new = {
-                **old,
-                "char_start": int(new_cs),
-                "char_end": int(new_ce),
-                "property_key": new_pk,
-                "property_value": new_pv,
-                "entry_id": new_eid,
-                "selection_text": selection_text,
-            }
-            required, warnings = audit_binding_edit(old, new, script_text)
-            if not required and not warnings:
-                conn.close()
-                return jsonify({"changeListId": None, "revision": 0, "required": [], "warnings": []}), 200
-            from thesaurus.clause_audit import char_to_farey
-
-            ln, ld, rn, rd = char_to_farey(script_text or old.get("selection_text", ""), int(new_cs), int(new_ce))
-            now = _now()
-            conn.execute(
-                """UPDATE localization_clause_bindings SET
-                   char_start = ?, char_end = ?, farey_left_num = ?, farey_left_den = ?,
-                   farey_right_num = ?, farey_right_den = ?, selection_text = ?,
-                   property_key = ?, property_value = ?, entry_id = ?, updated_at = ?
-                   WHERE id = ?""",
-                (
-                    int(new_cs),
-                    int(new_ce),
-                    ln,
-                    ld,
-                    rn,
-                    rd,
-                    selection_text,
-                    new_pk,
-                    new_pv,
-                    new_eid,
-                    now,
-                    binding_id,
-                ),
-            )
-            cl_id, revision, req_out, warn_out = merge_change_list(conn, draft_id, required, warnings)
+                status = 404 if err == "binding not found for draft" else 400
+                return jsonify({"error": err}), status
             conn.commit()
             conn.close()
-            return jsonify(
-                {
-                    "changeListId": cl_id,
-                    "revision": revision,
-                    "required": req_out,
-                    "warnings": warn_out,
-                }
-            ), 200
+            return jsonify(result), 200
         except sqlite3.OperationalError as e:
             return jsonify({"error": str(e)}), 500
 

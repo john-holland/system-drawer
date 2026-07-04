@@ -41,8 +41,14 @@ namespace Planetary.AsteroidBelt
 
         public void ReceiveHit(AsteroidHitInfo hit)
         {
-            if (destruction != null)
-                destruction.TriggerDestruction(hit);
+            if (destruction == null)
+            {
+                destruction = GetComponent<ProceduralAsteroidDestruction>();
+                if (destruction == null)
+                    destruction = gameObject.AddComponent<ProceduralAsteroidDestruction>();
+                destruction.asteroidBody = this;
+            }
+            destruction.TriggerDestruction(hit);
         }
     }
 }

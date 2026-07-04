@@ -16,10 +16,20 @@ namespace Planetary.Celestial
         PlanetBody _planet;
         CelestialManifoldHost _host;
 
-        public string BodyId => !string.IsNullOrEmpty(galacticBodyId) ? galacticBodyId : _planet?.societyPlanetId ?? name;
+        PlanetBody Planet
+        {
+            get
+            {
+                if (_planet == null)
+                    _planet = GetComponent<PlanetBody>();
+                return _planet;
+            }
+        }
+
+        public string BodyId => !string.IsNullOrEmpty(galacticBodyId) ? galacticBodyId : Planet?.societyPlanetId ?? name;
         public GalacticBodyKind Kind => GalacticBodyKind.Planet;
-        public float Mass => _planet != null ? VolumeMass(_planet.PlanetRadius, densityKgPerM3) : 0f;
-        public float Radius => _planet != null ? _planet.PlanetRadius : 0f;
+        public float Mass => Planet != null ? VolumeMass(Planet.PlanetRadius, densityKgPerM3) : 0f;
+        public float Radius => Planet != null ? Planet.PlanetRadius : 0f;
         public Vector3 GalacticPosition => galacticPosition;
         public PhysicalManifold Manifold => manifold;
         public bool Immovable => immovable;

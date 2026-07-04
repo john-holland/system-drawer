@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Weather.Activation;
+using Weather.Coarse;
+using Weather.Emergence;
 using Weather.Lod;
+using Weather.Scheduling;
 
 namespace Weather.Executor
 {
@@ -16,6 +20,11 @@ namespace Weather.Executor
         public WeatherPhysicsManifold manifold;
         public Transform focusTransform;
 
+        [Header("Emergence")]
+        public bool emergenceOnlyMode = true;
+        public WeatherEmergenceCollector emergenceCollector;
+        public WeatherSimLayerConfig simLayerConfig;
+
         [Header("Egg Defaults")]
         public Vector3 defaultEggRadii = new Vector3(40f, 60f, 40f);
         public float linearityThreshold = 0.25f;
@@ -26,6 +35,10 @@ namespace Weather.Executor
 
         public PlayerWeatherEggRegistry Registry { get; } = new PlayerWeatherEggRegistry();
         public WeatherStoppedSpaceCache StoppedSpace { get; } = new WeatherStoppedSpaceCache();
+        public WeatherActivationGate ActivationGate { get; } = new WeatherActivationGate();
+        public WeatherSimScheduler SimScheduler { get; } = new WeatherSimScheduler();
+        public CoarseMeteorologyGuessField CoarseGuess { get; } = new CoarseMeteorologyGuessField();
+        public EmergenceVectorField EmergenceField => emergenceCollector != null ? emergenceCollector.Field : null;
 
         readonly WeatherWorkQueue _workQueue = new WeatherWorkQueue();
         readonly WeatherGradientEggMerger _merger = new WeatherGradientEggMerger();
@@ -46,6 +59,8 @@ namespace Weather.Executor
                 return;
             }
             Instance = this;
+            ActivationGate.emergenceOnlyMode = emergenceOnlyMode;
+            SimScheduler.config = simLayerConfig;
             ResolveReferences();
         }
 
@@ -77,6 +92,21 @@ namespace Weather.Executor
             }
             if (focusTransform == null && weatherSystem != null)
                 focusTransform = weatherSystem.transform;
+            if (emergenceCollector == null)
+                emergenceCollector = GetComponent<WeatherEmergenceCollector>();
+            if (emergenceCollector == null)
+                emergenceCollector = gameObject.AddComponent<WeatherEmergenceCollector>();
+            if (emergenceCollector.playerFocus == null)
+                emergenceCollector.playerFocus = focusTransform;
+            if (simLayerConfig == null)
+                simLayerConfig = Resources.Load<WeatherSimLayerConfig>("WeatherSimLayerConfig");
+        }
+
+        public void SetEmergenceOnlyMode(bool enabled)
+        {
+            emergenceOnlyMode = enabled;
+            ActivationGate.SetEmergenceOnlyMode(enabled);
+            weatherSystem?.SetEmergenceOnlyMode(enabled);
         }
 
         public PlayerWeatherEggZone GetOrCreateEgg(string clientId)
@@ -100,9 +130,37 @@ namespace Weather.Executor
         public void TickClient(float deltaTime)
         {
             _frameIndex++;
+            ActivationGate.emergenceOnlyMode = emergenceOnlyMode;
+
+            if (emergenceCollector != null)
+            {
+                if (emergenceCollector.playerFocus == null)
+                    emergenceCollector.playerFocus = focusTransform;
+                emergenceCollector.Tick();
+            }
+
+            EmergenceVectorField field = EmergenceField;
+            float activationWeight = field != null && focusTransform != null
+                ? field.GetActivationWeight(focusTransform.position)
+                : 0f;
+
             PlayerWeatherEggZone egg = GetOrCreateEgg("local");
-            if (focusTransform != null)
+            Vector3 defaultRadii = defaultEggRadii;
+            if (field != null && focusTransform != null)
+            {
+                EmergenceEggShaper.ShapeEgg(
+                    focusTransform.position,
+                    defaultEggRadii,
+                    field,
+                    out Vector3 shapedCenter,
+                    out Vector3 shapedRadii);
+                egg.transform.position = shapedCenter;
+                egg.radii = shapedRadii;
+            }
+            else if (focusTransform != null)
+            {
                 egg.transform.position = focusTransform.position;
+            }
 
             foreach (PlayerWeatherEggZone z in Registry.Eggs)
                 z?.TickServerBlend();
@@ -110,17 +168,56 @@ namespace Weather.Executor
             if (manifold == null || weatherSystem == null)
                 return;
 
-            Bounds eggBounds = egg.GetBounds();
-            manifold.SetEggLodActive(true, eggBounds);
-            weatherSystem.ServiceUpdateSubsystems(deltaTime, skipManifold: true);
-            manifold.ServiceUpdateInBounds(deltaTime, eggBounds);
+            bool insideEgg = egg.Contains(focusTransform != null ? focusTransform.position : egg.Center);
+            float now = Time.time;
 
-            FitRegressionForEgg(egg);
+            CoarseGuess.SetAnchor(Registry.GetCombinedBounds().center);
+            if (SimScheduler.ShouldTick(WeatherSimLayerId.L0_MeteorologyGuess, activationWeight, insideEgg, now))
+            {
+                ManifoldCellData guess = CoarseGuess.GuessAt(egg.Center);
+                StoppedSpace.StoreCoarseGuess(egg.Center, guess);
+            }
+
+            if (SimScheduler.ShouldTick(WeatherSimLayerId.L1_CoarseAdvection, activationWeight, insideEgg, now)
+                && CoarseGuess.ShouldUpdate(now))
+            {
+                CoarseGuess.Step(deltaTime, weatherSystem.wind, field);
+            }
+
+            Bounds eggBounds = egg.GetBounds();
+            bool tickEggManifold = SimScheduler.ShouldTick(WeatherSimLayerId.L2_EggManifold, activationWeight, insideEgg, now)
+                || insideEgg;
+
+            if (tickEggManifold && ActivationGate.IsActive(WeatherFeatureMask.LodEggs, activationWeight, insideEgg))
+            {
+                manifold.SetEggLodActive(true, eggBounds);
+                weatherSystem.ServiceUpdateSubsystems(deltaTime, skipManifold: true, activationWeight, insideEgg);
+                if (ActivationGate.IsActive(WeatherFeatureMask.FullManifold, activationWeight, insideEgg))
+                    manifold.ServiceUpdateInBounds(deltaTime, eggBounds);
+            }
+            else
+            {
+                manifold.SetEggLodActive(false, eggBounds);
+            }
+
+            if (SimScheduler.ShouldTick(WeatherSimLayerId.L3_NearFieldWind, activationWeight, insideEgg, now)
+                && ActivationGate.IsActive(WeatherFeatureMask.NearFieldGraph, activationWeight, insideEgg)
+                && manifold.nearFieldGraph != null)
+            {
+                manifold.nearFieldGraph.enabled = true;
+            }
+            else if (manifold.nearFieldGraph != null)
+            {
+                manifold.nearFieldGraph.enabled = false;
+            }
+
+            if (tickEggManifold)
+                FitRegressionForEgg(egg);
 
             if (Time.time - _lastClientPushTime >= clientPushInterval)
             {
                 _lastClientPushTime = Time.time;
-                WeatherEggClientPayload payload = BuildClientPayload(egg);
+                WeatherEggClientPayload payload = BuildClientPayload(egg, field);
                 if (_isServer)
                     _workQueue.Enqueue(payload);
                 else
@@ -205,7 +302,7 @@ namespace Weather.Executor
             StoppedSpace.StoreRegression(egg.Center, egg.Regression);
         }
 
-        WeatherEggClientPayload BuildClientPayload(PlayerWeatherEggZone egg)
+        WeatherEggClientPayload BuildClientPayload(PlayerWeatherEggZone egg, EmergenceVectorField field)
         {
             byte[] sparse = null;
             byte[] regressionBytes = HyperplaneWeatherDiffCodec.EncodeRegression(egg.Regression);
@@ -229,7 +326,8 @@ namespace Weather.Executor
                 regressionPayload = regressionBytes,
                 sparseDiffPayload = sparse,
                 residualVariance = egg.Regression.residualVariance,
-                timeoutOrder = 0
+                timeoutOrder = 0,
+                emergenceChecksum = field != null ? EmergenceVectorField.ComputeChecksum(field.Vectors) : 0,
             };
         }
 
@@ -250,6 +348,12 @@ namespace Weather.Executor
 
             if (StoppedSpace.TryEvaluate(world, out data))
                 return true;
+
+            if (CoarseGuess != null)
+            {
+                data = CoarseGuess.GuessAt(world);
+                return true;
+            }
 
             if (manifold != null)
             {

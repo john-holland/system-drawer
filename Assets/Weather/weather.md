@@ -487,6 +487,18 @@ Like the Wind data structure, a 3D matrix of velocities and mode coords in an oc
 - **Supports**: Interior weather tracking for `PhysicalWeatherObject`s
 - **Updates**: Called last in service update order to capture final state
 
+## Emergence Vectors + LOD Egg Activation
+
+When `emergenceOnlyMode` is enabled (default), weather simulation is gated to **emergence corridors** and **player LOD eggs** only:
+
+- **Emergence vectors** (`Weather/Emergence/`) define corridor influence from travel paths, quest objectives (`map-layer=emergence`), SpatialGenerator4D emergence layers, and player focus.
+- **WeatherActivationGate** disables Wind, Precipitation, Water, Cloud, and full manifold updates outside corridors unless activation weight exceeds thresholds (enter 0.35 / exit 0.25 hysteresis).
+- **CoarseMeteorologyGuessField** (16×8×16 @ 16m default) provides lightweight T/P/velocity guesses between eggs via semi-Lagrangian advection.
+- **WeatherSimScheduler** runs L0–L4 layers at independent intervals (L0 scalar guess, L1 coarse advection, L2 egg manifold, L3 near-field wind, L4 visual clouds).
+- **WeatherExecutorService.TickClient** shapes egg radii from merged vectors, ticks emergence collector, and includes `emergenceChecksum` in client payloads.
+
+Attach `WeatherEmergenceCollector`, `TravelPathEmergenceSource`, `QuestEmergenceSource`, and `Spatial4DEmergenceSource` to the weather executor GameObject as needed.
+
 ## Data Integration
 
 These units align with common weather data sources:

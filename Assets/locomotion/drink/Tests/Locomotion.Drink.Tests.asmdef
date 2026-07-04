@@ -1,0 +1,24 @@
+{
+  "name": "Locomotion.Drink.Tests",
+  "rootNamespace": "Locomotion.Drink.Tests",
+  "references": [
+    "Locomotion.Drink.Runtime",
+    "Locomotion.Runtime",
+    "Locomotion.Narrative.Runtime",
+    "Locomotion.Liquid.Runtime",
+    "Continuum.Runtime",
+    "Weather.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

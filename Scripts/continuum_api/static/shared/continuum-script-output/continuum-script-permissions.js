@@ -10,7 +10,17 @@
   const IN_REVIEW = new Set(['in_review', 'submitted']);
 
   function normUser(id) {
-    return String(id || 'anonymous').trim() || 'anonymous';
+    return String(id || 'anonymous').trim().toLowerCase() || 'anonymous';
+  }
+
+  function resolveAuthor(ctx) {
+    const draft = (ctx && ctx.draft) || {};
+    const review = (ctx && ctx.review) || {};
+    return normUser(
+      draft.createdBy || draft.created_by ||
+      review.revieweeUserId || review.reviewee_user_id ||
+      'anonymous',
+    );
   }
 
   function resolveScriptPermissions(ctx) {
@@ -18,7 +28,7 @@
     const draft = ctx.draft || {};
     const changeList = ctx.changeList || null;
     const userId = normUser(ctx.userId);
-    const author = normUser(draft.createdBy || draft.created_by);
+    const author = resolveAuthor(ctx);
     const isAuthor = userId === author;
     const committed = !!(draft.committedAt || draft.committed_at);
     const clStatus = (changeList && (changeList.workflowStatus || changeList.workflow_status)) || '';
@@ -50,5 +60,5 @@
     };
   }
 
-  return { resolveScriptPermissions, normUser };
+  return { resolveScriptPermissions, resolveAuthor, normUser };
 });

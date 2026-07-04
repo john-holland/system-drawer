@@ -142,6 +142,13 @@
       modSlotBtn.textContent = 'Mark Mayor Dog mod slot';
       modSlotBtn.setAttribute('aria-label', 'Mark selection as Mayor Dog Mod slot for player overrides');
       toolbar.appendChild(modSlotBtn);
+      const autoFixLemmaAnchorsBtn = document.createElement('button');
+      autoFixLemmaAnchorsBtn.type = 'button';
+      autoFixLemmaAnchorsBtn.textContent = 'Auto fix lemma anchors';
+      autoFixLemmaAnchorsBtn.className = 'continuum-auto-fix-lemma-anchors-btn';
+      autoFixLemmaAnchorsBtn.setAttribute('aria-label', 'Reanchor lemma bindings in selection to match stored text');
+      autoFixLemmaAnchorsBtn.hidden = true;
+      toolbar.appendChild(autoFixLemmaAnchorsBtn);
       const suggestionsEl = document.createElement('div');
       suggestionsEl.className = 'continuum-clause-suggestions';
       suggestionsEl.setAttribute('aria-label', 'Reuse lemma or property configs for selected text');
@@ -189,13 +196,14 @@
         editor = { _ta: ta, getValue: () => ta.value, setValue: v => { ta.value = v; }, getSession: () => null, selection: { getRange: () => null } };
       }
 
-      const inst = { el, editor, options, aceLoaded, toolbar, attachBtn, modSlotBtn, suggestionsEl, clausePanel, readOnly };
+      const inst = { el, editor, options, aceLoaded, toolbar, attachBtn, modSlotBtn, autoFixLemmaAnchorsBtn, suggestionsEl, clausePanel, readOnly };
       inst.overlaySnapshotText = options.overlaySnapshotText ?? options.scriptText ?? '';
       inst._suggestionSeq = 0;
       this._instance = inst;
       this.renderOverlays(inst, options);
       this.renderClausePanel(inst);
       this.renderClauseSuggestions(inst);
+      this.updateToolbarActions(inst);
 
       const scheduleRefresh = () => {
         if (inst._overlayUpdating) return;
@@ -206,6 +214,7 @@
           ContinuumScriptEditor.renderOverlays(inst, inst.options);
           ContinuumScriptEditor.renderClausePanel(inst);
           ContinuumScriptEditor.renderClauseSuggestions(inst);
+          ContinuumScriptEditor.updateToolbarActions(inst);
         });
       };
 
@@ -239,12 +248,16 @@
             ContinuumScriptEditor.renderOverlays(inst, inst.options);
             ContinuumScriptEditor.renderClausePanel(inst);
             ContinuumScriptEditor.renderClauseSuggestions(inst);
+            ContinuumScriptEditor.updateToolbarActions(inst);
           },
         });
       };
 
       modSlotBtn.disabled = !!readOnly;
       modSlotBtn.onclick = () => this.markMayorDogModSlot(inst);
+
+      autoFixLemmaAnchorsBtn.disabled = !!readOnly;
+      autoFixLemmaAnchorsBtn.onclick = () => this.autoFixLemmaAnchors(inst);
 
       return inst;
     },
@@ -398,6 +411,7 @@
               ContinuumScriptEditor.renderOverlays(inst, inst.options);
               ContinuumScriptEditor.renderClausePanel(inst);
               ContinuumScriptEditor.renderClauseSuggestions(inst);
+              ContinuumScriptEditor.updateToolbarActions(inst);
             } catch (e) {
               alert(e.message || String(e));
             }
@@ -498,11 +512,15 @@
                   binding: b,
                   draftEpisodeId: options.draftEpisodeId || options.draftId,
                   scriptText: text,
+                  permissions: options.permissions,
+                  canSaveDirect: options.permissions && options.permissions.canSaveDirect,
+                  canSuggestEdit: options.permissions && options.permissions.canSuggestEdit,
                   onEdited: async (result) => {
                     if (options.onBindingsChanged) await options.onBindingsChanged();
                     if (options.onBindingEdited) options.onBindingEdited(result);
                     ContinuumScriptEditor.renderOverlays(inst, inst.options);
                     ContinuumScriptEditor.renderClausePanel(inst);
+                    ContinuumScriptEditor.updateToolbarActions(inst);
                   },
                 });
               };
@@ -518,11 +536,15 @@
                 draftEpisodeId: options.draftEpisodeId || options.draftId,
                 draftScriptId: options.draftScriptId,
                 scriptText: text,
+                permissions: options.permissions,
+                canSaveDirect: options.permissions && options.permissions.canSaveDirect,
+                canSuggestEdit: options.permissions && options.permissions.canSuggestEdit,
                 onEdited: async (result) => {
                   if (options.onBindingsChanged) await options.onBindingsChanged();
                   if (options.onBindingEdited) options.onBindingEdited(result);
                   ContinuumScriptEditor.renderOverlays(inst, inst.options);
                   ContinuumScriptEditor.renderClausePanel(inst);
+                  ContinuumScriptEditor.updateToolbarActions(inst);
                 },
               });
             };
@@ -559,6 +581,115 @@
         list.appendChild(card);
       });
       panel.appendChild(list);
+    },
+
+    updateToolbarActions(inst) {
+      inst = inst || this._instance;
+      const btn = inst && inst.autoFixLemmaAnchorsBtn;
+      if (!btn || !Spans || !Spans.mismatchedLemmaBindingsInRange) return;
+      if (inst.readOnly) {
+        btn.hidden = true;
+        return;
+      }
+      const options = inst.options || {};
+      const text = this.getValue(inst);
+      const snapshot = inst.overlaySnapshotText ?? options.overlaySnapshotText ?? options.scriptText ?? text;
+      const range = this.getCursorRange(inst);
+      const mismatches = Spans.mismatchedLemmaBindingsInRange(
+        snapshot,
+        text,
+        options.clauseBindings || [],
+        range.charStart,
+        range.charEnd,
+      );
+      const count = mismatches.length;
+      btn.hidden = count === 0;
+      if (count > 0) {
+        const noun = count === 1 ? 'anchor' : 'anchors';
+        btn.title = `${count} lemma ${noun} in selection do not match stored text`;
+      } else {
+        btn.removeAttribute('title');
+      }
+    },
+
+    async autoFixLemmaAnchors(inst) {
+      inst = inst || this._instance;
+      if (!inst || inst.readOnly) return;
+      const CS = global.ContinuumClauseSelector;
+      if (!CS || !CS.applyLemmaAnchorFix) {
+        alert('ContinuumClauseSelector not loaded');
+        return;
+      }
+      if (!Spans || !Spans.mismatchedLemmaBindingsInRange || !Spans.proposeLemmaReanchor) {
+        alert('ContinuumScriptSpans not loaded');
+        return;
+      }
+      const options = inst.options || {};
+      const draftId = options.draftEpisodeId || options.draftId;
+      if (!draftId) {
+        alert('Draft episode ID is required to fix lemma anchors.');
+        return;
+      }
+      const text = this.getValue(inst);
+      const snapshot = inst.overlaySnapshotText ?? options.overlaySnapshotText ?? options.scriptText ?? text;
+      const range = this.getCursorRange(inst);
+      const mismatches = Spans.mismatchedLemmaBindingsInRange(
+        snapshot,
+        text,
+        options.clauseBindings || [],
+        range.charStart,
+        range.charEnd,
+      );
+      const seen = new Set();
+      const unique = mismatches.filter((b) => {
+        const id = b.id || `${b.charStart}-${b.charEnd}-${b.selectionText || b.selection_text || ''}`;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+      if (!unique.length) return;
+
+      let fixed = 0;
+      let skipped = 0;
+      const applyOptions = {
+        draftEpisodeId: draftId,
+        draftId,
+        scriptText: text,
+        permissions: options.permissions,
+        canSaveDirect: options.permissions && options.permissions.canSaveDirect,
+        canSuggestEdit: options.permissions && options.permissions.canSuggestEdit,
+        callApi: (method, path, body) => this.callApi(method, path, body),
+      };
+
+      for (const binding of unique) {
+        const span = Spans.proposeLemmaReanchor(binding, snapshot, text);
+        if (!span) {
+          skipped += 1;
+          continue;
+        }
+        try {
+          await CS.applyLemmaAnchorFix(binding, span, applyOptions);
+          fixed += 1;
+        } catch (err) {
+          skipped += 1;
+          alert(err.message || 'Failed to fix lemma anchor');
+          break;
+        }
+      }
+
+      if (fixed > 0) {
+        if (options.onBindingsChanged) await options.onBindingsChanged();
+        this.renderOverlays(inst, inst.options);
+        this.renderClausePanel(inst);
+        this.updateToolbarActions(inst);
+      }
+
+      if (fixed > 0 || skipped > 0) {
+        const parts = [];
+        if (fixed > 0) parts.push(`Fixed ${fixed} anchor${fixed === 1 ? '' : 's'}`);
+        if (skipped > 0) parts.push(`${skipped} could not be relocated`);
+        alert(parts.join('; ') + '.');
+      }
     },
 
     async markMayorDogModSlot(inst) {
@@ -680,6 +811,7 @@
       inst._overlaySpanSig = null;
       this.renderOverlays(inst, inst.options);
       this.renderClausePanel(inst);
+      this.updateToolbarActions(inst);
     },
 
     getValue(inst) {

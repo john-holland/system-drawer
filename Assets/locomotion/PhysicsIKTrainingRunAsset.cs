@@ -125,7 +125,9 @@ public enum PhysicsIKTrainingCategory
     /// <summary>Launch toward target (e.g. basketball shot); fitness = accuracy toward target.</summary>
     Shoot,
     /// <summary>Dampened graze: slow mid-approach, low power, light contact with target (no follow-through). Same run asset fields as Hit.</summary>
-    PulledHit
+    PulledHit,
+    /// <summary>Drink from vessel: grasp, orient to mouth, sip with optional nozzle loop.</summary>
+    Drink
 }
 
 /// <summary>

@@ -162,6 +162,12 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.35f + r() * 0.55f; // shoot accuracy toward target
             set.powerUsed = power * (0.9f + r() * 0.3f);
         }
+        else if (category == PhysicsIKTrainingCategory.Drink)
+        {
+            set.completionTime = 1.2f + (2f - 1f / power) * 0.35f + r() * 0.25f;
+            set.accuracyScore = 0.45f + r() * 0.45f;
+            set.powerUsed = power * (0.85f + r() * 0.25f);
+        }
         else
         {
             if (category == PhysicsIKTrainingCategory.Locomotion &&

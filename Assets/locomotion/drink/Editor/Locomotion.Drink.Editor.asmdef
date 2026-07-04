@@ -1,0 +1,23 @@
+{
+  "name": "Locomotion.Drink.Editor",
+  "rootNamespace": "Locomotion.Drink.Editor",
+  "references": [
+    "Locomotion.Drink.Runtime",
+    "Locomotion.Runtime",
+    "Locomotion.Liquid.Runtime",
+    "Locomotion.Editor",
+    "Weather.Runtime",
+    "Continuum.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

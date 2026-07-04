@@ -450,7 +450,7 @@ public class Consider : MonoBehaviour
 
     // Helper methods for generating tool usage cards (simplified implementations)
 
-    private GoodSection GenerateApproachCard(GameObject tool)
+    public GoodSection GenerateApproachCard(GameObject tool)
     {
         Vector3 toolPos = tool.transform.position;
         Vector3 approachPos = toolPos - (toolPos - transform.position).normalized * 0.5f;
@@ -463,7 +463,7 @@ public class Consider : MonoBehaviour
         return CreatePrepositionCard("approach_return_position", position);
     }
 
-    private GoodSection GenerateGraspCard(GameObject tool)
+    public GoodSection GenerateGraspCard(GameObject tool)
     {
         GoodSection card = new GoodSection
         {
@@ -484,7 +484,7 @@ public class Consider : MonoBehaviour
         return card;
     }
 
-    private GoodSection GenerateOrientCard(GameObject tool)
+    public GoodSection GenerateOrientCard(GameObject tool)
     {
         GoodSection card = new GoodSection
         {
@@ -505,7 +505,7 @@ public class Consider : MonoBehaviour
         return card;
     }
 
-    private GoodSection GenerateUseCard(GameObject tool, string task)
+    public GoodSection GenerateUseCard(GameObject tool, string task)
     {
         GoodSection card = new GoodSection
         {
@@ -526,7 +526,7 @@ public class Consider : MonoBehaviour
         return card;
     }
 
-    private GoodSection GenerateReleaseCard(GameObject tool)
+    public GoodSection GenerateReleaseCard(GameObject tool)
     {
         GoodSection card = new GoodSection
         {

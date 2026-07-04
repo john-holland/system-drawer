@@ -151,6 +151,12 @@ public class GoodSection
     public UnityEngine.Object carriedObject;
     [Tooltip("When true, re-grasp if object is put down; do not wait for user prompt.")]
     public bool pleaseHold;
+    [Tooltip("When true, omit release card after tool use.")]
+    public bool skipRelease;
+    [Tooltip("When true, omit return-to-rest cards after hold/use.")]
+    public bool skipReturn;
+    [Tooltip("Repeat this section N times (e.g. sip-count).")]
+    public int repeatCount = 1;
     [Tooltip("Bone/attach point name for carry (e.g. RightHand). Empty = solver default.")]
     public string carryAttachBoneName = "";
 

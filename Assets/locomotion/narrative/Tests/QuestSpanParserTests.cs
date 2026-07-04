@@ -30,8 +30,9 @@ namespace Locomotion.Narrative.Tests
   {P:quest|objective=o1|travel-binding=fox-approach|map-layer=emergence}
 {P:quest|end-block=test}";
             var result = QuestSpanParser.Compile(text, "test");
-            Assert.AreEqual("fox-approach", result.nodes[0].travelBinding);
-            Assert.AreEqual("emergence", result.nodes[0].mapLayer);
+            var node = result.nodes[0].children.Count > 0 ? result.nodes[0].children[0] : result.nodes[0];
+            Assert.AreEqual("fox-approach", node.travelBinding);
+            Assert.AreEqual("emergence", node.mapLayer);
         }
     }
 }

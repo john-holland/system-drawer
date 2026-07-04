@@ -103,11 +103,16 @@
   }
 
   function lemmaLibraryEntryUrl(entryId) {
+    if (global.ContinuumLemmaEntry) return global.ContinuumLemmaEntry.entryUrl(entryId);
     return `/lemma-library#entry/${encodeURIComponent(entryId)}`;
   }
 
   function openLemmaEntryPage(entryId) {
     if (!entryId) return;
+    if (global.ContinuumLemmaEntry) {
+      global.ContinuumLemmaEntry.open(entryId);
+      return;
+    }
     const url = lemmaLibraryEntryUrl(entryId);
     window.open(url, '_blank', 'noopener,noreferrer');
   }
@@ -128,6 +133,52 @@
             <button type="button" id="${prefix}-edit-entry">Edit in lemma library</button>
           </div>
         </div>`;
+  }
+
+  function resolveBindingEditPermissions(options) {
+    options = options || {};
+    const perms = options.permissions || {};
+    const canSaveDirect = options.canSaveDirect !== undefined
+      ? options.canSaveDirect
+      : (perms.canSaveDirect !== undefined ? perms.canSaveDirect : true);
+    const canSuggestEdit = !!(options.canSuggestEdit || perms.canSuggestEdit);
+    return { canSaveDirect, canSuggestEdit };
+  }
+
+  function bindingSaveLabel(options) {
+    const { canSaveDirect, canSuggestEdit } = resolveBindingEditPermissions(options);
+    if (!canSaveDirect && canSuggestEdit) return 'Suggest';
+    return 'Save';
+  }
+
+  async function applyBindingEditOrSuggest(draftId, body, options) {
+    const { canSaveDirect, canSuggestEdit } = resolveBindingEditPermissions(options);
+    const callApi = options.callApi || ((method, path, reqBody) => {
+      if (global.ContinuumClauseSelector && global.ContinuumClauseSelector.callApi) {
+        return global.ContinuumClauseSelector.callApi(method, path, reqBody);
+      }
+      return fetch(path, {
+        method: method || 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: reqBody && method !== 'GET' ? JSON.stringify(reqBody) : undefined,
+      }).then(async (res) => {
+        const text = await res.text();
+        if (!res.ok) {
+          let parsed = null;
+          try { parsed = JSON.parse(text); } catch (_) { /* keep null */ }
+          throw createApiError((parsed && (parsed.error || parsed.message)) || text || res.statusText, parsed);
+        }
+        try { return JSON.parse(text); } catch (_) { return text; }
+      });
+    });
+    if (canSaveDirect) {
+      return callApi('POST', `/api/drafts/episodes/${encodeURIComponent(draftId)}/apply-binding-edit`, body);
+    }
+    if (canSuggestEdit) {
+      const result = await callApi('POST', `/api/drafts/episodes/${encodeURIComponent(draftId)}/binding-suggestions`, body);
+      return { ...result, suggestion: true };
+    }
+    throw createApiError('You do not have permission to edit bindings on this draft.');
   }
 
   function pickAutoSelectLemma(items, q) {
@@ -174,6 +225,92 @@
     return ctl;
   }
 
+  function gcd(a, b) {
+    a = Math.abs(a);
+    b = Math.abs(b);
+    while (b) {
+      const t = b;
+      b = a % b;
+      a = t;
+    }
+    return a || 1;
+  }
+
+  function charRangeToFarey(scriptText, charStart, charEnd) {
+    const n = Math.max(String(scriptText || '').length, 1);
+    const cs = Math.max(0, Math.min(charStart, n));
+    const ce = Math.max(cs, Math.min(charEnd, n));
+    const g1 = gcd(cs, n);
+    const g2 = gcd(ce, n);
+    return {
+      fareyLeftNum: cs / g1,
+      fareyLeftDen: n / g1,
+      fareyRightNum: ce / g2,
+      fareyRightDen: n / g2,
+    };
+  }
+
+  function dialogErrorPrefix(box) {
+    if (box.querySelector('#clause-attach-error')) return 'clause-attach';
+    if (box.querySelector('#lemma-entry-error')) return 'lemma-entry';
+    return 'clause-edit';
+  }
+
+  function clauseSpanPositionHtml(options) {
+    options = options || {};
+    const cs = options.charStart ?? options.char_start ?? 0;
+    const ce = options.charEnd ?? options.char_end ?? 0;
+    const disabled = options.readOnly ? ' disabled' : '';
+    const note = options.note
+      ? `<p style="font-size:12px;color:#666;margin:0 0 6px">${escHtml(options.note)}</p>`
+      : '';
+    return `
+      <fieldset class="clause-span-position" style="margin:0 0 12px;padding:8px 10px;border:1px solid #ddd;border-radius:4px">
+        <legend style="font-size:13px;font-weight:600">Clause span positions</legend>
+        ${note}
+        <label style="display:block;margin-top:4px">Left position index
+          <input id="clause-span-left" type="number" min="0" value="${cs}" style="width:100%;box-sizing:border-box"${disabled}/>
+        </label>
+        <label style="display:block;margin-top:8px">Right position index
+          <input id="clause-span-right" type="number" min="0" value="${ce}" style="width:100%;box-sizing:border-box"${disabled}/>
+        </label>
+        <p id="clause-span-preview" style="font-size:13px;color:#555;margin:8px 0 0"></p>
+        <p id="clause-span-farey" style="font-size:12px;color:#888;margin:4px 0 0"></p>
+      </fieldset>`;
+  }
+
+  function wireClauseSpanPositionEditors(box, options) {
+    options = options || {};
+    const scriptText = options.scriptText || '';
+    const leftInp = box.querySelector('#clause-span-left');
+    const rightInp = box.querySelector('#clause-span-right');
+    const preview = box.querySelector('#clause-span-preview');
+    const fareyEl = box.querySelector('#clause-span-farey');
+    if (!leftInp || !rightInp) return null;
+
+    function update() {
+      const s = parseInt(leftInp.value, 10) || 0;
+      const e = parseInt(rightInp.value, 10) || 0;
+      const slice = scriptText ? scriptText.substring(s, e) : '';
+      if (preview) {
+        preview.textContent = scriptText
+          ? (slice ? `"${slice.slice(0, 60)}" [${s}, ${e})` : `[${s}, ${e})`)
+          : `[${s}, ${e}) — load script text to preview selection`;
+      }
+      if (fareyEl) {
+        const f = charRangeToFarey(scriptText || ' ', s, e);
+        fareyEl.textContent = `Farey interval: ${f.fareyLeftNum}/${f.fareyLeftDen} — ${f.fareyRightNum}/${f.fareyRightDen}`;
+      }
+    }
+    leftInp.oninput = update;
+    rightInp.oninput = update;
+    update();
+    return {
+      getCharStart: () => parseInt(leftInp.value, 10) || 0,
+      getCharEnd: () => parseInt(rightInp.value, 10) || 0,
+    };
+  }
+
   function clearClauseDialogError(box) {
     if (!box) return;
     box.querySelectorAll('.continuum-clause-dialog-error').forEach((el) => {
@@ -204,7 +341,7 @@
     if (!box) return;
     clearClauseDialogError(box);
     err = normalizeClauseError(err);
-    const prefix = box.querySelector('#clause-attach-error') ? 'clause-attach' : 'clause-edit';
+    const prefix = dialogErrorPrefix(box);
     const errEl = box.querySelector(`#${prefix}-error`);
     if (!errEl) return;
 
@@ -215,8 +352,7 @@
     const entryId = err && err.existingEntryId;
     const isBuiltinConflict = err && err.code === 'builtin_conflict' && entryId;
     if (isBuiltinConflict) {
-      const prefixForCtl = box.querySelector('#clause-attach-error') ? 'clause-attach' : 'clause-edit';
-      const ctl = ensureConflictActions(box, prefixForCtl, options);
+      const ctl = ensureConflictActions(box, prefix, options);
       ctl.show(entryId);
     }
 
@@ -535,10 +671,11 @@
       box.innerHTML = `
         <h3 style="margin:0 0 8px">Attach to clause</h3>
         <p style="font-size:13px;color:#555">"${escHtml((clauseRef.selectionText || '').slice(0, 60))}" [${clauseRef.charStart}, ${clauseRef.charEnd})</p>
-        <div role="tablist" style="display:flex;gap:8px;margin-bottom:12px">
+        <div role="tablist" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
           <button type="button" data-tab="property">Property</button>
           <button type="button" data-tab="lemma">Lemma</button>
           <button type="button" data-tab="localization">Localization</button>
+          <button type="button" data-tab="prompt">Prompt placeholder</button>
         </div>
         <div id="clause-tab-property">
           <label>Property key <select id="clause-prop-key"><option value="">Loading…</option></select></label>
@@ -548,6 +685,10 @@
         <div id="clause-tab-localization" hidden>
           <label>Language code <input id="clause-lang" placeholder="es" style="width:100%"/></label>
           <label style="display:block;margin-top:8px">Translation <input id="clause-loc-val" style="width:100%"/></label>
+        </div>
+        <div id="clause-tab-prompt" hidden>
+          <label>Placeholder name <input id="clause-prompt-name" style="width:100%" placeholder="active phrase or {P:…} name"/></label>
+          <p style="font-size:12px;color:#666;margin-top:6px">Defaults to selection text when empty.</p>
         </div>
         ${clauseActionsHtml('clause-attach', 'Attach')}`;
       overlay.appendChild(box);
@@ -570,7 +711,7 @@
         activeTab = name;
         clearClauseDialogError(box);
         if (name === 'lemma') ensureLemmaPicker();
-        ['property', 'lemma', 'localization'].forEach(t => {
+        ['property', 'lemma', 'localization', 'prompt'].forEach(t => {
           const el = box.querySelector('#clause-tab-' + t);
           if (el) el.hidden = t !== name;
         });
@@ -625,6 +766,13 @@
             body.entryId = await resolveLemmaEntryId(box, ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector));
             body.propertyKey = box.querySelector('#clause-lemma-key').value || 'entry-id';
             body.propertyValue = body.entryId;
+          } else if (activeTab === 'prompt') {
+            body.bindingKind = 'prompt_placeholder';
+            const nameInput = box.querySelector('#clause-prompt-name');
+            const phName = (nameInput && nameInput.value.trim()) || (clauseRef.selectionText || '').trim();
+            body.promptPlaceholderName = phName;
+            body.propertyKey = 'prompt-placeholder';
+            body.propertyValue = phName;
           } else {
             body.bindingKind = 'localization';
             const lang = box.querySelector('#clause-lang').value.trim();
@@ -646,6 +794,7 @@
       const scriptText = options.scriptText || '';
       const cs = binding.charStart ?? binding.char_start ?? 0;
       const ce = binding.charEnd ?? binding.char_end ?? 0;
+      const liveSelection = (scriptText && ce > cs) ? scriptText.substring(cs, ce) : '';
       const overlay = document.createElement('div');
       overlay.className = 'continuum-clause-overlay';
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:110;display:flex;align-items:center;justify-content:center';
@@ -656,21 +805,17 @@
         : '';
       box.innerHTML = `
         <h3 style="margin:0 0 8px">Edit clause <span style="font-size:12px;color:#666">(${escHtml(kind)})</span></h3>
-        <label>Char start <input id="clause-edit-start" type="number" min="0" style="width:100%"/></label>
-        <label style="display:block;margin-top:8px">Char end <input id="clause-edit-end" type="number" min="0" style="width:100%"/></label>
-        <p id="clause-edit-preview" style="font-size:13px;color:#555;margin:8px 0"></p>
+        <div id="clause-span-position-host"></div>
         <div id="clause-edit-fields"></div>
-        ${clauseActionsHtml('clause-edit', 'Save')}`;
+        ${clauseActionsHtml('clause-edit', bindingSaveLabel(options))}`;
       overlay.appendChild(box);
       document.body.appendChild(overlay);
       box.addEventListener('mousedown', (ev) => ev.stopPropagation());
       box.addEventListener('click', (ev) => ev.stopPropagation());
 
-      const startInp = box.querySelector('#clause-edit-start');
-      const endInp = box.querySelector('#clause-edit-end');
-      const preview = box.querySelector('#clause-edit-preview');
-      startInp.value = cs;
-      endInp.value = ce;
+      const spanHost = box.querySelector('#clause-span-position-host');
+      spanHost.innerHTML = clauseSpanPositionHtml({ charStart: cs, charEnd: ce });
+      const spanCtl = wireClauseSpanPositionEditors(box, { scriptText });
 
       const fields = box.querySelector('#clause-edit-fields');
       if (kind === 'property') {
@@ -689,7 +834,7 @@
         fields.innerHTML = lemmaFieldsHtml(binding.propertyKey || binding.property_key || 'entry-id');
         box._lemmaPicker = setupLemmaPicker(box, ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector), {
           entryId: binding.entryId || binding.propertyValue || binding.property_value || '',
-          selectionText: scriptText.substring(cs, ce),
+          selectionText: liveSelection || binding.selectionText || binding.selection_text || '',
         });
       } else {
         fields.innerHTML = `
@@ -704,16 +849,6 @@
         const resultsEl = box.querySelector('#clause-lemma-results');
         if (resultsEl) resultsEl.style.display = 'none';
       });
-
-      function updatePreview() {
-        const s = parseInt(startInp.value, 10) || 0;
-        const e = parseInt(endInp.value, 10) || 0;
-        const slice = scriptText.substring(s, e);
-        preview.textContent = slice ? `"${slice.slice(0, 60)}" [${s}, ${e})` : `[${s}, ${e})`;
-      }
-      startInp.oninput = updatePreview;
-      endInp.oninput = updatePreview;
-      updatePreview();
 
       const useExistingEntry = async (entryId) => {
         const entry = await ContinuumClauseSelector.callApi(
@@ -735,8 +870,8 @@
           if (!draftId) throw new Error('Draft ID required');
           const body = {
             bindingId: binding.id,
-            charStart: parseInt(startInp.value, 10) || 0,
-            charEnd: parseInt(endInp.value, 10) || 0,
+            charStart: spanCtl ? spanCtl.getCharStart() : cs,
+            charEnd: spanCtl ? spanCtl.getCharEnd() : ce,
             scriptText,
           };
           if (kind === 'property') {
@@ -752,11 +887,10 @@
             body.propertyValue = fields.querySelector('#clause-loc-val').value;
           }
           body.selectionText = scriptText.substring(body.charStart, body.charEnd);
-          const result = await ContinuumClauseSelector.callApi(
-            'POST',
-            `/api/drafts/episodes/${encodeURIComponent(draftId)}/apply-binding-edit`,
-            body,
-          );
+          const result = await applyBindingEditOrSuggest(draftId, body, {
+            ...options,
+            callApi: ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector),
+          });
           overlay.remove();
           if (options.onEdited) await options.onEdited(result);
         } catch (e) {
@@ -771,7 +905,14 @@
       const binding = options.binding;
       const callApi = options.callApi || ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector);
       if (!entryId && !binding) return;
-      const saveLabel = binding ? 'Save' : 'Done';
+      const saveLabel = binding ? bindingSaveLabel(options) : 'Done';
+      const scriptText = options.scriptText || '';
+      const spanCs = binding
+        ? (binding.charStart ?? binding.char_start ?? 0)
+        : (options.charStart ?? options.char_start ?? 0);
+      const spanCe = binding
+        ? (binding.charEnd ?? binding.char_end ?? 0)
+        : (options.charEnd ?? options.char_end ?? 0);
       const overlay = document.createElement('div');
       overlay.className = 'continuum-clause-overlay';
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:110;display:flex;align-items:center;justify-content:center';
@@ -780,12 +921,22 @@
       box.innerHTML =
         '<h3 style="margin:0 0 8px">Edit lemma</h3>' +
         '<p style="font-size:13px;color:#555;margin:0 0 8px">Search, select, or create a lemma entry.</p>' +
+        '<div id="clause-span-position-host"></div>' +
         '<div id="clause-edit-fields"></div>' +
         clauseActionsHtml('lemma-entry', saveLabel);
       overlay.appendChild(box);
       document.body.appendChild(overlay);
       box.addEventListener('mousedown', (ev) => ev.stopPropagation());
       box.addEventListener('click', (ev) => ev.stopPropagation());
+      const spanHost = box.querySelector('#clause-span-position-host');
+      spanHost.innerHTML = clauseSpanPositionHtml({
+        charStart: spanCs,
+        charEnd: spanCe,
+        note: binding
+          ? 'Adjust left/right position indexes for this clause binding.'
+          : 'Position indexes are saved when this lemma is attached to a script clause.',
+      });
+      box._spanCtl = wireClauseSpanPositionEditors(box, { scriptText });
       const fields = box.querySelector('#clause-edit-fields');
       fields.innerHTML = lemmaFieldsHtml('entry-id');
       const compPanel = box.querySelector('#clause-create-composition-panel');
@@ -821,9 +972,8 @@
         try {
           const draftId = options.draftEpisodeId || options.draftId;
           if (!draftId) throw new Error('Draft ID required');
-          const scriptText = options.scriptText || '';
-          const cs = binding.charStart ?? binding.char_start ?? 0;
-          const ce = binding.charEnd ?? binding.char_end ?? 0;
+          const cs = box._spanCtl ? box._spanCtl.getCharStart() : spanCs;
+          const ce = box._spanCtl ? box._spanCtl.getCharEnd() : spanCe;
           const resolvedId = await resolveLemmaEntryId(box, callApi);
           const body = {
             bindingId: binding.id,
@@ -833,13 +983,9 @@
             entryId: resolvedId,
             propertyKey: box.querySelector('#clause-lemma-key')?.value || 'entry-id',
             propertyValue: resolvedId,
-            selectionText: options.selectionText || scriptText.substring(cs, ce),
+            selectionText: scriptText && ce > cs ? scriptText.substring(cs, ce) : (options.selectionText || ''),
           };
-          const result = await callApi(
-            'POST',
-            `/api/drafts/episodes/${encodeURIComponent(draftId)}/apply-binding-edit`,
-            body,
-          );
+          const result = await applyBindingEditOrSuggest(draftId, body, { ...options, callApi });
           overlay.remove();
           if (options.onEdited) await options.onEdited(result);
           if (options.onSaved) options.onSaved();
@@ -889,6 +1035,25 @@
         _label: entry.term,
         _tooltip: `Lemma: ${entry.term} (${entry.posTag || '?'}, ${entry.languageCode || '?'})\nEntry ID: ${id}`,
       };
+    },
+
+    async applyLemmaAnchorFix(binding, span, options) {
+      const draftId = options.draftEpisodeId || options.draftId;
+      if (!draftId) throw new Error('Draft ID required');
+      const scriptText = options.scriptText || '';
+      const selectionText = binding.selectionText || binding.selection_text || '';
+      const body = {
+        bindingId: binding.id,
+        charStart: span.charStart,
+        charEnd: span.charEnd,
+        selectionText,
+        scriptText,
+        entryId: binding.entryId || binding.entry_id || binding.propertyValue || binding.property_value,
+        propertyKey: binding.propertyKey || binding.property_key || 'entry-id',
+        propertyValue: binding.propertyValue || binding.property_value || body.entryId,
+      };
+      const callApi = options.callApi || ContinuumClauseSelector.callApi.bind(ContinuumClauseSelector);
+      return applyBindingEditOrSuggest(draftId, body, { ...options, callApi });
     },
   };
 

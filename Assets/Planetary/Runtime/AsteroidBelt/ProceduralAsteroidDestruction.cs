@@ -57,7 +57,21 @@ namespace Planetary.AsteroidBelt
             }
 
             AsteroidDestroyedEvent.Raise(asteroidBody, hit);
-            Destroy(gameObject);
+            DestroyAsteroidObject(gameObject);
+        }
+
+        static void DestroyAsteroidObject(GameObject go)
+        {
+            if (go == null)
+                return;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(go);
+                return;
+            }
+#endif
+            Destroy(go);
         }
     }
 }

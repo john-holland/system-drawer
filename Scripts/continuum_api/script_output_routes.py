@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -10,7 +11,7 @@ from typing import Callable
 
 from flask import jsonify, request, send_from_directory
 
-from thesaurus.script_edit_diff import audit_edit
+from thesaurus.script_edit_diff import audit_binding_edit, audit_edit
 
 try:
     from continuum_api.localization_helpers import (
@@ -25,7 +26,7 @@ try:
         require_draft_author,
         upsert_draft_script_text,
     )
-    from continuum_api.localization_routes import _ensure_review_columns, _load_bindings_for_draft
+    from continuum_api.localization_routes import _ensure_review_columns, _load_bindings_for_draft, execute_binding_edit
 except ImportError:
     from localization_helpers import (
         change_list_needs_review_ack,
@@ -39,7 +40,7 @@ except ImportError:
         require_draft_author,
         upsert_draft_script_text,
     )
-    from localization_routes import _ensure_review_columns, _load_bindings_for_draft
+    from localization_routes import _ensure_review_columns, _load_bindings_for_draft, execute_binding_edit
 
 GetConn = Callable[[], sqlite3.Connection]
 GetUser = Callable[[], str]
@@ -114,6 +115,28 @@ def _suggestion_row(r: sqlite3.Row) -> dict:
         "updatedAt": r["updated_at"],
         "resolvedAt": r["resolved_at"],
         "resolvedBy": r["resolved_by"],
+        "suggestionType": "script",
+    }
+
+
+def _binding_suggestion_row(r: sqlite3.Row) -> dict:
+    proposed = {}
+    try:
+        proposed = json.loads(r["proposed_json"] or "{}")
+    except (TypeError, json.JSONDecodeError):
+        proposed = {}
+    return {
+        "id": r["id"],
+        "draftEpisodeId": r["draft_episode_id"],
+        "bindingId": r["binding_id"],
+        "suggestedBy": r["suggested_by"],
+        "proposed": proposed,
+        "status": r["status"],
+        "createdAt": r["created_at"],
+        "updatedAt": r["updated_at"],
+        "resolvedAt": r["resolved_at"],
+        "resolvedBy": r["resolved_by"],
+        "suggestionType": "binding",
     }
 
 
@@ -405,6 +428,180 @@ def register_script_output_routes(app, get_conn: GetConn, get_user: GetUser) -> 
             conn.commit()
             conn.close()
             return jsonify({"ok": True, "status": "accepted"}), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/drafts/episodes/<draft_id>/binding-suggestions", methods=["GET"])
+    def list_binding_suggestions(draft_id: str):
+        status = (request.args.get("status") or "pending").strip().lower()
+        try:
+            conn = get_conn()
+            ensure_script_output_tables(conn)
+            cur = conn.execute(
+                """SELECT * FROM binding_suggestions
+                   WHERE draft_episode_id = ? AND status = ?
+                   ORDER BY created_at DESC""",
+                (draft_id, status),
+            )
+            items = [_binding_suggestion_row(r) for r in cur.fetchall()]
+            conn.close()
+            return jsonify({"items": items}), 200
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/drafts/episodes/<draft_id>/binding-suggestions", methods=["POST"])
+    def create_binding_suggestion(draft_id: str):
+        body = request.get_json() or {}
+        binding_id = (body.get("bindingId") or body.get("binding_id") or "").strip()
+        if not binding_id:
+            return jsonify({"error": "bindingId required"}), 400
+        user_id = get_user()
+        try:
+            conn = get_conn()
+            ensure_script_output_tables(conn)
+            if is_draft_author(conn, draft_id, user_id):
+                conn.close()
+                return jsonify({"error": "Author should save directly, not submit suggestions"}), 403
+            draft = conn.execute(
+                "SELECT committed_at FROM draft_episodes WHERE id = ?",
+                (draft_id,),
+            ).fetchone()
+            if not draft:
+                conn.close()
+                return jsonify({"error": "draft not found"}), 404
+            if draft["committed_at"]:
+                conn.close()
+                return jsonify({"error": "draft is committed"}), 409
+            cur = conn.execute(
+                """SELECT b.* FROM localization_clause_bindings b
+                   JOIN draft_episode_script s ON s.id = b.draft_script_id
+                   WHERE s.draft_episode_id = ? AND b.id = ?""",
+                (draft_id, binding_id),
+            )
+            old_row = cur.fetchone()
+            if not old_row:
+                conn.close()
+                return jsonify({"error": "binding not found for draft"}), 404
+            old = dict(old_row)
+            script_text = body.get("scriptText") or body.get("script_text") or ""
+            new_cs = body.get("charStart", old["char_start"])
+            new_ce = body.get("charEnd", old["char_end"])
+            new_pk = body.get("propertyKey", old["property_key"])
+            new_pv = body.get("propertyValue", old["property_value"])
+            new_eid = body.get("entryId", old.get("entry_id"))
+            selection_text = body.get("selectionText")
+            if selection_text is None and script_text and new_ce > new_cs:
+                selection_text = script_text[int(new_cs) : int(new_ce)]
+            elif selection_text is None:
+                selection_text = old["selection_text"]
+            proposed = {
+                "bindingId": binding_id,
+                "charStart": int(new_cs),
+                "charEnd": int(new_ce),
+                "propertyKey": new_pk,
+                "propertyValue": new_pv,
+                "entryId": new_eid,
+                "selectionText": selection_text,
+                "scriptText": script_text,
+                "_preview": {
+                    "required": _diff_items_to_json(required),
+                    "warnings": _diff_items_to_json(warnings),
+                },
+            }
+            required, warnings = audit_binding_edit(
+                old,
+                {
+                    **old,
+                    "char_start": int(new_cs),
+                    "char_end": int(new_ce),
+                    "property_key": new_pk,
+                    "property_value": new_pv,
+                    "entry_id": new_eid,
+                    "selection_text": selection_text,
+                },
+                script_text,
+            )
+            now = _now()
+            sid = str(uuid.uuid4())
+            conn.execute(
+                """INSERT INTO binding_suggestions
+                   (id, draft_episode_id, binding_id, suggested_by, proposed_json, status, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)""",
+                (sid, draft_id, binding_id, user_id, json.dumps(proposed), now, now),
+            )
+            conn.commit()
+            cur = conn.execute("SELECT * FROM binding_suggestions WHERE id = ?", (sid,))
+            item = _binding_suggestion_row(cur.fetchone())
+            conn.close()
+            return jsonify(
+                {
+                    "item": item,
+                    "suggestion": True,
+                    "required": _diff_items_to_json(required),
+                    "warnings": _diff_items_to_json(warnings),
+                }
+            ), 201
+        except sqlite3.OperationalError as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/drafts/episodes/<draft_id>/binding-suggestions/<suggestion_id>", methods=["PATCH"])
+    def patch_binding_suggestion(draft_id: str, suggestion_id: str):
+        body = request.get_json() or {}
+        action = (body.get("action") or body.get("status") or "").strip().lower()
+        user_id = get_user()
+        if action not in ("accept", "reject", "accepted", "rejected"):
+            return jsonify({"error": "action must be accept or reject"}), 400
+        if action in ("accepted",):
+            action = "accept"
+        if action in ("rejected",):
+            action = "reject"
+        try:
+            conn = get_conn()
+            ensure_script_output_tables(conn)
+            err = require_draft_author(conn, draft_id, user_id)
+            if err:
+                conn.close()
+                return jsonify({"error": err}), 403
+            row = conn.execute(
+                "SELECT * FROM binding_suggestions WHERE id = ? AND draft_episode_id = ? AND status = 'pending'",
+                (suggestion_id, draft_id),
+            ).fetchone()
+            if not row:
+                conn.close()
+                return jsonify({"error": "pending binding suggestion not found"}), 404
+            now = _now()
+            if action == "reject":
+                conn.execute(
+                    """UPDATE binding_suggestions SET status = 'rejected', resolved_at = ?, resolved_by = ?, updated_at = ?
+                       WHERE id = ?""",
+                    (now, user_id, now, suggestion_id),
+                )
+                conn.commit()
+                conn.close()
+                return jsonify({"ok": True, "status": "rejected"}), 200
+
+            blocked = draft_blocks_author_edit(conn, draft_id)
+            if blocked:
+                conn.close()
+                return jsonify({"error": f"draft change list is {blocked}; withdraw before accepting"}), 409
+            try:
+                proposed = json.loads(row["proposed_json"] or "{}")
+            except json.JSONDecodeError:
+                conn.close()
+                return jsonify({"error": "invalid proposed binding payload"}), 500
+            result, apply_err = execute_binding_edit(conn, draft_id, proposed)
+            if apply_err:
+                conn.close()
+                status = 404 if apply_err == "binding not found for draft" else 400
+                return jsonify({"error": apply_err}), status
+            conn.execute(
+                """UPDATE binding_suggestions SET status = 'accepted', resolved_at = ?, resolved_by = ?, updated_at = ?
+                   WHERE id = ?""",
+                (now, user_id, now, suggestion_id),
+            )
+            conn.commit()
+            conn.close()
+            return jsonify({"ok": True, "status": "accepted", **(result or {})}), 200
         except sqlite3.OperationalError as e:
             return jsonify({"error": str(e)}), 500
 

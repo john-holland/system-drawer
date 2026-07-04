@@ -15,6 +15,7 @@ namespace Weather.Executor
         public byte[] sparseDiffPayload;
         public float residualVariance;
         public int timeoutOrder;
+        public int emergenceChecksum;
     }
 
     [Serializable]

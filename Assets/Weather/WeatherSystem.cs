@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Weather.Activation;
 using Weather.Executor;
 
 namespace Weather
@@ -39,6 +40,10 @@ namespace Weather
         [Header("Egg LOD")]
         [Tooltip("Delegate advection to player egg zones via WeatherExecutorService.")]
         public bool useEggLodManifolds = true;
+
+        [Header("Emergence")]
+        [Tooltip("When true, only emergence corridors and LOD eggs run heavy weather simulation.")]
+        public bool emergenceOnlyMode = true;
 
         public WeatherExecutorService weatherExecutor;
 
@@ -180,35 +185,55 @@ namespace Weather
         /// </summary>
         public void ServiceUpdate(float deltaTime)
         {
-            ServiceUpdateSubsystems(deltaTime, skipManifold: false);
+            ServiceUpdateSubsystems(deltaTime, skipManifold: false, activationWeight: 1f, insideEggShell: true);
         }
 
         public void ServiceUpdateSubsystems(float deltaTime, bool skipManifold)
         {
+            ServiceUpdateSubsystems(deltaTime, skipManifold, activationWeight: 1f, insideEggShell: true);
+        }
+
+        public void ServiceUpdateSubsystems(float deltaTime, bool skipManifold, float activationWeight, bool insideEggShell)
+        {
             using (PerfTrace.Scope("WeatherSystem.ServiceUpdate"))
             {
-                ProcessWeatherEvents();
+                WeatherActivationGate gate = weatherExecutor != null ? weatherExecutor.ActivationGate : null;
+                if (gate != null)
+                    gate.emergenceOnlyMode = emergenceOnlyMode;
 
-                if (meteorology != null)
+                if (gate == null || gate.IsActive(WeatherFeatureMask.WeatherEvents, activationWeight, insideEggShell))
+                    ProcessWeatherEvents();
+
+                if (meteorology != null && (gate == null || gate.IsActive(WeatherFeatureMask.MeteorologyGuess, activationWeight, insideEggShell)))
                     meteorology.ServiceUpdate(deltaTime);
 
-                if (wind != null)
+                if (wind != null && (gate == null || gate.IsActive(WeatherFeatureMask.WindField, activationWeight, insideEggShell)))
                     wind.ServiceUpdate(deltaTime);
 
-                if (precipitation != null)
+                if (precipitation != null && (gate == null || gate.IsActive(WeatherFeatureMask.Precipitation, activationWeight, insideEggShell)))
                     precipitation.ServiceUpdate(deltaTime);
 
-                if (water != null)
+                if (water != null && (gate == null || gate.IsActive(WeatherFeatureMask.Water, activationWeight, insideEggShell)))
                     water.ServiceUpdate(deltaTime);
 
-                if (cloud != null)
+                bool cloudActive = gate == null || gate.IsActive(WeatherFeatureMask.Cloud, activationWeight, insideEggShell);
+                bool visualClouds = gate == null || gate.IsActive(WeatherFeatureMask.VisualClouds, activationWeight, insideEggShell);
+                if (cloud != null && cloudActive && visualClouds)
                     cloud.ServiceUpdate(deltaTime);
 
-                if (!skipManifold && weatherPhysicsManifold != null)
+                if (!skipManifold && weatherPhysicsManifold != null
+                    && (gate == null || gate.IsActive(WeatherFeatureMask.FullManifold, activationWeight, insideEggShell)))
                     weatherPhysicsManifold.ServiceUpdate(deltaTime);
 
                 UpdateWeatherState();
             }
+        }
+
+        public void SetEmergenceOnlyMode(bool enabled)
+        {
+            emergenceOnlyMode = enabled;
+            if (weatherExecutor != null)
+                weatherExecutor.SetEmergenceOnlyMode(enabled);
         }
 
         /// <summary>
