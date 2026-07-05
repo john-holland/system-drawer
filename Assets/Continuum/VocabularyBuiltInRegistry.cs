@@ -85,8 +85,11 @@ public static class VocabularyBuiltInRegistry
             Add("noun", w, "noun", VocabularyBuiltInCategory.SpatialGateway, new[] { "spatial", "deictic" });
 
         // Actions
-        foreach (var w in new[] { "go", "move", "open", "take", "use", "place", "connect", "set", "run", "drink" })
+        foreach (var w in new[] { "go", "move", "open", "close", "take", "use", "place", "connect", "set", "run", "drink" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, null);
+
+        foreach (var w in new[] { "unlock", "latch", "drawer", "lid", "hinge", "guard" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, new[] { "open-close" });
 
         // Drink / comedy liquid lemmas
         foreach (var w in new[] { "almost" })

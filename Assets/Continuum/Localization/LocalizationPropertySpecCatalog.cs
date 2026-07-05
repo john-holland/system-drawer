@@ -60,8 +60,27 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
             },
         };
         list.AddRange(BuildDrinkPropertyRecords());
+        list.AddRange(BuildOpenClosePropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildOpenClosePropertyRecords() => new[]
+    {
+        Spec(OpenCloseLemmaPropertyKeys.OpenAngleDeg, "Float", "90", "Target hinge open angle in degrees"),
+        Spec(OpenCloseLemmaPropertyKeys.DriveMode, "String", "hybrid", "Physics, animation, or hybrid drive"),
+        Spec(OpenCloseLemmaPropertyKeys.ArrivalBlendCoefficient, "Float", "0", "0=stop-first, 1=reach-and-retry open"),
+        Spec(OpenCloseLemmaPropertyKeys.ReachRadiusMeters, "Float", "0.6", "Handle reach radius for open attempts"),
+        Spec(OpenCloseLemmaPropertyKeys.RequireFacingTarget, "Bool", "true", "Require facing target before open when blend < 1"),
+        Spec(OpenCloseLemmaPropertyKeys.AutoCloseBt, "String", "on-stop-exit", "Auto-close BT compile mode"),
+        Spec(OpenCloseLemmaPropertyKeys.AutoCloseOnExit, "Bool", "false", "Runtime close when leaving stop"),
+        Spec(OpenCloseLemmaPropertyKeys.CompileCloseAmbulation, "Bool", "false", "Ambulate back before auto-close"),
+        Spec(OpenCloseLemmaPropertyKeys.LinearOnly, "Bool", "false", "Ignore disabled topology branches"),
+        Spec(OpenCloseLemmaPropertyKeys.QuestHintKind, "String", "none", "Quest hint on beat"),
+        Spec(OpenCloseLemmaPropertyKeys.QuestObjectiveId, "String", "", "Quest objective id"),
+        Spec(OpenCloseLemmaPropertyKeys.OpenAnimationRef, "String", "", "Open animation reference"),
+        Spec(OpenCloseLemmaPropertyKeys.CloseAnimationRef, "String", "", "Close animation reference"),
+        Spec(OpenCloseLemmaPropertyKeys.ClosureMode, "String", "auto", "Open/close beat closure mode"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildDrinkPropertyRecords() => new[]
     {

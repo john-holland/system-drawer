@@ -26,6 +26,7 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
     bool _nonIkAnimation;
     DrinkAnimationReference _drinkAnimationRef;
     DrinkLemmaProperties _drinkProps = DrinkLemmaProperties.Defaults;
+    OpenCloseLemmaProperties _openCloseProps = OpenCloseLemmaProperties.Defaults;
     Vector2 _scroll;
     GameObject _pushTarget;
 
@@ -109,6 +110,7 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         }
 
         DrawDrinkPropertiesPanel();
+        DrawOpenClosePropertiesPanel();
 
         EditorGUILayout.EndScrollView();
 
@@ -176,6 +178,26 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         _drinkProps.infiniteDrainClosureSeconds = EditorGUILayout.FloatField("Infinite drain closure (s)", _drinkProps.infiniteDrainClosureSeconds);
         _drinkProps.infiniteDrainClosureSeconds = Mathf.Max(0f, _drinkProps.infiniteDrainClosureSeconds);
 
+        EditorGUILayout.EndVertical();
+    }
+
+    void DrawOpenClosePropertiesPanel()
+    {
+        EditorGUILayout.Space(8);
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.LabelField("Open/close lemma properties", EditorStyles.boldLabel);
+        _openCloseProps.openAngleDeg = EditorGUILayout.FloatField("Open angle (deg)", _openCloseProps.openAngleDeg);
+        _openCloseProps.arrivalBlendCoefficient = EditorGUILayout.Slider("Arrival blend", _openCloseProps.arrivalBlendCoefficient, 0f, 1f);
+        _openCloseProps.reachRadiusMeters = EditorGUILayout.FloatField("Reach radius (m)", _openCloseProps.reachRadiusMeters);
+        _openCloseProps.requireFacingTarget = EditorGUILayout.Toggle("Require facing", _openCloseProps.requireFacingTarget);
+        _openCloseProps.autoCloseBt = (OpenCloseLemmaAutoCloseBtMode)EditorGUILayout.EnumPopup("Auto close BT", _openCloseProps.autoCloseBt);
+        _openCloseProps.autoCloseOnExit = EditorGUILayout.Toggle("Auto close on exit", _openCloseProps.autoCloseOnExit);
+        _openCloseProps.compileCloseAmbulation = EditorGUILayout.Toggle("Compile close ambulation", _openCloseProps.compileCloseAmbulation);
+        _openCloseProps.linearOnly = EditorGUILayout.Toggle("Linear only", _openCloseProps.linearOnly);
+        _openCloseProps.questHintKind = (OpenCloseLemmaQuestHintKind)EditorGUILayout.EnumPopup("Quest hint", _openCloseProps.questHintKind);
+        _openCloseProps.questObjectiveId = EditorGUILayout.TextField("Quest objective id", _openCloseProps.questObjectiveId ?? "");
+        _openCloseProps.openAnimationRef = EditorGUILayout.TextField("Open animation ref", _openCloseProps.openAnimationRef ?? "");
+        _openCloseProps.closeAnimationRef = EditorGUILayout.TextField("Close animation ref", _openCloseProps.closeAnimationRef ?? "");
         EditorGUILayout.EndVertical();
     }
 
@@ -360,6 +382,7 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         _properties = await client.GetEntryPropertiesAsync(_entryId);
         _nonIkAnimation = false;
         _drinkProps = DrinkLemmaProperties.Defaults;
+        _openCloseProps = OpenCloseLemmaProperties.Defaults;
         _drinkAnimationRef = null;
         foreach (var p in _properties)
         {
@@ -368,6 +391,7 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
                 TryParseBool(p.propertyValue, out bool v))
                 _nonIkAnimation = v;
             ApplyDrinkPropertyFromRecord(p);
+            ApplyOpenClosePropertyFromRecord(p);
         }
         if (!string.IsNullOrEmpty(_drinkProps.drinkAnimationRef))
         {
@@ -389,6 +413,72 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         }
         Repaint();
     }
+
+    void ApplyOpenClosePropertyFromRecord(ThesaurusEntryPropertyRecord p)
+    {
+        switch (p.propertyKey)
+        {
+            case OpenCloseLemmaPropertyKeys.OpenAngleDeg:
+                if (float.TryParse(p.propertyValue, out float oa)) _openCloseProps.openAngleDeg = oa;
+                break;
+            case OpenCloseLemmaPropertyKeys.ArrivalBlendCoefficient:
+                if (float.TryParse(p.propertyValue, out float ab)) _openCloseProps.arrivalBlendCoefficient = Mathf.Clamp01(ab);
+                break;
+            case OpenCloseLemmaPropertyKeys.ReachRadiusMeters:
+                if (float.TryParse(p.propertyValue, out float rr)) _openCloseProps.reachRadiusMeters = Mathf.Max(0.1f, rr);
+                break;
+            case OpenCloseLemmaPropertyKeys.RequireFacingTarget:
+                if (TryParseBool(p.propertyValue, out bool rf)) _openCloseProps.requireFacingTarget = rf;
+                break;
+            case OpenCloseLemmaPropertyKeys.AutoCloseOnExit:
+                if (TryParseBool(p.propertyValue, out bool ace)) _openCloseProps.autoCloseOnExit = ace;
+                break;
+            case OpenCloseLemmaPropertyKeys.CompileCloseAmbulation:
+                if (TryParseBool(p.propertyValue, out bool cca)) _openCloseProps.compileCloseAmbulation = cca;
+                break;
+            case OpenCloseLemmaPropertyKeys.LinearOnly:
+                if (TryParseBool(p.propertyValue, out bool lo)) _openCloseProps.linearOnly = lo;
+                break;
+            case OpenCloseLemmaPropertyKeys.AutoCloseBt:
+                _openCloseProps.autoCloseBt = ParseOpenCloseAutoCloseBt(p.propertyValue);
+                break;
+            case OpenCloseLemmaPropertyKeys.QuestHintKind:
+                if (Enum.TryParse(p.propertyValue, true, out OpenCloseLemmaQuestHintKind qh))
+                    _openCloseProps.questHintKind = qh;
+                break;
+            case OpenCloseLemmaPropertyKeys.QuestObjectiveId:
+                _openCloseProps.questObjectiveId = p.propertyValue ?? "";
+                break;
+            case OpenCloseLemmaPropertyKeys.OpenAnimationRef:
+                _openCloseProps.openAnimationRef = p.propertyValue ?? "";
+                break;
+            case OpenCloseLemmaPropertyKeys.CloseAnimationRef:
+                _openCloseProps.closeAnimationRef = p.propertyValue ?? "";
+                break;
+        }
+    }
+
+    static OpenCloseLemmaAutoCloseBtMode ParseOpenCloseAutoCloseBt(string raw)
+    {
+        raw = (raw ?? "on-stop-exit").Trim().ToLowerInvariant().Replace("_", "-");
+        return raw switch
+        {
+            "none" => OpenCloseLemmaAutoCloseBtMode.None,
+            "after-children" => OpenCloseLemmaAutoCloseBtMode.AfterChildren,
+            "on-sequence-end" => OpenCloseLemmaAutoCloseBtMode.OnSequenceEnd,
+            "manual" => OpenCloseLemmaAutoCloseBtMode.Manual,
+            _ => OpenCloseLemmaAutoCloseBtMode.OnStopExit,
+        };
+    }
+
+    static string AutoCloseBtToString(OpenCloseLemmaAutoCloseBtMode mode) => mode switch
+    {
+        OpenCloseLemmaAutoCloseBtMode.None => "none",
+        OpenCloseLemmaAutoCloseBtMode.AfterChildren => "after-children",
+        OpenCloseLemmaAutoCloseBtMode.OnSequenceEnd => "on-sequence-end",
+        OpenCloseLemmaAutoCloseBtMode.Manual => "manual",
+        _ => "on-stop-exit",
+    };
 
     void ApplyDrinkPropertyFromRecord(ThesaurusEntryPropertyRecord p)
     {
@@ -485,6 +575,18 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.MouthVolumeLitersTarget, _drinkProps.mouthVolumeLitersTarget.ToString("G"));
         await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.InfiniteDrain, _drinkProps.infiniteDrain ? "true" : "false");
         await client.PutEntryPropertyAsync(_entryId, DrinkLemmaPropertyKeys.InfiniteDrainClosureSeconds, _drinkProps.infiniteDrainClosureSeconds.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.OpenAngleDeg, _openCloseProps.openAngleDeg.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.ArrivalBlendCoefficient, _openCloseProps.arrivalBlendCoefficient.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.ReachRadiusMeters, _openCloseProps.reachRadiusMeters.ToString("G"));
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.RequireFacingTarget, _openCloseProps.requireFacingTarget ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.AutoCloseBt, AutoCloseBtToString(_openCloseProps.autoCloseBt));
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.AutoCloseOnExit, _openCloseProps.autoCloseOnExit ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.CompileCloseAmbulation, _openCloseProps.compileCloseAmbulation ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.LinearOnly, _openCloseProps.linearOnly ? "true" : "false");
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.QuestHintKind, _openCloseProps.questHintKind.ToString().ToLowerInvariant());
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.QuestObjectiveId, _openCloseProps.questObjectiveId ?? "");
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.OpenAnimationRef, _openCloseProps.openAnimationRef ?? "");
+        await client.PutEntryPropertyAsync(_entryId, OpenCloseLemmaPropertyKeys.CloseAnimationRef, _openCloseProps.closeAnimationRef ?? "");
         await LoadPropertiesAsync();
     }
 

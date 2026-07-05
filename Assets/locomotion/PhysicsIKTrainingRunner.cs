@@ -168,6 +168,18 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.45f + r() * 0.45f;
             set.powerUsed = power * (0.85f + r() * 0.25f);
         }
+        else if (category == PhysicsIKTrainingCategory.Open || category == PhysicsIKTrainingCategory.Close)
+        {
+            set.completionTime = 1f + (2f - 1f / power) * 0.4f + r() * 0.2f;
+            set.accuracyScore = 0.4f + r() * 0.5f;
+            set.powerUsed = power * (0.88f + r() * 0.22f);
+        }
+        else if (category == PhysicsIKTrainingCategory.OpenObject)
+        {
+            set.completionTime = 0.8f + r() * 0.3f;
+            set.accuracyScore = 0.55f + r() * 0.4f;
+            set.powerUsed = power * 0.5f;
+        }
         else
         {
             if (category == PhysicsIKTrainingCategory.Locomotion &&

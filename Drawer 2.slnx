@@ -16,6 +16,7 @@
   <Project Path="BedogaGenerator.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.csproj" />
+  <Project Path="Locomotion.Open.Editor.csproj" />
   <Project Path="Continuum.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Runtime.csproj" />
   <Project Path="Locomotion.Narrative.Inference.csproj" />
@@ -28,10 +29,12 @@
   <Project Path="Locomotion.Narrative.Tests.csproj" />
   <Project Path="Weather.Editor.csproj" />
   <Project Path="Locomotion.Drink.Runtime.csproj" />
+  <Project Path="Locomotion.Open.Runtime.csproj" />
   <Project Path="SystemDrawer.Networking.Editor.csproj" />
   <Project Path="Locomotion.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Editor.csproj" />
   <Project Path="Continuum.Library.Runtime.csproj" />
+  <Project Path="Locomotion.Open.Tests.csproj" />
   <Project Path="Locomotion.Liquid.Runtime.csproj" />
   <Project Path="SdfMax.Editor.csproj" />
   <Project Path="SystemDrawer.Networking.csproj" />

@@ -127,7 +127,13 @@ public enum PhysicsIKTrainingCategory
     /// <summary>Dampened graze: slow mid-approach, low power, light contact with target (no follow-through). Same run asset fields as Hit.</summary>
     PulledHit,
     /// <summary>Drink from vessel: grasp, orient to mouth, sip with optional nozzle loop.</summary>
-    Drink
+    Drink,
+    /// <summary>Actor pull/push to open hinged panel.</summary>
+    Open,
+    /// <summary>Actor push/pull to close hinged panel.</summary>
+    Close,
+    /// <summary>Object-only hinge motion profile.</summary>
+    OpenObject
 }
 
 /// <summary>

@@ -1,0 +1,22 @@
+{
+  "name": "Locomotion.Open.Editor",
+  "rootNamespace": "Locomotion.Open.Editor",
+  "references": [
+    "Locomotion.Open.Runtime",
+    "Locomotion.Runtime",
+    "Locomotion.Narrative.Runtime",
+    "Continuum.Runtime",
+    "Continuum.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
