@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-API = ROOT / "continuum_api"
+API = ROOT / "continuuuum_api"
 if str(API) not in sys.path:
     sys.path.insert(0, str(API))
 if str(ROOT) not in sys.path:

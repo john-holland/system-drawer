@@ -1,0 +1,170 @@
+.ace-prompt-placeholder,
+.ace-loc-clause,
+.ace-review-comment,
+.ace-mayor-dog-mod-slot {
+  position: absolute !important;
+  background: transparent !important;
+  pointer-events: none;
+  border-radius: 0 !important;
+}
+.ace-mayor-dog-mod-slot {
+  border-bottom: 2px dashed #7b1fa2 !important;
+}
+.ace-prompt-placeholder {
+  border-bottom: 2px dashed #06c !important;
+}
+.ace-loc-clause {
+  border-bottom: 2px dashed #393 !important;
+}
+.ace-review-comment {
+  border-bottom: 2px dashed #c60 !important;
+}
+#review-script-ace { border: 1px solid #ccc; min-height: 200px; }
+#review-script-ace .ace_editor,
+.continuuuum-script-editor-host .ace_editor {
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+#review-script-ace .ace_text-layer,
+.continuuuum-script-editor-host .ace_text-layer {
+  color: #1a1a1a;
+}
+.old-comments { margin-top: 16px; border-top: 1px solid #ddd; padding-top: 8px; }
+.old-comments summary { cursor: pointer; font-weight: 600; }
+.continuuuum-clause-panel {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fafafa;
+}
+.continuuuum-clause-panel-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+}
+.continuuuum-clause-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.continuuuum-clause-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 13px;
+}
+.continuuuum-clause-kind {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.continuuuum-clause-kind-property { background: #e8f5e9; color: #2e7d32; }
+.continuuuum-clause-kind-lemma { background: #e3f2fd; color: #1565c0; }
+.continuuuum-clause-kind-localization { background: #fff3e0; color: #e65100; }
+.continuuuum-clause-snippet { color: #333; flex: 1 1 180px; }
+.continuuuum-clause-meta { color: #666; font-size: 12px; }
+.continuuuum-clause-edit-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.continuuuum-script-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: nowrap;
+}
+.continuuuum-auto-fix-lemma-anchors-btn:not([hidden]) {
+  border: 1px solid #e6a817;
+  background: #fff8e6;
+  color: #8a6100;
+}
+.continuuuum-auto-fix-lemma-anchors-btn:not([hidden]):hover {
+  background: #ffefc2;
+}
+.continuuuum-clause-suggestions {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: min(640px, 65vw);
+  padding: 2px 4px;
+  min-height: 28px;
+  align-items: center;
+}
+.continuuuum-clause-suggestions-hint {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+.continuuuum-clause-suggestion-btn {
+  flex: 0 0 auto;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.continuuuum-clause-suggestion-btn:hover {
+  border-color: #999;
+  background: #f5f5f5;
+}
+.continuuuum-clause-suggestion-property {
+  border-color: #81c784;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.continuuuum-clause-suggestion-lemma {
+  border-color: #64b5f6;
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.continuuuum-clause-suggestion-localization {
+  border-color: #ffb74d;
+  background: #fff3e0;
+  color: #e65100;
+}
+.continuuuum-clause-suggestion-bundle {
+  border-color: #7e57c2;
+  background: #ede7f6;
+  color: #4527a0;
+  font-weight: 600;
+}
+.continuuuum-clause-overlay label.clause-field-error input,
+.continuuuum-clause-overlay label.clause-field-error select,
+.continuuuum-clause-overlay label.clause-field-error textarea {
+  border-color: #b00020;
+  box-shadow: 0 0 0 1px #b00020;
+}
+.continuuuum-clause-conflict-actions {
+  display: none;
+  margin-top: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.continuuuum-clause-conflict-actions.is-visible {
+  display: flex;
+}
+.continuuuum-clause-conflict-actions button {
+  font-size: 12px;
+  padding: 4px 10px;
+}

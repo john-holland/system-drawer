@@ -29,7 +29,7 @@ namespace Planetary
         public float primeMeridianOffsetDeg;
 
         [Header("Society sim")]
-        [Tooltip("Matches society_planets.planet_id in continuum API")]
+        [Tooltip("Matches society_planets.planet_id in continuuuum API")]
         public string societyPlanetId = "earth";
 
         [Header("Galactic registry")]

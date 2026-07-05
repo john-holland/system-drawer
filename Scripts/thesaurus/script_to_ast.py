@@ -2,7 +2,7 @@
 Build thesaurus AST from episode script text. Detects quote blocks (text between "...")
 and creates AST nodes with node_kind 'token' or 'quote'; quote nodes have child token nodes.
 Uses Farey intervals for ordering. Requires thesaurus_ast_nodes (with node_kind, quote_id
-from continuum_screenplay_schema.sql).
+from continuuuum_screenplay_schema.sql).
 """
 
 from __future__ import annotations

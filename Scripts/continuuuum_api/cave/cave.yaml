@@ -1,0 +1,70 @@
+name: continuuuum
+description: Continuuuum Cave — USC library, episodic hub, lemma library, society sim
+spelunk:
+  route: /
+  childCaves:
+    library:
+      route: /library
+      container: main
+      tomeId: library-tome
+    ui:
+      route: /ui
+      container: main
+      tomeId: hub-tome
+    lemma-library:
+      route: /lemma-library
+      container: main
+      tomeId: lemma-tome
+    table-read:
+      route: /table-read
+      container: main
+      tomeId: table-read-tome
+    camera-pathing:
+      route: /camera-pathing
+      container: main
+      tomeId: camera-tome
+    city-config:
+      route: /city-config
+      container: main
+      tomeId: society-tome
+    society-dashboard:
+      route: /society-dashboard
+      container: main
+      tomeId: society-tome
+    network-definitions:
+      route: /network-definitions
+      container: main
+      tomeId: network-tome
+    sql-viewer:
+      route: /sql-viewer
+      container: main
+      tomeId: sql-viewer-tome
+    story-board:
+      route: /story-board
+      container: main
+      tomeId: story-board-tome
+    project-calendar:
+      route: /project-calendar
+      container: main
+      tomeId: production-calendar-tome
+    budget-dashboard:
+      route: /budget-dashboard
+      container: main
+      tomeId: budget-tome
+    legal-tracker:
+      route: /legal-tracker
+      container: main
+      tomeId: legal-tracker-tome
+    mayor-dog-mods:
+      route: /mayor-dog-mods
+      container: main
+      tomeId: mayor-dog-mods-tome
+    features:
+      route: /features
+      container: main
+      tomeId: features-tome
+      permission: ">=anonymous"
+    drawer-game:
+      route: /api/drawer-game
+      container: api
+      tomeId: drawer-game-tome

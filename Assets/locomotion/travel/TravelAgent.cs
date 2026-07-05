@@ -65,10 +65,10 @@ public class TravelAgent : MonoBehaviour
     [Tooltip("GoodSection cards offered as acrobatics modality candidates for preview planning.")]
     public List<GoodSection> acrobaticsSectionsForPreview = new List<GoodSection>();
 
-    [Tooltip("How authoring-row positions are interpreted (world, narrative volume, or Continuum asset ref).")]
+    [Tooltip("How authoring-row positions are interpreted (world, narrative volume, or Continuuuum asset ref).")]
     public TravelCoordinateMode coordinateMode = TravelCoordinateMode.World;
 
-    [Header("Spatial authoring (Bedoga / Continuum-friendly)")]
+    [Header("Spatial authoring (Bedoga / Continuuuum-friendly)")]
     [Tooltip("Wide slot for SpatialGenerator / SpatialGenerator4D when assigned from editor.")]
     public UnityEngine.Object spatialGeneratorSlot;
 

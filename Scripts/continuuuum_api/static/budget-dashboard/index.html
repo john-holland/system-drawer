@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Budget Dashboard — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1419; color: #e6edf3; }
+    main { padding: 1rem; max-width: 900px; margin: 0 auto; }
+    .gauge { height: 24px; background: #21262d; border-radius: 12px; overflow: hidden; position: relative; margin: 0.5rem 0; }
+    .gauge-fill { height: 100%; background: linear-gradient(90deg, #1e88e5, #4caf50); transition: width 0.3s; }
+    .gauge-low { position: absolute; top: 0; bottom: 0; width: 2px; background: #f85149; }
+    input, button, select { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 4px; padding: 0.35rem 0.5rem; }
+    button { cursor: pointer; }
+    pre { background: #161b22; padding: 0.75rem; overflow: auto; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <header id="continuuuum-nav-root"></header>
+  <main>
+    <h1>Budget dashboard</h1>
+    <p>Water-reservoir view of production budget (Pond metaphor: capacity vs current level).</p>
+    <p>
+      <label>Plan ID <input id="plan-id" style="width:280px" placeholder="budget_..." /></label>
+      <button id="btn-load">Load</button>
+      <button id="btn-template" type="button">Download Budget Template</button>
+      <button id="btn-sheets">Publish to Sheets</button>
+    </p>
+    <div id="gauge-wrap" hidden>
+      <p><strong id="plan-name"></strong></p>
+      <div class="gauge"><div class="gauge-fill" id="gauge-fill"></div><div class="gauge-low" id="gauge-low"></div></div>
+      <p id="gauge-label"></p>
+    </div>
+    <h3>Journal (recent)</h3>
+    <pre id="journal"></pre>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-cave-shell.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/budget-dashboard/budget-dashboard.js"></script>
+</body>
+</html>

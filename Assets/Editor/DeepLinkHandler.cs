@@ -5,14 +5,14 @@ using System.Reflection;
 using UnityEditor;
 
 /// <summary>
-/// Polls for deeplink file written by continuum API (POST /api/deeplink) or system-drawer:// URL stub.
-/// Parses window and episodeId; opens Continuum Explorer or Episodes window.
-/// File path: ~/.continuum-deeplink.json or CONTINUUM_DEEPLINK_PATH.
+/// Polls for deeplink file written by continuuuum API (POST /api/deeplink) or system-drawer:// URL stub.
+/// Parses window and episodeId; opens Continuuuum Explorer or Episodes window.
+/// File path: ~/.continuuuum-deeplink.json or CONTINUUUUM_DEEPLINK_PATH.
 /// </summary>
 [InitializeOnLoad]
 public static class DeepLinkHandler
 {
-    private const string DefaultPath = ".continuum-deeplink.json";
+    private const string DefaultPath = ".continuuuum-deeplink.json";
     private static double _lastPollTime;
 
     static DeepLinkHandler()
@@ -22,7 +22,7 @@ public static class DeepLinkHandler
 
     private static string GetDeeplinkPath()
     {
-        var env = Environment.GetEnvironmentVariable("CONTINUUM_DEEPLINK_PATH");
+        var env = Environment.GetEnvironmentVariable("CONTINUUUUM_DEEPLINK_PATH");
         if (!string.IsNullOrEmpty(env))
             return env;
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -78,17 +78,17 @@ public static class DeepLinkHandler
                 return;
             if (window.IndexOf("Explorer", StringComparison.OrdinalIgnoreCase) >= 0 || !string.IsNullOrEmpty(episodeId))
             {
-                var dbPath = ContinuumSettings.GetDbPath();
-                var py = ContinuumSettings.GetPythonPath();
-                var tenant = ContinuumSettings.GetTenant();
+                var dbPath = ContinuuuumSettings.GetDbPath();
+                var py = ContinuuuumSettings.GetPythonPath();
+                var tenant = ContinuuuumSettings.GetTenant();
                 var sql = string.IsNullOrEmpty(episodeId)
                     ? "SELECT * FROM episodes LIMIT 100"
                     : $"SELECT * FROM work_orders WHERE episode_id = '{episodeId.Replace("'", "''")}' LIMIT 50";
-                ContinuumExplorerWindow.ShowAndRunQuery(dbPath, py, tenant, sql);
+                ContinuuuumExplorerWindow.ShowAndRunQuery(dbPath, py, tenant, sql);
             }
             else if (window.IndexOf("Episodes", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                ContinuumEpisodesWindow.ShowWindow();
+                ContinuuuumEpisodesWindow.ShowWindow();
             }
             else if (window.IndexOf("Lemma", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -104,10 +104,10 @@ public static class DeepLinkHandler
 
     static void OpenLemmaPropertiesWindow(string entryId)
     {
-        var windowType = Type.GetType("VocabularyLemmaPropertyEditorWindow, Continuum.Editor");
+        var windowType = Type.GetType("VocabularyLemmaPropertyEditorWindow, Continuuuum.Editor");
         if (windowType == null)
         {
-            UnityEngine.Debug.LogWarning("[DeepLinkHandler] Continuum.Editor assembly not found; cannot open Lemma Properties.");
+            UnityEngine.Debug.LogWarning("[DeepLinkHandler] Continuuuum.Editor assembly not found; cannot open Lemma Properties.");
             return;
         }
 

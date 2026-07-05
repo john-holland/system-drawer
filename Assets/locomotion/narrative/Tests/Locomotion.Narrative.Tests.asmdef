@@ -3,7 +3,7 @@
     "rootNamespace": "",
     "references": [
         "BedogaGenerator",
-        "Continuum.Runtime",
+        "Continuuuum.Runtime",
         "HierarchicalPathFinding",
         "Locomotion.Narrative.Inference",
         "Locomotion.Narrative.Runtime",

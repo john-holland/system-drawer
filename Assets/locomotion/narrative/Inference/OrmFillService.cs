@@ -12,7 +12,7 @@ namespace Locomotion.Narrative
         /// <summary>
         /// For each event title (and optionally phrase), try to resolve against registry. Fills outBindings with Matched, UnderstoodNoOrmMatch, or MarkedGenerate.
         /// </summary>
-        /// <param name="builtInsByEventIndex">Optional bindings resolved from Continuum built-ins (skip SceneObjectRegistry for those indices).</param>
+        /// <param name="builtInsByEventIndex">Optional bindings resolved from Continuuuum built-ins (skip SceneObjectRegistry for those indices).</param>
         public static void FillFromRegistry(
             IList<InterpretedEvent> events,
             SceneObjectRegistry registry,

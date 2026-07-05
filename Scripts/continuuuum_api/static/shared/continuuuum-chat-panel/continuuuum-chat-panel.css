@@ -1,0 +1,124 @@
+.continuuuum-chat-panel--inventory {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #2e7d32;
+  border-radius: 8px;
+  color: #4caf50;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  min-height: 200px;
+  box-sizing: border-box;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-panel-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid #2e7d32;
+  color: #4caf50;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-messages {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 10px;
+  min-height: 120px;
+  max-height: 360px;
+  color: #ccc;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-messages::-webkit-scrollbar-thumb {
+  background: #2e7d32;
+  border-radius: 4px;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-msg {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-msg--system {
+  color: #4caf50;
+  font-style: italic;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-sender {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-link {
+  color: #81c784;
+  text-decoration: underline;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid #2e7d32;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #2e7d32;
+  border-radius: 4px;
+  color: #ccc;
+  padding: 6px 8px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-input:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-send {
+  align-self: flex-end;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.continuuuum-chat-panel--inventory .continuuuum-chat-send:hover {
+  background: #4caf50;
+}
+
+#continuuuum-chat-panel.continuuuum-chat-panel--inventory {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #2e7d32;
+  color: #4caf50;
+}
+
+#continuuuum-chat-panel.continuuuum-chat-panel--inventory #continuuuum-chat-messages {
+  border: 1px solid #2e7d32;
+  background: rgba(0, 0, 0, 0.5);
+  color: #ccc;
+}
+
+#continuuuum-chat-panel.continuuuum-chat-panel--inventory #continuuuum-chat-input {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #2e7d32;
+  color: #ccc;
+}
+
+#continuuuum-chat-panel.continuuuum-chat-panel--inventory #continuuuum-chat-send {
+  background: #2e7d32;
+  color: #fff;
+}
+
+#continuuuum-chat-panel.continuuuum-chat-panel--inventory #continuuuum-chat-send:hover {
+  background: #4caf50;
+}

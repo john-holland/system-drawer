@@ -130,7 +130,7 @@ node_modules/
 .yarn/
 
 # If sibling repos are cloned at the repository root (multi-root workspace)
-/continuum/
+/continuuuum/
 /unified-semantic-compressor/
 
 # Test fixtures (generated/downloaded)

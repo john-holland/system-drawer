@@ -1,0 +1,41 @@
+.continuuuum-lemma-entry-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(102, 126, 234, 0.55);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.continuuuum-lemma-entry-link:hover {
+  text-decoration-color: rgba(102, 126, 234, 1);
+}
+.continuuuum-lemma-entry-chip {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  margin: 0 4px 4px 0;
+  border-radius: 4px;
+  background: rgba(102, 126, 234, 0.15);
+  text-decoration: none;
+}
+.continuuuum-lemma-entry-chip:hover {
+  background: rgba(102, 126, 234, 0.28);
+  text-decoration: none;
+}
+.continuuuum-lemma-entry-id {
+  font-size: 11px;
+  opacity: 0.72;
+  margin-left: 4px;
+}
+.continuuuum-lemma-entry-empty {
+  color: #666;
+  font-size: 13px;
+}
+.continuuuum-lemma-entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.continuuuum-lemma-entry-list li {
+  padding: 4px 0;
+}

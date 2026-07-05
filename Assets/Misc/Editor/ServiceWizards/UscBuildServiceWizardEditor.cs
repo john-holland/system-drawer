@@ -22,8 +22,8 @@ public class UscBuildServiceWizardEditor : Editor
             }
         }
 
-        if (GUILayout.Button("Open Continuum Build Manager", GUILayout.Height(22)))
-            ContinuumBuildManagerWindow.ShowWindow();
+        if (GUILayout.Button("Open Continuuuum Build Manager", GUILayout.Height(22)))
+            ContinuuuumBuildManagerWindow.ShowWindow();
 
         if (GUILayout.Button("Preview packed-publish CLI stub", GUILayout.Height(22)))
         {

@@ -1,1 +1,1 @@
-# Continuum thesaurus: Farey AST, rebalancing, script output support
+# Continuuuum thesaurus: Farey AST, rebalancing, script output support

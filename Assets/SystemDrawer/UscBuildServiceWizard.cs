@@ -12,8 +12,8 @@ public class UscBuildServiceWizard : MonoBehaviour
     [Header("Build mode")]
     public UscBuildMode buildMode = UscBuildMode.Packed;
 
-    [Header("Continuum / USC settings")]
-    public string continuumBaseUrl = "http://localhost:5050";
+    [Header("Continuuuum / USC settings")]
+    public string continuuuumBaseUrl = "http://localhost:5050";
     public string tenantId = "default";
     public string sourceDbPath = "";
     public string languageVersion = "1.0.0";
@@ -43,7 +43,7 @@ public class UscBuildServiceWizard : MonoBehaviour
         var existing = service.Get<UscBuildServiceWizard>(ServiceKey);
         if (existing == null || existing == this) return false;
 
-        continuumBaseUrl = existing.continuumBaseUrl;
+        continuuuumBaseUrl = existing.continuuuumBaseUrl;
         tenantId = existing.tenantId;
         sourceDbPath = existing.sourceDbPath;
         languageVersion = existing.languageVersion;
@@ -122,7 +122,7 @@ public class UscBuildServiceWizard : MonoBehaviour
         {
             result.success = true;
             result.source = "usc_runtime_service";
-            result.resolvedPath = $"{continuumBaseUrl.TrimEnd('/')}/api/media/reconstitute";
+            result.resolvedPath = $"{continuuuumBaseUrl.TrimEnd('/')}/api/media/reconstitute";
             return result;
         }
 

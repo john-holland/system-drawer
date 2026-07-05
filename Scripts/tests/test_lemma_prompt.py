@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from continuum_api.lemma_merge import BUILTIN_URN_PREFIX, merge_vocabulary
-from continuum_api.lemma_prompt import (
+from continuuuum_api.lemma_merge import BUILTIN_URN_PREFIX, merge_vocabulary
+from continuuuum_api.lemma_prompt import (
     ensure_lemma_prompt_schema,
     expand_lemma_prompt,
     load_prompt_bundle,
@@ -22,7 +22,7 @@ class LemmaPromptTests(unittest.TestCase):
         self.conn = sqlite3.connect(self.tmp.name)
         self.conn.row_factory = sqlite3.Row
         root = Path(__file__).resolve().parents[1]
-        self.conn.executescript((root / "continuum_spatial_4d_schema.sql").read_text(encoding="utf-8"))
+        self.conn.executescript((root / "continuuuum_spatial_4d_schema.sql").read_text(encoding="utf-8"))
         self.conn.executescript(
             """
             CREATE TABLE IF NOT EXISTS localization_property_specs (
@@ -34,8 +34,8 @@ class LemmaPromptTests(unittest.TestCase):
             );
             """
         )
-        self.conn.executescript((root / "continuum_lemma_composition_schema.sql").read_text(encoding="utf-8"))
-        self.conn.executescript((root / "continuum_lemma_prompt_schema.sql").read_text(encoding="utf-8"))
+        self.conn.executescript((root / "continuuuum_lemma_composition_schema.sql").read_text(encoding="utf-8"))
+        self.conn.executescript((root / "continuuuum_lemma_prompt_schema.sql").read_text(encoding="utf-8"))
         self.conn.executescript(
             """
             CREATE TABLE IF NOT EXISTS thesaurus_entries (

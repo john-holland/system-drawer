@@ -1,6 +1,6 @@
 # Episodic Content Generator
 
-Pipeline for creating, parsing, and outputting episodic narrative content for the Spatial 4D Generator in Unity. Uses the **Continuum** DB (episodes, episode_script, work_orders, causality) and **USC (Unified Semantic Compressor)** for assets.
+Pipeline for creating, parsing, and outputting episodic narrative content for the Spatial 4D Generator in Unity. Uses the **Continuuuum** DB (episodes, episode_script, work_orders, causality) and **USC (Unified Semantic Compressor)** for assets.
 
 ---
 
@@ -11,7 +11,7 @@ Pipeline for creating, parsing, and outputting episodic narrative content for th
 - **USC assets** — library documents, semantic chunks, or unique kernels linked to episodes via `episode_assets`
 - **Thesaurus** — languages, entries, alternatives, and AST nodes for translation and reordering
 
-Apply schemas in order: `continuum_episodes_schema.sql`, `continuum_spatial_4d_schema.sql` (4D volumes + gateway leaf triplet + optional history for Continuum Explorer), `continuum_thesaurus_schema.sql`, `continuum_screenplay_schema.sql`, `continuum_thesaurus_version_schema.sql`, `continuum_draft_schema.sql`, `continuum_dictionary_schema.sql`, `continuum_audit_schema.sql`. See [CONTINUUM_AND_COMPRESSOR.md](CONTINUUM_AND_COMPRESSOR.md).
+Apply schemas in order: `continuuuum_episodes_schema.sql`, `continuuuum_spatial_4d_schema.sql` (4D volumes + gateway leaf triplet + optional history for Continuuuum Explorer), `continuuuum_thesaurus_schema.sql`, `continuuuum_screenplay_schema.sql`, `continuuuum_thesaurus_version_schema.sql`, `continuuuum_draft_schema.sql`, `continuuuum_dictionary_schema.sql`, `continuuuum_audit_schema.sql`. See [CONTINUUUUM_AND_COMPRESSOR.md](CONTINUUUUM_AND_COMPRESSOR.md).
 
 ---
 
@@ -28,9 +28,9 @@ Apply schemas in order: `continuum_episodes_schema.sql`, `continuum_spatial_4d_s
    VALUES ('script-ep-001', 'ep-001', 'Your script text here...', 'en', datetime('now'));
    ```
 
-2. **Unity** — **Window → Continuum → Continuum Episodes**. Set DB path, then use "Browse Episodes" to explore. "New Episode" is a stub; creation via USC API or direct SQLite is planned.
+2. **Unity** — **Window → Continuuuum → Continuuuum Episodes**. Set DB path, then use "Browse Episodes" to explore. "New Episode" is a stub; creation via USC API or direct SQLite is planned.
 
-3. **USC / continuum repo** — If you use the continuum library server and migrations, episodes can be created via that pipeline.
+3. **USC / continuuuum repo** — If you use the continuuuum library server and migrations, episodes can be created via that pipeline.
 
 ---
 
@@ -38,7 +38,7 @@ Apply schemas in order: `continuum_episodes_schema.sql`, `continuum_spatial_4d_s
 
 USC (Unified Semantic Compressor) lives in a separate repo. Assets are stored in `library_documents`, `semantic_chunks`, or `unique_kernels`.
 
-1. **Continuum Library Server** — From the continuum repo: `python serve_library.py`. Open http://localhost:5050 to upload and manage assets.
+1. **Continuuuum Library Server** — From the continuuuum repo: `python serve_library.py`. Open http://localhost:5050 to upload and manage assets.
 2. **Install USC** — `pip install -e /path/to/unified-semantic-compressor`
 3. **Link to episodes** — Insert into `episode_assets`:
    ```sql
@@ -47,7 +47,7 @@ USC (Unified Semantic Compressor) lives in a separate repo. Assets are stored in
    ```
    `asset_type`: `'document'`, `'chunk'`, or `'kernel'`. `causality_leaf_id` links to a quad/oct tree leaf (e.g. `S3.O2.1.7`).
 
-4. **Unity** — **Window → Continuum → Continuum Library** for search; **Continuum Explorer** to browse `library_documents` and `episode_assets`. Tenancy is scoped by `Scripts/continuum_tenant.txt` or the Tenant field.
+4. **Unity** — **Window → Continuuuum → Continuuuum Library** for search; **Continuuuum Explorer** to browse `library_documents` and `episode_assets`. Tenancy is scoped by `Scripts/continuuuum_tenant.txt` or the Tenant field.
 
 ---
 
@@ -74,7 +74,7 @@ The Spatial 4D system uses **(x, y, z, t)** volumes: 3D regions plus narrative t
 1. **Calendar events** — `NarrativeCalendarAsset` holds events with optional `spatiotemporalVolume` (Bounds4).
 2. **Narrative4DPlacer** — Inserts event volumes into `SpatialGenerator4D`. Assign calendar and 4D generator (or resolve from `SpatialGenerator4DOrchestrator`).
 3. **Export to file** — Use `Spatial4DExportUtility` or the in-game Spatial 4D editor to export to JSON/YAML/XML (`Spatial4DExpressionsDto`). Configure path in `SpatialGenerator4DOrchestrator` (e.g. `inGameUIOutputFilePath`).
-4. **Continuum → Unity** — The `spatial_4d` table (see `continuum_spatial_4d_schema.sql`) holds Bounds4-style fields plus **causality_leaf_back / _pause / _forward** (gateway termini aligned with `SpatialGenerator4D`) and optional **causality_history_json** (append-only rows). Browse via **Continuum Explorer**. ETL from continuum (work_orders, causality_structure, episodes) into `NarrativeCalendarAsset` events is pipeline-specific; the schema supports `episodes.t_start`, `episodes.t_end`, `episodes.scene_path`, and `work_orders.causality_leaf_id` for mapping.
+4. **Continuuuum → Unity** — The `spatial_4d` table (see `continuuuum_spatial_4d_schema.sql`) holds Bounds4-style fields plus **causality_leaf_back / _pause / _forward** (gateway termini aligned with `SpatialGenerator4D`) and optional **causality_history_json** (append-only rows). Browse via **Continuuuum Explorer**. ETL from continuuuum (work_orders, causality_structure, episodes) into `NarrativeCalendarAsset` events is pipeline-specific; the schema supports `episodes.t_start`, `episodes.t_end`, `episodes.scene_path`, and `work_orders.causality_leaf_id` for mapping.
 
 See [Assets/BedogaGenerator/SpatialGenerator4D_Setup.md](../Assets/BedogaGenerator/SpatialGenerator4D_Setup.md).
 
@@ -82,8 +82,8 @@ See [Assets/BedogaGenerator/SpatialGenerator4D_Setup.md](../Assets/BedogaGenerat
 
 ## How do I see a selection of episodes?
 
-- **Unity** — **Window → Continuum → Continuum Episodes** → "Browse Episodes (SELECT * FROM episodes)". Opens Continuum Explorer with that query.
-- **Unity** — **Window → Continuum → Continuum Explorer** → Table: `episodes` (or `episode_script`, `episode_assets`).
+- **Unity** — **Window → Continuuuum → Continuuuum Episodes** → "Browse Episodes (SELECT * FROM episodes)". Opens Continuuuum Explorer with that query.
+- **Unity** — **Window → Continuuuum → Continuuuum Explorer** → Table: `episodes` (or `episode_script`, `episode_assets`).
 - **API** — There is no `/api/episodes` list endpoint yet. You need the episode ID from the DB or Explorer.
 
 ---
@@ -93,23 +93,23 @@ See [Assets/BedogaGenerator/SpatialGenerator4D_Setup.md](../Assets/BedogaGenerat
 **Not yet.** You must **copy/paste the episode ID** into each tool:
 
 - **Script-output app** — Enter episode ID, click Load script.
-- **Continuum Work Orders** — Set DB path; filter by episode (work orders are keyed by `episode_id`). No click-through from episode list to Work Orders with that episode pre-selected.
-- **Continuum Explorer** — Run `SELECT * FROM work_orders WHERE episode_id = 'ep-001'` etc.
+- **Continuuuum Work Orders** — Set DB path; filter by episode (work orders are keyed by `episode_id`). No click-through from episode list to Work Orders with that episode pre-selected.
+- **Continuuuum Explorer** — Run `SELECT * FROM work_orders WHERE episode_id = 'ep-001'` etc.
 
 A future improvement: episode picker or deep links (e.g. `?episodeId=ep-001`) so tools open with the episode pre-selected.
 
 ---
 
-## Do we have a base-level System Drawer / Continuum / USC index page?
+## Do we have a base-level System Drawer / Continuuuum / USC index page?
 
 **No.** Today:
 
 - **Script-output** — http://localhost:5174 (React app; enter episode ID)
-- **Continuum API** — http://localhost:5050 (Flask; used by script-output via proxy)
-- **Continuum Library Server** — http://localhost:5050 (from continuum repo; separate from system-drawer’s continuum API when both run)
-- **Unity** — Window → Continuum → Continuum Explorer / Episodes / Library / Work Orders
+- **Continuuuum API** — http://localhost:5050 (Flask; used by script-output via proxy)
+- **Continuuuum Library Server** — http://localhost:5050 (from continuuuum repo; separate from system-drawer’s continuuuum API when both run)
+- **Unity** — Window → Continuuuum → Continuuuum Explorer / Episodes / Library / Work Orders
 
-There is no unified index page linking episodes, script-output, work orders, and USC. A single hub (e.g. `/` or `/continuum`) listing episodes and linking to tools would improve discoverability.
+There is no unified index page linking episodes, script-output, work orders, and USC. A single hub (e.g. `/` or `/continuuuum`) listing episodes and linking to tools would improve discoverability.
 
 ---
 
@@ -129,10 +129,10 @@ There is no unified index page linking episodes, script-output, work orders, and
 
 | Tool | How to run | Purpose |
 |------|------------|---------|
-| Continuum API | `cd Scripts && CONTINUUM_DB=... python -m continuum_api.server --port 5050` | Episode script, thesaurus, AST, screenplay, work orders, drafts, audit |
-| Continuum UI | http://localhost:5050/ or http://localhost:5050/ui | Web UI: create episode, list, link to script-output |
+| Continuuuum API | `cd Scripts && CONTINUUUUM_DB=... python -m continuuuum_api.server --port 5050` | Episode script, thesaurus, AST, screenplay, work orders, drafts, audit |
+| Continuuuum UI | http://localhost:5050/ or http://localhost:5050/ui | Web UI: create episode, list, link to script-output |
 | Script-output | `cd apps/script-output && npm run dev` | React UI: load script by episode ID, click words, reorder, change-of-basis |
-| Continuum Explorer | Unity: Window → Continuum → Continuum Explorer | Browse DB tables, run SQL |
-| Continuum Episodes | Unity: Window → Continuum → Continuum Episodes | Browse episodes, episode_assets |
-| Continuum Work Orders | Unity: Window → Continuum → Continuum Work Orders | Browse/filter work orders |
-| Continuum Library | Unity: Window → Continuum → Continuum Library | Search USC assets by location |
+| Continuuuum Explorer | Unity: Window → Continuuuum → Continuuuum Explorer | Browse DB tables, run SQL |
+| Continuuuum Episodes | Unity: Window → Continuuuum → Continuuuum Episodes | Browse episodes, episode_assets |
+| Continuuuum Work Orders | Unity: Window → Continuuuum → Continuuuum Work Orders | Browse/filter work orders |
+| Continuuuum Library | Unity: Window → Continuuuum → Continuuuum Library | Search USC assets by location |

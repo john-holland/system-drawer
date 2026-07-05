@@ -8171,7 +8171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18da6b201da81964397dd1db04aa4a7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Planetary::Planetary.PlanetMeshStreamingService
-  continuumBaseUrl: http://localhost:5050
+  continuuuumBaseUrl: http://localhost:5050
   planetId: default
   maxCacheEntries: 64
 --- !u!114 &160829266
@@ -53948,7 +53948,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18da6b201da81964397dd1db04aa4a7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Planetary::Planetary.PlanetMeshStreamingService
-  continuumBaseUrl: http://localhost:5050
+  continuuuumBaseUrl: http://localhost:5050
   planetId: default
   maxCacheEntries: 64
 --- !u!114 &1229643038

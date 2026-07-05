@@ -42,7 +42,7 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("System Tests", "Audio", "Window/System Drawer/System Tests/Audio"),
         new Entry("System Tests", "Smell", "Window/System Drawer/System Tests/Smell"),
         new Entry("System Tests", "Ragdoll Cohesion", "Window/System Drawer/System Tests/Ragdoll Cohesion"),
-        new Entry("Continuum", "Continuum Library", "Window/Continuum/Continuum Library"),
+        new Entry("Continuuuum", "Continuuuum Library", "Window/Continuuuum/Continuuuum Library"),
         new Entry("Diagnostics", "Memory Swizzle View", "Window/System Drawer/Diagnostics/Memory Swizzle View"),
         new Entry("Diagnostics", "Perf Trace View", "Window/System Drawer/Diagnostics/Perf Trace View"),
         new Entry("Diagnostics", "Perform GC Pass", "Window/System Drawer/Diagnostics/Perform GC Pass"),

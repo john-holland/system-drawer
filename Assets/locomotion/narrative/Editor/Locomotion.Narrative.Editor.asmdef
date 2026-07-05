@@ -7,7 +7,7 @@
     "Locomotion.Narrative.Serialization",
     "Locomotion.Narrative.Inference",
     "Locomotion.Runtime",
-    "Continuum.Runtime",
+    "Continuuuum.Runtime",
     "SystemDrawer"
   ],
   "includePlatforms": [

@@ -12,39 +12,39 @@ Port-broker distributes server ports for Docker containers and build configurati
 
 Episodic tools use multiple services that can collide on ports:
 
-- **Continuum API** – 5050 (Flask)
+- **Continuuuum API** – 5050 (Flask)
 - **Script-output** – 5174 (Vite)
 - **Cave** – 3000 (library/search)
-- **Continuum Library** – 5050 (when run from continuum repo)
+- **Continuuuum Library** – 5050 (when run from continuuuum repo)
 
 ### Options
 
 1. **Static ports + env override** – Use fixed ports for local dev; override with `PORT` env var per service. Document in README.
 2. **Port-broker** – Services request ports from the broker at startup; broker returns an allocated port. Requires services to be broker-aware.
-3. **Named pipes** – Use Unix sockets (e.g. `/tmp/continuum-api.sock`). No port collision; requires reverse proxy.
+3. **Named pipes** – Use Unix sockets (e.g. `/tmp/continuuuum-api.sock`). No port collision; requires reverse proxy.
 
 ### Recommendation
 
 - **Local dev:** Use static ports (5050, 5174, 3000) or `PORT` env override.
-- **CI/Docker:** Use port-broker when running multiple services in containers. Add broker client to continuum API and script-output startup.
+- **CI/Docker:** Use port-broker when running multiple services in containers. Add broker client to continuuuum API and script-output startup.
 - **Port-broker validator** – Add to port-broker: validate and warn when `PORT` env conflicts with existing allocations; offer override via broker.
 
 ### Usage with port-broker
 
 ```bash
 # Request a port from broker
-curl -X POST http://localhost:PORT_BROKER/allocate -d '{"service":"continuum-api"}' 
+curl -X POST http://localhost:PORT_BROKER/allocate -d '{"service":"continuuuum-api"}' 
 # Returns {"port": 5050}
 
-# Start continuum API with allocated port
-PORT=$(curl -s -X POST ... | jq -r .port) python -m continuum_api.server --port $PORT
+# Start continuuuum API with allocated port
+PORT=$(curl -s -X POST ... | jq -r .port) python -m continuuuum_api.server --port $PORT
 ```
 
 ---
 
 ## Cave Adapter
 
-Location: `Scripts/continuum_api/cave_adapter.py`
+Location: `Scripts/continuuuum_api/cave_adapter.py`
 
 ### Functions
 
@@ -57,14 +57,14 @@ Location: `Scripts/continuum_api/cave_adapter.py`
 
 - `CAVE_BASE_URL` – Cave server base URL (default `http://localhost:3000`)
 - `CAVE_AUDIT_ENABLED` – Set to `1` to forward audit logs to Cave
-- `CONTINUUM_TENANT` – Tenant for `X-Tenant-ID` header
+- `CONTINUUUUM_TENANT` – Tenant for `X-Tenant-ID` header
 
 ### CaveDB / RobotCopy
 
 If CaveDB is a separate database:
 
-- **Sync:** Mirror `api_audit_log` from continuum.db to CaveDB for centralized storage
-- **RobotCopy:** Use as sync/copy utility; document: "optional: sync continuum.db audit tables to CaveDB via RobotCopy"
+- **Sync:** Mirror `api_audit_log` from continuuuum.db to CaveDB for centralized storage
+- **RobotCopy:** Use as sync/copy utility; document: "optional: sync continuuuum.db audit tables to CaveDB via RobotCopy"
 
 ---
 
@@ -72,7 +72,7 @@ If CaveDB is a separate database:
 
 | Service        | Default port | Env override |
 |----------------|--------------|--------------|
-| Continuum API  | 5050         | `PORT` or `--port` |
+| Continuuuum API  | 5050         | `PORT` or `--port` |
 | Script-output  | 5174         | Vite `server.port` |
 | Cave           | 3000         | Cave config |
 | Port-broker    | (configurable) | - |

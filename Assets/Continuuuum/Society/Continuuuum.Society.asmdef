@@ -1,0 +1,19 @@
+{
+    "name": "Continuuuum.Society",
+    "rootNamespace": "",
+    "references": [
+        "Continuuuum.Runtime",
+        "Locomotion.Narrative.Runtime",
+        "SystemDrawer.Networking",
+        "BedogaGenerator"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

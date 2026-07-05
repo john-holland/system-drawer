@@ -9,10 +9,10 @@ Sibling repos (assumed layout under `C:/Users/John/`):
 | Repo | Role | README |
 |------|------|--------|
 | **Drawer 2** (this repo) | Unity game systems, System Drawer, narrative/4D/pathfinding | [README.md](README.md) |
-| **continuum** | Library web UI + Flask API (upload, search, media parity) | [../continuum/README.md](../continuum/README.md) |
+| **continuuuum** | Library web UI + Flask API (upload, search, media parity) | [../continuuuum/README.md](../continuuuum/README.md) |
 | **unified-semantic-compressor** | USC core: DB schema, compressors, ETL, CLI | [../unified-semantic-compressor/README.md](../unified-semantic-compressor/README.md) |
 
-Unity ↔ Python bridge: [Scripts/CONTINUUM_AND_COMPRESSOR.md](Scripts/CONTINUUM_AND_COMPRESSOR.md)
+Unity ↔ Python bridge: [Scripts/CONTINUUUUM_AND_COMPRESSOR.md](Scripts/CONTINUUUUM_AND_COMPRESSOR.md)
 
 ## Services catalog
 
@@ -37,7 +37,7 @@ Scene services register on [`SystemDrawerService`](Assets/SystemDrawer/SystemDra
 | `Spatial4DOrchestrator` | [`Spatial4DServiceWizard`](Assets/BedogaGenerator/Spatial4DServiceWizard.cs) | BedogaGenerator | 4D spatial generator orchestrator |
 | `USCBuildService` | [`UscBuildServiceWizard`](Assets/SystemDrawer/UscBuildServiceWizard.cs) | SystemDrawer | USC build / export integration |
 | `actor.brain` | [`BrainMessageService`](Assets/SystemDrawer/BrainMessageService.cs) | SystemDrawer | Actor brain message hub (key overridable) |
-| `ContinuumNotifications` | [`ContinuumNotificationsService`](Assets/Continuum/ContinuumNotificationsService.cs) | Continuum | Continuum push / notification bridge |
+| `ContinuuuumNotifications` | [`ContinuuuumNotificationsService`](Assets/Continuuuum/ContinuuuumNotificationsService.cs) | Continuuuum | Continuuuum push / notification bridge |
 | `network.clientOrchestrator` | [`ClientOrchestrator`](Assets/SystemDrawer/Networking/ClientOrchestrator.cs) | Networking | Scene client singleton (TCP/UDP, mode selection) |
 | `network.serverOrchestrator` | [`ServerOrchestrator`](Assets/SystemDrawer/Networking/ServerOrchestrator.cs) | Networking | Game server / SP loopback host |
 | `network.serverMode` | [`ServerOrchestrator`](Assets/SystemDrawer/Networking/ServerOrchestrator.cs) | Networking | Active `NetworkServerMode` registry object |
@@ -54,9 +54,9 @@ Scene services register on [`SystemDrawerService`](Assets/SystemDrawer/SystemDra
 
 | Service | Repo | Entry point | Docs |
 |---------|------|-------------|------|
-| Continuum library server | continuum | `python serve_library.py` | [../continuum/README.md](../continuum/README.md) |
+| Continuuuum library server | continuuuum | `python serve_library.py` | [../continuuuum/README.md](../continuuuum/README.md) |
 | USC CLI / compressors / ETL | unified-semantic-compressor | `python -m unified_semantic_archiver …` | [../unified-semantic-compressor/README.md](../unified-semantic-compressor/README.md) |
-| Continuum API (episodes / thesaurus / screenplay) | Drawer 2 | `python -m continuum_api.server` | [Scripts/continuum_api/README.md](Scripts/continuum_api/README.md) |
+| Continuuuum API (episodes / thesaurus / screenplay) | Drawer 2 | `python -m continuuuum_api.server` | [Scripts/continuuuum_api/README.md](Scripts/continuuuum_api/README.md) |
 | Video storage tool (legacy) | Drawer 2 | `Scripts/video_storage_tool/` | [Scripts/video_storage_tool/README.md](Scripts/video_storage_tool/README.md) — superseded by USC media parity |
 
 ## Project Structure
@@ -190,7 +190,7 @@ When adding a new `.md` under `Assets/` or `Scripts/`, append it here (and to si
 
 ### Unity ↔ Python bridge
 
-- [Scripts/CONTINUUM_AND_COMPRESSOR.md](Scripts/CONTINUUM_AND_COMPRESSOR.md) — Continuum + USC integration from Unity
+- [Scripts/CONTINUUUUM_AND_COMPRESSOR.md](Scripts/CONTINUUUUM_AND_COMPRESSOR.md) — Continuuuum + USC integration from Unity
 
 ### Narrative / LSTM / episodic
 
@@ -291,12 +291,12 @@ When adding a new `.md` under `Assets/` or `Scripts/`, append it here (and to si
 
 ### Python APIs
 
-- [Scripts/continuum_api/README.md](Scripts/continuum_api/README.md) — Episode script, thesaurus, screenplay API
+- [Scripts/continuuuum_api/README.md](Scripts/continuuuum_api/README.md) — Episode script, thesaurus, screenplay API
 - [Scripts/video_storage_tool/README.md](Scripts/video_storage_tool/README.md) — Legacy video storage (superseded by USC media parity)
 
 ### Sibling repositories
 
-- [continuum documentation index](../continuum/README.md#documentation-index)
+- [continuuuum documentation index](../continuuuum/README.md#documentation-index)
 - [unified-semantic-compressor documentation index](../unified-semantic-compressor/README.md#documentation-index)
 
 ## Asset packs & indie partnership

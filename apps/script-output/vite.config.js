@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
-import { continuumStaticPlugin } from '../vite-continuum-static-plugin.js';
+import { continuuuumStaticPlugin } from '../vite-continuuuum-static-plugin.js';
 
 export default defineConfig({
-  plugins: [continuumStaticPlugin()],
+  plugins: [continuuuumStaticPlugin()],
   server: {
     host: '127.0.0.1',
     port: 5174,

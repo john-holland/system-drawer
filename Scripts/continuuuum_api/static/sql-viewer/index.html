@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Continuuuum – SQL Viewer</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/sql-viewer/sql-viewer.css">
+  <script src="/static/shared/vendor/ace.js"></script>
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+
+  <div id="sv-root">
+    <div id="sv-auth-gate" class="sv-auth-gate hidden">
+      <h2>Sign in required</h2>
+      <p>Set a user ID in the nav bar (not <code>anonymous</code>) to browse continuuuum.db.</p>
+    </div>
+
+    <div id="sv-layout" class="sv-layout hidden">
+      <aside class="sv-sidebar">
+        <h2>Tables</h2>
+        <input type="search" id="sv-table-filter" placeholder="Filter tables…" autocomplete="off">
+        <div id="sv-table-list" class="sv-table-list"></div>
+      </aside>
+
+      <section class="sv-schema">
+        <h2>Schema</h2>
+        <div id="sv-schema-panel" class="sv-schema-body">
+          <p class="muted">Select a table to inspect columns, indexes, and foreign keys.</p>
+        </div>
+      </section>
+
+      <section class="sv-results">
+        <h2>Results</h2>
+        <div id="sv-results-meta" class="sv-results-meta">Select a table or run a query.</div>
+        <div class="sv-results-scroll">
+          <table id="sv-grid" class="sv-grid"><thead></thead><tbody></tbody></table>
+        </div>
+        <div id="sv-pagination" class="sv-pagination" hidden>
+          <button type="button" class="secondary" id="sv-prev">Prev</button>
+          <span id="sv-page-info"></span>
+          <button type="button" class="secondary" id="sv-next">Next</button>
+        </div>
+      </section>
+
+      <section class="sv-editor-wrap">
+        <h2>Query</h2>
+        <div class="sv-exec-bar">
+          <button type="button" id="sv-run">Run</button>
+          <button type="button" class="secondary" id="sv-validate">Validate</button>
+          <button type="button" class="secondary" id="sv-clear">Clear</button>
+          <div class="sv-chips">
+            <span class="sv-chip">SELECT</span>
+            <span class="sv-chip">WITH</span>
+            <span class="sv-chip">EXPLAIN</span>
+            <span class="sv-chip">PRAGMA</span>
+          </div>
+          <div id="sv-exec-msg" class="sv-exec-msg"></div>
+        </div>
+        <div id="sv-editor"></div>
+      </section>
+
+      <section class="sv-recipes">
+        <h2>Recipe queries</h2>
+        <div id="sv-recipes" class="sv-recipes-body"></div>
+      </section>
+
+      <p class="sv-footer-note">
+        Read-only SQL viewer via sql-viewer-tome. Mutations use domain APIs. Results capped at 2000 rows.
+      </p>
+    </div>
+  </div>
+
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-cave-shell.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-tome-bootstrap.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/sql-viewer/sql-safety.js"></script>
+  <script src="/static/sql-viewer/sql-viewer-templates.js"></script>
+  <script src="/static/sql-viewer/continuuuum-sql-viewer-tome.js"></script>
+  <script src="/static/sql-viewer/sql-viewer.js"></script>
+</body>
+</html>

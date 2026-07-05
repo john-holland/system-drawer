@@ -1,1 +1,1 @@
-"""Continuum telecommunications package."""
+"""Continuuuum telecommunications package."""

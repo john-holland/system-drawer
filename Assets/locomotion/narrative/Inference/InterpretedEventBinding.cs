@@ -22,7 +22,7 @@ namespace Locomotion.Narrative
         public string phrase;
         /// <summary>Resolved ORM key when status is OrmMatched.</summary>
         public string resolvedOrmKey;
-        /// <summary>Continuum built-in URN when status is BuiltInLexeme.</summary>
+        /// <summary>Continuuuum built-in URN when status is BuiltInLexeme.</summary>
         public string builtInEntryId;
         /// <summary>Built-in category when status is BuiltInLexeme.</summary>
         public VocabularyBuiltInCategory builtInCategory;

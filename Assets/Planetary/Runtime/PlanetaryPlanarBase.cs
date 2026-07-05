@@ -24,7 +24,7 @@ namespace Planetary
             if (authoredHeightmap != null)
                 _sources.Add(new AuthoredHeightmapPlanarSource(authoredHeightmap));
             if (streaming != null)
-                _sources.Add(new ContinuumTilePlanarSource(streaming));
+                _sources.Add(new ContinuuuumTilePlanarSource(streaming));
             if (googleMaskPreview != null)
             {
                 int res = Mathf.Min(googleMaskPreview.width, 256);

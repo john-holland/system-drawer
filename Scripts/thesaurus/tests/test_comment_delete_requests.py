@@ -11,13 +11,13 @@ from pathlib import Path
 import pytest
 
 _scripts = Path(__file__).resolve().parents[2]
-_api = _scripts / "continuum_api"
+_api = _scripts / "continuuuum_api"
 if str(_api) not in sys.path:
     sys.path.insert(0, str(_api))
 if str(_scripts) not in sys.path:
     sys.path.insert(0, str(_scripts))
 
-from continuum_api import server as srv
+from continuuuum_api import server as srv
 
 
 def _bootstrap_db(path: str) -> None:
@@ -69,7 +69,7 @@ def review_client(monkeypatch):
     fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     _bootstrap_db(path)
-    monkeypatch.setenv("CONTINUUM_DB", path)
+    monkeypatch.setenv("CONTINUUUUM_DB", path)
     srv._schema_initialized = True
     yield srv.app.test_client(), path
     try:

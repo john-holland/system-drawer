@@ -83872,7 +83872,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SystemDrawer::UscBuildServiceWizard
   buildMode: 0
-  continuumBaseUrl: http://localhost:5050
+  continuuuumBaseUrl: http://localhost:5050
   tenantId: default
   sourceDbPath: 
   languageVersion: 1.0.0

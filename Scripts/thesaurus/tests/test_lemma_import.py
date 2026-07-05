@@ -10,14 +10,14 @@ from pathlib import Path
 import pytest
 
 _scripts = Path(__file__).resolve().parents[2]
-_api = _scripts / "continuum_api"
+_api = _scripts / "continuuuum_api"
 if str(_api) not in sys.path:
     sys.path.insert(0, str(_api))
 if str(_scripts) not in sys.path:
     sys.path.insert(0, str(_scripts))
 
-from continuum_api.lemma_import import parse_default_properties, parse_tabular_file, upsert_lemma_row
-from continuum_api.lemma_merge import filter_entries, find_builtin_entry, find_builtin_entries_for_term, is_builtin_urn, load_builtin_vocabulary
+from continuuuum_api.lemma_import import parse_default_properties, parse_tabular_file, upsert_lemma_row
+from continuuuum_api.lemma_merge import filter_entries, find_builtin_entry, find_builtin_entries_for_term, is_builtin_urn, load_builtin_vocabulary
 
 
 def test_parse_default_properties_prompt():
@@ -47,7 +47,7 @@ def test_parse_tabular_multi_column():
 
 
 def test_is_builtin_urn():
-    assert is_builtin_urn("urn:unity:continuum:builtin:v1:/en/noun/test")
+    assert is_builtin_urn("urn:unity:continuuuum:builtin:v1:/en/noun/test")
     assert not is_builtin_urn("550e8400-e29b-41d4-a716-446655440000")
 
 
@@ -65,7 +65,7 @@ def test_find_builtin_entry():
 
 
 def test_upsert_skips_builtin_collision(mem_db):
-    from continuum_api.lemma_import import _valid_property_keys
+    from continuuuum_api.lemma_import import _valid_property_keys
 
     keys = _valid_property_keys(mem_db)
     status, err, eid = upsert_lemma_row(
@@ -80,7 +80,7 @@ def test_upsert_skips_builtin_collision(mem_db):
 
 def test_upsert_skips_in_homograph_wrong_pos(mem_db):
     """Creating 'in' with default noun POS must still hit built-in preposition."""
-    from continuum_api.lemma_import import _valid_property_keys
+    from continuuuum_api.lemma_import import _valid_property_keys
 
     keys = _valid_property_keys(mem_db)
     status, err, eid = upsert_lemma_row(
@@ -90,7 +90,7 @@ def test_upsert_skips_in_homograph_wrong_pos(mem_db):
     )
     assert status == "skipped"
     assert err == "matches built-in entry"
-    assert eid == "urn:unity:continuum:builtin:v1:/en/prep/in"
+    assert eid == "urn:unity:continuuuum:builtin:v1:/en/prep/in"
 
 
 def test_find_builtin_entries_for_term_in():
@@ -131,7 +131,7 @@ def mem_db():
 
 
 def test_upsert_lemma_row(mem_db):
-    from continuum_api.lemma_import import _valid_property_keys
+    from continuuuum_api.lemma_import import _valid_property_keys
 
     keys = _valid_property_keys(mem_db)
     status, err, eid = upsert_lemma_row(

@@ -4,28 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Script Output</title>
-  <link rel="stylesheet" href="/static/shared/continuum-nav/continuum-nav.css" />
-  <link rel="stylesheet" href="/static/shared/continuum-lemma-entry/continuum-lemma-entry.css" />
-  <link rel="stylesheet" href="/static/shared/continuum-script-editor/continuum-script-editor.css" />
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/static/shared/continuuuum-lemma-entry/continuuuum-lemma-entry.css" />
+  <link rel="stylesheet" href="/static/shared/continuuuum-script-editor/continuuuum-script-editor.css" />
   <link rel="stylesheet" href="/script-output.css" />
   <script src="/static/shared/vendor/ace.js"></script>
-  <script src="/static/shared/continuum-user-session/continuum-user-session.js"></script>
-  <script src="/static/shared/continuum-nav/continuum-nav.js"></script>
-  <script src="/static/shared/continuum-script-editor/continuum-script-spans.js"></script>
-  <script src="/static/shared/continuum-lemma-entry/continuum-lemma-entry.js"></script>
-  <script src="/static/shared/continuum-script-output/continuum-script-permissions.js"></script>
-  <script src="/static/shared/continuum-script-output/continuum-script-ack.js"></script>
-  <script src="/static/shared/continuum-script-editor/continuum-script-editor.js"></script>
-  <link rel="stylesheet" href="/static/shared/continuum-lemma-composition/continuum-lemma-composition-editor.css" />
-  <link rel="stylesheet" href="/static/shared/continuum-lemma-composition/continuum-lemma-prompt-editor.css" />
-  <script src="/static/shared/continuum-lemma-composition/continuum-lemma-picker.js"></script>
-  <script src="/static/shared/continuum-lemma-composition/continuum-lemma-composition-editor.js"></script>
-  <script src="/static/shared/continuum-lemma-composition/continuum-lemma-prompt-editor.js"></script>
-  <script src="/static/shared/continuum-clause-selector/continuum-clause-selector.js"></script>
-  <script src="/static/shared/continuum-script-output/continuum-script-output.js"></script>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/continuuuum-script-editor/continuuuum-script-spans.js"></script>
+  <script src="/static/shared/continuuuum-lemma-entry/continuuuum-lemma-entry.js"></script>
+  <script src="/static/shared/continuuuum-script-output/continuuuum-script-permissions.js"></script>
+  <script src="/static/shared/continuuuum-script-output/continuuuum-script-ack.js"></script>
+  <script src="/static/shared/continuuuum-script-editor/continuuuum-script-editor.js"></script>
+  <link rel="stylesheet" href="/static/shared/continuuuum-lemma-composition/continuuuum-lemma-composition-editor.css" />
+  <link rel="stylesheet" href="/static/shared/continuuuum-lemma-composition/continuuuum-lemma-prompt-editor.css" />
+  <script src="/static/shared/continuuuum-lemma-composition/continuuuum-lemma-picker.js"></script>
+  <script src="/static/shared/continuuuum-lemma-composition/continuuuum-lemma-composition-editor.js"></script>
+  <script src="/static/shared/continuuuum-lemma-composition/continuuuum-lemma-prompt-editor.js"></script>
+  <script src="/static/shared/continuuuum-clause-selector/continuuuum-clause-selector.js"></script>
+  <script src="/static/shared/continuuuum-script-output/continuuuum-script-output.js"></script>
 </head>
-<body class="continuum-script-output">
-  <div id="continuum-nav-root"></div>
+<body class="continuuuum-script-output">
+  <div id="continuuuum-nav-root"></div>
   <div class="so-toolbar-row">
     <label>Draft ID <input id="draft-id" type="text" placeholder="draft episode uuid" /></label>
     <label>Episode ID <input id="episode-id" type="text" placeholder="episode uuid" /></label>
@@ -96,23 +96,23 @@
   </details>
 
   <script>
-    ContinuumNav.mount({ app: 'hub', theme: 'light' });
+    ContinuuuumNav.mount({ app: 'hub', theme: 'light' });
     document.getElementById('so-add-comment-btn').onclick = () => {
-      ContinuumScriptOutput.addComment();
+      ContinuuuumScriptOutput.addComment();
     };
-    ContinuumScriptOutput.init({
+    ContinuuuumScriptOutput.init({
       apiBase: '/api',
-      getUserId: () => ContinuumUserSession.getUserId(),
+      getUserId: () => ContinuuuumUserSession.getUserId(),
     });
-    ContinuumUserSession.onChange(() => {
-      if (ContinuumScriptOutput._state && ContinuumScriptOutput._state.activeId) ContinuumScriptOutput.loadDraft();
+    ContinuuuumUserSession.onChange(() => {
+      if (ContinuuuumScriptOutput._state && ContinuuuumScriptOutput._state.activeId) ContinuuuumScriptOutput.loadDraft();
     });
     document.getElementById('table-read-btn').onclick = async () => {
       const draftId = document.getElementById('draft-id').value.trim();
       if (!draftId) return;
       const res = await fetch('/api/table-read/sessions', {
         method: 'POST',
-        headers: ContinuumUserSession.getHeaders({ 'Content-Type': 'application/json' }),
+        headers: ContinuuuumUserSession.getHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ draftEpisodeId: draftId }),
       });
       if (!res.ok) { alert('Could not start table read'); return; }

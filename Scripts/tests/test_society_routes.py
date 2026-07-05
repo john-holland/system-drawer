@@ -3,9 +3,9 @@ import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "continuum_api"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "continuuuum_api"))
 
-from continuum_api.server import app
+from continuuuum_api.server import app
 
 
 def test_society_planets_and_city_flow():

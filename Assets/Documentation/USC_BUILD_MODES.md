@@ -7,7 +7,7 @@ This document describes the first-pass USC build mode integration in Unity.
 - `Assets/SystemDrawer/UscBuildManifest.cs`
 - `Assets/SystemDrawer/UscBuildServiceWizard.cs`
 - `Assets/Misc/Editor/ServiceWizards/UscBuildServiceWizardEditor.cs`
-- `Assets/Editor/ContinuumBuildManagerWindow.cs`
+- `Assets/Editor/ContinuuuumBuildManagerWindow.cs`
 
 ## Build Modes
 
@@ -34,7 +34,7 @@ This document describes the first-pass USC build mode integration in Unity.
 
 ## Build Manager Workflow (v1)
 
-1. Open `Window -> Continuum -> Build Manager`.
+1. Open `Window -> Continuuuum -> Build Manager`.
 2. Select build mode and fill tenant/DB/language version.
 3. Enter prompt language assets as CSV.
 4. Refresh scene references.
