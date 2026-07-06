@@ -11,6 +11,9 @@ public class CalendarServiceWizardEditor : Editor
         DrawDefaultInspector();
         var w = (CalendarServiceWizard)target;
         EditorGUILayout.Space();
+        WizardStandardAssetsUi.DrawSetupSection(w,
+            "Creates a NarrativeCalendar GameObject with starter events and assigns it to this wizard.");
+        EditorGUILayout.Space();
         if (GUILayout.Button("Assign from System Drawer", GUILayout.Height(22)))
         {
             var service = SystemDrawerService.FindInScene();

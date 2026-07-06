@@ -16,6 +16,8 @@ namespace Planetary.Editor
         PlanetaryCompositionRatioModel _model = PlanetaryCompositionRatioModel.CreateLittlePrinceDefaults();
         int _presetIndex;
         Vector2 _scroll;
+        readonly System.Collections.Generic.Dictionary<string, string> _unlockReasonDrafts =
+            new System.Collections.Generic.Dictionary<string, string>();
 
         [MenuItem("Window/System Drawer/Planet/Composition UI")]
         public static void Open() => GetWindow<PlanetaryCompositionEditorWindow>("Planetary Composition");
@@ -87,6 +89,8 @@ namespace Planetary.Editor
             DrawFieldSection("SDF LOD", "sdf", false);
 
             EditorGUILayout.Space(12);
+            if (GUILayout.Button("Sync to Feature Budget"))
+                SyncToFeatureBudget();
             if (GUILayout.Button("Apply To Profiles"))
                 PushToProfiles();
             if (GUILayout.Button("Apply & Rebuild Planet"))
@@ -162,35 +166,117 @@ namespace Planetary.Editor
         {
             if (!_model.TryGetField(id, out var field))
                 return;
+            bool budgetGoverned = IsBudgetGovernedField(id);
+            if (budgetGoverned && FeatureBudget.IsAvailable && FeatureBudget.IsBudgetMode)
+            {
+                float g = FeatureBudget.GetRatioEffective(id);
+                EditorGUILayout.LabelField($"{label} (budget effective @ R)", g.ToString("F3"));
+            }
+
             EditorGUILayout.BeginHorizontal();
-            bool locked = EditorGUILayout.Toggle(field.ratioLocked, GUILayout.Width(18));
+            bool wantsLocked = field.ratioLocked;
+            wantsLocked = EditorGUILayout.Toggle(wantsLocked, GUILayout.Width(18));
+
             float value = field.ratioLocked
                 ? field.ratio * _model.anchorRadius
                 : field.manualOverride;
             EditorGUI.BeginChangeCheck();
-            value = EditorGUILayout.FloatField(label, value);
+            using (new EditorGUI.DisabledScope(budgetGoverned && field.ratioLocked))
+                value = EditorGUILayout.FloatField(label, value);
             if (EditorGUI.EndChangeCheck())
             {
-                if (locked)
+                if (field.ratioLocked)
                     field.ratio = _model.anchorRadius > 1e-6f ? value / _model.anchorRadius : value;
                 else
                     field.manualOverride = value;
-                field.ratioLocked = locked;
                 _model.SetField(field);
                 PushToProfiles();
             }
-            else if (locked != field.ratioLocked)
+            else if (wantsLocked != field.ratioLocked)
             {
-                field.ratioLocked = locked;
+                if (budgetGoverned && !wantsLocked)
+                {
+                    if (!TryPromptUnlockReason(id))
+                        wantsLocked = true;
+                }
+                field.ratioLocked = wantsLocked;
                 _model.SetField(field);
             }
             EditorGUILayout.EndHorizontal();
+
+            if (budgetGoverned && field.ratioLocked)
+            {
+                if (!_unlockReasonDrafts.ContainsKey(id))
+                    _unlockReasonDrafts[id] = "";
+                _unlockReasonDrafts[id] = EditorGUILayout.TextField("Unlock reason", _unlockReasonDrafts[id]);
+            }
+        }
+
+        static bool IsBudgetGovernedField(string id)
+        {
+            return id.StartsWith("horizon.") || id.StartsWith("sdf.")
+                || id == FeatureBudgetRatioFieldIds.WeatherThickness
+                || id == FeatureBudgetRatioFieldIds.AtmosCloudBase
+                || id == FeatureBudgetRatioFieldIds.AtmosCloudTop
+                || id == FeatureBudgetRatioFieldIds.LavaThickness
+                || id == FeatureBudgetRatioFieldIds.MantleThickness;
+        }
+
+        bool HasUnlockReason(string id) =>
+            _unlockReasonDrafts.TryGetValue(id, out var r) && FeatureBudgetRatioBinding.IsValidUnlockReason(r);
+
+        bool TryPromptUnlockReason(string id)
+        {
+            if (HasUnlockReason(id))
+                return true;
+            EditorUtility.DisplayDialog("Unlock blocked",
+                "Budget-governed ratio fields require a non-empty unlock reason.", "OK");
+            return false;
+        }
+
+        void SyncToFeatureBudget()
+        {
+            PushToProfiles();
+            var profile = FindFeatureBudgetProfile();
+            if (profile == null)
+            {
+                EditorUtility.DisplayDialog("Feature Budget", "No FeatureBudgetProfile found in project or scene.", "OK");
+                return;
+            }
+            if (_body != null)
+            {
+                _body.ratioModel = _model;
+                EditorUtility.SetDirty(_body);
+            }
+            var registry = new FeatureBudgetRatioRegistry();
+            registry.LoadFromProfile(profile);
+            if (_body != null)
+                registry.SyncFromPlanetSource(new PlanetRatioSource(_body), profile);
+            registry.WriteBackToProfile(profile);
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+        }
+
+        static FeatureBudgetProfile FindFeatureBudgetProfile()
+        {
+            var runtime = Object.FindFirstObjectByType<FeatureBudgetRuntime>(FindObjectsInactive.Include);
+            if (runtime != null && runtime.profile != null)
+                return runtime.profile;
+            string[] guids = AssetDatabase.FindAssets("t:FeatureBudgetProfile");
+            if (guids.Length == 0)
+                return null;
+            return AssetDatabase.LoadAssetAtPath<FeatureBudgetProfile>(AssetDatabase.GUIDToAssetPath(guids[0]));
         }
 
         void PushToProfiles()
         {
             PlanetaryCompositionRatioSolver.WriteToProfile(
                 _model, _body, _composition, _atmosphere, _horizon, _sdfLod);
+            if (_body != null)
+            {
+                _body.ratioModel = _model;
+                EditorUtility.SetDirty(_body);
+            }
             if (_composition != null)
                 EditorUtility.SetDirty(_composition);
             if (_atmosphere != null)

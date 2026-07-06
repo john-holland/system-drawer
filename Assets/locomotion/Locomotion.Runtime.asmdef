@@ -1,15 +1,16 @@
 {
   "name": "Locomotion.Runtime",
   "rootNamespace": "",
-  "references": [
-    "BedogaPlacement",
-    "Weather.Runtime",
-    "HierarchicalPathFinding",
-    "Locomotion.Audio",
-    "Planetary",
-    "Continuuuum.Runtime",
-    "Locomotion.Narrative.Runtime"
-  ],
+    "references": [
+        "BedogaPlacement",
+        "Weather.Runtime",
+        "HierarchicalPathFinding",
+        "Locomotion.Audio",
+        "Planetary",
+        "Continuuuum.Runtime",
+        "Locomotion.Narrative.Runtime",
+        "SystemDrawer.FeatureBudget"
+    ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

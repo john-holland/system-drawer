@@ -40,9 +40,18 @@ namespace Planetary.Rendering
                 ? _horizon.SelectBand(altitudeMSL, cloudBaseM, cloudTopM)
                 : PlanetaryAltitudeBand.Surface;
 
+            float nearKm = PlanetaryFeatureBudget.EffectiveSdfNearKm(
+                _profile != null ? _profile.nearFullSdfKm : 0.5f);
+            float farKm = PlanetaryFeatureBudget.EffectiveSdfFarKm(
+                _profile != null ? _profile.farFullSdfKm : 2f);
             float detailCoeff = _profile != null
-                ? Mathf.InverseLerp(_profile.farFullSdfKm, _profile.nearFullSdfKm, surfaceDistKm)
+                ? Mathf.InverseLerp(farKm, nearKm, surfaceDistKm)
                 : 0.5f;
+            if (band == PlanetaryAltitudeBand.Space)
+                detailCoeff = 0f;
+
+            float planetG = FeatureBudget.IsAvailable ? FeatureBudget.GetGranularity(FeatureBudgetIds.Planet) : 1f;
+            detailCoeff *= planetG;
             if (band == PlanetaryAltitudeBand.Space)
                 detailCoeff = 0f;
 

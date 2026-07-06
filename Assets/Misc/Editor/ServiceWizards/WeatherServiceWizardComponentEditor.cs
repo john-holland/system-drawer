@@ -9,6 +9,9 @@ public class WeatherServiceWizardComponentEditor : Editor
         DrawDefaultInspector();
         var w = (WeatherServiceWizardComponent)target;
         EditorGUILayout.Space();
+        WizardStandardAssetsUi.DrawSetupSection(w,
+            "Creates WeatherSystem, subsystems, links references, and applies the Clear Day preset.");
+        EditorGUILayout.Space();
         if (GUILayout.Button("Assign from System Drawer", GUILayout.Height(22)))
         {
             var service = SystemDrawerService.FindInScene();

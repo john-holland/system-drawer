@@ -31,12 +31,25 @@ namespace Planetary.Composition
 
         public LodTier SelectLod(float surfaceDistanceKm, float altitudeMSL, float cloudBaseM, float cloudTopM)
         {
+            float fullSimKm = _settings != null ? _settings.fullSimRadiusKm : 50f;
+            float horizonKm = _settings != null ? _settings.horizonDistanceKm : 500f;
+            return SelectLod(surfaceDistanceKm, altitudeMSL, cloudBaseM, cloudTopM, fullSimKm, horizonKm);
+        }
+
+        public LodTier SelectLod(
+            float surfaceDistanceKm,
+            float altitudeMSL,
+            float cloudBaseM,
+            float cloudTopM,
+            float fullSimRadiusKm,
+            float horizonDistanceKm)
+        {
             var band = SelectBand(altitudeMSL, cloudBaseM, cloudTopM);
             if (band == PlanetaryAltitudeBand.Space)
                 return LodTier.SpaceImpostor;
-            if (surfaceDistanceKm > (_settings != null ? _settings.horizonDistanceKm : 500f))
+            if (surfaceDistanceKm > horizonDistanceKm)
                 return LodTier.FarImpostor;
-            if (surfaceDistanceKm > (_settings != null ? _settings.fullSimRadiusKm : 50f)
+            if (surfaceDistanceKm > fullSimRadiusKm
                 || altitudeMSL > (_settings != null ? _settings.fullSimAltitudeMaxM : 12000f))
                 return LodTier.MidPrebake;
             return LodTier.FullSim;

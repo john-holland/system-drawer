@@ -9,6 +9,9 @@ public class Spatial4DServiceWizardEditor : Editor
         DrawDefaultInspector();
         var w = (Spatial4DServiceWizard)target;
         EditorGUILayout.Space();
+        WizardStandardAssetsUi.DrawSetupSection(w,
+            "Creates Spatial4DOrchestrator with a SpatialGenerator4D child and wires the orchestrator slot.");
+        EditorGUILayout.Space();
         if (GUILayout.Button("Assign from System Drawer", GUILayout.Height(22)))
         {
             var service = SystemDrawerService.FindInScene();

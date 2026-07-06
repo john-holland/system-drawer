@@ -2,7 +2,8 @@
   "name": "Weather.Editor",
   "rootNamespace": "Weather",
   "references": [
-    "Weather.Runtime"
+    "Weather.Runtime",
+    "SystemDrawer"
   ],
   "includePlatforms": [
     "Editor"

@@ -46,6 +46,10 @@ namespace Planetary
         public PlanetInteriorPhysicsUpdater interiorUpdater;
         public PlanetarySimulationScheduler simulationScheduler;
 
+        [Header("Feature Budget")]
+        [Tooltip("Ratio model snapshot from Composition UI; synced to Feature Budget at runtime.")]
+        public PlanetaryCompositionRatioModel ratioModel;
+
         [Header("Physics bridge gizmos")]
         public bool drawPhysicsBridgeGizmos = true;
         public PlanetPhysicsManifoldBridge physicsManifoldBridge;
@@ -74,6 +78,14 @@ namespace Planetary
             }
 
             RebuildAll();
+        }
+
+        void OnEnable()
+        {
+            if (ratioModel == null)
+                ratioModel = PlanetaryCompositionRatioModel.CreateLittlePrinceDefaults();
+            if (Application.isPlaying)
+                FeatureBudget.RegisterPlanetSource(new PlanetRatioSource(this));
         }
 
         void EnsureComponentRefs()

@@ -1,4 +1,6 @@
 using System;
+using SystemDrawer.DreamCycle;
+using SystemDrawer.Quest;
 using UnityEditor;
 using UnityEngine;
 
@@ -33,6 +35,11 @@ internal static class SystemDrawerFacilitatorEditorUtility
         EnsureBind<RagdollServiceWizard>(child, so, "ragdollWizard");
         EnsureBind<UscBuildServiceWizard>(child, so, "uscBuildWizard");
         EnsureBind<WeatherServiceWizardComponent>(child, so, "weatherWizard");
+        EnsureBind<PlanetServiceWizardComponent>(child, so, "planetWizard");
+        EnsureBind<QuestServiceWizard>(child, so, "questServiceWizard");
+        EnsureBind<DreamCycleServiceWizard>(child, so, "dreamServiceWizard");
+
+        EnsureBindNetworkingWizards(child, so);
 
         var spatialType = ResolveSpatialWizardType();
         if (spatialType != null)
@@ -54,6 +61,27 @@ internal static class SystemDrawerFacilitatorEditorUtility
         var c = go.GetComponent<T>();
         if (c == null)
             c = Undo.AddComponent<T>(go);
+        var p = so.FindProperty(propName);
+        if (p != null)
+            p.objectReferenceValue = c;
+    }
+
+    private static void EnsureBindNetworkingWizards(GameObject child, SerializedObject so)
+    {
+        var netType = Type.GetType("NetworkServiceWizard, SystemDrawer.Networking");
+        if (netType != null)
+            EnsureBindByType(child, so, "networkServiceWizard", netType);
+
+        var menuType = Type.GetType("MenuRagdollServiceWizard, SystemDrawer.Networking");
+        if (menuType != null)
+            EnsureBindByType(child, so, "menuRagdollServiceWizard", menuType);
+    }
+
+    private static void EnsureBindByType(GameObject go, SerializedObject so, string propName, Type componentType)
+    {
+        var c = go.GetComponent(componentType);
+        if (c == null)
+            c = Undo.AddComponent(go, componentType);
         var p = so.FindProperty(propName);
         if (p != null)
             p.objectReferenceValue = c;

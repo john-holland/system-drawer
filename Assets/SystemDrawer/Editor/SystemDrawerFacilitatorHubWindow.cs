@@ -104,6 +104,18 @@ internal static class FacilitatorHubUi
                 }
             }
 
+            if (GUILayout.Button("Setup Standard Assets (all applicable)", GUILayout.Height(28)))
+            {
+                if (fac != null)
+                {
+                    var report = WizardStandardAssetsFacade.SetupAllForFacilitator(fac);
+                    EditorUtility.SetDirty(fac);
+                    if (facilitatorSo != null)
+                        facilitatorSo.Update();
+                    EditorUtility.DisplayDialog("Setup Standard Assets", report.Summary, "OK");
+                }
+            }
+
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Pull from SystemDrawerService"))
             {
@@ -225,6 +237,7 @@ internal static class SystemDrawerHubSetup
         }
         var svc = Undo.AddComponent<SystemDrawerService>(root);
         var fac = Undo.AddComponent<SystemDrawerFacilitator>(root);
+        var budget = Undo.AddComponent<FeatureBudgetRuntime>(root);
         var w = new GameObject("_Wizards");
         Undo.RegisterCreatedObjectUndo(w, "Create _Wizards");
         Undo.RecordObject(w.transform, "Parent _Wizards");
@@ -232,6 +245,22 @@ internal static class SystemDrawerHubSetup
         EditorUtility.SetDirty(root);
         EditorUtility.SetDirty(svc);
         EditorUtility.SetDirty(fac);
+        if (budget.profile == null)
+        {
+            var profile = ScriptableObject.CreateInstance<FeatureBudgetProfile>();
+            profile.EnsureDefaults();
+            const string assetDir = "Assets/SystemDrawer/FeatureBudget";
+            if (!AssetDatabase.IsValidFolder(assetDir))
+            {
+                if (!AssetDatabase.IsValidFolder("Assets/SystemDrawer"))
+                    AssetDatabase.CreateFolder("Assets", "SystemDrawer");
+                AssetDatabase.CreateFolder("Assets/SystemDrawer", "FeatureBudget");
+            }
+            string assetPath = AssetDatabase.GenerateUniqueAssetPath($"{assetDir}/DefaultFeatureBudgetProfile.asset");
+            AssetDatabase.CreateAsset(profile, assetPath);
+            budget.profile = profile;
+        }
+        EditorUtility.SetDirty(budget);
         Selection.activeGameObject = root;
         EditorSceneManager.MarkSceneDirty(root.scene);
         Debug.Log("[SystemDrawerHub] Created SystemDrawer root with service, facilitator, and _Wizards child.");

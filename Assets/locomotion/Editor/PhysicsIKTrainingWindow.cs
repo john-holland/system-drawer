@@ -187,9 +187,10 @@ public class PhysicsIKTrainingWindow : EditorWindow
         if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
         {
             // Delay resolution until scene is fully loaded (one frame after transition).
+            bool enteredPlayMode = state == PlayModeStateChange.EnteredPlayMode;
             EditorApplication.delayCall += () =>
             {
-                TryResolveSceneReferences();
+                TryResolveSceneReferences(rebindSceneRefs: enteredPlayMode);
                 Repaint();
             };
         }
@@ -209,8 +210,14 @@ public class PhysicsIKTrainingWindow : EditorWindow
     }
 
     /// <summary>Restore solver and ragdollRigidbody when they are null after domain reload or Play Mode enter.</summary>
-    private void TryResolveSceneReferences()
+    private void TryResolveSceneReferences(bool rebindSceneRefs = false)
     {
+        if (rebindSceneRefs)
+        {
+            solver = null;
+            ragdollRigidbody = null;
+        }
+
         if (solver == null)
         {
             string expectedName = null;

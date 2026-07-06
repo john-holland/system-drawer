@@ -1378,12 +1378,7 @@ namespace Weather
 
             if (GUILayout.Button("Auto-Setup Weather System", GUILayout.Height(30)))
             {
-                if (EditorUtility.DisplayDialog("Auto-Setup", 
-                    "This will create all required GameObjects and components. Continue?",
-                    "Yes", "Cancel"))
-                {
-                    AutoSetupWeatherSystem();
-                }
+                AutoSetupWeatherSystem();
             }
 
             EditorGUILayout.Space(10);
@@ -1418,47 +1413,16 @@ namespace Weather
 
         private void AutoSetupWeatherSystem()
         {
-            // Create main weather object if it doesn't exist
-            if (mainWeatherObject == null)
+            if (EditorUtility.DisplayDialog("Auto-Setup",
+                    "This will create all required GameObjects and components. Continue?",
+                    "Yes", "Cancel"))
             {
-                mainWeatherObject = CreateMainWeatherObject();
+                var report = WeatherStandardAssets.SetupForWizard(null);
+                FindExistingComponents();
+                EditorUtility.DisplayDialog("Auto-Setup Complete",
+                    "Weather system has been set up automatically!\n\n" + report.Summary,
+                    "OK");
             }
-
-            // Create subsystem objects if they don't exist
-            if (cloudObject == null)
-                cloudObject = CreateSubsystemObject<Cloud>("Cloud");
-
-            if (windObject == null)
-                windObject = CreateSubsystemObject<Wind>("Wind");
-
-            if (terrainObject == null)
-                terrainObject = CreateTerrainObject();
-
-            if (waterObject == null)
-                waterObject = CreateSubsystemObject<Water>("Water");
-
-            // Auto-link all references
-            AutoLinkReferences();
-
-            // Apply recommended settings
-            ApplyRecommendedSettings();
-
-            // Apply default preset (Clear Day)
-            ApplyPreset(WeatherPreset.ClearDay);
-
-            // Validate setup
-            ValidateSetup();
-
-            EditorUtility.DisplayDialog("Auto-Setup Complete",
-                "Weather system has been set up automatically!\n\n" +
-                "All required GameObjects and components have been created.\n" +
-                "References have been linked.\n" +
-                "Recommended settings have been applied.\n\n" +
-                "Please review the setup in the wizard.",
-                "OK");
-
-            // Refresh the window
-            FindExistingComponents();
         }
 
         private void ApplyPreset(WeatherPreset preset)

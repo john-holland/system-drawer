@@ -1,3 +1,4 @@
+using Planetary;
 using Planetary.Composition;
 using UnityEngine;
 
@@ -44,10 +45,14 @@ namespace Planetary.AsteroidBelt
             var horizonCtrl = horizonSettings != null
                 ? new PlanetaryHorizonLodController(horizonSettings)
                 : _horizon;
-            LodTier tier = horizonCtrl.SelectLod(distKm, 0f, 0f, 0f);
+            LodTier tier = PlanetaryFeatureBudget.SelectLodWithBudget(
+                horizonCtrl, distKm, 0f, 0f, 0f,
+                horizonSettings != null ? horizonSettings.fullSimRadiusKm : 50f,
+                horizonSettings != null ? horizonSettings.horizonDistanceKm : 500f);
 
+            float beltG = FeatureBudget.IsAvailable ? FeatureBudget.GetGranularity(FeatureBudgetIds.AsteroidBelt) : 1f;
             float spawnT = Mathf.InverseLerp(spawnFadeStartKm, spawnFadeEndKm, distKm);
-            float discOpacity = 1f - spawnT;
+            float discOpacity = (1f - spawnT) * beltG;
             if (tier == LodTier.SpaceImpostor || tier == LodTier.FarImpostor)
                 discOpacity = Mathf.Max(discOpacity, 0.85f);
 
@@ -55,7 +60,7 @@ namespace Planetary.AsteroidBelt
                 discRenderer.SetOpacity(discOpacity, manifold.SampleDensity(observer.position));
 
             if (population != null)
-                population.SetActive(spawnT > 0.1f, observer.position);
+                population.SetActive(spawnT > 0.1f && beltG > 0.1f, observer.position);
         }
     }
 }

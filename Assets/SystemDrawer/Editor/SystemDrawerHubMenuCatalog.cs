@@ -45,6 +45,7 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Continuuuum", "Continuuuum Library", "Window/Continuuuum/Continuuuum Library"),
         new Entry("Diagnostics", "Memory Swizzle View", "Window/System Drawer/Diagnostics/Memory Swizzle View"),
         new Entry("Diagnostics", "Perf Trace View", "Window/System Drawer/Diagnostics/Perf Trace View"),
+        new Entry("Diagnostics", "Feature Budget", "Window/System Drawer/Diagnostics/Feature Budget"),
         new Entry("Diagnostics", "Perform GC Pass", "Window/System Drawer/Diagnostics/Perform GC Pass"),
         new Entry("Planet", "Import Planar Scan", "Window/System Drawer/Planet/Import Planar Scan"),
         new Entry("Planet", "Bake Composition", "Window/System Drawer/Planet/Bake Composition"),

@@ -9,7 +9,8 @@
         "Planetary",
         "Weather.Runtime",
         "Roads.Runtime",
-        "HierarchicalPathFinding"
+        "HierarchicalPathFinding",
+        "SystemDrawer.FeatureBudget"
     ],
     "includePlatforms": [
         "Editor"

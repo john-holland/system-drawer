@@ -129,6 +129,9 @@ namespace Weather.Executor
 
         public void TickClient(float deltaTime)
         {
+            if (!FeatureBudget.IsFeatureActive(FeatureBudgetIds.Weather))
+                return;
+
             _frameIndex++;
             ActivationGate.emergenceOnlyMode = emergenceOnlyMode;
 
@@ -143,6 +146,8 @@ namespace Weather.Executor
             float activationWeight = field != null && focusTransform != null
                 ? field.GetActivationWeight(focusTransform.position)
                 : 0f;
+            activationWeight *= FeatureBudget.GetGranularity(FeatureBudgetIds.Weather);
+            _ = FeatureBudget.GetRatioEffective(FeatureBudgetRatioFieldIds.WeatherThickness);
 
             PlayerWeatherEggZone egg = GetOrCreateEgg("local");
             Vector3 defaultRadii = defaultEggRadii;

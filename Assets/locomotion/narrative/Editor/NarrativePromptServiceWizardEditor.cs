@@ -52,29 +52,8 @@ public class NarrativePromptServiceWizardEditor : Editor
 
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Setup", EditorStyles.miniBoldLabel);
-        if (GUILayout.Button("Create LSTM prompt rig (on this GameObject)", GUILayout.Height(22)))
-        {
-            Undo.RecordObject(w.gameObject, "Create LSTM Rig");
-            var interp = w.GetComponent<NarrativeLSTMPromptInterpreter>();
-            if (interp == null) interp = Undo.AddComponent<NarrativeLSTMPromptInterpreter>(w.gameObject);
-            var sum = w.GetComponent<NarrativeLSTMSummarizer>();
-            if (sum == null) sum = Undo.AddComponent<NarrativeLSTMSummarizer>(w.gameObject);
-            var ui = w.GetComponent<NarrativeLSTMUI>();
-            if (ui == null) ui = Undo.AddComponent<NarrativeLSTMUI>(w.gameObject);
-            ui.summarizer = sum;
-            ui.promptInterpreter = interp;
-            w.promptInterpreter = interp;
-            w.summarizer = sum;
-            if (w.calendarAsset == null)
-            {
-                var cal = Object.FindAnyObjectByType<NarrativeCalendarAsset>();
-                if (cal != null) { w.calendarAsset = cal; sum.calendar = cal; interp.calendar = cal; }
-            }
-            serializedObject.Update();
-            EditorUtility.SetDirty(w);
-            EditorUtility.DisplayDialog("Narrative Prompt Wizard", "Added NarrativeLSTMPromptInterpreter, NarrativeLSTMSummarizer, and NarrativeLSTMUI. Assign vocab and model paths (StreamingAssets/NarrativeLSTM/) and run Export for LSTM training if you haven't yet.", "OK");
-        }
-
+        WizardStandardAssetsUi.DrawSetupSection(w,
+            "Creates LSTM rig components, ensures a narrative calendar exists, and wires cross-references.");
         if (GUILayout.Button("Export for LSTM training...", GUILayout.Height(22)))
         {
             EditorApplication.ExecuteMenuItem("Locomotion/Narrative/Export for LSTM training...");

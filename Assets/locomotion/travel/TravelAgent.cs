@@ -165,8 +165,13 @@ public class TravelAgent : MonoBehaviour
     public bool gravityAwarePathingForPreview;
     public Locomotion.Spaceship.GravityAwarePathingSolver gravityPathing = new Locomotion.Spaceship.GravityAwarePathingSolver();
 
+    [Header("Feature Budget / Pathing")]
+    [Tooltip("Minimum seconds between automatic preview replans when pathing budget is active.")]
+    public float replanIntervalSeconds = 2f;
+
     GalacticTravelSnapshot _lastGalacticSnapshot;
     Vector3 _lastGalacticEmitPos;
+    float _replanTimer;
 
     /// <summary>Fired when observer crosses SOI, lattice cell, or significant move.</summary>
     public event Action<GalacticTravelSnapshot> GalacticPositionChanged;
@@ -198,6 +203,12 @@ public class TravelAgent : MonoBehaviour
 
     void Update()
     {
+        TickGalacticSnapshots();
+        TickPathingBudget();
+    }
+
+    void TickGalacticSnapshots()
+    {
         if (!emitGalacticPositionEvents)
             return;
         Vector3 pos = ResolveMultibodyActorWorld();
@@ -225,6 +236,26 @@ public class TravelAgent : MonoBehaviour
         _lastGalacticSnapshot = snap;
         _lastGalacticEmitPos = pos;
         GalacticPositionChanged?.Invoke(snap);
+    }
+
+    void TickPathingBudget()
+    {
+        if (!Application.isPlaying || pathingSolverForPreview == null)
+            return;
+        if (!FeatureBudget.IsFeatureActive(FeatureBudgetIds.Pathing))
+            return;
+
+        float g = FeatureBudget.GetGranularity(FeatureBudgetIds.Pathing);
+        float horizonKm = FeatureBudget.GetRatioEffective(FeatureBudgetRatioFieldIds.HorizonDistanceKm);
+        float interval = FeatureBudgetGranularityBridge.ScaleIntervalByGranularity(replanIntervalSeconds, g);
+        if (horizonKm > 0f)
+            interval *= Mathf.Clamp(horizonKm / 2f, 0.5f, 4f);
+
+        _replanTimer += Time.deltaTime;
+        if (_replanTimer < interval)
+            return;
+        _replanTimer = 0f;
+        RebuildCachedPlan();
     }
 
     public Transform ResolveHierarchyRoot()

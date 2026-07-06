@@ -1,0 +1,16 @@
+{
+    "name": "SystemDrawer.FeatureBudget",
+    "rootNamespace": "",
+    "references": [
+        "SystemDrawer.PerfTrace"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

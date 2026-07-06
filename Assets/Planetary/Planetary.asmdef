@@ -1,11 +1,12 @@
 {
     "name": "Planetary",
     "rootNamespace": "Planetary",
-  "references": [
+    "references": [
     "SdfMax",
         "HierarchicalPathFinding",
         "Weather.Runtime",
-        "SystemDrawer.PerfTrace"
+        "SystemDrawer.PerfTrace",
+        "SystemDrawer.FeatureBudget"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

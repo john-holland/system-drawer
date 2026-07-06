@@ -4,7 +4,8 @@
     "references": [
         "Planetary",
         "SdfMax",
-        "Weather.Runtime"
+        "Weather.Runtime",
+        "SystemDrawer.FeatureBudget"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],

@@ -2,7 +2,8 @@
   "name": "Weather.Runtime",
   "rootNamespace": "Weather",
   "references": [
-    "SystemDrawer.PerfTrace"
+    "SystemDrawer.PerfTrace",
+    "SystemDrawer.FeatureBudget"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

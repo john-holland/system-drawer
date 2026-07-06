@@ -10,6 +10,15 @@ public class RagdollServiceWizardEditor : Editor
         DrawDefaultInspector();
         var w = (RagdollServiceWizard)target;
         EditorGUILayout.Space();
+        if (GUILayout.Button("Setup Standard Assets (placeholder root)", GUILayout.Height(28)))
+        {
+            var report = WizardStandardAssetsFacade.SetupForWizard(w);
+            EditorUtility.DisplayDialog("Setup Standard Assets", report.Summary, "OK");
+        }
+        EditorGUILayout.HelpBox(
+            "Creates an empty RagdollRoot GameObject. Use Ragdoll Fitting Wizard to fit a character mesh.",
+            MessageType.Info);
+        EditorGUILayout.Space();
         if (GUILayout.Button("Assign from System Drawer", GUILayout.Height(22)))
         {
             var service = SystemDrawerService.FindInScene();

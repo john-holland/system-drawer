@@ -4,6 +4,7 @@
     "references": [
         "SystemDrawer.Networking",
         "SystemDrawer",
+        "SystemDrawer.Editor",
         "BedogaGenerator"
     ],
     "includePlatforms": [

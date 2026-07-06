@@ -4,6 +4,7 @@
     "references": [
         "BedogaGenerator",
         "SystemDrawer",
+        "SystemDrawer.Editor",
         "Locomotion.Narrative.Runtime",
         "Locomotion.Narrative.Editor",
         "HierarchicalPathFinding",

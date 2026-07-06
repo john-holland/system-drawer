@@ -76,7 +76,7 @@ namespace Locomotion.Audio
                 return;
             }
 
-            string fullPath = Path.Combine(Application.dataPath, "..", soundManifestPath);
+            string fullPath = ResolveManifestFullPath(soundManifestPath);
             if (!File.Exists(fullPath))
             {
                 Debug.LogWarning($"[ActorSoundStore] Manifest file not found: {fullPath}");
@@ -381,6 +381,21 @@ namespace Locomotion.Audio
                 }
             }
             return maxId + 1;
+        }
+
+        static string ResolveManifestFullPath(string manifestPath)
+        {
+            if (string.IsNullOrEmpty(manifestPath))
+                return manifestPath;
+            if (manifestPath.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase)
+                || manifestPath.StartsWith("Assets\\", StringComparison.OrdinalIgnoreCase))
+            {
+                string relative = manifestPath.Substring(7).TrimStart('/', '\\');
+                return Path.Combine(Application.dataPath, relative);
+            }
+            return Path.IsPathRooted(manifestPath)
+                ? manifestPath
+                : Path.Combine(Application.dataPath, manifestPath);
         }
     }
 }

@@ -17,7 +17,20 @@ namespace Planetary.Rendering
                 return;
             var sc = SphericalCoordinates.FromWorldPosition(
                 cam.transform.position, body.PlanetCenter, body.StablePoleAxis, body.PrimeMeridianOffsetDeg);
-            _streaming.RequestTilesAroundPlayer(body, 0, 1);
+            int lod = 0;
+            int radius = 1;
+            if (FeatureBudget.IsAvailable && FeatureBudget.IsFeatureActive(FeatureBudgetIds.PlanetStreaming))
+            {
+                float g = FeatureBudget.GetGranularity(FeatureBudgetIds.PlanetStreaming);
+                lod = FeatureBudgetGranularityBridge.MapGranularityToLodTierOffset(1f - g);
+                radius = Mathf.Max(1, Mathf.RoundToInt(g * 2f));
+            }
+            else if (FeatureBudget.IsAvailable && !FeatureBudget.IsFeatureActive(FeatureBudgetIds.PlanetStreaming))
+            {
+                return;
+            }
+
+            _streaming.RequestTilesAroundPlayer(body, lod, radius);
             _revealNadir = _streaming.GetCoverageFraction(sc.LatitudeDeg, sc.LongitudeDeg, body.chunksPerFace);
         }
     }

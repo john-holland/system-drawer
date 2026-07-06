@@ -11,6 +11,9 @@ public class UscBuildServiceWizardEditor : Editor
         var wizard = (UscBuildServiceWizard)target;
 
         EditorGUILayout.Space();
+        WizardStandardAssetsUi.DrawSetupSection(wizard,
+            "Creates DefaultUscBuildManifest.json under Assets/SystemDrawer/StandardAssets/USC/ and assigns manifestJson.");
+        EditorGUILayout.Space();
         if (GUILayout.Button("Assign from System Drawer", GUILayout.Height(22)))
         {
             var service = SystemDrawerService.FindInScene();
