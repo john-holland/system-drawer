@@ -1,0 +1,223 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3aecd1d907310549886928df5c01e03, type: 3}
+  m_Name: FeatureBudgetProfile
+  m_EditorClassIdentifier: SystemDrawer.FeatureBudget::FeatureBudgetProfile
+  targetFrameCpuMs: 16.67
+  warnThreshold: 0.9
+  rollingWindowFrames: 60
+  entries:
+  - featureId: weather
+    displayName: Weather
+    importanceRank: 0
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - WeatherSystem.
+    - WeatherPhysicsManifold.
+    ratioFieldIds:
+    - weather.thickness
+    - atmos.cloudBase
+    - atmos.cloudTop
+    supportsAestheticGranularity: 1
+  - featureId: planet
+    displayName: Planet / Horizon
+    importanceRank: 1
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - RebuildAll
+    - RebakeComposition
+    ratioFieldIds:
+    - horizon.fullSimRadiusKm
+    - horizon.horizonDistanceKm
+    - sdf.nearFullSdfKm
+    - sdf.farFullSdfKm
+    supportsAestheticGranularity: 1
+  - featureId: planet_sim
+    displayName: Planet Simulation
+    importanceRank: 2
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PlateTectonics
+    - LavaAdvect
+    ratioFieldIds:
+    - lava.thickness
+    - mantle.thickness
+    supportsAestheticGranularity: 1
+  - featureId: asteroid_belt
+    displayName: Asteroid Belt
+    importanceRank: 3
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - AsteroidBelt
+    ratioFieldIds:
+    - horizon.horizonDistanceKm
+    supportsAestheticGranularity: 1
+  - featureId: planet_streaming
+    displayName: Planet Tile Streaming
+    importanceRank: 4
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PlanetTile
+    - RequestTile
+    ratioFieldIds:
+    - sdf.nearFullSdfKm
+    supportsAestheticGranularity: 1
+  - featureId: pathing
+    displayName: Pathing / Travel
+    importanceRank: 5
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - SyncRenderComponents
+    - TravelAgent
+    - HierarchicalPath
+    ratioFieldIds:
+    - horizon.horizonDistanceKm
+    supportsAestheticGranularity: 1
+  - featureId: networking
+    displayName: Networking
+    importanceRank: 6
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - NetworkLod
+    - TreeStream
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: spatial4d
+    displayName: Spatial 4D
+    importanceRank: 7
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - Spatial4D
+    - Bedoga
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: ragdoll
+    displayName: Ragdoll / Animation
+    importanceRank: 8
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - Ragdoll
+    - AnimationTree
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: narrative
+    displayName: Narrative
+    importanceRank: 9
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - Narrative
+    - Calendar
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: dreamcycle
+    displayName: Dream Cycle
+    importanceRank: 10
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - DreamCycle
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: society
+    displayName: Society / Political
+    importanceRank: 11
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PoliticalSim
+    - Society
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: usc
+    displayName: USC Build
+    importanceRank: 12
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - USC
+    - SemanticCompress
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  ratioBindings:
+  - fieldId: horizon.fullSimRadiusKm
+    ratio: 0.002
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: planet
+  - fieldId: horizon.horizonDistanceKm
+    ratio: 0.004
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: planet
+  - fieldId: sdf.nearFullSdfKm
+    ratio: 0.001
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: planet
+  - fieldId: sdf.farFullSdfKm
+    ratio: 0.004
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: planet
+  - fieldId: weather.thickness
+    ratio: 0.3
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: weather
+  - fieldId: atmos.cloudBase
+    ratio: 0.1
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: weather
+  - fieldId: atmos.cloudTop
+    ratio: 0.3
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: weather
+  - fieldId: lava.thickness
+    ratio: 0.1
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: planet_sim
+  - fieldId: mantle.thickness
+    ratio: 0.6
+    ratioLocked: 1
+    budgetGoverned: 1
+    unlockReason: 
+    manualOverride: 0
+    sourceFeatureId: planet_sim

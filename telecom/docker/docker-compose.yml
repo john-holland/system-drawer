@@ -1,32 +1,96 @@
-services:
-  continuuuum-api:
-    build:
-      context: ../..
-      dockerfile: telecom/docker/Dockerfile.api
-    ports:
-      - "5050:5050"
-    environment:
-      CONTINUUUUM_DB: /data/continuuuum.db
-      TELECOM_FRAME_BACKEND: icp_mock
-      TELECOM_FRAME_BASE_URL: http://telecom-frame-processor:4943
-    volumes:
-      - telecom-data:/data
-      - ../../telecom:/app/telecom:ro
-
-  telecom-frame-processor:
-    build:
-      context: ./icp-canister-mock
-    ports:
-      - "4943:4943"
-
-  telecom-webtop:
-    build:
-      context: ../../apps/telecom-webtop
-      dockerfile: ../../telecom/docker/Dockerfile.webtop
-    ports:
-      - "8080:80"
-    depends_on:
-      - continuuuum-api
-
-volumes:
-  telecom-data:
+services:
+
+
+  continuuuum-api:
+
+
+    build:
+
+
+      context: ../..
+
+
+      dockerfile: telecom/docker/Dockerfile.api
+
+
+    ports:
+
+
+      - "5050:5050"
+
+
+    environment:
+
+
+      CONTINUUUUM_DB: /data/continuuuum.db
+
+
+      TELECOM_FRAME_BACKEND: icp_mock
+
+
+      TELECOM_FRAME_BASE_URL: http://telecom-frame-processor:4943
+
+
+    volumes:
+
+
+      - telecom-data:/data
+
+
+      - ../../telecom:/app/telecom:ro
+
+
+
+
+
+  telecom-frame-processor:
+
+
+    build:
+
+
+      context: ./icp-canister-mock
+
+
+    ports:
+
+
+      - "4943:4943"
+
+
+
+
+
+  telecom-webtop:
+
+
+    build:
+
+
+      context: ../../apps/telecom-webtop
+
+
+      dockerfile: ../../telecom/docker/Dockerfile.webtop
+
+
+    ports:
+
+
+      - "8080:80"
+
+
+    depends_on:
+
+
+      - continuuuum-api
+
+
+
+
+
+volumes:
+
+
+  telecom-data:
+
+
