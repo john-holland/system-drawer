@@ -135,3 +135,9 @@ node_modules/
 
 # Test fixtures (generated/downloaded)
 Scripts/video_storage_tool/tests/fixtures/random_test_image.jpg
+
+# Local Continuuuum/USC SQLite (python -m unified_semantic_archiver init --db ./continuuuum.db)
+/continuuuum.db
+/continuum.db
+/Scripts/continuuuum.db
+/Scripts/continuum.db
