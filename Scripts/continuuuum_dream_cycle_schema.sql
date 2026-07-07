@@ -8,6 +8,11 @@ CREATE TABLE IF NOT EXISTS dream_day_sessions (
     aspect_states_json TEXT DEFAULT '[]',
     day_collapse_seed INTEGER DEFAULT 0,
     quad_digest_json TEXT DEFAULT '{}',
+    outer_session_id TEXT,
+    good_day_collapse_seed INTEGER DEFAULT 0,
+    dream_day_collapse_seed INTEGER DEFAULT 0,
+    layer_json TEXT DEFAULT '{}',
+    double_day INTEGER DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -26,6 +31,7 @@ CREATE TABLE IF NOT EXISTS dream_memory_recalls (
     sleep_session_id TEXT NOT NULL REFERENCES dream_sleep_sessions(sleep_session_id),
     actor_id TEXT,
     lstm_output_json TEXT DEFAULT '{}',
+    safe_refrain_json TEXT DEFAULT '{}',
     created_at TEXT NOT NULL
 );
 

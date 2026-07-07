@@ -1,7 +1,7 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using Locomotion.DreamCycle;
 
 namespace SystemDrawer.DreamCycle
 {
@@ -14,6 +14,7 @@ namespace SystemDrawer.DreamCycle
         [SerializeField] MonoBehaviour dreamMemoryLstm;
         public string lastSleepSessionId;
         public int sleepSeed;
+        public bool wakeFromNestedDream;
         public float[] waveSamples = System.Array.Empty<float>();
 
         public event System.Action<string> OnNightComplete;
@@ -46,24 +47,36 @@ namespace SystemDrawer.DreamCycle
 
             lastSleepSessionId = resp.night.sleepSessionId;
             sleepSeed = resp.night.sleepSeed;
+            wakeFromNestedDream = resp.night.wakeFromNestedDream;
             waveSamples = resp.night.waveSamples ?? System.Array.Empty<float>();
             if (sleepRenderer != null)
                 sleepRenderer.SetWaveSamples(waveSamples);
 
-            PushDreamMemory(waveSamples);
+            PushDreamMemory(waveSamples, wakeFromNestedDream);
             OnNightComplete?.Invoke(lastSleepSessionId);
         }
 
-        void PushDreamMemory(float[] samples)
+        void PushDreamMemory(float[] samples, bool nestedDream)
         {
             if (dreamMemoryLstm == null || samples == null || samples.Length == 0)
                 return;
             var bufferProp = dreamMemoryLstm.GetType().GetField("buffer");
-            var buffer = bufferProp?.GetValue(dreamMemoryLstm);
+            var buffer = bufferProp?.GetValue(dreamMemoryLstm) as DreamMemoryBuffer;
             if (buffer == null)
                 return;
-            var push = buffer.GetType().GetMethod("PushWaveBatch");
-            push?.Invoke(buffer, new object[] { samples, dayRunner != null ? dayRunner.dayCollapseSeed : 0, string.Empty });
+
+            int dreamSeed = dayRunner != null ? dayRunner.dreamDayCollapseSeed : 0;
+            int goodSeed = dayRunner != null ? dayRunner.goodDayCollapseSeed : 0;
+            if (dreamSeed == 0 && dayRunner != null)
+                dreamSeed = dayRunner.dayCollapseSeed;
+
+            buffer.PushWaveBatch(
+                samples,
+                dreamSeed,
+                string.Empty,
+                goodSeed,
+                nestedDream ? DreamMemoryLayer.DeveloperDream : DreamMemoryLayer.SingleDay,
+                remOnly: nestedDream);
         }
 
         [System.Serializable]
@@ -86,6 +99,7 @@ namespace SystemDrawer.DreamCycle
             public string sleepSessionId;
             public int sleepSeed;
             public float[] waveSamples;
+            public bool wakeFromNestedDream;
         }
     }
 }

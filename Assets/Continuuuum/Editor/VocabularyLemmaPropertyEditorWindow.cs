@@ -29,12 +29,29 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
     OpenCloseLemmaProperties _openCloseProps = OpenCloseLemmaProperties.Defaults;
     Vector2 _scroll;
     GameObject _pushTarget;
+    int _activeTab;
+    LemmaBuildTabController _lemmaBuildTab;
 
     [MenuItem("Window/Continuuuum/Lemma Properties")]
     public static void Open()
     {
         var w = GetWindow<VocabularyLemmaPropertyEditorWindow>("Lemma Properties");
         w.minSize = new Vector2(420, 320);
+        w._activeTab = 0;
+    }
+
+    [MenuItem("Window/System Drawer/Lemmas/Lemma Build")]
+    public static void OpenLemmaBuildTab()
+    {
+        OpenOnLemmaBuildTab();
+    }
+
+    public static void OpenOnLemmaBuildTab()
+    {
+        var w = GetWindow<VocabularyLemmaPropertyEditorWindow>("Lemma Properties");
+        w.minSize = new Vector2(720, 480);
+        w._activeTab = 1;
+        w._lemmaBuildTab ??= new LemmaBuildTabController();
     }
 
     public static void OpenWithEntryId(string entryId)
@@ -58,6 +75,14 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
 
     void OnGUI()
     {
+        _activeTab = GUILayout.Toolbar(_activeTab, new[] { "Properties", "Lemma Build" });
+        if (_activeTab == 1)
+        {
+            _lemmaBuildTab ??= new LemmaBuildTabController();
+            _lemmaBuildTab.Draw(this);
+            return;
+        }
+
         EditorGUILayout.LabelField("Localization Property Specs", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox("Lemma-level property bags sync with Continuuuum thesaurus_entry_properties.", MessageType.Info);
 

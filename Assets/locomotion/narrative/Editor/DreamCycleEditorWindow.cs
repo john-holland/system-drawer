@@ -1,14 +1,15 @@
 #if UNITY_EDITOR
 using SystemDrawer.DreamCycle;
+using Locomotion.DreamCycle;
 using UnityEditor;
 using UnityEngine;
 
 namespace Locomotion.Narrative.EditorTools
 {
-    /// <summary>Dream Cycle editor: day prompt, aspect meters, sleep wave preview, dream recall panel.</summary>
+    /// <summary>Dream Cycle editor: double-day horizon, developer dream prompt, sleep wave, safe recall.</summary>
     public sealed class DreamCycleEditorWindow : EditorWindow
     {
-        const string SamplePrompt = @"
+        const string SampleDreamPrompt = @"
 {P:dream-day|aspect=need_physiological|spatial2d-slot=need_physiological|satisfied=0.7}
 {P:dream-day|aspect=need_belonging|spatial2d-slot=need_belonging|satisfied=0.6}
 ";
@@ -17,10 +18,9 @@ namespace Locomotion.Narrative.EditorTools
         public static void ShowWindow()
         {
             var win = GetWindow<DreamCycleEditorWindow>("Dream Cycle");
-            win.minSize = new Vector2(640f, 480f);
+            win.minSize = new Vector2(640f, 520f);
         }
 
-        string _dayPrompt = SamplePrompt;
         string _cityId = "earth-city";
         Vector2 _scroll;
         DreamDayCycleRunner _dayRunner;
@@ -28,6 +28,7 @@ namespace Locomotion.Narrative.EditorTools
         SleepWaveStatRenderer _sleepRenderer;
         Object _dreamMemoryLstm;
         NeedAspectRegistry _registry;
+        DreamDaySimulationProfile _profile;
         string _status = "";
 
         void OnEnable()
@@ -35,6 +36,8 @@ namespace Locomotion.Narrative.EditorTools
             _dayRunner = FindAnyObjectByType<DreamDayCycleRunner>();
             _nightRunner = FindAnyObjectByType<DreamNightCycleRunner>();
             _sleepRenderer = FindAnyObjectByType<SleepWaveStatRenderer>();
+            if (_dayRunner != null)
+                _profile = _dayRunner.profile;
             var regs = Resources.FindObjectsOfTypeAll<NeedAspectRegistry>();
             if (regs != null && regs.Length > 0)
                 _registry = regs[0];
@@ -44,15 +47,18 @@ namespace Locomotion.Narrative.EditorTools
         {
             EditorGUILayout.LabelField("Dream Cycle", EditorStyles.boldLabel);
             _cityId = EditorGUILayout.TextField("City Id", _cityId);
-            EditorGUILayout.LabelField("Day prompt (lemma dream-day spans)");
-            _dayPrompt = EditorGUILayout.TextArea(_dayPrompt, GUILayout.MinHeight(80f));
+
+            DrawGoodDayHorizon();
+            DrawDeveloperDreamDay();
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Run day complete"))
-                RunDay();
-            if (GUILayout.Button("Run night complete"))
+            if (GUILayout.Button("Run double day"))
+                RunDay(doubleDay: true);
+            if (GUILayout.Button("Run single day"))
+                RunDay(doubleDay: false);
+            if (GUILayout.Button("Run night"))
                 RunNight();
-            if (GUILayout.Button("Recall dream fragment"))
+            if (GUILayout.Button("Recall with safe refrain"))
                 RecallDream();
             EditorGUILayout.EndHorizontal();
 
@@ -65,6 +71,42 @@ namespace Locomotion.Narrative.EditorTools
                 EditorGUILayout.HelpBox(_status, MessageType.Info);
         }
 
+        void DrawGoodDayHorizon()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Good day horizon (statistical, no lemma hints)", EditorStyles.boldLabel);
+            if (_profile == null)
+            {
+                EditorGUILayout.HelpBox("Assign DreamDaySimulationProfile on day runner.", MessageType.None);
+                return;
+            }
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.Toggle("Double day enabled", _profile.doubleDayEnabled);
+            EditorGUILayout.Slider("Min satisfied", _profile.goodDayHorizon.minSatisfied, 0f, 1f);
+            EditorGUILayout.Slider("Max satisfied", _profile.goodDayHorizon.maxSatisfied, 0f, 1f);
+            EditorGUILayout.Slider("Society blend", _profile.goodDayHorizon.blendSocietyWeight, 0f, 1f);
+            EditorGUI.EndDisabledGroup();
+            EditorGUILayout.HelpBox(
+                "Outer layer clamps need satisfaction from society snapshot only — no {P:dream-day} spans.",
+                MessageType.Info);
+        }
+
+        void DrawDeveloperDreamDay()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Developer dream day (lemma hints)", EditorStyles.boldLabel);
+            if (_profile != null)
+            {
+                _profile.dreamDayPrompt = EditorGUILayout.TextArea(
+                    _profile.dreamDayPrompt ?? SampleDreamPrompt,
+                    GUILayout.MinHeight(80f));
+            }
+            else if (_dayRunner != null)
+            {
+                _dayRunner.dayPrompt = EditorGUILayout.TextArea(_dayRunner.dayPrompt, GUILayout.MinHeight(80f));
+            }
+        }
+
         void DrawServiceRefs()
         {
             EditorGUILayout.Space();
@@ -74,6 +116,10 @@ namespace Locomotion.Narrative.EditorTools
             _sleepRenderer = (SleepWaveStatRenderer)EditorGUILayout.ObjectField("Sleep renderer", _sleepRenderer, typeof(SleepWaveStatRenderer), true);
             _dreamMemoryLstm = EditorGUILayout.ObjectField("Dream memory LSTM", _dreamMemoryLstm, typeof(Object), true);
             _registry = (NeedAspectRegistry)EditorGUILayout.ObjectField("Need registry", _registry, typeof(NeedAspectRegistry), false);
+            _profile = (DreamDaySimulationProfile)EditorGUILayout.ObjectField(
+                "Simulation profile", _profile, typeof(DreamDaySimulationProfile), false);
+            if (_dayRunner != null && _profile != null && _dayRunner.profile != _profile)
+                _dayRunner.profile = _profile;
         }
 
         void DrawAspectMeters()
@@ -111,7 +157,9 @@ namespace Locomotion.Narrative.EditorTools
             if (_sleepRenderer == null)
                 return;
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Sleep wave (electrical sheep → REM)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Sleep wave (wake from nested dream)", EditorStyles.boldLabel);
+            if (_nightRunner != null && _nightRunner.wakeFromNestedDream)
+                EditorGUILayout.HelpBox("Last night: wakeFromNestedDream (double-day stack).", MessageType.Info);
             if (_sleepRenderer.waveSamples != null && _sleepRenderer.waveSamples.Length > 0)
             {
                 _sleepRenderer.RenderWave();
@@ -134,9 +182,16 @@ namespace Locomotion.Narrative.EditorTools
         void DrawSeedTreeReadOnly()
         {
             var orch = FindAnyObjectByType<SpatialGenerator4DOrchestrator>();
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Day collapse seeds", EditorStyles.boldLabel);
+            if (_dayRunner != null)
+            {
+                EditorGUILayout.IntField("Good day seed", _dayRunner.goodDayCollapseSeed);
+                EditorGUILayout.IntField("Dream day seed", _dayRunner.dreamDayCollapseSeed);
+                EditorGUILayout.IntField("Active day seed", _dayRunner.dayCollapseSeed);
+            }
             if (orch == null)
                 return;
-            EditorGUILayout.Space();
             EditorGUILayout.LabelField("Seed dependency (orchestrator)", EditorStyles.boldLabel);
             EditorGUI.BeginDisabledGroup(orch.lockSeedDependencyTree);
             EditorGUILayout.IntField("Master seed", orch.masterSeed);
@@ -147,7 +202,7 @@ namespace Locomotion.Narrative.EditorTools
                 EditorGUILayout.HelpBox("Seed tree locked — values are read-only.", MessageType.Warning);
         }
 
-        void RunDay()
+        void RunDay(bool doubleDay)
         {
             if (_dayRunner == null)
             {
@@ -155,9 +210,21 @@ namespace Locomotion.Narrative.EditorTools
                 return;
             }
             _dayRunner.cityId = _cityId;
-            _dayRunner.dayPrompt = _dayPrompt;
+            if (_profile != null)
+            {
+                _profile.doubleDayEnabled = doubleDay;
+                if (string.IsNullOrEmpty(_profile.dreamDayPrompt))
+                    _profile.dreamDayPrompt = SampleDreamPrompt;
+                _dayRunner.profile = _profile;
+            }
+            else
+            {
+                _dayRunner.dayPrompt = SampleDreamPrompt;
+            }
             _dayRunner.RunDayComplete();
-            _status = "Day complete requested (async). Protagonist aspects are derived, not per-citizen sim.";
+            _status = doubleDay
+                ? "Double day requested (good horizon + developer dream)."
+                : "Single day requested (legacy path).";
         }
 
         void RunNight()
@@ -177,6 +244,11 @@ namespace Locomotion.Narrative.EditorTools
             {
                 _status = "Assign DreamMemoryLSTM.";
                 return;
+            }
+            if (_profile != null)
+            {
+                var refrainField = _dreamMemoryLstm.GetType().GetField("safeRefrain");
+                refrainField?.SetValue(_dreamMemoryLstm, _profile.safeRefrain);
             }
             var recall = _dreamMemoryLstm.GetType().GetMethod("RecallDreamFragment");
             var fragment = recall?.Invoke(_dreamMemoryLstm, null);

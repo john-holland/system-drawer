@@ -1,0 +1,16 @@
+{
+    "name": "SystemDrawer.Lemmas",
+    "rootNamespace": "",
+    "references": [
+        "Continuuuum.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

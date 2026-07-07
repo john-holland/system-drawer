@@ -20,6 +20,7 @@ internal static class WizardStandardAssetsPaths
     internal static class DreamCycle
     {
         internal const string NeedAspectRegistry = Root + "/DreamCycle/DefaultNeedAspectRegistry.asset";
+        internal const string SimulationProfile = Root + "/DreamCycle/DefaultDreamDaySimulationProfile.asset";
     }
 
     internal static class Networking

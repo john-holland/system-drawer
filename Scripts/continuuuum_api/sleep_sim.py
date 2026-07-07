@@ -47,20 +47,35 @@ def run_sleep_sim(
     day_collapse_seed: int | None = None,
     duration_s: float = 480.0,
     sample_count: int = 256,
+    *,
+    good_day_collapse_seed: int | None = None,
 ) -> dict[str, Any]:
     day_state = day_state or {}
     seed = day_collapse_seed if day_collapse_seed is not None else int(day_state.get("dayCollapseSeed") or 0)
+    dream_seed = day_state.get("dreamDayCollapseSeed")
+    if dream_seed is not None:
+        seed = int(dream_seed)
+    good_seed = good_day_collapse_seed
+    if good_seed is None:
+        good_seed = day_state.get("goodDayCollapseSeed")
     aspects = day_state.get("aspectStates") or day_state.get("aspects") or []
     satisfied = 0.5
     if aspects:
         vals = [float(a.get("satisfied01", 0.5)) for a in aspects if isinstance(a, dict)]
         satisfied = sum(vals) / max(len(vals), 1)
+    # Gentler ElectricalSheep when outer good-day horizon was high
+    outer_satisfied = satisfied
+    if good_seed is not None and isinstance(good_seed, int):
+        outer_satisfied = min(0.95, satisfied + 0.05)
 
     samples: list[float] = []
     rem_epochs: list[dict[str, float]] = []
     for i in range(sample_count):
         t = i / max(sample_count - 1, 1)
-        samples.append(_sample_wave(t, seed, satisfied))
+        wave_seed = seed
+        if _phase_at(t) == "ElectricalSheep" and good_seed is not None:
+            wave_seed = int(good_seed) ^ int(seed)
+        samples.append(_sample_wave(t, wave_seed, outer_satisfied))
         if _phase_at(t) == "REM" and (i == 0 or _phase_at((i - 1) / max(sample_count - 1, 1)) != "REM"):
             rem_epochs.append({"tStart": t, "tEnd": min(1.0, t + 0.17)})
 
@@ -76,7 +91,10 @@ def run_sleep_sim(
         "remEpochs": rem_epochs,
         "ioStats": io_stats,
         "sleepSeed": seed,
+        "goodDayCollapseSeed": good_seed,
+        "dreamDayCollapseSeed": dream_seed,
         "durationS": duration_s,
+        "wakeFromNestedDream": bool(day_state.get("doubleDay")),
     }
 
 

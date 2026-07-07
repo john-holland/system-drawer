@@ -12,6 +12,7 @@ namespace Locomotion.DreamCycle
         public float confidence;
         public double timestampUtc;
         public bool isDreamMemory;
+        public float distanceFromBed;
     }
 
     /// <summary>
@@ -23,14 +24,16 @@ namespace Locomotion.DreamCycle
         public LSTMPredictor predictor;
         public DreamMemoryBuffer buffer;
         public Brain brain;
+        public DreamSafeRefrainSettings safeRefrain = DreamSafeRefrainSettings.Default;
         public int dreamSeed;
         public bool dreamMemoryMode = true;
+        public bool recallRemOnly = true;
 
         public void EncodeDreamMemory()
         {
             if (predictor == null || buffer == null)
                 return;
-            var frames = buffer.Snapshot();
+            var frames = recallRemOnly ? buffer.SnapshotRemOnly() : buffer.Snapshot();
             if (frames.Length == 0)
                 return;
             predictor.dreamMemoryMode = true;
@@ -39,33 +42,41 @@ namespace Locomotion.DreamCycle
 
         public DreamFragment RecallDreamFragment()
         {
+            var settings = safeRefrain.refrainLabel != null && safeRefrain.refrainLabel.Length > 0
+                ? safeRefrain
+                : DreamSafeRefrainSettings.Default;
+
             var fragment = new DreamFragment
             {
-                label = "dream memory (non-authoritative)",
+                label = settings.refrainLabel,
                 isDreamMemory = true,
                 confidence = predictor != null ? predictor.GetConfidence() : 0.5f,
                 timestampUtc = DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds
             };
 
-            if (buffer == null || !buffer.TryPeekLatest(out var latest))
+            var frames = recallRemOnly && buffer != null ? buffer.SnapshotRemOnly() : buffer?.Snapshot();
+            if (frames == null || frames.Length == 0)
             {
                 fragment.narrativeText = "Empty dream buffer.";
-                return fragment;
+                return DreamSafeRefrain.Apply(fragment, buffer, settings);
             }
 
+            var latest = frames[frames.Length - 1];
             var sb = new StringBuilder();
             sb.Append("Recalled wave t=").Append(latest.timestampUtc.ToString("F2"));
             sb.Append(" seed=").Append(latest.dayCollapseSeed);
+            if (latest.goodDayCollapseSeed > 0)
+                sb.Append(" good=").Append(latest.goodDayCollapseSeed);
             if (!string.IsNullOrEmpty(latest.quadDigest))
                 sb.Append(" digest=").Append(latest.quadDigest);
+            sb.Append(" layer=").Append(latest.dreamLayer);
             sb.Append(" sample=").Append(latest.waveSample.ToString("F3"));
 
             if (predictor != null && predictor.model != null)
-            {
                 sb.Append(" [ONNX stub]");
-            }
 
             fragment.narrativeText = sb.ToString();
+            fragment = DreamSafeRefrain.Apply(fragment, buffer, settings);
             LogThought(fragment);
             return fragment;
         }

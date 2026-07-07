@@ -40,6 +40,7 @@
   <Project Path="Continuuuum.Society.csproj" />
   <Project Path="SdfMax.Editor.csproj" />
   <Project Path="SystemDrawer.Networking.csproj" />
+  <Project Path="SystemDrawer.Lemmas.Editor.csproj" />
   <Project Path="Environment.Destructible.Editor.csproj" />
   <Project Path="SystemDrawer.PerfTrace.csproj" />
   <Project Path="Weather.Tests.csproj" />
@@ -57,9 +58,11 @@
   <Project Path="Locomotion.Audio.Editor.csproj" />
   <Project Path="Generated.Tests.csproj" />
   <Project Path="Roads.Editor.csproj" />
+  <Project Path="SystemDrawer.Lemmas.csproj" />
   <Project Path="SystemDrawer.PerfTrace.Editor.Tests.csproj" />
   <Project Path="BedogaPlacement.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.Editor.Tests.csproj" />
+  <Project Path="SystemDrawer.Lemmas.Editor.Tests.csproj" />
   <Project Path="HierarchicalPathFinding.Tests.csproj" />
   <Project Path="HierarchicalPathFinding.Editor.csproj" />
   <Project Path="Continuuuum.Telecom.Editor.csproj" />

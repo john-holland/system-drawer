@@ -96,6 +96,12 @@ internal static class DreamCycleStandardAssets
             report,
             "NeedAspectRegistry");
 
+        var simProfile = WizardStandardAssetsCore.FindOrCreateAsset(
+            WizardStandardAssetsPaths.DreamCycle.SimulationProfile,
+            () => ScriptableObject.CreateInstance<DreamDaySimulationProfile>(),
+            report,
+            "DreamDaySimulationProfile");
+
         var day = wizard.dayRunner ?? host.GetComponent<DreamDayCycleRunner>();
         if (day == null)
             day = WizardStandardAssetsCore.FindFirstInScene<DreamDayCycleRunner>();
@@ -126,6 +132,14 @@ internal static class DreamCycleStandardAssets
             day.registry = registry;
             EditorUtility.SetDirty(day);
             report.Linked.Add("DreamDayCycleRunner.registry");
+        }
+
+        if (day.profile != simProfile)
+        {
+            Undo.RecordObject(day, "Assign dream simulation profile");
+            day.profile = simProfile;
+            EditorUtility.SetDirty(day);
+            report.Linked.Add("DreamDayCycleRunner.profile");
         }
 
         if (night.dayRunner != day)

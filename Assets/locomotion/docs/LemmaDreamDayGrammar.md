@@ -1,6 +1,8 @@
 # Dream day lemma grammar
 
-Use `{P:dream-day|...}` spans to steer per-need 2D spatial generator slots during the city day sim.
+Use `{P:dream-day|...}` spans to steer per-need 2D spatial generator slots during the **developer dream day** (inner layer of the double-day stack).
+
+> **Note:** `{P:dream-day}` applies to the inner developer dream day only. The outer **good day horizon** is statistical (society snapshot + satisfaction floors) with no lemma hints. See [`DreamDoubleDay.md`](../../SystemDrawer/docs/DreamDoubleDay.md).
 
 ## Syntax
 

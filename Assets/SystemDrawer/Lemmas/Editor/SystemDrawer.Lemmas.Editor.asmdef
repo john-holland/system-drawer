@@ -1,11 +1,10 @@
 {
-    "name": "Continuuuum.Editor",
+    "name": "SystemDrawer.Lemmas.Editor",
     "rootNamespace": "",
     "references": [
+        "SystemDrawer.Lemmas",
         "Continuuuum.Runtime",
-        "Locomotion.Narrative.Runtime",
-        "Locomotion.Drink.Runtime",
-        "SystemDrawer.Lemmas.Editor"
+        "Generated.Editor"
     ],
     "includePlatforms": [
         "Editor"
@@ -17,8 +16,5 @@
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
-    "noEngineReferences": false,
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ]
+    "noEngineReferences": false
 }

@@ -4,6 +4,14 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEditor;
 
+/// <summary>OpenAI-compatible chat message for LM Studio requests.</summary>
+[System.Serializable]
+public class LmStudioChatMessage
+{
+    public string role;
+    public string content;
+}
+
 /// <summary>
 /// LM Studio API (and Barracuda scan) for "Search for updates": list models, filter by generator keywords.
 /// </summary>
@@ -169,17 +177,44 @@ public static class LmStudioModelService
         float temperature = 0.2f,
         int timeoutSeconds = DefaultCompletionTimeoutSeconds)
     {
+        return RequestChatCompletionMulti(
+            modelId,
+            new[]
+            {
+                new LmStudioChatMessage { role = "system", content = systemPrompt ?? "" },
+                new LmStudioChatMessage { role = "user", content = userPrompt ?? "" }
+            },
+            out response,
+            maxTokens,
+            temperature,
+            timeoutSeconds);
+    }
+
+    /// <summary>
+    /// Call LM Studio chat completions with an arbitrary message thread (system + user/assistant turns).
+    /// </summary>
+    public static bool RequestChatCompletionMulti(
+        string modelId,
+        LmStudioChatMessage[] messages,
+        out string response,
+        int maxTokens = 4096,
+        float temperature = 0.2f,
+        int timeoutSeconds = DefaultCompletionTimeoutSeconds)
+    {
         response = null;
-        if (string.IsNullOrEmpty(modelId)) { Debug.LogWarning("[LmStudio] RequestChatCompletion: modelId is empty."); return false; }
+        if (string.IsNullOrEmpty(modelId)) { Debug.LogWarning("[LmStudio] RequestChatCompletionMulti: modelId is empty."); return false; }
+        if (messages == null || messages.Length == 0) { Debug.LogWarning("[LmStudio] RequestChatCompletionMulti: messages is empty."); return false; }
         var url = _baseUrl.TrimEnd('/') + "/chat/completions";
+        var apiMessages = new ChatMessage[messages.Length];
+        for (int i = 0; i < messages.Length; i++)
+        {
+            var m = messages[i];
+            apiMessages[i] = new ChatMessage { role = m?.role ?? "user", content = m?.content ?? "" };
+        }
         var body = new ChatCompletionRequest
         {
             model = modelId,
-            messages = new[]
-            {
-                new ChatMessage { role = "system", content = systemPrompt ?? "" },
-                new ChatMessage { role = "user", content = userPrompt ?? "" }
-            },
+            messages = apiMessages,
             max_tokens = maxTokens,
             temperature = temperature
         };
