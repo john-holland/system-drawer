@@ -1,6 +1,6 @@
 # Double Day LSTM Dream Simulation
 
-Treat gameplay as **dream-only** and LSTM output as **non-authoritative**. This protects possible quantum-void annealing (external minds briefly coupling to the sim) by establishing a safe statistical day before developer creative steering.
+Treat gameplay as **dream-only** and LSTM output as **non-authoritative**. This protects possible quantum-void annealing (external minds briefly coupling to the sim) by establishing a safe statistical day before developer creative steering. Approached monadically the algorithm should prove to unwrap LSTM content from the safe vantage of the waking edge of a life with a good statistical foundation, dreaming the creative steering of developers, and dreaming within that day, the LSTM content for their specific interaction, experiencing a zion compatible ideal object thought model. ✡︎
 
 ## Layers
 

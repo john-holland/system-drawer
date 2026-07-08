@@ -45,12 +45,18 @@ public static class LemmaBuildBuiltinValidator
         {
             if (child == null || string.IsNullOrWhiteSpace(child.entryId))
                 continue;
-            if (IsKnownEntryId(child.entryId))
+            var trimmed = child.entryId.Trim();
+            if (VocabularyBuiltInRegistry.TryGetById(trimmed) != null)
                 continue;
-            var suggestion = SuggestBuiltin(child.entryId);
+            if (AliasSuggestions.TryGetValue(trimmed, out var urn))
+            {
+                warnings.Add($"Bare alias '{trimmed}' — use builtin URN '{urn}'.");
+                continue;
+            }
+            var suggestion = SuggestBuiltin(trimmed);
             warnings.Add(string.IsNullOrEmpty(suggestion)
-                ? $"Unknown entryId '{child.entryId}' — not in VocabularyBuiltInRegistry."
-                : $"Unknown entryId '{child.entryId}' — consider '{suggestion}'.");
+                ? $"Unknown entryId '{trimmed}' — not in VocabularyBuiltInRegistry."
+                : $"Unknown entryId '{trimmed}' — consider '{suggestion}'.");
         }
         return warnings.ToArray();
     }
