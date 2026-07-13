@@ -8,10 +8,19 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
   }
 
-  function changeListSaveBody(data) {
-    const items = [...(data?.required || []), ...(data?.warnings || [])]
+  function changeListSaveBody(data, rootEl) {
+    const required = data?.required || [];
+    const warnings = data?.warnings || [];
+    const items = [...required, ...warnings]
       .filter((i) => i && i.id && !i._synthetic)
-      .map((i) => ({ id: i.id, userAcknowledged: !!i.userAcknowledged }));
+      .map((i) => {
+        let ack = !!i.userAcknowledged;
+        if (rootEl && i.severity === 'required') {
+          const cb = rootEl.querySelector(`input[data-cl-id="${i.id}"]`);
+          if (cb) ack = cb.checked;
+        }
+        return { id: i.id, userAcknowledged: ack };
+      });
     return JSON.stringify({ items });
   }
 
@@ -34,6 +43,8 @@
       if (loadBtn) loadBtn.onclick = () => this.loadDraft();
       if (saveBtn) saveBtn.onclick = () => this.saveScript();
       if (suggestBtn) suggestBtn.onclick = () => this.submitSuggestion();
+      const autoAddBtn = document.getElementById('auto-add-lemmas-btn');
+      if (autoAddBtn) autoAddBtn.onclick = () => this.autoAddAllSingleLemmas();
       const userInp = document.getElementById('user-id');
       if (userInp) userInp.addEventListener('change', () => {
         if (this._state && this._state.activeId) this.loadDraft();
@@ -200,6 +211,14 @@
         const committed = !!(this._state.draft && this._state.draft.committedAt);
         tableReadBtn.hidden = !this._state.draftId || committed;
       }
+      const autoAddBtn = document.getElementById('auto-add-lemmas-btn');
+      const settingsLink = document.getElementById('auto-add-settings-link');
+      const editable = !!(hasDraft && p.canSaveDirect);
+      if (autoAddBtn) {
+        autoAddBtn.hidden = !editable;
+        autoAddBtn.disabled = !editable;
+      }
+      if (settingsLink) settingsLink.hidden = !hasDraft;
       this.renderSuggestionSubmitWrap();
       this.renderSuggestionReviewBar();
     },
@@ -521,23 +540,126 @@
       const warnings = items.filter((i) => i.severity !== 'required');
       const p = this._state.permissions || {};
       const blocked = p.inReview;
+      const canEdit = !blocked && p.canSaveDirect;
       el.innerHTML = `
-        <h3 style="margin:0 0 8px">Change list <small>(${escHtml(cl.workflowStatus || 'in_progress')}, rev ${cl.revision || 0})</small></h3>
+        <div class="so-cl-toolbar">
+          <h3 style="margin:0">Change list <small>(${escHtml(cl.workflowStatus || 'in_progress')}, rev ${cl.revision || 0})</small></h3>
+          ${canEdit ? '<button type="button" id="so-cl-revert" class="so-cl-revert-btn">Revert</button>' : ''}
+        </div>
         <p style="font-size:12px;color:#666">${escHtml(cl.id)}</p>
         <h4>Required</h4>
-        <ul>${required.map((i) =>
+        <ul class="so-cl-required">${required.map((i) =>
           `<li><label><input type="checkbox" data-cl-id="${escHtml(i.id)}" ${i.userAcknowledged ? 'checked' : ''} ${blocked ? 'disabled' : ''}/> ${escHtml(i.description || i.itemType)}</label></li>`,
         ).join('') || '<li><em>None</em></li>'}</ul>
         <details><summary>Warnings (${warnings.length})</summary><ul>${warnings.map((i) => `<li>${escHtml(i.description || '')}</li>`).join('') || '<li>None</li>'}</ul></details>
-        ${!blocked && p.canSubmitChangeList ? '<button type="button" id="so-cl-withdraw" hidden>Withdraw</button>' : ''}
-        ${blocked ? '<p style="font-size:13px;color:#666">In review — withdraw from Review page to edit.</p>' : ''}`;
+        <div class="so-cl-actions">
+          ${canEdit ? '<button type="button" id="so-cl-save">Save change list</button>' : ''}
+          ${canEdit && p.canSubmitChangeList ? '<button type="button" id="so-cl-submit">Submit for review</button>' : ''}
+          ${!blocked && cl.workflowStatus === 'in_review' ? '<button type="button" id="so-cl-withdraw">Withdraw</button>' : ''}
+        </div>
+        ${blocked ? '<p style="font-size:13px;color:#666;margin-top:8px">In review — withdraw from Review page to edit.</p>' : ''}`;
+
+      const saveBtn = el.querySelector('#so-cl-save');
+      if (saveBtn) saveBtn.onclick = () => this.saveChangeListInline();
+      const submitBtn = el.querySelector('#so-cl-submit');
+      if (submitBtn) submitBtn.onclick = () => this.submitChangeListInline();
+      const revertBtn = el.querySelector('#so-cl-revert');
+      if (revertBtn) revertBtn.onclick = () => this.revertToSnapshot();
       const withdrawBtn = el.querySelector('#so-cl-withdraw');
-      if (withdrawBtn && cl.workflowStatus === 'in_review') {
-        withdrawBtn.hidden = false;
+      if (withdrawBtn) {
         withdrawBtn.onclick = async () => {
           await this.api(`/localization/change-lists/${cl.id}/withdraw`, { method: 'POST', body: '{}' });
           await this.loadDraft();
         };
+      }
+    },
+
+    async reloadChangeList() {
+      const draftId = this._state.activeId;
+      if (!draftId) return;
+      const clRes = await this.api(`/localization/change-lists?draftEpisodeId=${encodeURIComponent(draftId)}`).catch(() => null);
+      this._state.changeList = clRes && clRes.id ? clRes : (clRes && clRes.item ? clRes.item : null);
+      this.renderChangeListInline();
+      this.renderHeader();
+    },
+
+    async saveChangeListInline() {
+      const cl = this._state.changeList;
+      const el = document.getElementById('so-change-list');
+      if (!cl || !cl.id || !el) return;
+      const required = (cl.items || []).filter((i) => i.severity === 'required' && !i._synthetic);
+      const unchecked = required.filter((i) => {
+        const cb = el.querySelector(`input[data-cl-id="${CSS.escape(i.id)}"]`);
+        return cb ? !cb.checked : !i.userAcknowledged;
+      });
+      if (unchecked.length) {
+        this.setStatus('Acknowledge all required items before save', true);
+        return;
+      }
+      try {
+        await this.api(`/localization/change-lists/${cl.id}/save`, {
+          method: 'POST',
+          body: changeListSaveBody({ required: cl.items.filter((i) => i.severity === 'required'), warnings: cl.items.filter((i) => i.severity !== 'required') }, el),
+        });
+        await this.reloadChangeList();
+        this.setStatus('Change list saved');
+      } catch (e) {
+        this.setStatus(e.message, true);
+      }
+    },
+
+    async submitChangeListInline() {
+      const cl = this._state.changeList;
+      const el = document.getElementById('so-change-list');
+      if (!cl || !cl.id || !el) return;
+      const required = (cl.items || []).filter((i) => i.severity === 'required' && !i._synthetic);
+      const unchecked = required.filter((i) => {
+        const cb = el.querySelector(`input[data-cl-id="${CSS.escape(i.id)}"]`);
+        return cb ? !cb.checked : !i.userAcknowledged;
+      });
+      if (unchecked.length) {
+        this.setStatus('Acknowledge all required items before submit', true);
+        return;
+      }
+      try {
+        await this.api(`/localization/change-lists/${cl.id}/save`, {
+          method: 'POST',
+          body: changeListSaveBody({ required: cl.items.filter((i) => i.severity === 'required'), warnings: cl.items.filter((i) => i.severity !== 'required') }, el),
+        });
+        await this.api(`/localization/change-lists/${cl.id}/submit-for-review`, { method: 'POST', body: '{}' });
+        this.setStatus('Submitted for review');
+        await this.loadDraft();
+      } catch (e) {
+        this.setStatus(e.message, true);
+      }
+    },
+
+    async revertToSnapshot() {
+      const draftId = this._state.activeId;
+      const snapshot = this._state.scriptSnapshot;
+      if (!draftId || snapshot == null) return;
+      const current = global.ContinuuuumScriptEditor.getValue(this._state.editorInst);
+      if (current === snapshot && !(this._state.changeList && (this._state.changeList.items || []).length)) {
+        this.setStatus('Nothing to revert');
+        return;
+      }
+      if (!global.confirm('Revert script and pending change list to the last saved version?')) return;
+      try {
+        await this.api(`/drafts/episodes/${draftId}/script`, {
+          method: 'PUT',
+          body: JSON.stringify({ scriptText: snapshot }),
+        });
+        if (this._state.editorInst) {
+          global.ContinuuuumScriptEditor.setScriptText(this._state.editorInst, snapshot);
+          this._state.editorInst.overlaySnapshotText = snapshot;
+          this._state.editorInst._overlaySpanSig = null;
+        }
+        await this.loadClauseBindings(draftId);
+        this._refreshEditorBindings();
+        await this.loadDraft();
+        this.setStatus('Reverted to last saved script');
+      } catch (e) {
+        this.setStatus(e.message, true);
       }
     },
 
@@ -628,8 +750,37 @@
       const inst = this._state.editorInst;
       if (!inst) return;
       inst.options.clauseBindings = this._state.clauseBindings;
-      global.ContinuuuumScriptEditor.renderOverlays(inst, inst.options);
-      global.ContinuuuumScriptEditor.renderClausePanel(inst);
+      inst._overlaySpanSig = null;
+      const SE = global.ContinuuuumScriptEditor;
+      SE.renderOverlays(inst, inst.options);
+      SE.renderClausePanel(inst);
+      if (SE.renderClauseSuggestions) SE.renderClauseSuggestions(inst);
+      if (SE.updateToolbarActions) SE.updateToolbarActions(inst);
+      this.renderHeader();
+    },
+
+    async autoAddAllSingleLemmas() {
+      const LemmaAuto = global.ContinuuuumScriptLemmaAuto;
+      if (!LemmaAuto) {
+        this.setStatus('Auto-add module not loaded', true);
+        return;
+      }
+      try {
+        await LemmaAuto.autoAddAllSingleLemmas({
+          draftId: this._state.activeId,
+          activeId: this._state.activeId,
+          api: (path, opts) => this.api(path, opts),
+          getScriptText: () => global.ContinuuuumScriptEditor.getValue(this._state.editorInst),
+          loadClauseBindings: (id) => this.loadClauseBindings(id),
+          refreshEditor: async () => this._refreshEditorBindings(),
+          onComplete: async () => {
+            await this.reloadChangeList();
+          },
+          setStatus: (msg, isError) => this.setStatus(msg, isError),
+        });
+      } catch (e) {
+        this.setStatus(e.message || 'Auto-add failed', true);
+      }
     },
 
     openChangeListModal(editRes, afterRefresh) {
@@ -649,6 +800,7 @@
             });
           }
           if (afterRefresh) await afterRefresh();
+          await this.reloadChangeList();
           this.setStatus('Change list saved');
         },
         onSubmit: async (clId, clData) => {
@@ -665,6 +817,9 @@
         onWithdraw: async (clId) => {
           await this.api(`/localization/change-lists/${clId}/withdraw`, { method: 'POST', body: '{}' });
           await this.loadDraft();
+        },
+        onRevert: async () => {
+          await this.revertToSnapshot();
         },
       });
     },
@@ -780,7 +935,7 @@
             await this.loadClauseBindings(this._state.activeId);
             this._refreshEditorBindings();
             this.setStatus('Draft saved');
-            await this.loadDraft();
+            await this.reloadChangeList();
           },
           onSubmit: async (clId, clData) => {
             if (clId) {
@@ -792,6 +947,9 @@
             }
             this.setStatus('Submitted for review');
             await this.loadDraft();
+          },
+          onRevert: async () => {
+            await this.revertToSnapshot();
           },
         });
       } catch (e) {

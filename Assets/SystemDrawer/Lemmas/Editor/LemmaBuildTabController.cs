@@ -30,7 +30,8 @@ public sealed class LemmaBuildTabController
         var stacked = host.position.width < 820f;
         if (stacked)
         {
-            _formScroll = EditorGUILayout.BeginScrollView(_formScroll);
+            _formScroll = EditorGUILayout.BeginScrollView(
+                _formScroll, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             DrawBuildForm();
             EditorGUILayout.EndScrollView();
             EditorGUILayout.Space(8);
@@ -38,12 +39,15 @@ public sealed class LemmaBuildTabController
         }
         else
         {
-            EditorGUILayout.BeginHorizontal();
-            _formScroll = EditorGUILayout.BeginScrollView(_formScroll, GUILayout.Width(host.position.width * 0.48f));
+            EditorGUILayout.BeginHorizontal(GUILayout.ExpandHeight(true));
+            _formScroll = EditorGUILayout.BeginScrollView(
+                _formScroll,
+                GUILayout.Width(host.position.width * 0.48f),
+                GUILayout.ExpandHeight(true));
             DrawBuildForm();
             EditorGUILayout.EndScrollView();
 
-            EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true));
+            EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             _chatPanel.Draw(host);
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();

@@ -23,6 +23,11 @@ def register_dream_cycle_routes(app, get_conn: GetConn, get_current_user: Callab
         )
         from continuuuum_api.dream_day_parser import compile_dream_day_hints
         from continuuuum_api.dream_day_horizon import horizon_config_from_body
+        from continuuuum_api.dream_improbability import (
+            DEFAULT_THRESHOLD,
+            ImprobabilityConfig,
+            score_play_improbability,
+        )
         from continuuuum_api.needs_pyramid import registry_json
         from continuuuum_api.sleep_sim import run_sleep_sim
     except ImportError:
@@ -37,8 +42,19 @@ def register_dream_cycle_routes(app, get_conn: GetConn, get_current_user: Callab
         )
         from dream_day_parser import compile_dream_day_hints
         from dream_day_horizon import horizon_config_from_body
+        from dream_improbability import (
+            DEFAULT_THRESHOLD,
+            ImprobabilityConfig,
+            score_play_improbability,
+        )
         from needs_pyramid import registry_json
         from sleep_sim import run_sleep_sim
+
+    def _optional_float(body: dict, *keys: str):
+        for key in keys:
+            if key in body and body[key] is not None:
+                return float(body[key])
+        return None
 
     @app.route("/api/dream-cycle/needs", methods=["GET"])
     def dream_cycle_needs():
@@ -157,6 +173,28 @@ def register_dream_cycle_routes(app, get_conn: GetConn, get_current_user: Callab
         finally:
             conn.close()
 
+    @app.route("/api/dream-cycle/improbability/score", methods=["POST"])
+    def dream_improbability_score():
+        body = request.get_json(silent=True) or {}
+        conn = get_conn()
+        try:
+            threshold = _optional_float(body, "threshold")
+            cfg = ImprobabilityConfig(
+                threshold=threshold if threshold is not None else DEFAULT_THRESHOLD,
+            )
+            score = score_play_improbability(
+                conn=conn,
+                layer_stack=body.get("layerStack") or body.get("layer_stack"),
+                inducing_play=body.get("inducingPlay") or body.get("inducing_play"),
+                nested_play_event=body.get("nestedPlayEvent") or body.get("nested_play_event"),
+                reproduction_coeff=_optional_float(body, "reproductionCoeff", "reproduction_coeff"),
+                rem_entropy_norm=float(body.get("remEntropyNorm", body.get("rem_entropy_norm", 0.5))),
+                config=cfg,
+            )
+            return jsonify({"ok": True, "score": score}), 200
+        finally:
+            conn.close()
+
     @app.route("/api/dream-cycle/memory/recall", methods=["POST"])
     def dream_memory_recall():
         body = request.get_json(silent=True) or {}
@@ -177,16 +215,53 @@ def register_dream_cycle_routes(app, get_conn: GetConn, get_current_user: Callab
             raw_peak = max((abs(s) for s in samples), default=0.0)
             distance_from_bed = min(1.0, min_bed_distance + raw_peak * (1.0 - min_bed_distance))
             suppressed_severity = min(max_severity, raw_peak * 0.5)
+
+            inducing_play = body.get("inducingPlay") or body.get("inducing_play")
+            score = None
+            if inducing_play is not None or body.get("scorePlayImprobability") is True:
+                day = load_day_session(conn, sleep.get("daySessionId") or "") if sleep.get("daySessionId") else None
+                layer_stack = body.get("layerStack") or body.get("layer_stack")
+                if not layer_stack and day and day.get("doubleDay"):
+                    layer_stack = ["good_day_horizon", "developer_dream"]
+                elif not layer_stack:
+                    layer_stack = ["single_day"]
+                threshold = _optional_float(body, "threshold")
+                cfg = ImprobabilityConfig(
+                    threshold=threshold if threshold is not None else DEFAULT_THRESHOLD,
+                )
+                score = score_play_improbability(
+                    conn=conn,
+                    layer_stack=layer_stack,
+                    inducing_play=inducing_play or {},
+                    nested_play_event=body.get("nestedPlayEvent") or body.get("nested_play_event"),
+                    reproduction_coeff=_optional_float(body, "reproductionCoeff", "reproduction_coeff"),
+                    rem_entropy_norm=float(body.get("remEntropyNorm", body.get("rem_entropy_norm", raw_peak))),
+                    config=cfg,
+                )
+
+            label = safe_refrain.get("refrainLabel")
+            if score and score.get("refrainLabel"):
+                label = score["refrainLabel"]
+            if not label:
+                label = "dream memory (non-authoritative)"
+
+            fragment_step = max(1, len(samples) // 8)
+            if score and score.get("unwrapMode") == "escapism_preview":
+                fragment_step = max(fragment_step, max(1, len(samples) // 3))
+
             output = {
                 "mode": "dream_memory",
                 "fragments": [
                     {"t": i / max(len(samples) - 1, 1), "v": samples[i]}
-                    for i in range(0, len(samples), max(1, len(samples) // 8))
+                    for i in range(0, len(samples), fragment_step)
                 ],
-                "label": safe_refrain.get("refrainLabel") or "dream memory (non-authoritative)",
+                "label": label,
                 "distanceFromBed": round(distance_from_bed, 4),
                 "suppressedSeverity": round(suppressed_severity, 4),
                 "fearProjectionMode": safe_refrain.get("fearProjectionMode") or "Distant",
+                "unwrapMode": (score or {}).get("unwrapMode"),
+                "improbability01": (score or {}).get("improbability01"),
+                "playImprobability": score,
             }
             recall_id = save_memory_recall(conn, sleep_id, body.get("actorId"), output, safe_refrain)
             return jsonify({"ok": True, "recallId": recall_id, "output": output}), 200

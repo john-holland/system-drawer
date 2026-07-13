@@ -65,5 +65,49 @@ public class DreamMemoryLSTMTests
         Assert.Less(buf.Count, samples.Length);
         Object.DestroyImmediate(go);
     }
+    [Test]
+    public void SafeRefrain_PlayThoughtUnpack_SetsLabel()
+    {
+        var go = new GameObject("buf");
+        var buf = go.AddComponent<DreamMemoryBuffer>();
+        buf.PushWaveBatch(new[] { 0.2f }, 1, "", 2, DreamMemoryLayer.DeveloperDream);
+
+        var fragment = new DreamFragment
+        {
+            narrativeText = "remembered curtain call",
+            confidence = 0.5f,
+            isDreamMemory = true
+        };
+        var audit = PlayImprobabilityAudit.FromApiFields(
+            0.9f, 0.8f, 0.2f, 0.2f, 0.85f,
+            "play_thought_unpack",
+            "play thought unpack (non-authoritative)",
+            "partial",
+            false);
+        var result = DreamSafeRefrain.Apply(fragment, buf, DreamSafeRefrainSettings.Default, audit);
+        Assert.AreEqual(DreamUnwrapMode.PlayThoughtUnpack, result.unwrapMode);
+        Assert.IsTrue(result.label.Contains("play thought"));
+        Assert.IsTrue(result.narrativeText.Contains("play thought unpack"));
+        Object.DestroyImmediate(go);
+    }
+
+    [Test]
+    public void SafeRefrain_EscapismPreview_ClampsImprobability()
+    {
+        var go = new GameObject("buf");
+        var buf = go.AddComponent<DreamMemoryBuffer>();
+        var fragment = new DreamFragment { narrativeText = "preview scrap", confidence = 0.4f, isDreamMemory = true };
+        var audit = PlayImprobabilityAudit.FromApiFields(
+            0.1f, 0.9f, 0.1f, 0.05f, 0.4f,
+            "escapism_preview",
+            "escapism preview (non-authoritative)",
+            "preview_only",
+            true);
+        var result = DreamSafeRefrain.Apply(fragment, buf, DreamSafeRefrainSettings.Default, audit);
+        Assert.AreEqual(DreamUnwrapMode.EscapismPreview, result.unwrapMode);
+        Assert.AreEqual(1f, result.improbability01, 0.001f);
+        Assert.IsTrue(result.isDreamMemory);
+        Object.DestroyImmediate(go);
+    }
 }
 #endif

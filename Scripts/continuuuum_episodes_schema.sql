@@ -77,6 +77,8 @@ CREATE TABLE IF NOT EXISTS episode_script (
     script_ref TEXT,  -- FK to document_blobs or semantic_chunks
     script_text TEXT,  -- inline text if not using ref
     language TEXT,
+    -- mean logistic coeffs of current prompt lemmas: 0=perfect dream reproduction, 1=free to change
+    dream_reproduction_coeff REAL NOT NULL DEFAULT 0.5,
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_episode_script_episode ON episode_script(episode_id);

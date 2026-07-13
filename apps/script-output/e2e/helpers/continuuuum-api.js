@@ -138,10 +138,27 @@ async function listClauseBindings(baseURL, draftId, userId = DEFAULT_USER) {
   return data.items || [];
 }
 
+/**
+ * @param {string} baseURL
+ * @param {string} draftId
+ * @param {{ scriptText?: string, settings?: object, userId?: string }} [opts]
+ */
+async function autoAddSingleLemmas(baseURL, draftId, opts = {}) {
+  return api(baseURL, `/drafts/episodes/${encodeURIComponent(draftId)}/auto-add-single-lemmas`, {
+    method: 'POST',
+    userId: opts.userId,
+    body: {
+      scriptText: opts.scriptText,
+      settings: opts.settings,
+    },
+  });
+}
+
 module.exports = {
   DEFAULT_USER,
   api,
   createDraftFixture,
   seedLemmaSuggestionTemplate,
   listClauseBindings,
+  autoAddSingleLemmas,
 };

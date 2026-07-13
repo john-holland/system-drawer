@@ -589,7 +589,8 @@ def register_localization_routes(
             for item in body.get("items") or []:
                 if item.get("id"):
                     conn.execute(
-                        "UPDATE localization_change_list_items SET user_acknowledged = ? WHERE id = ? AND change_list_id = ?",
+                        """UPDATE localization_change_list_items SET user_acknowledged = ?
+                           WHERE id = ? AND change_list_id = ? AND superseded_at IS NULL""",
                         (1 if item.get("userAcknowledged") else 0, item["id"], change_list_id),
                     )
             if status == "in_review":

@@ -10,6 +10,7 @@ STATIC_STORY = Path(__file__).resolve().parent / "static" / "story-board"
 STATIC_CAL = Path(__file__).resolve().parent / "static" / "project-calendar"
 STATIC_LEGAL = Path(__file__).resolve().parent / "static" / "legal-tracker"
 STATIC_BUDGET = Path(__file__).resolve().parent / "static" / "budget-dashboard"
+STATIC_SETTINGS = Path(__file__).resolve().parent / "static" / "settings"
 
 
 def register_agile_ui_routes(app) -> None:
@@ -60,3 +61,15 @@ def register_agile_ui_routes(app) -> None:
     @app.route("/budget-dashboard/<path:asset>")
     def budget_dashboard_assets(asset: str):
         return send_from_directory(STATIC_BUDGET, asset)
+
+    @app.route("/settings")
+    def settings_redirect():
+        return redirect("/settings/", code=302)
+
+    @app.route("/settings/")
+    def settings_page():
+        return send_from_directory(STATIC_SETTINGS, "index.html")
+
+    @app.route("/settings/<path:asset>")
+    def settings_assets(asset: str):
+        return send_from_directory(STATIC_SETTINGS, asset)

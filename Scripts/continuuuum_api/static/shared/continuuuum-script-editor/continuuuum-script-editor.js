@@ -851,23 +851,39 @@
           <h4>Required</h4>
           <ul id="cl-required">${state.required.map((i, idx) => `<li><label><input type="checkbox" data-idx="${idx}" ${i.userAcknowledged ? 'checked' : ''}/> ${i.description}</label></li>`).join('') || '<li>None</li>'}</ul>
           <details><summary>Warnings (${state.warnings.length})</summary><ul>${state.warnings.map(i => `<li>${i.description}</li>`).join('') || '<li>None</li>'}</ul></details>
-          <div style="margin-top:12px"><button id="cl-save">Save</button> <button id="cl-submit">Submit for review</button> <button id="cl-withdraw">Withdraw</button> <button id="cl-cancel">Cancel</button></div>`;
+          <div style="margin-top:12px"><button id="cl-save">Save</button> <button id="cl-submit">Submit for review</button> <button id="cl-revert">Revert</button> <button id="cl-withdraw">Withdraw</button> <button id="cl-cancel">Cancel</button></div>`;
         box.querySelector('#cl-cancel').onclick = () => overlay.remove();
         box.querySelectorAll('#cl-required input').forEach(inp => {
           inp.onchange = () => { state.required[+inp.dataset.idx].userAcknowledged = inp.checked; };
         });
+        function syncChecks() {
+          box.querySelectorAll('#cl-required input').forEach((inp) => {
+            const idx = Number(inp.dataset.idx);
+            if (state.required[idx]) state.required[idx].userAcknowledged = inp.checked;
+          });
+        }
         box.querySelector('#cl-save').onclick = async () => {
+          syncChecks();
           const unchecked = unacknowledgedRequired(state.required);
           if (unchecked.length) { alert('Acknowledge all required items before save'); return; }
           if (callbacks.onSave) await callbacks.onSave(changeListId, { ...data, required: state.required, warnings: state.warnings });
           overlay.remove();
         };
         box.querySelector('#cl-submit').onclick = async () => {
+          syncChecks();
           const unchecked = unacknowledgedRequired(state.required);
           if (unchecked.length) { alert('Acknowledge all required items before submit'); return; }
           if (callbacks.onSubmit) await callbacks.onSubmit(changeListId, { ...data, required: state.required });
           overlay.remove();
         };
+        const revertBtn = box.querySelector('#cl-revert');
+        if (revertBtn) {
+          revertBtn.onclick = async () => {
+            if (!global.confirm('Revert script and pending change list to the last saved version?')) return;
+            if (callbacks.onRevert) await callbacks.onRevert();
+            overlay.remove();
+          };
+        }
         const withdrawBtn = box.querySelector('#cl-withdraw');
         if (withdrawBtn) {
           withdrawBtn.onclick = async () => {

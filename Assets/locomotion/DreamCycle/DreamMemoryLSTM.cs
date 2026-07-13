@@ -13,11 +13,15 @@ namespace Locomotion.DreamCycle
         public double timestampUtc;
         public bool isDreamMemory;
         public float distanceFromBed;
+        public DreamUnwrapMode unwrapMode;
+        [Range(0f, 1f)] public float improbability01;
+        [Range(0f, 1f)] public float fidelity01;
     }
 
     /// <summary>
     /// Wraps LSTMPredictor for dream-memory reconstruction (non-authoritative for physics).
     /// v1: deterministic replay from buffer; ONNX hook later.
+    /// Full developer narrative always runs; play improbability only shapes unwrap mode.
     /// </summary>
     public sealed class DreamMemoryLSTM : MonoBehaviour
     {
@@ -28,6 +32,22 @@ namespace Locomotion.DreamCycle
         public int dreamSeed;
         public bool dreamMemoryMode = true;
         public bool recallRemOnly = true;
+
+        [Header("Play improbability (floats + unwrap mode)")]
+        public PlayImprobabilityAudit playImprobability;
+        public bool hasPlayImprobability;
+
+        public void SetPlayImprobability(PlayImprobabilityAudit audit)
+        {
+            playImprobability = audit;
+            hasPlayImprobability = audit.unwrapMode != DreamUnwrapMode.None;
+        }
+
+        public void ClearPlayImprobability()
+        {
+            playImprobability = default;
+            hasPlayImprobability = false;
+        }
 
         public void EncodeDreamMemory()
         {
@@ -58,7 +78,7 @@ namespace Locomotion.DreamCycle
             if (frames == null || frames.Length == 0)
             {
                 fragment.narrativeText = "Empty dream buffer.";
-                return DreamSafeRefrain.Apply(fragment, buffer, settings);
+                return ApplyRefrain(fragment, settings);
             }
 
             var latest = frames[frames.Length - 1];
@@ -72,13 +92,30 @@ namespace Locomotion.DreamCycle
             sb.Append(" layer=").Append(latest.dreamLayer);
             sb.Append(" sample=").Append(latest.waveSample.ToString("F3"));
 
+            if (hasPlayImprobability)
+            {
+                sb.Append(" unwrap=").Append(playImprobability.unwrapMode);
+                sb.Append(" fidelity=").Append(playImprobability.fidelity01.ToString("F2"));
+                if (playImprobability.unwrapMode == DreamUnwrapMode.EscapismPreview)
+                    sb.Append(" [preview density]");
+                else if (playImprobability.unwrapMode == DreamUnwrapMode.PlayThoughtUnpack)
+                    sb.Append(" [play thought]");
+            }
+
             if (predictor != null && predictor.model != null)
                 sb.Append(" [ONNX stub]");
 
             fragment.narrativeText = sb.ToString();
-            fragment = DreamSafeRefrain.Apply(fragment, buffer, settings);
+            fragment = ApplyRefrain(fragment, settings);
             LogThought(fragment);
             return fragment;
+        }
+
+        DreamFragment ApplyRefrain(DreamFragment fragment, DreamSafeRefrainSettings settings)
+        {
+            if (hasPlayImprobability)
+                return DreamSafeRefrain.Apply(fragment, buffer, settings, playImprobability);
+            return DreamSafeRefrain.Apply(fragment, buffer, settings);
         }
 
         void LogThought(DreamFragment fragment)

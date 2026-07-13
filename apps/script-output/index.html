@@ -22,6 +22,8 @@
   <script src="/static/shared/continuuuum-lemma-composition/continuuuum-lemma-composition-editor.js"></script>
   <script src="/static/shared/continuuuum-lemma-composition/continuuuum-lemma-prompt-editor.js"></script>
   <script src="/static/shared/continuuuum-clause-selector/continuuuum-clause-selector.js"></script>
+  <script src="/static/shared/continuuuum-settings/continuuuum-settings.js"></script>
+  <script src="/static/shared/continuuuum-script-output/continuuuum-script-lemma-auto.js"></script>
   <script src="/static/shared/continuuuum-script-output/continuuuum-script-output.js"></script>
 </head>
 <body class="continuuuum-script-output">
@@ -33,6 +35,8 @@
     <button type="button" id="save-btn">Save</button>
     <button type="button" id="table-read-btn" hidden>Start table read</button>
     <button type="button" id="suggest-btn" hidden>Submit suggestion</button>
+    <button type="button" id="auto-add-lemmas-btn" hidden>Auto Add All Single Lemmas</button>
+    <a id="auto-add-settings-link" class="so-settings-link" href="/settings#script-output" hidden>Settings</a>
   </div>
   <div id="status"></div>
   <p id="mode-hint" class="so-mode-hint"></p>

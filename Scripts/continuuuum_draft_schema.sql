@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS draft_episode_script (
     script_text TEXT,
     language TEXT NOT NULL DEFAULT 'en',
     min_thesaurus_version TEXT,  -- minimum version required for asset thesaurus definitions (semver e.g. 1.0, 1.1)
+    -- mean logistic coeffs of current prompt lemmas: 0=perfect dream reproduction, 1=free to change
+    dream_reproduction_coeff REAL NOT NULL DEFAULT 0.5,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );

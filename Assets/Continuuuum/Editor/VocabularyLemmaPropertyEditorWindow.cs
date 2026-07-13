@@ -83,6 +83,10 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
             return;
         }
 
+        // Containing scroll view for the whole Properties tab (IMGUI only shows a
+        // scrollbar when the view is height-constrained via ExpandHeight).
+        _scroll = EditorGUILayout.BeginScrollView(_scroll, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+
         EditorGUILayout.LabelField("Localization Property Specs", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox("Lemma-level property bags sync with Continuuuum thesaurus_entry_properties.", MessageType.Info);
 
@@ -117,7 +121,6 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
             _ = MarkMayorDogModSlotAsync();
         GUI.enabled = true;
 
-        _scroll = EditorGUILayout.BeginScrollView(_scroll);
         if (_catalog?.specs != null)
         {
             foreach (var spec in _catalog.specs)
@@ -137,8 +140,6 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         DrawDrinkPropertiesPanel();
         DrawOpenClosePropertiesPanel();
 
-        EditorGUILayout.EndScrollView();
-
         EditorGUILayout.Space(8);
         _pushTarget = (GameObject)EditorGUILayout.ObjectField("Push to Travel Agent", _pushTarget, typeof(GameObject), true);
         if (GUILayout.Button("Push to runtime cache") && _pushTarget != null)
@@ -155,6 +156,8 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         }
 
         DrawCompositionPanel();
+
+        EditorGUILayout.EndScrollView();
     }
 
     void DrawDrinkPropertiesPanel()

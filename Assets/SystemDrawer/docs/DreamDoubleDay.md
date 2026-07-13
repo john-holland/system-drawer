@@ -62,6 +62,34 @@ POST /api/dream-cycle/memory/recall
 
 Returns `distanceFromBed` and `suppressedSeverity` audit fields.
 
+### Play improbability (escapism foundation)
+
+Full developer narrative is never gated. When an inducing play is present, score how the play is remembered inside the nested dream:
+
+```http
+POST /api/dream-cycle/improbability/score
+{
+  "layerStack": ["good_day_horizon", "developer_dream"],
+  "inducingPlay": {
+    "draftEpisodeId": "...",
+    "tableReadSessionId": "...",
+    "consumedPhrases": ["0:curtain"],
+    "inductionPrior": 0.9
+  },
+  "nestedPlayEvent": { "draftEpisodeId": "...", "phrase": "curtain" },
+  "reproductionCoeff": 0.4
+}
+```
+
+`dream_reproduction_coeff` (float on `draft_episode_script` / `episode_script`) is the baked mean of logistic coeffs for current prompt lemmas: **0** = perfect dream reproduction, **1** = free to change. Baked on lemma auto-bind.
+
+Escapism foundation (floats only — no class where a float belongs):
+
+- If `inductionPrior < 0.25` **or** computed `improbability01 < threshold` → `unwrapMode = escapism_preview`, refrain `escapism preview (non-authoritative)`, and **`improbability01 = 1.0`** (infinitely unlikely to inhabit; fitful preview memory at worst).
+- Else → `unwrapMode = play_thought_unpack`, refrain `play thought unpack (non-authoritative)`.
+
+`POST /api/dream-cycle/memory/recall` accepts the same `inducingPlay` / `nestedPlayEvent` fields and attaches `playImprobability` + `unwrapMode` on the output. Narrative always returns.
+
 ## Safe refrain (“fears far from beds”)
 
 - Bed anchors: built-in URNs for pause, center, player (configurable).

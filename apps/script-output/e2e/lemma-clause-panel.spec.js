@@ -166,3 +166,51 @@ test.describe('Lemma clause panel — script output', () => {
     await expect.poll(() => getLemmaClauseLemmaCount(page)).toBeGreaterThan(0);
   });
 });
+
+test.describe('Auto add single lemmas', () => {
+  test('settings page swaps duplicate priority slot values', async ({ page, baseURL }) => {
+    if (!baseURL) throw new Error('baseURL is required');
+    await page.addInitScript(() => {
+      localStorage.setItem('continuuuumSettings', JSON.stringify({
+        scriptOutput: {
+          autoAddPriority: ['builtin', 'prefab', 'localization', 'mod_slot', 'prompt_placeholder', 'new_lemma'],
+          newLemmaRequired: false,
+        },
+      }));
+    });
+    await page.goto(`${baseURL}/settings#script-output`);
+    await expect(page.locator('#cs-priority-0')).toBeVisible();
+    await page.locator('#cs-priority-0').selectOption('prefab');
+    await expect(page.locator('#cs-priority-0')).toHaveValue('prefab');
+    const values = await page.locator('select[data-slot]').evaluateAll((els) => els.map((el) => /** @type {HTMLSelectElement} */ (el).value));
+    expect(values.filter((v) => v === 'prefab').length).toBe(1);
+    expect(values.filter((v) => v === 'builtin').length).toBe(1);
+  });
+
+  test('bulk auto-add attaches single-suggestion span without manual save', async ({ page, baseURL }) => {
+    if (!baseURL) throw new Error('baseURL is required');
+    await page.addInitScript((userId) => {
+      localStorage.setItem('continuuuumUserId', userId);
+    }, DEFAULT_USER);
+    await seedLemmaSuggestionTemplate(baseURL, {
+      term: 'ALICE',
+      selectionText: 'ALICE',
+      userId: DEFAULT_USER,
+    });
+    const fixture = await createDraftFixture(baseURL, {
+      userId: DEFAULT_USER,
+      scriptText: 'ALICE\nSecond line only.',
+      title: `E2E auto-add ${Date.now()}`,
+    });
+    await openScriptOutputDraft(page, fixture.draftId, DEFAULT_USER);
+    const bindingsBefore = await listClauseBindings(baseURL, fixture.draftId);
+    const dialogPromise = page.waitForEvent('dialog').then((dialog) => dialog.accept());
+    await page.locator('#auto-add-lemmas-btn').click();
+    await dialogPromise;
+    await expect.poll(async () => listClauseBindings(baseURL, fixture.draftId).then((items) => items.length))
+      .toBeGreaterThan(bindingsBefore.length);
+    const bindingsAfter = await listClauseBindings(baseURL, fixture.draftId);
+    const aliceBinding = bindingsAfter.find((b) => (b.selectionText || '').toUpperCase() === 'ALICE');
+    expect(aliceBinding).toBeTruthy();
+  });
+});

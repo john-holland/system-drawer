@@ -16,6 +16,7 @@
     { id: 'camera', label: 'Camera', path: '/camera-pathing' },
     { id: 'table-read', label: 'Table Read', path: '/table-read' },
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
+    { id: 'settings', label: 'Settings', path: '/settings' },
   ];
 
   function esc(s) {
@@ -126,6 +127,7 @@
       camera: lemmaBase + '/camera-pathing',
       'table-read': lemmaBase + '/table-read',
       'sql-viewer': lemmaBase + '/sql-viewer',
+      settings: lemmaBase + '/settings',
       lemmaApiBase: lemmaBase,
     };
   }
@@ -151,6 +153,7 @@
     if (path.indexOf('/project-calendar') >= 0) return 'project-calendar';
     if (path.indexOf('/budget-dashboard') >= 0) return 'budget-dashboard';
     if (path.indexOf('/legal-tracker') >= 0) return 'legal-tracker';
+    if (path.indexOf('/settings') >= 0) return 'settings';
     if (path.indexOf('/ui') >= 0) return 'hub';
     if (path.indexOf('/library') >= 0 || path === '/') return 'library';
     return fallback || 'library';

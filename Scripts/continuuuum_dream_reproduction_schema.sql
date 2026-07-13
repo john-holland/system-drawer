@@ -1,0 +1,7 @@
+-- Migration notes for dream_reproduction_coeff on script tables.
+-- Runtime ensure: continuuuum_api.dream_improbability.ensure_script_reproduction_columns
+-- Fresh installs: columns are in continuuuum_draft_schema.sql and continuuuum_episodes_schema.sql.
+--
+-- dream_reproduction_coeff REAL NOT NULL DEFAULT 0.5
+--   0 = perfect dream reproduction of the play
+--   1 = free to change / infinitely unlikely full inhabit (preview-like memory)
