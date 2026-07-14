@@ -3,6 +3,7 @@
   "rootNamespace": "",
   "references": [
     "BedogaPlacement",
+    "Locomotion.Audio",
     "Locomotion.Narrative.Runtime",
     "Locomotion.Narrative.Serialization",
     "Locomotion.Runtime",

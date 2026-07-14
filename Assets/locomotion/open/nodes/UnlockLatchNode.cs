@@ -7,6 +7,8 @@ namespace Locomotion.Open.Nodes
     {
         public OpenableLatch latch;
         public string toolLemma;
+        public string topologyNodeId;
+        public OpenCloseBeatProfile profile;
 
         void Awake() => nodeType = NodeType.Action;
 
@@ -14,7 +16,13 @@ namespace Locomotion.Open.Nodes
         {
             if (latch == null)
                 return BehaviorTreeStatus.Success;
-            return latch.TryUnlock(toolLemma) ? BehaviorTreeStatus.Success : BehaviorTreeStatus.Failure;
+            if (!latch.TryUnlock(toolLemma))
+                return BehaviorTreeStatus.Failure;
+            OpenCloseBeatMessageBus.RaiseUnlock(
+                !string.IsNullOrEmpty(topologyNodeId) ? topologyNodeId : latch.name,
+                profile,
+                latch.transform.position);
+            return BehaviorTreeStatus.Success;
         }
     }
 }

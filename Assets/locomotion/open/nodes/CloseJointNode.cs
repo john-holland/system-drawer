@@ -9,6 +9,9 @@ namespace Locomotion.Open.Nodes
         public OpenCloseBeatProfile profile;
         public OpenableLatch relatch;
         public AudioSource audioSource;
+        public string topologyNodeId;
+
+        bool _messagesRaised;
 
         void Awake() => nodeType = NodeType.Action;
 
@@ -20,12 +23,21 @@ namespace Locomotion.Open.Nodes
             if (driver.state == OpenableJointState.Closed)
             {
                 relatch?.Relock();
-                OpenCloseCausalityBridge.NotifyClosed(OpenCloseClosureMode.CloseBeatClosed, driver.name);
+                if (!_messagesRaised)
+                {
+                    OpenCloseCausalityBridge.NotifyClosed(OpenCloseClosureMode.CloseBeatClosed, driver.name);
+                    OpenCloseBeatMessageBus.RaiseCloseBeat(
+                        !string.IsNullOrEmpty(topologyNodeId) ? topologyNodeId : driver.name,
+                        profile,
+                        driver.transform.position);
+                    _messagesRaised = true;
+                }
                 return BehaviorTreeStatus.Success;
             }
 
             if (driver.state != OpenableJointState.Closing)
             {
+                driver.ApplyProfile(profile);
                 if (!driver.BeginClose())
                     return BehaviorTreeStatus.Failure;
                 if (profile != null && profile.soundClose != null)

@@ -1,20 +1,21 @@
-{
-  "name": "Locomotion.Open.Runtime",
-  "rootNamespace": "Locomotion.Open",
-  "references": [
-    "Locomotion.Runtime",
-    "Locomotion.Narrative.Runtime",
-    "Locomotion.Drink.Runtime",
-    "HierarchicalPathFinding",
-    "Continuuuum.Runtime"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
-}
+{
+  "name": "Locomotion.Open.Runtime",
+  "rootNamespace": "Locomotion.Open",
+  "references": [
+    "Locomotion.Runtime",
+    "Locomotion.Narrative.Runtime",
+    "Locomotion.Drink.Runtime",
+    "Locomotion.Audio",
+    "HierarchicalPathFinding",
+    "Continuuuum.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -71,6 +71,10 @@ namespace Locomotion.Open.Editor
             var camSeq = camRig.AddComponent<OpenCloseCameraSequence>();
 
             var btHost = new GameObject("OpenCloseBT");
+            var plan = btHost.AddComponent<ObjectOpenCloseTopologyPlanNode>();
+            plan.actor = actor.transform;
+            plan.cameraSequence = camSeq;
+            plan.persistBakedSteps = true;
             var seq = btHost.AddComponent<OpenCloseSequenceNode>();
             seq.actor = actor.transform;
             seq.cameraSequence = camSeq;
@@ -90,6 +94,8 @@ namespace Locomotion.Open.Editor
                 AssetDatabase.CreateAsset(topology, TopologyPath);
             }
 
+            plan.topology = topology;
+            plan.BakeFromTopology();
             seq.topology = topology;
             seq.RebuildFromTopology();
 
@@ -98,6 +104,8 @@ namespace Locomotion.Open.Editor
             musicBridge.compositionPlan = rootChildren.Count > 0
                 ? rootChildren[0].beatProfile?.musicPlan
                 : null;
+            var router = btHost.AddComponent<OpenCloseBeatMessageRouter>();
+            router.musicBridge = musicBridge;
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log($"Saved dresser music box demo to {ScenePath}");

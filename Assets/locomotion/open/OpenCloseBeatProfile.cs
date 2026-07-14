@@ -30,6 +30,13 @@ namespace Locomotion.Open
         public bool autoCloseOnExit;
         public bool playMusicOnOpen;
         public MusicCompositionPlanAsset musicPlan;
+        public string musicIdleLeafId = "open_beat_idle";
+        public string musicActiveLeafId;
+
+        [Header("UI messages")]
+        public string uiMessageId;
+        public string uiMessageText;
+        public string uiCloseMessageText;
 
         [Header("IK training")]
         public RagdollAnimationSet actorOpenSet;

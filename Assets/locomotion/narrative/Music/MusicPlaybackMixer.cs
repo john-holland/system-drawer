@@ -14,11 +14,19 @@ namespace Locomotion.Narrative.Music
         float _timeSinceQuantize;
         float _quantizeIntervalSec = 0.5f;
         float _masterVolume = 1f;
+        float _playerInteractionQuantize01 = 1f;
 
         public float QuantizeIntervalSec
         {
             get => _quantizeIntervalSec;
             set => _quantizeIntervalSec = Mathf.Max(0.05f, value);
+        }
+
+        /// <summary>0 = freer timing (shorter effective grid blend), 1 = hard bar grid.</summary>
+        public float PlayerInteractionQuantize01
+        {
+            get => _playerInteractionQuantize01;
+            set => _playerInteractionQuantize01 = Mathf.Clamp01(value);
         }
 
         public void BindSource(MusicStemRole role, AudioSource source)
@@ -45,11 +53,16 @@ namespace Locomotion.Narrative.Music
             if (bpm > 0f)
                 _quantizeIntervalSec = 60f / bpm * 4f;
 
+            float effectiveInterval = Mathf.Lerp(
+                Mathf.Max(0.02f, _quantizeIntervalSec * 0.125f),
+                _quantizeIntervalSec,
+                _playerInteractionQuantize01);
+
             _timeSinceQuantize += deltaTime;
-            if (_timeSinceQuantize < _quantizeIntervalSec)
+            if (_timeSinceQuantize < effectiveInterval)
                 return;
 
-            _timeSinceQuantize -= _quantizeIntervalSec;
+            _timeSinceQuantize -= effectiveInterval;
 
             for (int i = 0; i < _pendingStop.Count; i++)
             {

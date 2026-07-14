@@ -44,6 +44,25 @@ namespace Locomotion.Open
             return rootSeq;
         }
 
+        /// <summary>Bake topology steps onto an <see cref="ObjectOpenCloseTopologyPlanNode"/> host.</summary>
+        public static ObjectOpenCloseTopologyPlanNode BakePlanToScene(
+            OpenCloseTopologyAsset asset,
+            GameObject host,
+            OpenCloseLemmaProperties? lemmaOverrides = null)
+        {
+            if (host == null || asset == null)
+                return null;
+
+            var plan = host.GetComponent<ObjectOpenCloseTopologyPlanNode>();
+            if (plan == null)
+                plan = host.AddComponent<ObjectOpenCloseTopologyPlanNode>();
+            plan.topology = asset;
+            plan.lemmaOverrides = lemmaOverrides ?? default;
+            plan.persistBakedSteps = true;
+            plan.BakeFromTopology();
+            return plan;
+        }
+
         static void CompileNode(
             OpenCloseTopologyNode node,
             OpenCloseTopologyAsset asset,
@@ -57,7 +76,10 @@ namespace Locomotion.Open
             if (asset.linearOnly && !node.enabledInGameplay)
                 return;
 
-            var mode = ResolveAutoClose(node, lemmaOverrides, asset.defaultAutoCloseBt);
+            var mode = OpenCloseTopologyBtBuilder.ResolveAutoClose(
+                node,
+                lemmaOverrides ?? default,
+                asset.defaultAutoCloseBt);
             result.previewLines.Add($"{Indent(depth)}Ambulate → {(node.jointKind == OpenCloseJointKind.LatchOnly ? "Unlock" : "Open")} [{node.nodeId}] blend={node.arrivalBlendCoefficient:F2} autoClose={mode}");
             result.openNodeCount++;
 
@@ -78,15 +100,6 @@ namespace Locomotion.Open
                     closeStack.Push(node);
                     break;
             }
-        }
-
-        static AutoCloseBtMode ResolveAutoClose(OpenCloseTopologyNode node, OpenCloseLemmaProperties? lemma, AutoCloseBtMode assetDefault)
-        {
-            if (lemma.HasValue && lemma.Value.autoCloseBt != OpenCloseLemmaAutoCloseBtMode.OnStopExit)
-                return OpenCloseLemmaPropertyResolver.ToRuntimeAutoClose(lemma.Value.autoCloseBt);
-            if (node.autoCloseBt != AutoCloseBtMode.OnStopExit)
-                return node.autoCloseBt;
-            return assetDefault;
         }
 
         static string Indent(int depth) => new string(' ', depth * 2);

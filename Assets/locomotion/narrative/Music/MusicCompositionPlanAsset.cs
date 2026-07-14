@@ -13,6 +13,8 @@ namespace Locomotion.Narrative.Music
         public int barEnd;
         public MusicPointCutMode exitCut = MusicPointCutMode.None;
         public MusicPointCutMode enterCut = MusicPointCutMode.None;
+        [Tooltip("Optional proxy voice id for instrument assembly routing.")]
+        public string proxyVoiceId;
     }
 
     [Serializable]
@@ -22,6 +24,8 @@ namespace Locomotion.Narrative.Music
         public string toNodeId;
         public MusicOverlayEdgeKind kind = MusicOverlayEdgeKind.Forward;
         public MusicStemRole lane;
+        [Tooltip("Optional proxy voice id (overrides stem-only routing when set).")]
+        public string proxyVoiceId;
     }
 
     [CreateAssetMenu(fileName = "MusicCompositionPlan", menuName = "Locomotion/Narrative/Music Composition Plan", order = 13)]

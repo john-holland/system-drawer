@@ -1,17 +1,34 @@
 using Locomotion.Narrative;
-using Locomotion.Narrative.Music;
 using UnityEngine;
 
 namespace Locomotion.Open
 {
-    /// <summary>Quest, music, and narrative hooks on open/close beats.</summary>
+    /// <summary>Legacy quest/music helpers. Prefer <see cref="OpenCloseBeatMessageBus"/> + router.</summary>
     public static class OpenCloseBeatHooks
     {
         public static void OnBeatOpened(BehaviorTree tree, OpenCloseBeatProfile profile)
+            => OnBeatOpened(tree, profile, null, default);
+
+        public static void OnBeatOpened(
+            BehaviorTree tree,
+            OpenCloseBeatProfile profile,
+            string nodeId,
+            Vector3 worldPos)
         {
+            _ = tree;
+            _ = worldPos;
             if (profile == null)
                 return;
 
+            // When a router is present, bus messages are handled there (raised by joint nodes).
+            if (Object.FindAnyObjectByType<OpenCloseBeatMessageRouter>() != null)
+                return;
+
+            ApplyLegacyQuestAndMusic(profile, nodeId);
+        }
+
+        static void ApplyLegacyQuestAndMusic(OpenCloseBeatProfile profile, string nodeId)
+        {
             var quest = Object.FindAnyObjectByType<QuestRunner>();
             if (quest != null && !string.IsNullOrEmpty(profile.questObjectiveId))
             {
@@ -24,19 +41,25 @@ namespace Locomotion.Open
                         quest.ActivateObjective(profile.questObjectiveId);
                         break;
                     case OpenCloseQuestHintKind.Change:
-                        var goals = new System.Collections.Generic.Dictionary<string, bool>
+                        quest.SyncGoals(new System.Collections.Generic.Dictionary<string, bool>
                         {
                             [profile.questObjectiveId] = true,
-                        };
-                        quest.SyncGoals(goals);
+                        });
+                        break;
+                    case OpenCloseQuestHintKind.Note:
+                        OnBeatNote(null, profile.uiMessageText);
                         break;
                 }
             }
 
-            if (profile.playMusicOnOpen)
+            if (profile.playMusicOnOpen || profile.musicPlan != null)
             {
-                var music = Object.FindAnyObjectByType<CausalityMusicBridge>();
-                music?.OnCausalityLeafTransition("open_beat_idle", "music_box_beat_active");
+                var music = Object.FindAnyObjectByType<Locomotion.Narrative.Music.CausalityMusicBridge>();
+                string fromLeaf = !string.IsNullOrEmpty(profile.musicIdleLeafId) ? profile.musicIdleLeafId : "open_beat_idle";
+                string toLeaf = !string.IsNullOrEmpty(profile.musicActiveLeafId)
+                    ? profile.musicActiveLeafId
+                    : $"open_beat_active_{(!string.IsNullOrEmpty(nodeId) ? nodeId : "beat")}";
+                music?.OnCausalityLeafTransition(fromLeaf, toLeaf);
             }
         }
 
@@ -45,6 +68,7 @@ namespace Locomotion.Open
             if (string.IsNullOrEmpty(note))
                 return;
             Debug.Log($"[OpenClose] Note: {note}");
+            _ = executor;
         }
     }
 }

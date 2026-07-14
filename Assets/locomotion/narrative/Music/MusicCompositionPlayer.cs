@@ -91,6 +91,8 @@ namespace Locomotion.Narrative.Music
                 clip = section.loopClip,
                 volume = 0.7f
             };
+            // proxyVoiceId is carried on the node for instrument assembly routing (mixer stem path unchanged).
+            _ = node.proxyVoiceId;
             mixer.CrossfadeToSlots(new[] { slot });
 
             float barSec = 60f / Mathf.Max(section.bpm, 1f) * section.beatsPerBar;
