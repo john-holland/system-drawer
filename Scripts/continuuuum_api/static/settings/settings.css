@@ -76,6 +76,25 @@ body.continuuuum-settings {
   line-height: 1.45;
 }
 
+.cs-panel label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: #333;
+}
+
+.cs-panel label input,
+.cs-panel label select {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  font: inherit;
+}
+
 .cs-priority-row {
   display: flex;
   align-items: center;

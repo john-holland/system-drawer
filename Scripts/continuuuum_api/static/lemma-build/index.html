@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Lemma Build — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/lemma-build/lemma-build.css" />
+</head>
+<body class="lb-page">
+  <div id="continuuuum-nav-root"></div>
+  <div class="lb-layout">
+    <section class="lb-form-col">
+      <header class="lb-header">
+        <h1>Lemma Build</h1>
+        <div class="lb-engine" role="group" aria-label="Target engine">
+          <button type="button" data-engine="unity" class="lb-engine-btn is-active">Unity</button>
+          <button type="button" data-engine="haxe" class="lb-engine-btn">Haxe</button>
+          <button type="button" data-engine="unreal" class="lb-engine-btn" disabled title="Coming soon">Unreal</button>
+        </div>
+      </header>
+      <details class="lb-accordion" open>
+        <summary>Build form</summary>
+        <label>Lemma / phrase <input id="lb-lemma" type="text" /></label>
+        <label>Part of speech <input id="lb-pos" type="text" value="verb" /></label>
+        <label>Mechanical role
+          <select id="lb-role">
+            <option>ConnectorConjunction</option>
+            <option>AtomicAction</option>
+            <option>AtomicSubject</option>
+            <option>ModifierAdjective</option>
+            <option>ModifierAdverb</option>
+            <option>ConnectorPreposition</option>
+            <option>DeterminerArticle</option>
+            <option>ComposedPhrase</option>
+            <option>LiteralPrimitive</option>
+            <option>Passthrough</option>
+          </select>
+        </label>
+        <label>Output tier <input id="lb-tier" type="range" min="0" max="2" value="0" /> <span id="lb-tier-val">0</span></label>
+        <label>Functional description <input id="lb-func" type="text" /></label>
+        <label>Mechanism prompt <textarea id="lb-mech" rows="3"></textarea></label>
+        <label>Synonyms (CSV) <input id="lb-syn" type="text" /></label>
+        <label>Composition children (entryId|sort per line) <textarea id="lb-comp" rows="3" placeholder="urn:...|0"></textarea></label>
+        <label>Properties (key=value per line) <textarea id="lb-props" rows="3"></textarea></label>
+      </details>
+      <div class="lb-form-actions">
+        <button type="button" id="lb-apply">Apply descriptor from chat</button>
+        <button type="button" id="lb-open-editor">Open in Editor</button>
+      </div>
+      <p id="lb-form-status" class="lb-status"></p>
+    </section>
+    <section class="lb-chat-col">
+      <div class="lb-chat-toolbar">
+        <span id="lb-model-label" class="lb-muted">model…</span>
+        <button type="button" id="lb-clear">Clear</button>
+        <button type="button" id="lb-save-batch">Save batch</button>
+      </div>
+      <div id="lb-messages" class="lb-messages" aria-live="polite"></div>
+      <div class="lb-composer">
+        <textarea id="lb-input" rows="2" placeholder="Ask Codestral about this lemma…"></textarea>
+        <button type="button" id="lb-send">Send</button>
+      </div>
+      <div id="lb-files" class="lb-files"></div>
+      <p id="lb-chat-status" class="lb-status"></p>
+    </section>
+  </div>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/lemma-build/lemma-build.js"></script>
+</body>
+</html>

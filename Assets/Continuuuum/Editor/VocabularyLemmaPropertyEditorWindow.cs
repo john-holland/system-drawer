@@ -54,6 +54,24 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         w._lemmaBuildTab ??= new LemmaBuildTabController();
     }
 
+    public static void OpenOnLemmaBuildTabWithForm(string formJson)
+    {
+        OpenOnLemmaBuildTab();
+        var w = GetWindow<VocabularyLemmaPropertyEditorWindow>("Lemma Properties");
+        w._lemmaBuildTab ??= new LemmaBuildTabController();
+        if (string.IsNullOrEmpty(formJson))
+            return;
+        try
+        {
+            var form = JsonUtility.FromJson<LemmaBuildDeeplinkForm>(formJson);
+            w._lemmaBuildTab.ApplyQueryForm(form);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[Lemma Properties] Failed to apply deeplink form: " + e.Message);
+        }
+    }
+
     public static void OpenWithEntryId(string entryId)
     {
         var w = GetWindow<VocabularyLemmaPropertyEditorWindow>("Lemma Properties");

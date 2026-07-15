@@ -1,0 +1,283 @@
+.credits-page {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #12141a;
+  color: #e8e6e1;
+  min-height: 100vh;
+}
+
+.cr-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 48px);
+}
+
+.cr-sidebar {
+  border-right: 1px solid #2a2e38;
+  padding: 1rem;
+  background: #161922;
+}
+
+.cr-sidebar h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cr-row {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.cr-row input,
+.cr-label input,
+.cr-toolbar select,
+.cr-entry-form input[type="text"],
+.cr-entry-form input[type="number"] {
+  background: #0e1016;
+  border: 1px solid #343848;
+  color: #e8e6e1;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  width: 100%;
+}
+
+.cr-row button,
+.cr-toolbar button {
+  background: #3d6a5a;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cr-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cr-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #9aa0ad;
+  margin-bottom: 0.75rem;
+}
+
+.cr-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cr-list li {
+  padding: 0.45rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+}
+
+.cr-list li:hover,
+.cr-list li.active {
+  background: #252a36;
+}
+
+.cr-list li.cr-list-new {
+  font-style: italic;
+  color: #8ec8b0;
+  border: 1px dashed #3a4254;
+}
+
+.cr-list-meta {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #2a2e38;
+}
+
+.cr-add-entry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: flex-end;
+  margin: 0.65rem 0 0.35rem;
+}
+
+.cr-add-entry label {
+  flex: 1;
+  min-width: 160px;
+  font-size: 0.8rem;
+  color: #9aa0ad;
+}
+
+.cr-add-entry select,
+.cr-entry-form select {
+  display: block;
+  width: 100%;
+  margin-top: 0.2rem;
+  background: #0e1016;
+  border: 1px solid #343848;
+  color: #e8e6e1;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+}
+
+.cr-add-entry button {
+  background: #3d6a5a;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
+
+.cr-add-entry button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cr-badge.kind {
+  background: #2a3a48;
+  color: #a8c8e0;
+}
+
+.cr-chip {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: #8ec8b0;
+  text-decoration: none;
+}
+
+.cr-main {
+  padding: 1rem 1.25rem;
+}
+
+.cr-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cr-toolbar h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.cr-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.cr-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  min-height: 420px;
+}
+
+.cr-editor,
+.cr-preview-wrap {
+  background: #161922;
+  border: 1px solid #2a2e38;
+  border-radius: 6px;
+  padding: 0.85rem;
+}
+
+.cr-hint {
+  font-size: 0.8rem;
+  color: #8a90a0;
+}
+
+.cr-entry-card {
+  border: 1px solid #2f3442;
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.4rem;
+  cursor: pointer;
+}
+
+.cr-entry-card.selected {
+  border-color: #5a9e84;
+}
+
+.cr-entry-card.hidden-entry {
+  opacity: 0.55;
+}
+
+.cr-badge {
+  font-size: 0.7rem;
+  background: #4a3040;
+  color: #f0c0d0;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  margin-left: 0.35rem;
+}
+
+.cr-entry-form label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 0.45rem;
+}
+
+.cr-check {
+  display: flex !important;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cr-preview-frame {
+  position: relative;
+  height: 360px;
+  overflow: hidden;
+  background: #0a0b10;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  border: 1px solid #2a2e38;
+}
+
+.cr-preview-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  text-align: center;
+  padding: 1rem;
+  will-change: transform;
+}
+
+.cr-preview-line {
+  margin: 0.65rem 0;
+  font-size: 1.05rem;
+}
+
+.cr-preview-line .meta {
+  display: block;
+  font-size: 0.75rem;
+  color: #8a90a0;
+}
+
+.cr-status {
+  font-size: 0.8rem;
+  color: #8ec8b0;
+  min-height: 1.2em;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .cr-layout,
+  .cr-split {
+    grid-template-columns: 1fr;
+  }
+}

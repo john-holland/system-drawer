@@ -14,6 +14,7 @@ public sealed class LemmaBuildChatSession
     string _lemmaSlug = "default";
 
     public string ModelId { get; set; }
+    public string Engine { get; set; } = "unity";
     public IReadOnlyList<LemmaBuildChatMessage> Messages => _messages;
 
     public void SetLemmaSlug(string lemma)
@@ -118,6 +119,8 @@ public sealed class LemmaBuildChatSession
                 _messages.AddRange(data.messages.Where(m => m != null));
             if (!string.IsNullOrEmpty(data?.modelId))
                 ModelId = data.modelId;
+            if (!string.IsNullOrEmpty(data?.engine))
+                Engine = data.engine;
         }
         catch (Exception e)
         {
@@ -135,7 +138,8 @@ public sealed class LemmaBuildChatSession
             {
                 messages = _messages.ToArray(),
                 modelId = ModelId ?? "",
-                lemmaSlug = _lemmaSlug
+                lemmaSlug = _lemmaSlug,
+                engine = Engine ?? "unity"
             };
             File.WriteAllText(path, JsonUtility.ToJson(data, true));
         }

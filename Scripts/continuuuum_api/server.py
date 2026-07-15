@@ -232,6 +232,12 @@ try:
     from continuuuum_api.agile_ui_routes import register_agile_ui_routes
 
 
+    from continuuuum_api.credits_routes import register_credits_routes
+
+
+    from continuuuum_api.lemma_build_routes import register_lemma_build_routes
+
+
     from continuuuum_api.mod_routes import register_mod_routes
 
 
@@ -269,6 +275,12 @@ except ImportError:
 
 
     from agile_ui_routes import register_agile_ui_routes
+
+
+    from credits_routes import register_credits_routes
+
+
+    from lemma_build_routes import register_lemma_build_routes
 
 
     from mod_routes import register_mod_routes
@@ -773,6 +785,36 @@ def get_conn():
 
 
         ensure_draft_review_schema(conn)
+
+
+        try:
+
+
+            from continuuuum_api.credits_db import ensure_credits_schema
+
+
+        except ImportError:
+
+
+            from credits_db import ensure_credits_schema
+
+
+        ensure_credits_schema(conn)
+
+
+        try:
+
+
+            from continuuuum_api.lemma_build_db import ensure_lemma_build_schema
+
+
+        except ImportError:
+
+
+            from lemma_build_db import ensure_lemma_build_schema
+
+
+        ensure_lemma_build_schema(conn)
 
 
         _schema_initialized = True
@@ -4090,6 +4132,12 @@ register_calendar_routes(app, get_conn)
 register_agile_ui_routes(app)
 
 
+register_credits_routes(app, get_conn)
+
+
+register_lemma_build_routes(app, get_conn, _is_admin)
+
+
 register_mod_routes(app, get_conn, _get_current_user)
 
 
@@ -7042,7 +7090,7 @@ def import_xliff():
 
 
 
-def _write_deeplink_file(window: str, episode_id: str = "", entry_id: str = "") -> str:
+def _write_deeplink_file(window: str, episode_id: str = "", entry_id: str = "", form: dict | None = None) -> str:
 
 
     path = os.environ.get("CONTINUUUUM_DEEPLINK_PATH", os.path.expanduser("~/.continuuuum-deeplink.json"))
@@ -7061,6 +7109,12 @@ def _write_deeplink_file(window: str, episode_id: str = "", entry_id: str = "") 
 
 
         payload["entryId"] = entry_id
+
+
+    if form:
+
+
+        payload["form"] = form
 
 
     with open(path, "w") as f:
@@ -7084,7 +7138,7 @@ def _write_deeplink_file(window: str, episode_id: str = "", entry_id: str = "") 
 def write_deeplink():
 
 
-    """Write deeplink file for Unity DeepLinkHandler. Body: window, episodeId."""
+    """Write deeplink file for Unity DeepLinkHandler. Body: window, episodeId, entryId, form."""
 
 
     body = request.get_json() or {}
@@ -7099,10 +7153,13 @@ def write_deeplink():
     entry_id = body.get("entryId", "")
 
 
+    form = body.get("form") if isinstance(body.get("form"), dict) else None
+
+
     try:
 
 
-        path = _write_deeplink_file(window, episode_id, entry_id)
+        path = _write_deeplink_file(window, episode_id, entry_id, form)
 
 
         return jsonify({"ok": True, "path": path}), 200

@@ -11,6 +11,7 @@ STATIC_CAL = Path(__file__).resolve().parent / "static" / "project-calendar"
 STATIC_LEGAL = Path(__file__).resolve().parent / "static" / "legal-tracker"
 STATIC_BUDGET = Path(__file__).resolve().parent / "static" / "budget-dashboard"
 STATIC_SETTINGS = Path(__file__).resolve().parent / "static" / "settings"
+STATIC_CREDITS = Path(__file__).resolve().parent / "static" / "credits"
 
 
 def register_agile_ui_routes(app) -> None:
@@ -73,3 +74,15 @@ def register_agile_ui_routes(app) -> None:
     @app.route("/settings/<path:asset>")
     def settings_assets(asset: str):
         return send_from_directory(STATIC_SETTINGS, asset)
+
+    @app.route("/credits")
+    def credits_redirect():
+        return redirect("/credits/", code=302)
+
+    @app.route("/credits/")
+    def credits_page():
+        return send_from_directory(STATIC_CREDITS, "index.html")
+
+    @app.route("/credits/<path:asset>")
+    def credits_assets(asset: str):
+        return send_from_directory(STATIC_CREDITS, asset)

@@ -16,6 +16,8 @@
     { id: 'camera', label: 'Camera', path: '/camera-pathing' },
     { id: 'table-read', label: 'Table Read', path: '/table-read' },
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
+    { id: 'credits', label: 'Credits', path: '/credits' },
+    { id: 'lemma-build', label: 'Lemma Build', path: '/lemma-build' },
     { id: 'settings', label: 'Settings', path: '/settings' },
   ];
 
@@ -127,6 +129,8 @@
       camera: lemmaBase + '/camera-pathing',
       'table-read': lemmaBase + '/table-read',
       'sql-viewer': lemmaBase + '/sql-viewer',
+      credits: lemmaBase + '/credits',
+      'lemma-build': lemmaBase + '/lemma-build',
       settings: lemmaBase + '/settings',
       lemmaApiBase: lemmaBase,
     };
@@ -149,6 +153,8 @@
     if (path.indexOf('/camera-pathing') >= 0 || path.indexOf('/camera-scenes') >= 0) return 'camera';
     if (path.indexOf('/table-read') >= 0) return 'table-read';
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';
+    if (path.indexOf('/credits') >= 0) return 'credits';
+    if (path.indexOf('/lemma-build') >= 0) return 'lemma-build';
     if (path.indexOf('/story-board') >= 0) return 'story-board';
     if (path.indexOf('/project-calendar') >= 0) return 'project-calendar';
     if (path.indexOf('/budget-dashboard') >= 0) return 'budget-dashboard';

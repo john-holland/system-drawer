@@ -20,9 +20,17 @@
 
   const GROUPS = [
     { id: 'script-output', label: 'Script Output', enabled: true },
-    { id: 'lemma-library', label: 'Lemma Library', enabled: false },
+    { id: 'lemma-library', label: 'Lemma Library', enabled: true },
     { id: 'table-read', label: 'Table Read', enabled: false },
   ];
+
+  const DEFAULT_LEMMA_LIBRARY = {
+    lmStudioBaseUrl: 'http://localhost:1234/v1',
+    defaultModelId: 'mistralai/codestral-22b-v0.1',
+    maxConcurrentBuilds: 1,
+    batchOutputDir: 'Library/LemmaBuild/batches',
+    defaultEngine: 'unity',
+  };
 
   function deepClone(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -31,6 +39,7 @@
   function defaultSettings() {
     return {
       scriptOutput: deepClone(DEFAULT_SCRIPT_OUTPUT),
+      lemmaLibrary: deepClone(DEFAULT_LEMMA_LIBRARY),
     };
   }
 
@@ -65,6 +74,10 @@
           ...(parsed.scriptOutput || {}),
           autoAddPriority: normalizePriority(parsed.scriptOutput?.autoAddPriority),
         },
+        lemmaLibrary: {
+          ...DEFAULT_LEMMA_LIBRARY,
+          ...(parsed.lemmaLibrary || {}),
+        },
       };
     } catch (_) {
       return defaultSettings();
@@ -79,6 +92,10 @@
         ...DEFAULT_SCRIPT_OUTPUT,
         ...(settings.scriptOutput || {}),
         autoAddPriority: normalizePriority(settings.scriptOutput?.autoAddPriority),
+      },
+      lemmaLibrary: {
+        ...DEFAULT_LEMMA_LIBRARY,
+        ...(settings.lemmaLibrary || {}),
       },
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -125,6 +142,7 @@
     STORAGE_KEY,
     AUTO_ADD_TYPES,
     GROUPS,
+    DEFAULT_LEMMA_LIBRARY,
     defaultSettings,
     normalizePriority,
     swapPrioritySlots,
@@ -151,6 +169,17 @@
         autoAddPriority: normalizePriority(scriptOutput?.autoAddPriority),
       };
       return saveRaw(all).scriptOutput;
+    },
+    getLemmaLibrary() {
+      return loadRaw().lemmaLibrary;
+    },
+    saveLemmaLibrary(lemmaLibrary) {
+      const all = loadRaw();
+      all.lemmaLibrary = {
+        ...DEFAULT_LEMMA_LIBRARY,
+        ...lemmaLibrary,
+      };
+      return saveRaw(all).lemmaLibrary;
     },
   };
 

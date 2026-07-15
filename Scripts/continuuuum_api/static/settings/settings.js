@@ -131,12 +131,144 @@
     }
   }
 
+  function renderLemmaLibraryPanel() {
+    const ll = draft.lemmaLibrary || CS.DEFAULT_LEMMA_LIBRARY || {};
+    return `
+      <h1>Lemma Library</h1>
+      <p class="cs-hint">Admin settings for Web Lemma Build model proxy (Codestral / LM Studio).
+      Saves to the server with <code>X-Admin: 1</code> and mirrors into local settings.</p>
+      <label>Model base URL
+        <input type="text" id="ll-base-url" value="${esc(ll.lmStudioBaseUrl || '')}" />
+      </label>
+      <label>Default model id
+        <input type="text" id="ll-model-id" value="${esc(ll.defaultModelId || '')}" />
+      </label>
+      <div class="cs-actions" style="margin-top:0.5rem">
+        <button type="button" id="ll-refresh-models">Refresh models</button>
+        <select id="ll-models" style="min-width:12rem"><option value="">— models —</option></select>
+      </div>
+      <label>Max concurrent builds
+        <input type="number" id="ll-max-c" min="0" max="16" value="${esc(ll.maxConcurrentBuilds ?? 1)}" />
+      </label>
+      <label>Batch output directory
+        <input type="text" id="ll-batch" value="${esc(ll.batchOutputDir || '')}" />
+      </label>
+      <label>Default target engine
+        <select id="ll-engine">
+          <option value="unity"${ll.defaultEngine === 'unity' ? ' selected' : ''}>Unity</option>
+          <option value="haxe"${ll.defaultEngine === 'haxe' ? ' selected' : ''}>Haxe</option>
+        </select>
+      </label>
+      <div class="cs-actions">
+        <button type="button" id="cs-save-btn">Save to server</button>
+        <span id="cs-status"></span>
+      </div>`;
+  }
+
+  function bindLemmaLibraryPanel() {
+    const panel = document.getElementById('cs-panel');
+    if (!panel) return;
+
+    const syncDraft = () => {
+      draft.lemmaLibrary = {
+        ...(draft.lemmaLibrary || CS.DEFAULT_LEMMA_LIBRARY),
+        lmStudioBaseUrl: panel.querySelector('#ll-base-url')?.value || '',
+        defaultModelId: panel.querySelector('#ll-model-id')?.value || '',
+        maxConcurrentBuilds: Number(panel.querySelector('#ll-max-c')?.value || 1),
+        batchOutputDir: panel.querySelector('#ll-batch')?.value || '',
+        defaultEngine: panel.querySelector('#ll-engine')?.value || 'unity',
+      };
+    };
+
+    panel.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('change', syncDraft);
+      el.addEventListener('input', syncDraft);
+    });
+
+    const modelsSel = panel.querySelector('#ll-models');
+    if (modelsSel) {
+      modelsSel.onchange = () => {
+        if (modelsSel.value) {
+          panel.querySelector('#ll-model-id').value = modelsSel.value;
+          syncDraft();
+        }
+      };
+    }
+
+    const refresh = panel.querySelector('#ll-refresh-models');
+    if (refresh) {
+      refresh.onclick = async () => {
+        setStatus('Loading models…');
+        try {
+          const res = await fetch('/api/lemma-build/models', { headers: { 'X-Admin': '1' } });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || data.detail || 'models failed');
+          const models = data.models || [];
+          modelsSel.innerHTML =
+            '<option value="">— models —</option>' +
+            models.map((m) => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+          setStatus(models.length ? `${models.length} models` : 'No models');
+        } catch (e) {
+          setStatus(e.message || 'Refresh failed', true);
+        }
+      };
+    }
+
+    const saveBtn = panel.querySelector('#cs-save-btn');
+    if (saveBtn) {
+      saveBtn.onclick = async () => {
+        syncDraft();
+        try {
+          const body = draft.lemmaLibrary;
+          const res = await fetch('/api/lemma-build/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Admin': '1' },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Save failed');
+          draft.lemmaLibrary = {
+            lmStudioBaseUrl: data.lmStudioBaseUrl,
+            defaultModelId: data.defaultModelId,
+            maxConcurrentBuilds: data.maxConcurrentBuilds,
+            batchOutputDir: data.batchOutputDir,
+            defaultEngine: data.defaultEngine,
+          };
+          CS.saveLemmaLibrary(draft.lemmaLibrary);
+          setStatus('Lemma Library settings saved.');
+        } catch (e) {
+          setStatus(e.message || 'Save failed', true);
+        }
+      };
+    }
+  }
+
+  async function hydrateLemmaLibraryFromServer() {
+    try {
+      const res = await fetch('/api/lemma-build/settings', { headers: { 'X-Admin': '1' } });
+      if (!res.ok) return;
+      const data = await res.json();
+      draft.lemmaLibrary = {
+        lmStudioBaseUrl: data.lmStudioBaseUrl || draft.lemmaLibrary?.lmStudioBaseUrl,
+        defaultModelId: data.defaultModelId || draft.lemmaLibrary?.defaultModelId,
+        maxConcurrentBuilds: data.maxConcurrentBuilds ?? draft.lemmaLibrary?.maxConcurrentBuilds,
+        batchOutputDir: data.batchOutputDir || draft.lemmaLibrary?.batchOutputDir,
+        defaultEngine: data.defaultEngine || draft.lemmaLibrary?.defaultEngine || 'unity',
+      };
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
   function renderPanelContent() {
     const panel = document.getElementById('cs-panel');
     if (!panel) return;
     if (activeGroup === 'script-output') {
       panel.innerHTML = renderScriptOutputPanel();
       bindScriptOutputPanel();
+    } else if (activeGroup === 'lemma-library') {
+      panel.innerHTML = renderLemmaLibraryPanel();
+      bindLemmaLibraryPanel();
     } else {
       panel.innerHTML = '<h1>Coming soon</h1><p class="cs-hint">This settings group is not available yet.</p>';
     }
@@ -158,5 +290,5 @@
 
   activeGroup = groupFromHash();
   draft = CS.load();
-  render();
+  hydrateLemmaLibraryFromServer().finally(render);
 })();

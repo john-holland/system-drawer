@@ -12,6 +12,7 @@ public sealed class LemmaBuildFormState
     public string functionalDescription = "";
     public string mechanismPrompt = "";
     public string synonymsCsv = "";
+    public string engine = "unity";
     public LemmaCompositionChildPutDto[] compositionChildren = Array.Empty<LemmaCompositionChildPutDto>();
     public ThesaurusEntryPropertyRecord[] properties = Array.Empty<ThesaurusEntryPropertyRecord>();
 
@@ -29,8 +30,38 @@ public sealed class LemmaBuildFormState
             mechanismPrompt = mechanismPrompt ?? "",
             synonyms = ParseSynonyms(),
             compositionChildren = compositionChildren ?? Array.Empty<LemmaCompositionChildPutDto>(),
-            properties = properties ?? Array.Empty<ThesaurusEntryPropertyRecord>()
+            properties = properties ?? Array.Empty<ThesaurusEntryPropertyRecord>(),
+            engine = engine ?? "unity"
         };
+    }
+
+    public void ApplyQueryForm(LemmaBuildDeeplinkForm form)
+    {
+        if (form == null)
+            return;
+        if (!string.IsNullOrEmpty(form.lemma))
+            lemma = form.lemma;
+        var pos = !string.IsNullOrEmpty(form.posTag) ? form.posTag : form.partOfSpeech;
+        if (!string.IsNullOrEmpty(pos))
+            posTag = pos;
+        if (!string.IsNullOrEmpty(form.mechanicalRole) &&
+            Enum.TryParse(form.mechanicalRole, true, out LemmaMechanicalRole role))
+            mechanicalRole = role;
+        outputTier = form.outputTier;
+        if (form.functionalDescription != null)
+            functionalDescription = form.functionalDescription;
+        if (form.mechanismPrompt != null)
+            mechanismPrompt = form.mechanismPrompt;
+        if (form.synonyms != null && form.synonyms.Length > 0)
+            synonymsCsv = string.Join(", ", form.synonyms);
+        if (form.compositionChildren != null)
+            compositionChildren = form.compositionChildren;
+        if (form.properties != null)
+            properties = form.properties;
+        if (!string.IsNullOrEmpty(form.engine))
+            engine = form.engine.Trim().ToLowerInvariant();
+        ApplyStatusMessage = "Applied deeplink / query form" +
+                             (string.IsNullOrEmpty(engine) ? "" : $" (engine={engine})");
     }
 
     public void ApplyDescriptor(LemmaMechanismDescriptor descriptor, out string[] unknownEntryWarnings)

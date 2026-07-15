@@ -27,6 +27,24 @@ public sealed class LemmaBuildFormSnapshot
     public string[] synonyms;
     public LemmaCompositionChildPutDto[] compositionChildren;
     public ThesaurusEntryPropertyRecord[] properties;
+    public string engine;
+}
+
+/// <summary>Deeplink / query form payload from Web Lemma Build (JsonUtility).</summary>
+[Serializable]
+public sealed class LemmaBuildDeeplinkForm
+{
+    public string lemma;
+    public string partOfSpeech;
+    public string posTag;
+    public string mechanicalRole;
+    public int outputTier;
+    public string functionalDescription;
+    public string mechanismPrompt;
+    public string[] synonyms;
+    public string engine;
+    public LemmaCompositionChildPutDto[] compositionChildren;
+    public ThesaurusEntryPropertyRecord[] properties;
 }
 
 [Serializable]
@@ -43,4 +61,5 @@ public sealed class LemmaBuildChatSessionData
     public LemmaBuildChatMessage[] messages;
     public string modelId;
     public string lemmaSlug;
+    public string engine;
 }

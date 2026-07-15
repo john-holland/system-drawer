@@ -114,41 +114,9 @@ public static class DeepLinkHandler
 
         {
 
-            var window = "";
+            var window = ParseJsonString(json, "window");
 
-            var episodeId = "";
-
-            if (json.Contains("\"window\""))
-
-            {
-
-                var start = json.IndexOf("\"window\"");
-
-                var valStart = json.IndexOf(':', start) + 1;
-
-                var valEnd = json.IndexOfAny(new[] { '"', ',', '}' }, valStart);
-
-                if (valEnd > valStart)
-
-                    window = json.Substring(valStart, valEnd - valStart).Trim('"', ' ');
-
-            }
-
-            if (json.Contains("\"episodeId\""))
-
-            {
-
-                var start = json.IndexOf("\"episodeId\"");
-
-                var valStart = json.IndexOf(':', start) + 1;
-
-                var valEnd = json.IndexOfAny(new[] { '"', ',', '}' }, valStart);
-
-                if (valEnd > valStart)
-
-                    episodeId = json.Substring(valStart, valEnd - valStart).Trim('"', ' ');
-
-            }
+            var episodeId = ParseJsonString(json, "episodeId");
 
             if (string.IsNullOrEmpty(window) && string.IsNullOrEmpty(episodeId))
 
@@ -179,6 +147,16 @@ public static class DeepLinkHandler
             {
 
                 ContinuuuumEpisodesWindow.ShowWindow();
+
+            }
+
+            else if (window.IndexOf("Lemma Build", StringComparison.OrdinalIgnoreCase) >= 0)
+
+            {
+
+                var formJson = ExtractJsonObject(json, "form");
+
+                OpenLemmaBuildWindow(formJson);
 
             }
 
@@ -239,6 +217,98 @@ public static class DeepLinkHandler
 
 
         open.Invoke(null, new object[] { entryId ?? "" });
+
+    }
+
+
+
+    static void OpenLemmaBuildWindow(string formJson)
+
+    {
+
+        var windowType = Type.GetType("VocabularyLemmaPropertyEditorWindow, Continuuuum.Editor");
+
+        if (windowType == null)
+
+        {
+
+            UnityEngine.Debug.LogWarning("[DeepLinkHandler] Continuuuum.Editor assembly not found; cannot open Lemma Build.");
+
+            return;
+
+        }
+
+
+
+        var open = windowType.GetMethod("OpenOnLemmaBuildTabWithForm", BindingFlags.Public | BindingFlags.Static);
+
+        if (open == null)
+
+        {
+
+            var fallback = windowType.GetMethod("OpenOnLemmaBuildTab", BindingFlags.Public | BindingFlags.Static);
+
+            fallback?.Invoke(null, null);
+
+            return;
+
+        }
+
+
+
+        open.Invoke(null, new object[] { formJson ?? "" });
+
+    }
+
+
+
+    static string ExtractJsonObject(string json, string key)
+
+    {
+
+        var token = "\"" + key + "\"";
+
+        var start = json.IndexOf(token, StringComparison.Ordinal);
+
+        if (start < 0)
+
+            return "";
+
+        var brace = json.IndexOf('{', start + token.Length);
+
+        if (brace < 0)
+
+            return "";
+
+        var depth = 0;
+
+        for (var i = brace; i < json.Length; i++)
+
+        {
+
+            var c = json[i];
+
+            if (c == '{')
+
+                depth++;
+
+            else if (c == '}')
+
+            {
+
+                depth--;
+
+                if (depth == 0)
+
+                    return json.Substring(brace, i - brace + 1);
+
+            }
+
+        }
+
+
+
+        return "";
 
     }
 

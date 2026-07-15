@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credits — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/credits/credits.css" />
+</head>
+<body class="credits-page">
+  <div id="continuuuum-nav-root"></div>
+  <div class="cr-layout">
+    <aside class="cr-sidebar">
+      <h2>Credits lists</h2>
+      <ul id="cr-list" class="cr-list"></ul>
+      <div class="cr-list-meta">
+        <label class="cr-label">Title
+          <input id="cr-title-input" type="text" placeholder="List title" />
+        </label>
+        <label class="cr-label">List id
+          <input id="cr-list-id" type="text" placeholder="(new)" readonly />
+        </label>
+        <label class="cr-label">Episode / project id
+          <input id="cr-episode" type="text" placeholder="episode id (optional)" />
+        </label>
+        <div class="cr-row">
+          <button type="button" id="cr-create-save">Create</button>
+        </div>
+      </div>
+      <a id="cr-sql-link" class="cr-chip" href="/sql-viewer?recipe=credits_warehouse_history">SQL Viewer history</a>
+    </aside>
+    <main class="cr-main">
+      <header class="cr-toolbar">
+        <h1 id="cr-title">New credits list</h1>
+        <div class="cr-toolbar-actions">
+          <label>Update from
+            <select id="cr-update-mode">
+              <option value="work_orders">Work orders (project)</option>
+              <option value="hr">HR employees</option>
+              <option value="both">Both</option>
+            </select>
+          </label>
+          <button type="button" id="cr-update-list" disabled>Update list</button>
+          <button type="button" id="cr-save-entry" disabled>Save entry</button>
+        </div>
+      </header>
+      <div class="cr-split">
+        <section class="cr-editor">
+          <h3>Entries</h3>
+          <p class="cr-hint">Hidden when both Show full name and Show nickname are off.</p>
+          <div class="cr-add-entry">
+            <label>Create entry
+              <select id="cr-entry-type">
+                <option value="manual">Manual</option>
+                <option value="work_order">From work orders</option>
+                <option value="hr">From HR employees</option>
+              </select>
+            </label>
+            <button type="button" id="cr-add-entry" disabled>Add</button>
+          </div>
+          <p id="cr-entry-type-hint" class="cr-hint">Add a blank manual credit row you can edit below.</p>
+          <div id="cr-entries"></div>
+          <div id="cr-entry-form" class="cr-entry-form hidden">
+            <h4>Edit entry</h4>
+            <label>Type / source
+              <select id="ef-source-kind">
+                <option value="manual">Manual</option>
+                <option value="work_order">Work order</option>
+                <option value="hr">HR</option>
+              </select>
+            </label>
+            <label>Full name <input id="ef-full" type="text" /></label>
+            <label>Nickname <input id="ef-nick" type="text" /></label>
+            <label class="cr-check"><input id="ef-show-full" type="checkbox" checked /> Show full name</label>
+            <label class="cr-check"><input id="ef-show-nick" type="checkbox" /> Show nickname</label>
+            <label>Company <input id="ef-company" type="text" /></label>
+            <label>Quote <input id="ef-quote" type="text" /></label>
+            <label>Rights (R)(C) <input id="ef-rights" type="text" /></label>
+            <label>Years <input id="ef-years" type="text" /></label>
+            <label>Scroll speed <input id="ef-speed" type="number" min="1" step="1" /></label>
+            <label>Section speed <input id="ef-section-speed" type="number" min="1" step="1" /></label>
+          </div>
+        </section>
+        <section class="cr-preview-wrap">
+          <h3>Speed preview</h3>
+          <label>Preview speed scale
+            <input id="cr-preview-scale" type="range" min="0.25" max="3" step="0.05" value="1" />
+          </label>
+          <div class="cr-preview-frame">
+            <div id="cr-preview-track" class="cr-preview-track"></div>
+          </div>
+        </section>
+      </div>
+      <p id="cr-status" class="cr-status"></p>
+    </main>
+  </div>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/credits/credits.js"></script>
+</body>
+</html>

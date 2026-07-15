@@ -23,6 +23,17 @@ public sealed class LemmaBuildTabController
         _chatPanel = new LemmaBuildChatPanel(_chatSession, _form, _settings);
     }
 
+    public void ApplyQueryForm(LemmaBuildDeeplinkForm form)
+    {
+        _form.ApplyQueryForm(form);
+        if (!string.IsNullOrEmpty(_form.engine))
+        {
+            _chatSession.Engine = _form.engine;
+            _chatSession.Save();
+        }
+        SyncLemmaSession();
+    }
+
     public void Draw(EditorWindow host)
     {
         SyncLemmaSession();
