@@ -259,6 +259,9 @@ namespace Locomotion.Narrative.EditorTools
                     NarrativeActionKind.CallMethod => new CallMethodAction(),
                     NarrativeActionKind.RunBehaviorTree => new RunBehaviorTreeAction(),
                     NarrativeActionKind.SendThought => new SendThoughtAction(),
+                    NarrativeActionKind.EnterSlowTimeGambit => new NarrativeEnterSlowTimeGambitAction(),
+                    NarrativeActionKind.ChooseGambitAperture => new NarrativeChooseGambitApertureAction(),
+                    NarrativeActionKind.CommitGambitPath => new NarrativeCommitGambitPathAction(),
                     _ => new CallMethodAction()
                 };
                 EditorUtility.SetDirty(tree);
@@ -329,6 +332,27 @@ namespace Locomotion.Narrative.EditorTools
                 st.queryPayload.queryId = EditorGUILayout.TextField("Query Id", st.queryPayload.queryId);
                 st.queryPayload.channels = (NarrativeQueryChannel)EditorGUILayout.EnumFlagsField("Query Channels", st.queryPayload.channels);
             }
+            else if (a is NarrativeEnterSlowTimeGambitAction enterGambit)
+            {
+                enterGambit.sessionKey = EditorGUILayout.TextField("Session Key", enterGambit.sessionKey);
+                enterGambit.modeFilter = (PathingApertureMode)EditorGUILayout.EnumPopup("Mode Filter", enterGambit.modeFilter);
+                enterGambit.tagFilter = EditorGUILayout.TextField("Tag Filter", enterGambit.tagFilter);
+                enterGambit.timeScaleCoefficient = EditorGUILayout.Slider("Time Scale", enterGambit.timeScaleCoefficient, 0f, 1f);
+                enterGambit.enforcement01 = EditorGUILayout.Slider("Enforcement", enterGambit.enforcement01, 0f, 1f);
+            }
+            else if (a is NarrativeChooseGambitApertureAction chooseGambit)
+            {
+                chooseGambit.sessionKey = EditorGUILayout.TextField("Session Key", chooseGambit.sessionKey);
+                chooseGambit.selectedApertureKey = EditorGUILayout.TextField("Selected Aperture Key", chooseGambit.selectedApertureKey);
+                chooseGambit.apertureRegistryKey = EditorGUILayout.TextField("Registry Key", chooseGambit.apertureRegistryKey);
+                chooseGambit.enforcement01 = EditorGUILayout.Slider("Enforcement", chooseGambit.enforcement01, 0f, 1f);
+                chooseGambit.requirePlayerConfirm = EditorGUILayout.Toggle("Require Player Confirm", chooseGambit.requirePlayerConfirm);
+                chooseGambit.timeoutUnscaledSeconds = EditorGUILayout.FloatField("Timeout (unscaled)", chooseGambit.timeoutUnscaledSeconds);
+            }
+            else if (a is NarrativeCommitGambitPathAction commitGambit)
+            {
+                commitGambit.sessionKey = EditorGUILayout.TextField("Session Key", commitGambit.sessionKey);
+            }
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -343,7 +367,10 @@ namespace Locomotion.Narrative.EditorTools
             SetProperty,
             SpawnPrefab,
             RunBehaviorTree,
-            SendThought
+            SendThought,
+            EnterSlowTimeGambit,
+            ChooseGambitAperture,
+            CommitGambitPath
         }
 
         private static NarrativeActionKind GetKind(NarrativeActionSpec a)
@@ -355,6 +382,9 @@ namespace Locomotion.Narrative.EditorTools
                 CallMethodAction => NarrativeActionKind.CallMethod,
                 RunBehaviorTreeAction => NarrativeActionKind.RunBehaviorTree,
                 SendThoughtAction => NarrativeActionKind.SendThought,
+                NarrativeEnterSlowTimeGambitAction => NarrativeActionKind.EnterSlowTimeGambit,
+                NarrativeChooseGambitApertureAction => NarrativeActionKind.ChooseGambitAperture,
+                NarrativeCommitGambitPathAction => NarrativeActionKind.CommitGambitPath,
                 _ => NarrativeActionKind.CallMethod
             };
         }

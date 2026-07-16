@@ -8,9 +8,10 @@ Open `/credits` on the Drawer API (port 5050).
 
 - Sidebar defaults to **New** (blank title / id); selecting a list fills title, id, and project id and switches **Create** → **Save**
 - Bind an episode/project id on the list meta form
+- **Groups** — rename section titles and set default group scroll speed; add new groups
 - **Create entry** types: Manual, From work orders, From HR employees
 - **Update list** — refresh from work-order assignees (`work_orders`), Resaurce HR employees, or both
-- Edit show full name / nickname, quote, company, rights, years, scroll speeds, source kind
+- Edit show full name / nickname, quote, company, rights, years, **per-entry scroll speed** (persisted; blank inherits group), source kind
 - **Speed preview** scrolls only visible entries (hidden when both show flags are off)
 - SQL Viewer recipes: `credits_list_entries`, `credits_warehouse_history`, `credits_hidden_entries`
 

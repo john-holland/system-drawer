@@ -34,6 +34,8 @@ public sealed class LemmaBuildTabController
         SyncLemmaSession();
     }
 
+    public LemmaBuildFormSnapshot GetFormSnapshot() => _form.ToSnapshot();
+
     public void Draw(EditorWindow host)
     {
         SyncLemmaSession();

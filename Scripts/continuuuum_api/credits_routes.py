@@ -533,6 +533,15 @@ def register_credits_routes(app, get_conn: GetConn) -> None:
         now = _now()
         show_full = _bool_int(body.get("showFullName"), 1)
         show_nick = _bool_int(body.get("showNickname"), 0)
+        raw_speed = body.get("scrollSpeed", body.get("scroll_speed"))
+        if raw_speed is None or raw_speed == "":
+            scroll_speed = None
+        else:
+            try:
+                scroll_speed = float(raw_speed)
+            except (TypeError, ValueError):
+                conn.close()
+                return jsonify({"error": "invalid_scroll_speed"}), 400
         conn.execute(
             """INSERT INTO credits_entries
                (id, list_id, section_id, full_name, nick_name, show_nickname, show_full_name,
@@ -553,7 +562,7 @@ def register_credits_routes(app, get_conn: GetConn) -> None:
                 body.get("company") or "",
                 body.get("rightsMarks") or body.get("rights_marks") or "",
                 body.get("years") or "",
-                body.get("scrollSpeed"),
+                scroll_speed,
                 body.get("sourceUserId") or body.get("source_user_id"),
                 body.get("sourceKind") or "manual",
                 now,
@@ -592,7 +601,18 @@ def register_credits_routes(app, get_conn: GetConn) -> None:
             int(row["show_nickname"]),
         )
         now = _now()
-        scroll = body.get("scrollSpeed") if "scrollSpeed" in body else row["scroll_speed"]
+        if "scrollSpeed" in body or "scroll_speed" in body:
+            raw_speed = body["scrollSpeed"] if "scrollSpeed" in body else body.get("scroll_speed")
+            if raw_speed is None or raw_speed == "":
+                scroll = None
+            else:
+                try:
+                    scroll = float(raw_speed)
+                except (TypeError, ValueError):
+                    conn.close()
+                    return jsonify({"error": "invalid_scroll_speed"}), 400
+        else:
+            scroll = row["scroll_speed"]
         source_kind = (
             body.get("sourceKind")
             if "sourceKind" in body or "source_kind" in body
@@ -638,6 +658,7 @@ def register_credits_routes(app, get_conn: GetConn) -> None:
                 "showFullName": bool(show_full),
                 "showNickname": bool(show_nick),
                 "visible": after_vis,
+                "scrollSpeed": scroll,
             },
         )
         conn.commit()

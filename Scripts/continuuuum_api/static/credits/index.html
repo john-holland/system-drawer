@@ -46,8 +46,16 @@
       </header>
       <div class="cr-split">
         <section class="cr-editor">
+          <h3>Groups</h3>
+          <p class="cr-hint">Rename credit groups (sections). Group speed is the default when an entry has no speed.</p>
+          <div id="cr-sections" class="cr-sections"></div>
+          <div class="cr-row cr-add-section-row">
+            <input id="cr-new-section-title" type="text" placeholder="New group name" />
+            <button type="button" id="cr-add-section" disabled>Add group</button>
+          </div>
+
           <h3>Entries</h3>
-          <p class="cr-hint">Hidden when both Show full name and Show nickname are off.</p>
+          <p class="cr-hint">Hidden when both Show full name and Show nickname are off. Entry scroll speed is saved per person.</p>
           <div class="cr-add-entry">
             <label>Create entry
               <select id="cr-entry-type">
@@ -56,12 +64,18 @@
                 <option value="hr">From HR employees</option>
               </select>
             </label>
+            <label>Group
+              <select id="cr-entry-section"></select>
+            </label>
             <button type="button" id="cr-add-entry" disabled>Add</button>
           </div>
           <p id="cr-entry-type-hint" class="cr-hint">Add a blank manual credit row you can edit below.</p>
           <div id="cr-entries"></div>
           <div id="cr-entry-form" class="cr-entry-form hidden">
             <h4>Edit entry</h4>
+            <label>Group
+              <select id="ef-section-id"></select>
+            </label>
             <label>Type / source
               <select id="ef-source-kind">
                 <option value="manual">Manual</option>
@@ -77,8 +91,12 @@
             <label>Quote <input id="ef-quote" type="text" /></label>
             <label>Rights (R)(C) <input id="ef-rights" type="text" /></label>
             <label>Years <input id="ef-years" type="text" /></label>
-            <label>Scroll speed <input id="ef-speed" type="number" min="1" step="1" /></label>
-            <label>Section speed <input id="ef-section-speed" type="number" min="1" step="1" /></label>
+            <label>Entry scroll speed (px/s)
+              <input id="ef-speed" type="number" min="1" step="1" placeholder="inherits group" />
+            </label>
+            <div class="cr-form-actions">
+              <button type="button" id="cr-save-entry-form">Save entry</button>
+            </div>
           </div>
         </section>
         <section class="cr-preview-wrap">

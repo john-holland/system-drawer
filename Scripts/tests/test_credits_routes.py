@@ -128,7 +128,49 @@ def test_hidden_entry_omitted_without_include_hidden(app_client):
     assert hidden[0]["visible"] is False
 
 
+def test_entry_scroll_speed_persists(app_client):
+    r = app_client.post("/api/credits/lists", json={"title": "Speed"})
+    lid = r.get_json()["id"]
+    section_id = r.get_json()["sections"][0]["id"]
+    eid = app_client.post(
+        f"/api/credits/lists/{lid}/entries",
+        json={"sectionId": section_id, "fullName": "Fast Person", "scrollSpeed": 72},
+    ).get_json()["id"]
+
+    got = app_client.get(f"/api/credits/lists/{lid}?includeHidden=1").get_json()
+    entry = next(e for e in got["entries"] if e["id"] == eid)
+    assert entry["scrollSpeed"] == 72
+
+    patched = app_client.patch(
+        f"/api/credits/entries/{eid}",
+        json={"scrollSpeed": 18},
+    ).get_json()
+    assert patched["scrollSpeed"] == 18
+
+    cleared = app_client.patch(
+        f"/api/credits/entries/{eid}",
+        json={"scrollSpeed": None},
+    ).get_json()
+    assert cleared["scrollSpeed"] is None
+
+
+def test_section_title_rename(app_client):
+    r = app_client.post("/api/credits/lists", json={"title": "Groups"})
+    lid = r.get_json()["id"]
+    section_id = r.get_json()["sections"][0]["id"]
+    patched = app_client.patch(
+        f"/api/credits/sections/{section_id}",
+        json={"title": "Stunts", "scrollSpeed": 55},
+    ).get_json()
+    assert patched["title"] == "Stunts"
+    assert patched["scrollSpeed"] == 55
+
+    got = app_client.get(f"/api/credits/lists/{lid}?includeHidden=1").get_json()
+    assert got["sections"][0]["title"] == "Stunts"
+
+
 def test_warehouse_history_on_update_and_visibility(app_client):
+
     r = app_client.post("/api/credits/lists", json={"title": "Hist"})
     lid = r.get_json()["id"]
     app_client.post(f"/api/credits/lists/{lid}/update-list", json={"mode": "hr"})

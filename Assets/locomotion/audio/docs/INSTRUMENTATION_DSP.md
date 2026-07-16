@@ -15,6 +15,7 @@
 - **Case / lid open** — Audio stays Open-free; wire via `Locomotion.Open.InstrumentOpenCloseBridge` (see `Assets/locomotion/open/docs/open-close-topology.md`)
 - **Score** — MIDI, tabs, audio features, MusicXML; OCR feature-flagged
 - **Editor** — Audio Equipment Timeline, Music Timeline Overlays
+- **Rail ding radial cache** — `RailDingRadialCache` / `RailDingChainPlayer` prebake azimuth×listener-band metal DING DONG chains for stairwell railings (see `Assets/locomotion/docs/STAIRWELL_NIGHTSTICK_FISH.md`)
 
 ## Menus
 

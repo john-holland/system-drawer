@@ -28,4 +28,7 @@ public sealed class VehicleActor : BaseAmbulatingActor
 
     [Tooltip("Optional instrument-only card solver when character is driving.")]
     public DrivingPhysicsCardSolver drivingPhysicsCardSolver;
+
+    [Tooltip("Optional proxy that retargets local instruments onto a remote vehicle.")]
+    public VehicleInstrumentPhysicsProxy instrumentPhysicsProxy;
 }

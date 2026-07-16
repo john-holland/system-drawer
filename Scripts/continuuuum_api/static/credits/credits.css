@@ -143,6 +143,82 @@
   color: #a8c8e0;
 }
 
+.cr-badge.speed {
+  background: #2e3a2e;
+  color: #b8d8b0;
+}
+
+.cr-sections {
+  margin-bottom: 0.75rem;
+}
+
+.cr-section-row {
+  display: grid;
+  grid-template-columns: 1fr 110px auto;
+  gap: 0.4rem;
+  align-items: end;
+  margin-bottom: 0.45rem;
+  padding: 0.45rem;
+  border: 1px solid #2f3442;
+  border-radius: 4px;
+}
+
+.cr-section-row label {
+  display: block;
+  font-size: 0.75rem;
+  color: #9aa0ad;
+}
+
+.cr-section-row input {
+  display: block;
+  width: 100%;
+  margin-top: 0.2rem;
+  background: #0e1016;
+  border: 1px solid #343848;
+  color: #e8e6e1;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  box-sizing: border-box;
+}
+
+.cr-section-row button,
+.cr-add-section-row button {
+  background: #3d6a5a;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cr-add-section-row {
+  margin-bottom: 1rem;
+}
+
+.cr-entry-group-header {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a90a0;
+  margin: 0.65rem 0 0.3rem;
+}
+
+.cr-editor h3 {
+  margin: 0.85rem 0 0.35rem;
+  font-size: 1rem;
+}
+
+.cr-editor h3:first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .cr-section-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .cr-chip {
   display: inline-block;
   margin-top: 1rem;
@@ -226,6 +302,29 @@
   display: block;
   font-size: 0.8rem;
   margin-bottom: 0.45rem;
+}
+
+.cr-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #2f3442;
+}
+
+.cr-form-actions button {
+  background: #3d6a5a;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.cr-form-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .cr-check {

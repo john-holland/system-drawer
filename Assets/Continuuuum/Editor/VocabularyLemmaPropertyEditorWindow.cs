@@ -72,6 +72,13 @@ public sealed class VocabularyLemmaPropertyEditorWindow : EditorWindow
         }
     }
 
+    /// <summary>Edit Mode / deeplink integration: current Lemma Build form after apply.</summary>
+    public LemmaBuildFormSnapshot GetLemmaBuildFormSnapshot()
+    {
+        _lemmaBuildTab ??= new LemmaBuildTabController();
+        return _lemmaBuildTab.GetFormSnapshot();
+    }
+
     public static void OpenWithEntryId(string entryId)
     {
         var w = GetWindow<VocabularyLemmaPropertyEditorWindow>("Lemma Properties");

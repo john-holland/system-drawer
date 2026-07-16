@@ -5,6 +5,7 @@
         "Continuuuum.Runtime",
         "Locomotion.Narrative.Runtime",
         "Locomotion.Drink.Runtime",
+        "SystemDrawer.Lemmas",
         "SystemDrawer.Lemmas.Editor"
     ],
     "includePlatforms": [
