@@ -133,7 +133,23 @@ public enum PhysicsIKTrainingCategory
     /// <summary>Actor push/pull to close hinged panel.</summary>
     Close,
     /// <summary>Object-only hinge motion profile.</summary>
-    OpenObject
+    OpenObject,
+    /// <summary>Sit on surface with hierarchical CoG tow.</summary>
+    Sit,
+    /// <summary>Stand on surface with feet plant tow.</summary>
+    StandOnSurface,
+    /// <summary>Rotating-chair swivel tool-use sequence.</summary>
+    ChairRotate,
+    /// <summary>Non-rotating chair schooch / scoot with tool-hold lift.</summary>
+    ChairSchooch,
+    /// <summary>Type on computer keyboard chiclet.</summary>
+    KeyboardType,
+    /// <summary>Point / drag desk mouse.</summary>
+    MousePoint,
+    /// <summary>Press peripheral / aux / jump-press button.</summary>
+    PeripheralButtonPress,
+    /// <summary>Place/build seat-stand bridge fitness.</summary>
+    PlaceBuild
 }
 
 /// <summary>

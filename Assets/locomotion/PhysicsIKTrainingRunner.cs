@@ -180,6 +180,54 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.55f + r() * 0.4f;
             set.powerUsed = power * 0.5f;
         }
+        else if (category == PhysicsIKTrainingCategory.Sit)
+        {
+            set.completionTime = 1.1f + (2f - 1f / power) * 0.35f + r() * 0.25f;
+            set.accuracyScore = 0.55f + r() * 0.4f; // CoG over seat + hold
+            set.powerUsed = power * (0.55f + r() * 0.25f);
+        }
+        else if (category == PhysicsIKTrainingCategory.StandOnSurface)
+        {
+            set.completionTime = 1.0f + (2f - 1f / power) * 0.3f + r() * 0.25f;
+            set.accuracyScore = 0.5f + r() * 0.45f; // both feet plant + low sway
+            set.powerUsed = power * (0.6f + r() * 0.25f);
+        }
+        else if (category == PhysicsIKTrainingCategory.ChairRotate)
+        {
+            set.completionTime = 1.3f + (2f - 1f / power) * 0.4f + r() * 0.3f;
+            set.accuracyScore = 0.45f + r() * 0.45f; // caster clear + CoG hold
+            set.powerUsed = power * (0.85f + r() * 0.25f);
+        }
+        else if (category == PhysicsIKTrainingCategory.ChairSchooch)
+        {
+            set.completionTime = 1.4f + (2f - 1f / power) * 0.45f + r() * 0.3f;
+            set.accuracyScore = 0.42f + r() * 0.45f; // lift-hold + translate + re-seat
+            set.powerUsed = power * (0.9f + r() * 0.28f);
+        }
+        else if (category == PhysicsIKTrainingCategory.KeyboardType)
+        {
+            set.completionTime = 0.9f + (2f - 1f / power) * 0.3f + r() * 0.25f;
+            set.accuracyScore = 0.5f + r() * 0.45f;
+            set.powerUsed = power * (0.7f + r() * 0.25f);
+        }
+        else if (category == PhysicsIKTrainingCategory.MousePoint)
+        {
+            set.completionTime = 0.7f + (2f - 1f / power) * 0.25f + r() * 0.2f;
+            set.accuracyScore = 0.55f + r() * 0.4f;
+            set.powerUsed = power * (0.5f + r() * 0.2f);
+        }
+        else if (category == PhysicsIKTrainingCategory.PeripheralButtonPress)
+        {
+            set.completionTime = 0.6f + (2f - 1f / power) * 0.2f + r() * 0.25f;
+            set.accuracyScore = 0.48f + r() * 0.45f;
+            set.powerUsed = power * (0.85f + r() * 0.3f);
+        }
+        else if (category == PhysicsIKTrainingCategory.PlaceBuild)
+        {
+            set.completionTime = 1.6f + (2f - 1f / power) * 0.5f + r() * 0.35f;
+            set.accuracyScore = 0.4f + r() * 0.45f;
+            set.powerUsed = power * (0.9f + r() * 0.28f);
+        }
         else
         {
             if (category == PhysicsIKTrainingCategory.Locomotion &&

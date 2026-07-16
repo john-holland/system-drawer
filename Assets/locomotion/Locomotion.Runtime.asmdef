@@ -9,7 +9,8 @@
         "Planetary",
         "Continuuuum.Runtime",
         "Locomotion.Narrative.Runtime",
-        "SystemDrawer.FeatureBudget"
+        "SystemDrawer.FeatureBudget",
+        "SdfMax"
     ],
   "includePlatforms": [],
   "excludePlatforms": [],

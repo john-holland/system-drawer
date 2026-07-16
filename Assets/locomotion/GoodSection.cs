@@ -210,6 +210,16 @@ public class GoodSection
     [Tooltip("Optional max horizontal distance for this shoot card (0 = no maximum).")]
     public float shootMaxRange;
 
+    [Header("Sit / Stand-On / Chair")]
+    [Tooltip("Sit on surface with hierarchical CoG tow (GoalType.Sit).")]
+    public bool isSitGoal;
+    [Tooltip("Stand on surface with feet plant tow (GoalType.StandOnSurface).")]
+    public bool isStandOnSurfaceGoal;
+    [Tooltip("Rotating-chair swivel tool-use card.")]
+    public bool isChairRotateGoal;
+    [Tooltip("Non-rotating chair schooch / scoot tool-use card.")]
+    public bool isChairSchoochGoal;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;

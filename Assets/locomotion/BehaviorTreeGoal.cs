@@ -94,7 +94,11 @@ public enum GoalType
     /// <summary>Intercept object with hand(s); goal.target = object to catch.</summary>
     Catch,
     /// <summary>Launch toward target; goal.target or goal.targetPosition = shoot target.</summary>
-    Shoot
+    Shoot,
+    /// <summary>Sit on a surface (chair, stack, wall, books) with hierarchical CoG tow.</summary>
+    Sit,
+    /// <summary>Stand on a surface (e.g. stand on a chair) with feet plant tow.</summary>
+    StandOnSurface
 }
 
 /// <summary>

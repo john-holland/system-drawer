@@ -11,7 +11,8 @@
     "HierarchicalPathFinding",
     "Planetary",
     "SystemDrawer",
-    "Weather.Runtime"
+    "Weather.Runtime",
+    "SdfMax"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -26,4 +27,3 @@
     "TestAssemblies"
   ]
 }
-

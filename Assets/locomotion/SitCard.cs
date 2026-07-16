@@ -28,36 +28,87 @@ public class SitCard : GoodSection
     [Tooltip("Required distance from ledge edge for safe sitting")]
     public float safeEdgeDistance = 0.2f;
 
+    [Header("Surface Tow")]
+    [Tooltip("Generic sit surface contact (chair, stack, wall, books). When set, overrides ledge-only assumptions.")]
+    public SitSurfaceContact surfaceContact;
+
+    [Tooltip("Occupancy mode for this card (Sit by default).")]
+    public SurfaceOccupancyMode occupancyMode = SurfaceOccupancyMode.Sit;
+
     /// <summary>
     /// Check if this sit card is feasible for the given ragdoll state and surface geometry.
     /// </summary>
     public bool IsSitFeasible(RagdollState currentState, Vector3 surfacePosition, Vector3 surfaceNormal, List<Vector3> surfaceEdges)
     {
-        // First check base feasibility
         if (!IsFeasible(currentState))
-        {
             return false;
+
+        if (surfaceContact != null)
+        {
+            Vector3 hip = hipVertexPosition != Vector3.zero
+                ? hipVertexPosition
+                : (currentState != null ? currentState.rootPosition : surfacePosition);
+            surfaceContact.TryProjectCog(hip, out _, out float tip);
+            if (tip > 1.35f)
+                return false;
+            return true;
         }
 
-        // Check if hip vertex can be placed on ledge
         if (!CanPlaceHipOnLedge(surfacePosition, surfaceNormal))
-        {
             return false;
-        }
-
-        // Check if torso can be positioned over seated vertices
         if (!CanPositionTorsoOverSeatedVertices())
-        {
             return false;
-        }
-
-        // Check if torso would hang over ledge edge
         if (WouldTorsoHangOverEdge(surfaceEdges))
-        {
             return false;
-        }
-
         return true;
+    }
+
+    /// <summary>Bind a SitSurfaceContact and mark goal flags from occupancyMode.</summary>
+    public void BindSurface(SitSurfaceContact contact)
+    {
+        surfaceContact = contact;
+        if (occupancyMode == SurfaceOccupancyMode.StandOn)
+        {
+            isStandOnSurfaceGoal = true;
+            isSitGoal = false;
+        }
+        else
+        {
+            isSitGoal = true;
+            isStandOnSurfaceGoal = false;
+        }
+        if (contact != null)
+        {
+            hipVertexPosition = contact.WorldPlanePoint;
+            ledgeNormal = contact.WorldPlaneNormal;
+            seatedVertices = contact.GetWorldPolygon();
+        }
+    }
+
+    /// <summary>
+    /// Apply tow occupancy on the actor runtime when the card executes.
+    /// </summary>
+    public void ApplyOccupancy(GameObject actor)
+    {
+        if (actor == null || surfaceContact == null)
+            return;
+        var runtime = actor.GetComponent<SeatedOccupancyRuntime>();
+        if (runtime == null)
+            runtime = actor.AddComponent<SeatedOccupancyRuntime>();
+        if (occupancyMode == SurfaceOccupancyMode.StandOn)
+            runtime.BeginStandOn(surfaceContact);
+        else
+            runtime.BeginSit(surfaceContact);
+    }
+
+    /// <summary>Append CoG tip-restore impulses from a stabilizer.</summary>
+    public void AppendCogRestore(SeatedCogStabilizer stabilizer, bool feetReachGround)
+    {
+        if (stabilizer == null) return;
+        var restore = stabilizer.BuildRestoreImpulses(feetReachGround);
+        if (impulseStack == null)
+            impulseStack = new System.Collections.Generic.List<ImpulseAction>();
+        impulseStack.AddRange(restore);
     }
 
     /// <summary>
@@ -158,7 +209,9 @@ public class SitCard : GoodSection
         SitCard card = new SitCard
         {
             sectionName = "Sit_" + System.Guid.NewGuid().ToString("N").Substring(0, 8),
-            description = "Sit on ledge with hip vertex on surface and torso over seated vertices"
+            description = "Sit on ledge with hip vertex on surface and torso over seated vertices",
+            isSitGoal = true,
+            occupancyMode = SurfaceOccupancyMode.Sit
         };
 
         // Estimate hip vertex position (would need to get from ragdoll system)
@@ -185,6 +238,7 @@ public class SitCard : GoodSection
 
         // Set ledge properties
         card.ledgeNormal = surfaceNormal;
+        card.BindSurface(SitSurfaceContact.FromWorldPlane(null, surfacePosition, surfaceNormal));
 
         // Estimate seated vertices (torso contact points)
         // These would typically be calculated based on ragdoll geometry

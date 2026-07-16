@@ -451,6 +451,26 @@ public class PhysicsCardSolver : MonoBehaviour
             }
         }
 
+        // Sit: prefer SitCard / isSitGoal
+        if (goal.type == GoalType.Sit)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isSitGoal || card is SitCard) return card;
+            }
+        }
+
+        // Stand on surface
+        if (goal.type == GoalType.StandOnSurface)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isStandOnSurfaceGoal || card is StandOnSurfaceCard) return card;
+            }
+        }
+
         // Flying: prefer wing cards then jet cards (use procedural flying where possible)
         if (goal.type == GoalType.Flying)
         {

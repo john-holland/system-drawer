@@ -60,6 +60,9 @@ namespace Continuuuum.Telecom
             device?.webViewDisplay?.SendToJs(JsonUtility.ToJson(resp));
         }
 
+        /// <summary>Fired when webtop publishes window frame centroids JSON payload.</summary>
+        public static event Action<string> WindowCentroidsReceived;
+
         public async Task<TelecomBridgeResponse> HandleAsync(string json)
         {
             TelecomBridgeMessage msg;
@@ -77,6 +80,9 @@ namespace Continuuuum.Telecom
                     visualNotifier?.Notify(msg.payload);
                     return Ok(msg.requestId, "{}");
                 case "cctvFrame":
+                    return Ok(msg.requestId, "{}");
+                case "windowCentroids":
+                    WindowCentroidsReceived?.Invoke(msg.payload ?? "{}");
                     return Ok(msg.requestId, "{}");
                 default:
                     return Error(msg.requestId, "unknown action");

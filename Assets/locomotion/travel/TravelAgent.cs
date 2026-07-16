@@ -353,6 +353,10 @@ public class TravelAgent : MonoBehaviour
             gravityAwarePathingForPreview ? PhysicalPathingMedium.Space : PhysicalPathingMedium.Air,
             in tl);
 
+        GameObject actorGo = ambulatingActor != null ? ambulatingActor.gameObject : gameObject;
+        if (built != null)
+            ConsiderPathingPrep.EnrichPlan(built, actorGo);
+
         if (gravityAwarePathingForPreview && built?.segments != null && gravityPathing != null)
         {
             for (int i = 0; i < built.segments.Count; i++)

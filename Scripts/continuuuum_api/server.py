@@ -238,6 +238,9 @@ try:
     from continuuuum_api.lemma_build_routes import register_lemma_build_routes
 
 
+    from continuuuum_api.life_systems_routes import register_life_systems_routes
+
+
     from continuuuum_api.mod_routes import register_mod_routes
 
 
@@ -281,6 +284,9 @@ except ImportError:
 
 
     from lemma_build_routes import register_lemma_build_routes
+
+
+    from life_systems_routes import register_life_systems_routes
 
 
     from mod_routes import register_mod_routes
@@ -4136,6 +4142,9 @@ register_credits_routes(app, get_conn)
 
 
 register_lemma_build_routes(app, get_conn, _is_admin)
+
+
+register_life_systems_routes(app, get_conn)
 
 
 register_mod_routes(app, get_conn, _get_current_user)

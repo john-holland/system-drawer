@@ -245,6 +245,53 @@ def _mod_slot_candidate(span: dict[str, Any], draft_id: str) -> dict[str, Any]:
     }
 
 
+LIFE_DISCOVERY_TOKENS = {
+    "mood",
+    "depressed",
+    "depression",
+    "manic",
+    "mania",
+    "morale",
+    "empathy",
+    "heart",
+    "liver",
+    "lungs",
+    "brain",
+    "organ",
+    "supplement",
+    "illness",
+    "adrenaline",
+    "hydration",
+    "immune",
+}
+
+
+def _life_systems_prompt_candidate(span: dict[str, Any], selection_text: str) -> dict[str, Any] | None:
+    token = (selection_text or "").strip().lower()
+    if token not in LIFE_DISCOVERY_TOKENS:
+        return None
+    if token in ("mood", "depressed", "depression", "manic", "mania", "morale", "empathy"):
+        value = "{P:life|op=query|q=mood}"
+    elif token in ("heart", "liver", "lungs", "brain", "organ"):
+        organ = token if token != "organ" else "heart"
+        value = f"{{P:life|op=query|q=organ|id={organ}}}"
+    elif token == "supplement":
+        value = "{P:life|op=buff|lifeForce=0.1|duration=300|label=supplement}"
+    elif token == "illness":
+        value = "{P:life|op=illness|channel=immune|delta=-0.2|duration=600|label=authored}"
+    else:
+        value = f"{{P:life|op=query|q={token}}}"
+    return {
+        "bindingKind": "prompt_placeholder",
+        "propertyKey": "life",
+        "propertyValue": value,
+        "promptPlaceholderName": "life",
+        "charStart": span["charStart"],
+        "charEnd": span["charEnd"],
+        "selectionText": selection_text,
+    }
+
+
 def build_span_candidates(
     conn: sqlite3.Connection,
     span: dict[str, Any],
@@ -304,6 +351,13 @@ def build_span_candidates(
         if key not in applied and key not in seen:
             seen.add(key)
             candidates.append(tpl)
+
+    life_tpl = _life_systems_prompt_candidate(span, selection_text)
+    if life_tpl:
+        key = binding_template_key(life_tpl)
+        if key not in applied and key not in seen:
+            seen.add(key)
+            candidates.append(life_tpl)
 
     return candidates
 
