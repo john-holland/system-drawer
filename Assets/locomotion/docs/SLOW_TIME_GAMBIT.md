@@ -25,3 +25,9 @@ Registered in Narrative Tree editor as EnterSlowTimeGambit / ChooseGambitApertur
 ## Advisor
 
 `GambitPhysicsMaterialAdvisor.Suggest` returns friction/bounciness/manifold deltas for easier or harder retries.
+
+## Pass / crash + crowding
+
+`PathingAperture.passMode`: `SelectOnly` (default gambit pick), `AngularPassThrough`, `CrashThrough` (optional `breakable` + `materialHint`).
+
+`ApertureCrowdSampler` updates `crowdOccupancy01` for Stuntman / Safety Warden risk. See `StuntmanSafetyWarden.md`.

@@ -419,10 +419,13 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
     def localization_view():
         q = request.args.get("q")
         property_key = request.args.get("propertyKey")
+        language = request.args.get("language")
         try:
             conn = get_conn()
             merged = merge_vocabulary(conn)
-            entries = filter_entries(list(merged.values()), q=q, property_key=property_key)
+            entries = filter_entries(
+                list(merged.values()), q=q, property_key=property_key, language=language
+            )
 
             specs = []
             try:

@@ -119,6 +119,18 @@ namespace Locomotion.Narrative
                 case LayoutSpatialRelation.Near:
                     center += new Vector3(size.x * 0.25f, 0f, size.z * 0.25f);
                     break;
+                case LayoutSpatialRelation.Above:
+                    center.y += size.y;
+                    break;
+                case LayoutSpatialRelation.Below:
+                    center.y -= size.y;
+                    break;
+                case LayoutSpatialRelation.Far:
+                    center += new Vector3(size.x * 0.75f, 0f, size.z * 0.75f);
+                    break;
+                case LayoutSpatialRelation.Side:
+                    center.x += size.x * 0.5f;
+                    break;
             }
         }
 

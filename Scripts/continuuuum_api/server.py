@@ -238,7 +238,13 @@ try:
     from continuuuum_api.lemma_build_routes import register_lemma_build_routes
 
 
+    from continuuuum_api.lemma_completion_routes import register_lemma_completion_routes
+
+
     from continuuuum_api.life_systems_routes import register_life_systems_routes
+
+
+    from continuuuum_api.nsm_routes import register_change_of_basis_routes, register_nsm_routes
 
 
     from continuuuum_api.mod_routes import register_mod_routes
@@ -286,7 +292,13 @@ except ImportError:
     from lemma_build_routes import register_lemma_build_routes
 
 
+    from lemma_completion_routes import register_lemma_completion_routes
+
+
     from life_systems_routes import register_life_systems_routes
+
+
+    from nsm_routes import register_change_of_basis_routes, register_nsm_routes
 
 
     from mod_routes import register_mod_routes
@@ -821,6 +833,21 @@ def get_conn():
 
 
         ensure_lemma_build_schema(conn)
+
+
+        try:
+
+
+            from continuuuum_api.lemma_completion_db import ensure_lemma_completion_schema
+
+
+        except ImportError:
+
+
+            from lemma_completion_db import ensure_lemma_completion_schema
+
+
+        ensure_lemma_completion_schema(conn)
 
 
         _schema_initialized = True
@@ -2527,7 +2554,7 @@ def build_ast():
 def change_of_basis():
 
 
-    """Translate script to target language using thesaurus_translations, rules, and word overrides."""
+    """Translate script using CoB rewrite engine (rules, conjugation, lexicon fill)."""
 
 
     body = request.get_json() or {}
@@ -2545,10 +2572,40 @@ def change_of_basis():
         return jsonify({"error": "episodeScriptId and targetLanguage required"}), 400
 
 
+    dry_run = bool(body.get("dryRun") or body.get("dry_run"))
+
+
+    conjugation = body.get("conjugation") or {}
+
+
+    max_passes = body.get("maxGlobalPasses") or body.get("max_global_passes")
+
+
     try:
 
 
+        try:
+
+
+            from continuuuum_api.change_of_basis_engine import apply_change_of_basis
+
+
+            from continuuuum_api.nsm_wiring_db import ensure_nsm_schema
+
+
+        except ImportError:
+
+
+            from change_of_basis_engine import apply_change_of_basis
+
+
+            from nsm_wiring_db import ensure_nsm_schema
+
+
         conn = get_conn()
+
+
+        ensure_nsm_schema(conn)
 
 
         cur = conn.execute(
@@ -2572,16 +2629,13 @@ def change_of_basis():
             conn.close()
 
 
-            return jsonify({"scriptText": ""}), 200
+            return jsonify({"scriptText": "", "appliedRules": [], "warnings": []}), 200
 
 
         script_text = row["script_text"]
 
 
         source_lang_code = (row["language"] or "en").strip()
-
-
-        # Resolve source and target language ids
 
 
         cur = conn.execute("SELECT id FROM languages WHERE code = ? LIMIT 1", (source_lang_code,))
@@ -2611,272 +2665,154 @@ def change_of_basis():
         target_language_id = target_lang_row["id"]
 
 
-        # Word overrides for target language (term, context_type -> target_form; None = leave as-is)
+        result = apply_change_of_basis(
 
 
-        overrides = {}
+            conn,
 
 
-        try:
+            script_text,
 
 
-            cur = conn.execute(
+            source_language_id,
 
 
-                "SELECT term, context_type, target_form FROM change_of_basis_word_overrides WHERE target_language_id = ?",
+            target_language_id,
 
 
-                (target_language_id,),
+            conjugation=conjugation if isinstance(conjugation, dict) else {},
 
 
-            )
+            max_global_passes=int(max_passes) if max_passes is not None else None,
 
 
-            overrides = {(r["term"].lower(), r["context_type"]): r["target_form"] for r in cur.fetchall()}
+            dry_run=dry_run,
 
 
-        except sqlite3.OperationalError:
+        )
 
 
-            pass
+        if not dry_run:
 
 
-        # Tokenize (whitespace)
-
-
-        tokens = script_text.split()
-
-
-        if not tokens:
-
-
-            conn.close()
-
-
-            return jsonify({"scriptText": ""}), 200
-
-
-        # Resolve each token: override (default/place/person) else thesaurus_translations else leave token
-
-
-        result_parts = []
-
-
-        for i, token in enumerate(tokens):
-
-
-            used_override = False
-
-
-            for ctx in ("default", "place", "person"):
-
-
-                if (token.lower(), ctx) in overrides:
-
-
-                    val = overrides[(token.lower(), ctx)]
-
-
-                    result_parts.append(token if val is None else val)
-
-
-                    used_override = True
-
-
-                    break
-
-
-            if used_override:
-
-
-                continue
-
-
-            entry_id = None
-
-
-            if source_language_id:
-
-
-                cur = conn.execute(
-
-
-                    "SELECT id FROM thesaurus_entries WHERE language_id = ? AND (term = ? OR term = ?) LIMIT 1",
-
-
-                    (source_language_id, token.lower(), token),
-
-
-                )
-
-
-                entry = cur.fetchone()
-
-
-                if entry:
-
-
-                    entry_id = entry["id"]
-
-
-            if entry_id:
-
-
-                cur = conn.execute(
-
-
-                    "SELECT form FROM thesaurus_translations WHERE entry_id = ? AND language_id = ? LIMIT 1",
-
-
-                    (entry_id, target_language_id),
-
-
-                )
-
-
-                tr = cur.fetchone()
-
-
-                if tr:
-
-
-                    result_parts.append(tr["form"])
-
-
-                    continue
-
-
-            result_parts.append(token)
-
-
-        script_text_out = " ".join(result_parts)
-
-
-        # Update script_audio_by_language for target language (so translation context has audio refs per clause)
-
-
-        try:
-
-
-            conn.execute(
-
-
-                "DELETE FROM script_audio_by_language WHERE episode_script_id = ? AND language_id = ?",
-
-
-                (episode_script_id, target_language_id),
-
-
-            )
-
-
-            cur = conn.execute(
-
-
-                """SELECT id, episode_script_id, language_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, audio_ref
-
-
-                   FROM script_speech_audio WHERE episode_script_id = ?""",
-
-
-                (episode_script_id,),
-
-
-            )
-
-
-            for r in cur.fetchall():
+            try:
 
 
                 conn.execute(
 
 
-                    """INSERT INTO script_audio_by_language
+                    "DELETE FROM script_audio_by_language WHERE episode_script_id = ? AND language_id = ?",
 
 
-                       (id, episode_script_id, language_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, kind, audio_ref, source_speech_id)
-
-
-                       VALUES (?, ?, ?, ?, ?, ?, ?, 'speech', ?, ?)""",
-
-
-                    (str(uuid.uuid4()), r["episode_script_id"], target_language_id,
-
-
-                     r["farey_left_num"], r["farey_left_den"], r["farey_right_num"], r["farey_right_den"],
-
-
-                     r["audio_ref"], r["id"]),
-
-
-                )   #todo: review: should we be using the source_speech_id or the id?
-
-
-            cur = conn.execute(
-
-
-                """SELECT id, episode_script_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, audio_ref
-
-
-                   FROM script_sound_effects WHERE episode_script_id = ?""",
-
-
-                (episode_script_id,),
-
-
-            )
-
-
-            for r in cur.fetchall():
-
-
-                conn.execute(
-
-
-                    """INSERT INTO script_audio_by_language
-
-
-                       (id, episode_script_id, language_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, kind, audio_ref, source_sfx_id)
-
-
-                       VALUES (?, ?, ?, ?, ?, ?, ?, 'sfx', ?, ?)""",
-
-
-                    (str(uuid.uuid4()), r["episode_script_id"], target_language_id,
-
-
-                     r["farey_left_num"], r["farey_left_den"], r["farey_right_num"], r["farey_right_den"],
-
-
-                     r["audio_ref"], r["id"]),
+                    (episode_script_id, target_language_id),
 
 
                 )
 
 
-            conn.commit()
+                cur = conn.execute(
 
 
-        except sqlite3.OperationalError:
+                    """SELECT id, episode_script_id, language_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, audio_ref
 
 
-            pass
+                       FROM script_speech_audio WHERE episode_script_id = ?""",
+
+
+                    (episode_script_id,),
+
+
+                )
+
+
+                for r in cur.fetchall():
+
+
+                    conn.execute(
+
+
+                        """INSERT INTO script_audio_by_language
+
+
+                           (id, episode_script_id, language_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, kind, audio_ref, source_speech_id)
+
+
+                           VALUES (?, ?, ?, ?, ?, ?, ?, 'speech', ?, ?)""",
+
+
+                        (str(uuid.uuid4()), r["episode_script_id"], target_language_id,
+
+
+                         r["farey_left_num"], r["farey_left_den"], r["farey_right_num"], r["farey_right_den"],
+
+
+                         r["audio_ref"], r["id"]),
+
+
+                    )
+
+
+                cur = conn.execute(
+
+
+                    """SELECT id, episode_script_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, audio_ref
+
+
+                       FROM script_sound_effects WHERE episode_script_id = ?""",
+
+
+                    (episode_script_id,),
+
+
+                )
+
+
+                for r in cur.fetchall():
+
+
+                    conn.execute(
+
+
+                        """INSERT INTO script_audio_by_language
+
+
+                           (id, episode_script_id, language_id, farey_left_num, farey_left_den, farey_right_num, farey_right_den, kind, audio_ref, source_sfx_id)
+
+
+                           VALUES (?, ?, ?, ?, ?, ?, ?, 'sfx', ?, ?)""",
+
+
+                        (str(uuid.uuid4()), r["episode_script_id"], target_language_id,
+
+
+                         r["farey_left_num"], r["farey_left_den"], r["farey_right_num"], r["farey_right_den"],
+
+
+                         r["audio_ref"], r["id"]),
+
+
+                    )
+
+
+                conn.commit()
+
+
+            except sqlite3.OperationalError:
+
+
+                pass
 
 
         conn.close()
 
 
-        return jsonify({"scriptText": script_text_out}), 200
+        return jsonify(result), 200
 
 
     except Exception as e:
 
 
         return jsonify({"error": str(e)}), 500
-
-
-
-
 
 
 
@@ -4144,7 +4080,16 @@ register_credits_routes(app, get_conn)
 register_lemma_build_routes(app, get_conn, _is_admin)
 
 
+register_lemma_completion_routes(app, get_conn)
+
+
 register_life_systems_routes(app, get_conn)
+
+
+register_nsm_routes(app, get_conn)
+
+
+register_change_of_basis_routes(app, get_conn)
 
 
 register_mod_routes(app, get_conn, _get_current_user)

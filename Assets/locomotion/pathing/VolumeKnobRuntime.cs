@@ -1,7 +1,11 @@
+using System.Reflection;
 using UnityEngine;
-using Locomotion.Open;
 
 /// <summary>Volume knob with discrete click travel.</summary>
+/// <remarks>
+/// OpenableJointDriver lives in Locomotion.Open (which references this assembly), so the
+/// joint is a MonoBehaviour soft-ref and SetOpen01 is invoked by name to avoid a cycle.
+/// </remarks>
 [AddComponentMenu("Locomotion/Periphery/Volume Knob")]
 public sealed class VolumeKnobRuntime : MonoBehaviour
 {
@@ -12,7 +16,8 @@ public sealed class VolumeKnobRuntime : MonoBehaviour
     public float travel = 0.004f;
     public int clickCount = 12;
     public Light knobLight;
-    public OpenableJointDriver jointDriver;
+    [Tooltip("Optional OpenableJointDriver (Locomotion.Open) — assigned in inspector.")]
+    public MonoBehaviour jointDriver;
 
     public int CurrentClick { get; private set; }
 
@@ -20,12 +25,24 @@ public sealed class VolumeKnobRuntime : MonoBehaviour
     {
         CurrentClick = Mathf.Clamp(click, 0, Mathf.Max(0, clickCount - 1));
         float t = clickCount <= 1 ? 0f : CurrentClick / (float)(clickCount - 1);
-        if (jointDriver != null)
-            jointDriver.SetOpen01(t);
+        TrySetOpen01(jointDriver, t);
         transform.localRotation = Quaternion.Euler(0f, t * 270f, 0f);
         if (knobLight != null)
             knobLight.intensity = 0.2f + t * 0.8f;
     }
 
     public void Nudge(int delta) => SetClick(CurrentClick + delta);
+
+    static void TrySetOpen01(MonoBehaviour driver, float open01)
+    {
+        if (driver == null) return;
+        MethodInfo mi = driver.GetType().GetMethod(
+            "SetOpen01",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            null,
+            new[] { typeof(float) },
+            null);
+        if (mi != null)
+            mi.Invoke(driver, new object[] { open01 });
+    }
 }

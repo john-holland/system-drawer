@@ -63,6 +63,15 @@ public class MultiModalSegment
     [NonSerialized] public ParkingZoneVolume parkingZoneRef;
     public float terminalScore;
 
+    [Header("Stunt / risk totals")]
+    public TravelPlanRunningTotals runningTotals = TravelPlanRunningTotals.Neutral;
+    [Tooltip("Optional stunt zone GameObject (runway / terminus).")]
+    public GameObject stuntZoneRef;
+    [Tooltip("Optional pathing aperture id for crash/pass-through legs.")]
+    public string apertureId;
+    [Tooltip("Selected parkour / rope animation group tag for this leg.")]
+    public string animationGroupTag;
+
     public bool HasTerminalPayload =>
         TravelLegModeExtensions.IsTerminalLeg(mode) && terminalCentroidWorld.sqrMagnitude > 1e-8f;
 
@@ -190,6 +199,10 @@ public class MultiModalSegment
             placementSlotConfig = placementSlotConfig,
             parkingZoneRef = parkingZoneRef,
             terminalScore = terminalScore,
+            runningTotals = runningTotals,
+            stuntZoneRef = stuntZoneRef,
+            apertureId = apertureId,
+            animationGroupTag = animationGroupTag,
         };
         if (waypoints != null)
             copy.waypoints = new List<Vector3>(waypoints);
@@ -211,6 +224,12 @@ public class GenericMultiModalPathPlan
 {
     public List<MultiModalSegment> segments = new List<MultiModalSegment>();
 
+    [Tooltip("Aggregate running totals across all segments.")]
+    public TravelPlanRunningTotals planTotals = TravelPlanRunningTotals.Neutral;
+
+    /// <summary>Rejected / alternate forks for broccoli-plume emergence viz.</summary>
+    [NonSerialized] public List<MultiModalSegment> rejectedForks;
+
     public bool IsEmpty => segments == null || segments.Count == 0;
 
     public List<Vector3> FlattenWaypointsForGizmos()
@@ -229,6 +248,7 @@ public class GenericMultiModalPathPlan
     public GenericMultiModalPathPlan Clone()
     {
         var p = new GenericMultiModalPathPlan();
+        p.planTotals = planTotals;
         if (segments == null)
             return p;
         foreach (MultiModalSegment seg in segments)
@@ -237,7 +257,32 @@ public class GenericMultiModalPathPlan
                 continue;
             p.segments.Add(seg.CloneShallowRefs());
         }
+        if (rejectedForks != null && rejectedForks.Count > 0)
+        {
+            p.rejectedForks = new List<MultiModalSegment>();
+            foreach (MultiModalSegment fork in rejectedForks)
+            {
+                if (fork != null)
+                    p.rejectedForks.Add(fork.CloneShallowRefs());
+            }
+        }
 
         return p;
+    }
+
+    public void RecomputePlanTotals()
+    {
+        var acc = TravelPlanRunningTotals.Neutral;
+        if (segments == null)
+        {
+            planTotals = acc;
+            return;
+        }
+        for (int i = 0; i < segments.Count; i++)
+        {
+            if (segments[i] == null) continue;
+            acc = acc.Add(segments[i].runningTotals);
+        }
+        planTotals = acc;
     }
 }

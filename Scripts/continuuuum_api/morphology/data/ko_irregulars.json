@@ -1,0 +1,16 @@
+{
+  "하다": {"type": "hada"},
+  "알다": {"type": "regular"},
+  "원하다": {"type": "hada"},
+  "느끼다": {"type": "regular"},
+  "보다": {"type": "regular"},
+  "듣다": {"type": "d_irregular"},
+  "하다": {"type": "hada"},
+  "일어나다": {"type": "regular"},
+  "움직이다": {"type": "regular"},
+  "만지다": {"type": "regular"},
+  "알다": {"type": "regular"},
+  "생각하다": {"type": "hada"},
+  "원하다": {"type": "hada"},
+  "이다": {"type": "ida"}
+}

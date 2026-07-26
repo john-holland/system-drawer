@@ -46,7 +46,7 @@ public static class ConsiderPathingPrep
             if (found) break;
         }
 
-        var station = Object.FindObjectOfType<ComputerPeripheryStation>();
+        var station = Object.FindFirstObjectByType<ComputerPeripheryStation>();
         if (station != null)
         {
             station.EnsureSeatContact();

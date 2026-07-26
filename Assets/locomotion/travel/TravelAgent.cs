@@ -59,6 +59,22 @@ public class TravelAgent : MonoBehaviour
     [Tooltip("Secondary modality mix bias used by timeline and traversibility scoring.")]
     public float requireType01 = 0.5f;
 
+    [Header("Risk / safety band (NaN = unset)")]
+    [Tooltip("Refuse routes with risk above this (e.g. 0.3 = jump over, not out a window).")]
+    public float maxRisk01 = float.NaN;
+    [Tooltip("Require at least this much risk (e.g. with maxSafety=0.9 ⇒ min risk 0.1).")]
+    public float minRisk01 = float.NaN;
+    [Tooltip("Require safety >= this (safety = 1 - risk).")]
+    public float minSafety01 = float.NaN;
+    [Tooltip("Cap safety so some risk remains (maxSafety=0.9 ⇒ risk >= 0.1).")]
+    public float maxSafety01 = float.NaN;
+
+    [Header("Stunt / Safety planners")]
+    [Tooltip("When set, Stuntman proposes runway/acrobatics/crash legs within the risk band.")]
+    public StuntmanPlannerService stuntmanPlanner;
+    [Tooltip("When set, Safety Warden gates/rewrites plans outside the risk band.")]
+    public SafetyWardenPlannerService safetyWardenPlanner;
+
     [Tooltip("GoodSection cards offered as tool modality candidates for preview planning.")]
     public List<GoodSection> toolSectionsForPreview = new List<GoodSection>();
 
@@ -313,6 +329,16 @@ public class TravelAgent : MonoBehaviour
         }
     }
 
+    GenericMultiModalPathPlan ApplyRiskPlannerServices(
+        GenericMultiModalPathPlan plan,
+        GenericTraversibilityPlannerSolver.PlannerHints hints,
+        GameObject actorGo)
+    {
+        var stunt = stuntmanPlanner != null ? stuntmanPlanner : GetComponent<StuntmanPlannerService>();
+        var warden = safetyWardenPlanner != null ? safetyWardenPlanner : GetComponent<SafetyWardenPlannerService>();
+        return TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stunt, warden);
+    }
+
     /// <summary>
     /// Rebuild cached plan using preview positions and configured sections (editor preview / runtime tooling).
     /// </summary>
@@ -332,7 +358,11 @@ public class TravelAgent : MonoBehaviour
         {
             requireAsset01 = requireAsset01,
             requireType01 = requireType01,
-            preferredVehicle = hintVehicle
+            preferredVehicle = hintVehicle,
+            maxRisk01 = maxRisk01,
+            minRisk01 = minRisk01,
+            minSafety01 = minSafety01,
+            maxSafety01 = maxSafety01
         };
 
         PlannerTimelineOptions tl = plannerTimelineOptions;
@@ -355,7 +385,14 @@ public class TravelAgent : MonoBehaviour
 
         GameObject actorGo = ambulatingActor != null ? ambulatingActor.gameObject : gameObject;
         if (built != null)
+        {
             ConsiderPathingPrep.EnrichPlan(built, actorGo);
+            ConsiderStuntmanHints.EnrichPlan(built, actorGo, previewStartWorld, previewGoalWorld);
+            ConsiderSafetyWardenHints.EnrichPlan(built, actorGo, previewStartWorld, previewGoalWorld);
+        }
+
+        if (built != null)
+            built = ApplyRiskPlannerServices(built, hints, actorGo);
 
         if (gravityAwarePathingForPreview && built?.segments != null && gravityPathing != null)
         {

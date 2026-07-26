@@ -1,0 +1,101 @@
+{
+  "lemmaMap": {
+    "know": { "es": "saber", "fr": "savoir" },
+    "think": { "es": "pensar", "fr": "penser" },
+    "want": { "es": "querer", "fr": "vouloir" },
+    "dont-want": { "es": "querer", "fr": "vouloir", "esNeg": true, "frNeg": true },
+    "feel": { "es": "sentir", "fr": "sentir" },
+    "see": { "es": "ver", "fr": "voir" },
+    "hear": { "es": "oír", "fr": "entendre" },
+    "do": { "es": "hacer", "fr": "faire" },
+    "happen": { "es": "pasar", "fr": "arriver" },
+    "move": { "es": "mover", "fr": "bouger" },
+    "touch": { "es": "tocar", "fr": "toucher" }
+  },
+  "conjugations": {
+    "es": {
+      "saber": {
+        "1|singular": "sé", "2|singular": "sabes", "3|singular": "sabe",
+        "1|plural": "sabemos", "2|plural": "sabéis", "3|plural": "saben"
+      },
+      "pensar": {
+        "1|singular": "pienso", "2|singular": "piensas", "3|singular": "piensa",
+        "1|plural": "pensamos", "2|plural": "pensáis", "3|plural": "piensan"
+      },
+      "querer": {
+        "1|singular": "quiero", "2|singular": "quieres", "3|singular": "quiere",
+        "1|plural": "queremos", "2|plural": "queréis", "3|plural": "quieren"
+      },
+      "sentir": {
+        "1|singular": "siento", "2|singular": "sientes", "3|singular": "siente",
+        "1|plural": "sentimos", "2|plural": "sentís", "3|plural": "sienten"
+      },
+      "ver": {
+        "1|singular": "veo", "2|singular": "ves", "3|singular": "ve",
+        "1|plural": "vemos", "2|plural": "veis", "3|plural": "ven"
+      },
+      "oír": {
+        "1|singular": "oigo", "2|singular": "oyes", "3|singular": "oye",
+        "1|plural": "oímos", "2|plural": "oís", "3|plural": "oyen"
+      },
+      "hacer": {
+        "1|singular": "hago", "2|singular": "haces", "3|singular": "hace",
+        "1|plural": "hacemos", "2|plural": "hacéis", "3|plural": "hacen"
+      },
+      "pasar": {
+        "1|singular": "paso", "2|singular": "pasas", "3|singular": "pasa",
+        "1|plural": "pasamos", "2|plural": "pasáis", "3|plural": "pasan"
+      },
+      "mover": {
+        "1|singular": "muevo", "2|singular": "mueves", "3|singular": "mueve",
+        "1|plural": "movemos", "2|plural": "movéis", "3|plural": "mueven"
+      },
+      "tocar": {
+        "1|singular": "toco", "2|singular": "tocas", "3|singular": "toca",
+        "1|plural": "tocamos", "2|plural": "tocáis", "3|plural": "tocan"
+      }
+    },
+    "fr": {
+      "savoir": {
+        "1|singular": "sais", "2|singular": "sais", "3|singular": "sait",
+        "1|plural": "savons", "2|plural": "savez", "3|plural": "savent"
+      },
+      "penser": {
+        "1|singular": "pense", "2|singular": "penses", "3|singular": "pense",
+        "1|plural": "pensons", "2|plural": "pensez", "3|plural": "pensent"
+      },
+      "vouloir": {
+        "1|singular": "veux", "2|singular": "veux", "3|singular": "veut",
+        "1|plural": "voulons", "2|plural": "voulez", "3|plural": "veulent"
+      },
+      "sentir": {
+        "1|singular": "sens", "2|singular": "sens", "3|singular": "sent",
+        "1|plural": "sentons", "2|plural": "sentez", "3|plural": "sentent"
+      },
+      "voir": {
+        "1|singular": "vois", "2|singular": "vois", "3|singular": "voit",
+        "1|plural": "voyons", "2|plural": "voyez", "3|plural": "voient"
+      },
+      "entendre": {
+        "1|singular": "entends", "2|singular": "entends", "3|singular": "entend",
+        "1|plural": "entendons", "2|plural": "entendez", "3|plural": "entendent"
+      },
+      "faire": {
+        "1|singular": "fais", "2|singular": "fais", "3|singular": "fait",
+        "1|plural": "faisons", "2|plural": "faites", "3|plural": "font"
+      },
+      "arriver": {
+        "1|singular": "arrive", "2|singular": "arrives", "3|singular": "arrive",
+        "1|plural": "arrivons", "2|plural": "arrivez", "3|plural": "arrivent"
+      },
+      "bouger": {
+        "1|singular": "bouge", "2|singular": "bouges", "3|singular": "bouge",
+        "1|plural": "bougeons", "2|plural": "bougez", "3|plural": "bougent"
+      },
+      "toucher": {
+        "1|singular": "touche", "2|singular": "touches", "3|singular": "touche",
+        "1|plural": "touchons", "2|plural": "touchez", "3|plural": "touchent"
+      }
+    }
+  }
+}

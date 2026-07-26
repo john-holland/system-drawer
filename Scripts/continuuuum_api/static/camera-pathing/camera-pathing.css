@@ -1,5 +1,9 @@
 .cp-main { max-width: 960px; margin: 0 auto; padding: 1rem 1.5rem 3rem; font-family: system-ui, sans-serif; }
 .cp-toolbar { display: flex; gap: 0.75rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
+.cp-toolbar label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: #57606a; }
+.cp-toolbar select { min-width: 12rem; padding: 0.35rem 0.5rem; }
+.cp-toolbar input { padding: 0.35rem 0.5rem; }
+.cp-active-path { font-size: 0.85rem; color: #57606a; margin: 0.25rem 0 0.75rem; }
 .cp-panel { border: 1px solid #d0d7de; border-radius: 6px; padding: 1rem; margin-top: 1rem; min-height: 120px; }
 .cp-scene { border-bottom: 1px solid #eee; padding: 0.5rem 0; cursor: pointer; }
 .cp-scene:hover { background: #f6f8fa; }

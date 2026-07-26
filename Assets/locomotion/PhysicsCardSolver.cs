@@ -201,7 +201,32 @@ public class PhysicsCardSolver : MonoBehaviour
         float velocityLikelihood = EstimateVelocityChangeLikelihood(card, state);
         score += velocityLikelihood * velocityWeight;
 
+        // Vulnerable / strong markers near root: prefer lower damage bias.
+        if (state != null)
+        {
+            float dmg = SampleNearbyMarkerDamage(state.rootPosition);
+            score *= Mathf.Clamp01(1.05f - dmg * 0.35f);
+        }
+
         return Mathf.Clamp01(score);
+    }
+
+    static float SampleNearbyMarkerDamage(Vector3 root)
+    {
+        var hits = Physics.OverlapSphere(root, 1.25f, ~0, QueryTriggerInteraction.Collide);
+        float bestVuln = 0f;
+        float bestStrong = 0f;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            if (hits[i] == null) continue;
+            var m = hits[i].GetComponentInParent<RagdollSectionStrengthMarker>();
+            if (m == null) continue;
+            float d = Vector3.Distance(root, m.SamplePoint);
+            float w = m.capsuleWeight * Mathf.Clamp01(1f - d / Mathf.Max(0.05f, m.influenceRadius));
+            if (m.strength == RagdollSectionStrength.Vulnerable) bestVuln = Mathf.Max(bestVuln, w);
+            else bestStrong = Mathf.Max(bestStrong, w);
+        }
+        return Mathf.Clamp01(bestVuln - bestStrong * 0.5f);
     }
 
     /// <summary>

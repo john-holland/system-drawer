@@ -115,6 +115,27 @@
   font-size: 0.9rem;
 }
 
+.lb-btn-primary {
+  background: #c45c2a !important;
+  font-weight: 700;
+  padding: 0.65rem 1.1rem !important;
+  font-size: 1rem !important;
+  letter-spacing: 0.01em;
+}
+
+.lb-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+#lb-lm-status.is-ok {
+  color: #8ec8b0;
+}
+
+#lb-lm-status.is-bad {
+  color: #e88;
+}
+
 .lb-messages {
   min-height: 220px;
   max-height: 45vh;

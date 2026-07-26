@@ -285,10 +285,29 @@
     renderBrowseList();
   }
 
+  async function populateLocLangFilter() {
+    const sel = document.getElementById('loc-filter-lang');
+    if (!sel || sel.getAttribute('data-populated') === '1') return;
+    const prev = sel.value;
+    try {
+      const data = await api('/api/thesaurus/languages');
+      const items = data.items || [];
+      sel.innerHTML = '<option value="">All languages</option>' +
+        items.map(l => `<option value="${esc(l.code)}">${esc(l.code)}</option>`).join('');
+      if (prev) sel.value = prev;
+      else if (items.some(l => l.code === 'en')) sel.value = 'en';
+      sel.setAttribute('data-populated', '1');
+    } catch (e) {
+      /* keep static options */
+    }
+  }
+
   async function loadLocalization() {
+    await populateLocLangFilter();
     const q = document.getElementById('loc-search-q')?.value || '';
     const propertyKey = document.getElementById('loc-filter-key')?.value || '';
     const draftId = document.getElementById('loc-filter-draft')?.value?.trim() || '';
+    const language = document.getElementById('loc-filter-lang')?.value || '';
     if (draftId) {
       const params = new URLSearchParams({ draftEpisodeId: draftId });
       if (propertyKey) params.set('bindingKind', 'localization');
@@ -305,6 +324,7 @@
         draftEpisodeId: draftId,
         charStart: b.charStart,
         charEnd: b.charEnd,
+        languageCode: b.languageCode || b.language || '',
       }));
       if (q) {
         const ql = q.toLowerCase();
@@ -316,12 +336,16 @@
       if (propertyKey) {
         locRows = locRows.filter(r => (r.propertyKey || '').includes(propertyKey));
       }
+      if (language) {
+        locRows = locRows.filter(r => !r.languageCode || r.languageCode === language);
+      }
       renderLocList();
       return;
     }
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (propertyKey) params.set('propertyKey', propertyKey);
+    if (language) params.set('language', language);
     const data = await api('/api/thesaurus/localization-view?' + params);
     locRows = (data.rows || []).map(function (row) {
       var pk = row.propertyKey || '';
@@ -770,6 +794,8 @@
     document.getElementById('filter-spatial-dim')?.addEventListener('change', () => loadBrowse());
     document.getElementById('loc-search-q')?.addEventListener('input', debounce(() => loadLocalization(), 300));
     document.getElementById('loc-filter-key')?.addEventListener('change', () => loadLocalization());
+    document.getElementById('loc-filter-lang')?.addEventListener('change', () => loadLocalization());
+    document.getElementById('loc-filter-draft')?.addEventListener('change', () => loadLocalization());
     document.getElementById('btn-refresh-browse')?.addEventListener('click', () => loadBrowse());
     window.addEventListener('hashchange', route);
     const params = new URLSearchParams(location.search);

@@ -1,0 +1,462 @@
+{
+  "version": 1,
+  "source": "NSM hand-authored Continuuuum glosses",
+  "count": 65,
+  "primes": [
+    {
+      "term": "I",
+      "group": "substantive",
+      "posTag": "pronoun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (substantive): the speaker; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "you",
+      "group": "substantive",
+      "posTag": "pronoun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (substantive): the addressee; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "someone",
+      "group": "substantive",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (substantive): a person, not named further; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "something",
+      "group": "substantive",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (substantive): a thing, not named further; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "people",
+      "group": "substantive",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (substantive): more than one person; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "body",
+      "group": "substantive",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (substantive): the physical body of someone; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "kind",
+      "group": "relational",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (relational): a type or sort of something; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "part",
+      "group": "relational",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (relational): a piece of something; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "this",
+      "group": "determiner",
+      "posTag": "determiner",
+      "mechanicalRole": "DeterminerArticle",
+      "nsmDefinition": "Semantic prime (determiner): the thing I am pointing to now; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "the-same",
+      "group": "determiner",
+      "posTag": "determiner",
+      "mechanicalRole": "DeterminerArticle",
+      "nsmDefinition": "Semantic prime (determiner): not other; identical in the intended sense; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "other",
+      "group": "determiner",
+      "posTag": "determiner",
+      "mechanicalRole": "DeterminerArticle",
+      "nsmDefinition": "Semantic prime (determiner): not the same; else; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "one",
+      "group": "quantifier",
+      "posTag": "numeral",
+      "mechanicalRole": "LiteralPrimitive",
+      "nsmDefinition": "Semantic prime (quantifier): a single unit; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "two",
+      "group": "quantifier",
+      "posTag": "numeral",
+      "mechanicalRole": "LiteralPrimitive",
+      "nsmDefinition": "Semantic prime (quantifier): one and one more; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "some",
+      "group": "quantifier",
+      "posTag": "determiner",
+      "mechanicalRole": "DeterminerArticle",
+      "nsmDefinition": "Semantic prime (quantifier): not all; an indefinite amount; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "all",
+      "group": "quantifier",
+      "posTag": "determiner",
+      "mechanicalRole": "DeterminerArticle",
+      "nsmDefinition": "Semantic prime (quantifier): the whole of a set; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "much",
+      "group": "quantifier",
+      "posTag": "determiner",
+      "mechanicalRole": "DeterminerArticle",
+      "nsmDefinition": "Semantic prime (quantifier): a large amount; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "little",
+      "group": "quantifier",
+      "posTag": "determiner",
+      "mechanicalRole": "DeterminerArticle",
+      "nsmDefinition": "Semantic prime (quantifier): a small amount; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "good",
+      "group": "evaluator",
+      "posTag": "adjective",
+      "mechanicalRole": "ModifierAdjective",
+      "nsmDefinition": "Semantic prime (evaluator): evaluated positively; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "bad",
+      "group": "evaluator",
+      "posTag": "adjective",
+      "mechanicalRole": "ModifierAdjective",
+      "nsmDefinition": "Semantic prime (evaluator): evaluated negatively; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "big",
+      "group": "descriptor",
+      "posTag": "adjective",
+      "mechanicalRole": "ModifierAdjective",
+      "nsmDefinition": "Semantic prime (descriptor): large in size; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "small",
+      "group": "descriptor",
+      "posTag": "adjective",
+      "mechanicalRole": "ModifierAdjective",
+      "nsmDefinition": "Semantic prime (descriptor): not big; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "know",
+      "group": "mental",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (mental): have in mind as true; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "think",
+      "group": "mental",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (mental): have in mind; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "want",
+      "group": "mental",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (mental): wish for something to happen; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "dont-want",
+      "group": "mental",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (mental): wish for something not to happen; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "feel",
+      "group": "mental",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (mental): have a bodily or emotional sensation; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "see",
+      "group": "mental",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (mental): perceive with the eyes; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "hear",
+      "group": "mental",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (mental): perceive with the ears; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "say",
+      "group": "speech",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (speech): produce words; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "words",
+      "group": "speech",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (speech): units of speech; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "true",
+      "group": "speech",
+      "posTag": "adjective",
+      "mechanicalRole": "ModifierAdjective",
+      "nsmDefinition": "Semantic prime (speech): matching what is so; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "do",
+      "group": "action",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (action): perform an action; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "happen",
+      "group": "action",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (action): take place as an event; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "move",
+      "group": "action",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (action): change place; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "touch",
+      "group": "action",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (action): come into contact; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "be-somewhere",
+      "group": "existence",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (existence): be located in a place; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "there-is",
+      "group": "existence",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (existence): exist; be present; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "be-someone",
+      "group": "existence",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (existence): be a particular person or thing; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "have",
+      "group": "existence",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (existence): possess; be mine; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "live",
+      "group": "life",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (life): be alive; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "die",
+      "group": "life",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (life): cease to live; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "when",
+      "group": "time",
+      "posTag": "conjunction",
+      "mechanicalRole": "ConnectorConjunction",
+      "nsmDefinition": "Semantic prime (time): at a time; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "now",
+      "group": "time",
+      "posTag": "adverb",
+      "mechanicalRole": "ModifierAdverb",
+      "nsmDefinition": "Semantic prime (time): at this time; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "before",
+      "group": "time",
+      "posTag": "adverb",
+      "mechanicalRole": "ModifierAdverb",
+      "nsmDefinition": "Semantic prime (time): at a time earlier; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "after",
+      "group": "time",
+      "posTag": "adverb",
+      "mechanicalRole": "ModifierAdverb",
+      "nsmDefinition": "Semantic prime (time): at a time later; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "a-long-time",
+      "group": "time",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (time): for much time; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "a-short-time",
+      "group": "time",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (time): for little time; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "for-some-time",
+      "group": "time",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (time): during an indefinite duration; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "moment",
+      "group": "time",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (time): in one very short time; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "where",
+      "group": "space",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (space): at a place; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "here",
+      "group": "space",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (space): at this place; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "above",
+      "group": "space",
+      "posTag": "preposition",
+      "mechanicalRole": "ConnectorPreposition",
+      "nsmDefinition": "Semantic prime (space): in a place higher; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "below",
+      "group": "space",
+      "posTag": "preposition",
+      "mechanicalRole": "ConnectorPreposition",
+      "nsmDefinition": "Semantic prime (space): in a place lower; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "far",
+      "group": "space",
+      "posTag": "adjective",
+      "mechanicalRole": "ModifierAdjective",
+      "nsmDefinition": "Semantic prime (space): not near; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "near",
+      "group": "space",
+      "posTag": "preposition",
+      "mechanicalRole": "ConnectorPreposition",
+      "nsmDefinition": "Semantic prime (space): not far; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "side",
+      "group": "space",
+      "posTag": "noun",
+      "mechanicalRole": "AtomicSubject",
+      "nsmDefinition": "Semantic prime (space): beside; at one side; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "inside",
+      "group": "space",
+      "posTag": "preposition",
+      "mechanicalRole": "ConnectorPreposition",
+      "nsmDefinition": "Semantic prime (space): in the inner part; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "not",
+      "group": "logical",
+      "posTag": "adverb",
+      "mechanicalRole": "ModifierAdverb",
+      "nsmDefinition": "Semantic prime (logical): negation; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "maybe",
+      "group": "logical",
+      "posTag": "adverb",
+      "mechanicalRole": "ModifierAdverb",
+      "nsmDefinition": "Semantic prime (logical): it is possible; not certain; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "can",
+      "group": "logical",
+      "posTag": "verb",
+      "mechanicalRole": "AtomicAction",
+      "nsmDefinition": "Semantic prime (logical): it is possible for someone to do; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "because",
+      "group": "logical",
+      "posTag": "conjunction",
+      "mechanicalRole": "ConnectorConjunction",
+      "nsmDefinition": "Semantic prime (logical): for this reason; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "if",
+      "group": "logical",
+      "posTag": "conjunction",
+      "mechanicalRole": "ConnectorConjunction",
+      "nsmDefinition": "Semantic prime (logical): under this condition; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "very",
+      "group": "intensifier",
+      "posTag": "adverb",
+      "mechanicalRole": "ModifierAdverb",
+      "nsmDefinition": "Semantic prime (intensifier): intensifier; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "more",
+      "group": "intensifier",
+      "posTag": "adverb",
+      "mechanicalRole": "ModifierAdverb",
+      "nsmDefinition": "Semantic prime (intensifier): augmentor; additional amount; not defined in more basic words. Continuuuum composition atom."
+    },
+    {
+      "term": "like",
+      "group": "similarity",
+      "posTag": "preposition",
+      "mechanicalRole": "ConnectorPreposition",
+      "nsmDefinition": "Semantic prime (similarity): similar to; the same way as; not defined in more basic words. Continuuuum composition atom."
+    }
+  ]
+}

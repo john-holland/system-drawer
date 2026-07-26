@@ -17,6 +17,10 @@ public class ConsiderRopeCards : MonoBehaviour
     [SerializeField] float scanRangeM = 12f;
     [SerializeField] float minClimbTension = 50f;
     [SerializeField] LayerMask anchorMask = ~0;
+    [Tooltip("Emit inchworm mantle/lower/ledge cards with rope.* tags.")]
+    [SerializeField] bool emitInchwormCards = true;
+    [Tooltip("When true, climb cards carry attach_sherpa_carry tag.")]
+    [SerializeField] bool attachSherpaCarry;
 
     readonly List<GoodSection> _generated = new List<GoodSection>();
 
@@ -49,7 +53,18 @@ public class ConsiderRopeCards : MonoBehaviour
         }
 
         if (ropeSystem.NormalizedLoad < 0.95f && ropeSystem.MaxTensionN >= minClimbTension)
+        {
             _generated.Add(BuildClimbCard());
+            if (emitInchwormCards)
+            {
+                _generated.Add(BuildInchwormCard(RopeInchwormAnimationGroup.MantleLeft, "Mantle left"));
+                _generated.Add(BuildInchwormCard(RopeInchwormAnimationGroup.MantleRight, "Mantle right"));
+                _generated.Add(BuildInchwormCard(RopeInchwormAnimationGroup.Lowering, "Lowering"));
+                _generated.Add(BuildInchwormCard(RopeInchwormAnimationGroup.ClimbingUp, "Climbing up"));
+                _generated.Add(BuildInchwormCard(RopeInchwormAnimationGroup.ClimbOntoLedge, "Climb onto ledge"));
+                _generated.Add(BuildInchwormCard(RopeInchwormAnimationGroup.Idling, "Rope idle"));
+            }
+        }
 
         if (ropeSystem.OverlapIndex == null || !ropeSystem.OverlapIndex.HasTangle)
             _generated.Add(BuildCoilCard());
@@ -88,14 +103,33 @@ public class ConsiderRopeCards : MonoBehaviour
 
     GoodSection BuildClimbCard()
     {
+        string tag = TagClimb;
+        if (attachSherpaCarry)
+            tag = TagClimb + "," + RopeInchwormAnimationGroup.TagSherpaCarry;
         return new GoodSection
         {
             sectionName = "climb_tension_rope",
-            description = "Climb tensioned rope",
+            description = attachSherpaCarry ? "Climb tensioned rope (sherpa)" : "Climb tensioned rope",
             traversabilityMode = TraversabilityMode.Climb,
-            physicalPathingTag = TagClimb,
+            physicalPathingTag = tag,
             enablesTraversability = true,
             limits = new SectionLimits { maxForce = ropeSystem.TotalBreakTensionN * 0.5f }
+        };
+    }
+
+    GoodSection BuildInchwormCard(string inchwormTag, string label)
+    {
+        string tag = inchwormTag;
+        if (attachSherpaCarry)
+            tag = inchwormTag + "," + RopeInchwormAnimationGroup.TagSherpaCarry;
+        return new GoodSection
+        {
+            sectionName = inchwormTag.Replace('.', '_'),
+            description = label,
+            traversabilityMode = TraversabilityMode.Climb,
+            physicalPathingTag = tag,
+            enablesTraversability = true,
+            limits = new SectionLimits { maxForce = ropeSystem.TotalBreakTensionN * 0.45f }
         };
     }
 

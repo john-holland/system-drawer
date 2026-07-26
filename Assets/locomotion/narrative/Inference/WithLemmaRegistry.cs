@@ -32,7 +32,16 @@ namespace Locomotion.Narrative
                 { "there", LayoutSpatialRelation.Through },
                 { "here", LayoutSpatialRelation.Near },
                 { "over-here", LayoutSpatialRelation.Near },
-                { "over here", LayoutSpatialRelation.Near }
+                { "over here", LayoutSpatialRelation.Near },
+                { "where", LayoutSpatialRelation.Near },
+                { "above", LayoutSpatialRelation.Above },
+                { "below", LayoutSpatialRelation.Below },
+                { "far", LayoutSpatialRelation.Far },
+                { "side", LayoutSpatialRelation.Side },
+                { "crash-through", LayoutSpatialRelation.Through },
+                { "crash through", LayoutSpatialRelation.Through },
+                { "wall-run", LayoutSpatialRelation.Along },
+                { "scale", LayoutSpatialRelation.Along }
             };
 
         public static void RegisterBuiltInSynonyms()
@@ -45,6 +54,8 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("along the road", "along-the-road");
             BuiltInSynonyms.RegisterAlias("here here", "here-here");
             BuiltInSynonyms.RegisterAlias("there there", "there-there");
+            BuiltInSynonyms.RegisterAlias("crash through", "crash-through");
+            BuiltInSynonyms.RegisterAlias("wall run", "wall-run");
         }
 
         public static string CanonicalizeDeictic(string token)

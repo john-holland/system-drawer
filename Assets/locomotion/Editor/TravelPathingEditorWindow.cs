@@ -322,8 +322,8 @@ public class TravelPathingEditorWindow : EditorWindow
                           !staticSeed.boolValue;
 
         EditorGUI.BeginDisabledGroup(lockCoords);
-        EditorGUILayout.PropertyField(serializedAgent.FindProperty("previewStartWorld"));
-        EditorGUILayout.PropertyField(serializedAgent.FindProperty("previewGoalWorld"));
+        DrawVector3WithZoom(serializedAgent.FindProperty("previewStartWorld"));
+        DrawVector3WithZoom(serializedAgent.FindProperty("previewGoalWorld"));
         EditorGUILayout.PropertyField(serializedAgent.FindProperty("coordinateMode"));
         EditorGUI.EndDisabledGroup();
 
@@ -505,6 +505,25 @@ public class TravelPathingEditorWindow : EditorWindow
             ZoomSegment(ta);
         else
             ZoomToFit(ta);
+    }
+
+    static void DrawVector3WithZoom(SerializedProperty prop)
+    {
+        if (prop == null)
+            return;
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.PropertyField(prop);
+        if (GUILayout.Button("Zoom", GUILayout.Width(52f)))
+            FrameWorldPoint(prop.vector3Value);
+        EditorGUILayout.EndHorizontal();
+    }
+
+    internal static void FrameWorldPoint(Vector3 worldPos, float pad = 2f)
+    {
+        SceneView sv = SceneView.lastActiveSceneView;
+        if (sv == null)
+            return;
+        sv.Frame(new Bounds(worldPos, Vector3.one * Mathf.Max(0.1f, pad)), false);
     }
 
     static void ZoomToFit(TravelAgent ta)

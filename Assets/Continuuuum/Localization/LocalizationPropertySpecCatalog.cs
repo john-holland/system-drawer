@@ -62,9 +62,34 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildDrinkPropertyRecords());
         list.AddRange(BuildOpenClosePropertyRecords());
         list.AddRange(BuildLifeSystemsPropertyRecords());
+        list.AddRange(BuildNsmPropertyRecords());
+        list.AddRange(BuildStuntSafetyPropertyRecords());
         list.AddRange(BuildSpatialDescriptionPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildStuntSafetyPropertyRecords() => new[]
+    {
+        Spec("stunt-max-risk", "Float", "0.3", "Stuntman maxRisk01 planner band"),
+        Spec("stunt-min-risk", "Float", "", "Stuntman minRisk01 planner band"),
+        Spec("safely-risk-min", "Float", "0.1", "{P:safely|riskMin} band"),
+        Spec("safely-safety-min", "Float", "0.9", "{P:safely|safetyMin} band"),
+        Spec("safely-safety-max", "Float", "0.9", "{P:safely|safetyMax} ⇒ min risk complementary"),
+        Spec("stunt-anim-group", "String", "", "Parkour / rope animation group tag"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildNsmPropertyRecords() => new[]
+    {
+        Spec(NsmLemmaPropertyKeys.SpecPrime, "Bool", "false", "Entry is an NSM semantic prime"),
+        Spec(NsmLemmaPropertyKeys.SpecGroup, "String", "", "NSM prime group (substantive, time, logical, ...)"),
+        Spec(NsmLemmaPropertyKeys.SpecDefinition, "String", "", "Gloss / ostensive note"),
+        Spec(NsmLemmaPropertyKeys.SpecLogicalForm, "Json", "{}", "Math/predicate AST JSON"),
+        Spec(NsmLemmaPropertyKeys.SpecCausalityRole, "String", "none", "none|causal|conditional|negation|temporal|modal"),
+        Spec(NsmLemmaPropertyKeys.SpecTemporalRole, "String", "none", "none|when|now|before|after|duration|moment|place_time"),
+        Spec(NsmLemmaPropertyKeys.SpecFuzzyHedge, "String", "", "Hedge id / phrase key"),
+        Spec(NsmLemmaPropertyKeys.SpecFuzzyCurve, "Json", "", "Override membership curve params"),
+        Spec(NsmLemmaPropertyKeys.SpecCausalityTree, "String", "", "Causality tree / composition note"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildSpatialDescriptionPropertyRecords() => new[]
     {

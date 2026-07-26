@@ -16,16 +16,16 @@ def resolve_gov_glove_bin() -> Path:
     override = os.environ.get("GOV_GLOVE_BIN")
     if override:
         return Path(override)
+    # Prefer vendored CLI.js — node_modules/.bin can be a stale junction after renames.
+    vendor_cli = _API_ROOT / "vendor" / "gov-glove" / "dist" / "cli.js"
+    if vendor_cli.is_file():
+        return vendor_cli
     win = sys.platform == "win32"
-    candidates = [
-        _API_ROOT / "node_modules" / ".bin" / ("gov-glove.cmd" if win else "gov-glove"),
-        _API_ROOT / "vendor" / "gov-glove" / "dist" / "cli.js",
-    ]
-    for c in candidates:
-        if c.exists():
-            if c.suffix == ".js":
-                return c
-            return c
+    shim = _API_ROOT / "node_modules" / ".bin" / ("gov-glove.cmd" if win else "gov-glove")
+    if shim.exists():
+        linked_cli = _API_ROOT / "node_modules" / "gov-glove" / "dist" / "cli.js"
+        if linked_cli.is_file():
+            return shim
     raise FileNotFoundError(
         "gov-glove CLI not found. Run: cd Scripts/continuuuum_api && npm install"
     )

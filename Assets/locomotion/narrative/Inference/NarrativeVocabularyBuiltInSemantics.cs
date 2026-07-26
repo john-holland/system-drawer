@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -88,7 +89,12 @@ namespace Locomotion.Narrative
             if (string.IsNullOrWhiteSpace(text)) return clauses;
             string[] words = VocabularyBuiltInTokenizer.TokenizeText(text);
             if (words.Length == 0) return clauses;
-            var conj = new HashSet<string> { "if", "then", "else", "but", "because", "when", "while", "although", "unless", "and", "or", "nor", "yet", "so" };
+            // Includes NSM causality/temporal discourse primes (if/because/not/when/before/after/maybe/can).
+            var conj = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "if", "then", "else", "but", "because", "when", "while", "although", "unless",
+                "and", "or", "nor", "yet", "so", "before", "after", "not", "maybe", "can"
+            };
             var cur = new List<string>();
             foreach (var w in words)
             {

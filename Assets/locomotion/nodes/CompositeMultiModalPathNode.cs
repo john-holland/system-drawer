@@ -17,6 +17,14 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
     [Range(0f, 1f)] public float requireType01 = 0.5f;
     public VehicleActor preferredVehicle;
 
+    [Header("Risk / safety band (NaN = unset)")]
+    public float maxRisk01 = float.NaN;
+    public float minRisk01 = float.NaN;
+    public float minSafety01 = float.NaN;
+    public float maxSafety01 = float.NaN;
+    public StuntmanPlannerService stuntmanPlanner;
+    public SafetyWardenPlannerService safetyWardenPlanner;
+
     [Header("Execution")]
     public float waypointReachedDistance = 0.5f;
     [Tooltip("When > 0, limits the number of plan legs (not individual waypoints).")]
@@ -111,7 +119,11 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
         {
             requireAsset01 = requireAsset01,
             requireType01 = requireType01,
-            preferredVehicle = preferredVehicle
+            preferredVehicle = preferredVehicle,
+            maxRisk01 = maxRisk01,
+            minRisk01 = minRisk01,
+            minSafety01 = minSafety01,
+            maxSafety01 = maxSafety01
         };
 
         PlannerTimelineOptions tl = plannerTimelineOptions;
@@ -128,6 +140,14 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             goalTarget,
             PhysicalPathingMedium.Air,
             in tl);
+
+        GameObject actorGo = tree != null ? tree.gameObject : gameObject;
+        if (plan != null)
+        {
+            ConsiderStuntmanHints.EnrichPlan(plan, actorGo, origin, destination);
+            ConsiderSafetyWardenHints.EnrichPlan(plan, actorGo, origin, destination);
+            plan = TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stuntmanPlanner, safetyWardenPlanner);
+        }
 
         if (plan == null || plan.IsEmpty)
             return false;

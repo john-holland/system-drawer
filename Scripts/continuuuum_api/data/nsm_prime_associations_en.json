@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "language": "en",
+  "associations": [
+    {
+      "id": "nsa_when_time_dual",
+      "source_term": "when",
+      "target_term": "time",
+      "relation_kind": "dual_exponent",
+      "directed": 0,
+      "notes": "WHEN~TIME dual exponent; noun time is tagged, not a 66th prime"
+    },
+    {
+      "id": "nsa_time_when_dual",
+      "source_term": "time",
+      "target_term": "when",
+      "relation_kind": "dual_exponent",
+      "directed": 0,
+      "notes": "Inverse dual exponent edge"
+    },
+    {
+      "id": "nsa_before_after",
+      "source_term": "before",
+      "target_term": "after",
+      "relation_kind": "temporal_order",
+      "directed": 1,
+      "math_form": { "op": "before", "args": [{ "op": "var", "name": "T" }] },
+      "notes": "before is inverse-ordered relative to after"
+    },
+    {
+      "id": "nsa_after_before",
+      "source_term": "after",
+      "target_term": "before",
+      "relation_kind": "temporal_order",
+      "directed": 1,
+      "notes": "after inverse of before"
+    },
+    {
+      "id": "nsa_now_before",
+      "source_term": "now",
+      "target_term": "before",
+      "relation_kind": "temporal_order",
+      "directed": 1,
+      "notes": "now is reference for before"
+    },
+    {
+      "id": "nsa_now_after",
+      "source_term": "now",
+      "target_term": "after",
+      "relation_kind": "temporal_order",
+      "directed": 1,
+      "notes": "now is reference for after"
+    },
+    {
+      "id": "nsa_because_causal",
+      "source_term": "because",
+      "target_term": "because",
+      "relation_kind": "causal",
+      "directed": 1,
+      "math_form": { "op": "because", "args": [{ "op": "var", "name": "P" }, { "op": "var", "name": "Q" }] }
+    },
+    {
+      "id": "nsa_if_conditional",
+      "source_term": "if",
+      "target_term": "if",
+      "relation_kind": "conditional",
+      "directed": 1,
+      "math_form": { "op": "if", "args": [{ "op": "var", "name": "P" }, { "op": "var", "name": "Q" }] }
+    },
+    {
+      "id": "nsa_not_logical",
+      "source_term": "not",
+      "target_term": "not",
+      "relation_kind": "logical",
+      "directed": 1,
+      "math_form": { "op": "not", "args": [{ "op": "var", "name": "P" }] }
+    },
+    {
+      "id": "nsa_maybe_modal",
+      "source_term": "maybe",
+      "target_term": "can",
+      "relation_kind": "logical",
+      "directed": 1,
+      "notes": "modal peers"
+    },
+    {
+      "id": "nsa_can_modal",
+      "source_term": "can",
+      "target_term": "maybe",
+      "relation_kind": "logical",
+      "directed": 1
+    },
+    {
+      "id": "nsa_like_similarity",
+      "source_term": "like",
+      "target_term": "very",
+      "relation_kind": "similarity",
+      "directed": 0,
+      "notes": "like as similarity connective; intensifiers nearby"
+    },
+    {
+      "id": "nsa_somewhat_maybe",
+      "source_term": "somewhat",
+      "target_term": "maybe",
+      "relation_kind": "fuzzy_hedge",
+      "directed": 1
+    },
+    {
+      "id": "nsa_mostly_very",
+      "source_term": "mostly",
+      "target_term": "very",
+      "relation_kind": "fuzzy_hedge",
+      "directed": 1
+    },
+    {
+      "id": "nsa_basically_true",
+      "source_term": "basically",
+      "target_term": "true",
+      "relation_kind": "fuzzy_hedge",
+      "directed": 1
+    },
+    {
+      "id": "nsa_less_little",
+      "source_term": "less",
+      "target_term": "little",
+      "relation_kind": "fuzzy_hedge",
+      "directed": 1
+    },
+    {
+      "id": "nsa_just_like_like",
+      "source_term": "just-like",
+      "target_term": "like",
+      "relation_kind": "similarity",
+      "directed": 1,
+      "notes": "high-band similarity phrase"
+    },
+    {
+      "id": "nsa_later_fixture",
+      "source_term": "later",
+      "target_term": "after",
+      "relation_kind": "temporal_order",
+      "directed": 1,
+      "math_form": { "op": "after", "args": [{ "op": "prime", "term": "now" }] },
+      "notes": "composed later = after(now)"
+    }
+  ]
+}

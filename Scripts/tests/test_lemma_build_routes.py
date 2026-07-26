@@ -91,6 +91,27 @@ def test_unreal_engine_rejected(app_client):
     assert "unreal" in r.get_json()["error"]
 
 
+def test_lm_status_public_when_unreachable(app_client):
+    client, _ = app_client
+    with patch("lemma_build_routes._list_models", side_effect=RuntimeError("model_unreachable:down")):
+        r = client.get("/api/lemma-build/lm-status")
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["reachable"] is False
+    assert body["ok"] is False
+
+
+def test_lm_status_public_when_ok(app_client):
+    client, _ = app_client
+    with patch("lemma_build_routes._list_models", return_value=["local-model"]):
+        r = client.get("/api/lemma-build/lm-status")
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["reachable"] is True
+    assert body["modelCount"] == 1
+
+
+
 def test_unity_vs_haxe_preface():
     unity = load_system_preface("unity")
     haxe = load_system_preface("haxe")

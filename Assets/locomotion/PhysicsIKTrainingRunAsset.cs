@@ -149,7 +149,29 @@ public enum PhysicsIKTrainingCategory
     /// <summary>Press peripheral / aux / jump-press button.</summary>
     PeripheralButtonPress,
     /// <summary>Place/build seat-stand bridge fitness.</summary>
-    PlaceBuild
+    PlaceBuild,
+    // Parkour group
+    ParkourLopingStrides,
+    ParkourFallRolls,
+    ParkourMantling,
+    ParkourOneLegLanding,
+    ParkourOneHandLanding,
+    ParkourSwinging,
+    ParkourFootSwinging,
+    ParkourToeFingerHoldSwings,
+    ParkourSpringLanding,
+    ParkourSpringRollJump,
+    ParkourSlideDownLedgePropJump,
+    ParkourWallRun,
+    ParkourUnevenBarsSwing,
+    ParkourJungleGymBars,
+    // Rope inchworm group
+    RopeMantleLeft,
+    RopeMantleRight,
+    RopeLowering,
+    RopeClimbingUp,
+    RopeClimbOntoLedge,
+    RopeIdling
 }
 
 /// <summary>
@@ -304,6 +326,12 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
     public ThrowHandMode shootHandMode = ThrowHandMode.Right;
     [Tooltip("Optional shoot animation trees.")]
     public List<AnimationBehaviorTreeNode> shootAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Header("Parkour / Rope inchworm")]
+    [Tooltip("Animation group tag (ParkourAnimationGroup / RopeInchwormAnimationGroup).")]
+    public string parkourAnimGroupTag;
+    [Tooltip("When true, attach sherpa-carry load during rope inchworm training.")]
+    public bool attachSherpaCarry;
 
     [Header("Trained Sets")]
     [Tooltip("List of coefficient sets with metrics (overwrite replaces this; append adds to it)")]

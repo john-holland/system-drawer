@@ -125,4 +125,34 @@ public class VocabularyBuiltInEditModeTests
         }
         Assert.AreEqual(VocabularyBuiltInRegistry.Count, idCount);
     }
+
+    [Test]
+    public void NsmSemanticPrimes_AtLeast65TaggedPrime()
+    {
+        int primeTagged = VocabularyBuiltInRegistry.All.Count(d =>
+            d.Tags != null && d.Tags.Any(t => string.Equals(t, "prime", System.StringComparison.OrdinalIgnoreCase)));
+        Assert.GreaterOrEqual(primeTagged, 65, "Expected at least 65 prime-tagged builtins");
+    }
+
+    [Test]
+    public void NsmSemanticPrimes_SemanticPrimeCategory_AtLeast56()
+    {
+        int sem = VocabularyBuiltInRegistry.All.Count(d => d.Category == VocabularyBuiltInCategory.SemanticPrime);
+        Assert.GreaterOrEqual(sem, 56);
+    }
+
+    [Test]
+    public void NsmSemanticPrimes_OverlapTerms_CarryPrimeTag()
+    {
+        string[] overlaps = { "this", "move", "when", "here", "near", "inside", "not", "because", "if" };
+        foreach (var term in overlaps)
+        {
+            var hit = VocabularyBuiltInRegistry.All.FirstOrDefault(d =>
+                string.Equals(d.Term, term, System.StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(string.IsNullOrEmpty(hit.Id), "missing overlap term " + term);
+            Assert.IsTrue(
+                hit.Tags != null && hit.Tags.Any(t => string.Equals(t, "prime", System.StringComparison.OrdinalIgnoreCase)),
+                "overlap term missing prime tag: " + term);
+        }
+    }
 }

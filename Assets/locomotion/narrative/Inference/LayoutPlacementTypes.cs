@@ -6,7 +6,8 @@ namespace Locomotion.Narrative
 {
     public enum LayoutSpatialRelation
     {
-        None, With, LeftOf, RightOf, ForwardOf, Behind, Through, Near, Along, Inside, Outside
+        None, With, LeftOf, RightOf, ForwardOf, Behind, Through, Near, Along, Inside, Outside,
+        Above, Below, Far, Side
     }
 
     public enum LayoutFitAxis

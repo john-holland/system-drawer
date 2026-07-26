@@ -8,14 +8,31 @@ public enum PathingApertureMode
     Either
 }
 
+public enum PathingAperturePassMode
+{
+    SelectOnly,
+    AngularPassThrough,
+    CrashThrough
+}
+
 /// <summary>Pathing opening / narrow passage marker (not drink aperture).</summary>
 public sealed class PathingAperture : MonoBehaviour
 {
     public string apertureId;
     public PathingApertureMode mode = PathingApertureMode.Either;
+    [Tooltip("Select-only gambit vs angular pass-through vs crash-through breach.")]
+    public PathingAperturePassMode passMode = PathingAperturePassMode.SelectOnly;
     [Min(0.05f)] public float radius = 1.2f;
+    [Min(0.05f)] public float clearanceRadius = 0.6f;
+    [Tooltip("When true, crash-through may break / use GambitPhysicsMaterialAdvisor.")]
+    public bool breakable;
+    [Tooltip("Material hint for advisor (glass, wood, drywall, ...).")]
+    public string materialHint;
+    [Range(0f, 1f)]
+    [Tooltip("Runtime crowd occupancy at this aperture (filled by ApertureCrowdSampler).")]
+    public float crowdOccupancy01;
     public Vector3 approachOffset = new Vector3(0f, 0f, -2f);
-    [Tooltip("Optional authoring tag filter (e.g. stair_rail, garage_door).")]
+    [Tooltip("Optional authoring tag filter (e.g. stair_rail, garage_door, window).")]
     public List<string> tags = new List<string>();
     public int octreeLeafIndex = -1;
 

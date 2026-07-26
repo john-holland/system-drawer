@@ -31,9 +31,9 @@
   <Project Path="SystemDrawer.csproj" />
   <Project Path="Locomotion.Narrative.Tests.csproj" />
   <Project Path="Weather.Editor.csproj" />
+  <Project Path="Locomotion.Tests.csproj" />
   <Project Path="Locomotion.Drink.Runtime.csproj" />
   <Project Path="SystemDrawer.Networking.Editor.csproj" />
-  <Project Path="Locomotion.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Editor.csproj" />
   <Project Path="Locomotion.Open.Tests.csproj" />
   <Project Path="Continuuuum.Library.Runtime.csproj" />

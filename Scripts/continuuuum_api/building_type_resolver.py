@@ -16,12 +16,12 @@ def resolve_building_type(conn: sqlite3.Connection, building_type_id: str) -> di
     lemma_id = row["lemma_entry_id"]
     if not prefab_id and lemma_id:
         cur2 = conn.execute(
-            "SELECT value FROM thesaurus_entry_properties WHERE entry_id = ? AND property_key = ?",
+            "SELECT property_value FROM thesaurus_entry_properties WHERE entry_id = ? AND property_key = ?",
             (lemma_id, "prefab-id"),
         )
         p = cur2.fetchone()
         if p:
-            prefab_id = p["value"]
+            prefab_id = p["property_value"]
     return {
         "buildingTypeId": row["building_type_id"],
         "displayName": row["display_name"],

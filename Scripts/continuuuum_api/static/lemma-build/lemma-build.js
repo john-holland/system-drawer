@@ -156,15 +156,51 @@
     });
   }
 
-  async function sendChat() {
-    const text = ($("lb-input").value || "").trim();
+  function formatChatError(data, status) {
+    const err = (data && data.error) || "chat failed";
+    const detail = data && data.detail ? String(data.detail) : "";
+    if (err === "chat_failed" && /model_unreachable|10061|refused/i.test(detail)) {
+      return (
+        "LM Studio not reachable at http://localhost:1234/v1 — start LM Studio, load a model, " +
+        "and enable the local server. (" +
+        detail +
+        ")"
+      );
+    }
+    return detail ? err + ": " + detail : err + " (" + status + ")";
+  }
+
+  function buildPromptFromForm() {
+    const form = formPayload();
+    const lemma = form.lemma || "untitled";
+    return [
+      "Build a Continuuuum lemma mechanism for `" + lemma + "`.",
+      "Engine: " + (form.engine || state.engine) + ".",
+      "Part of speech: " + (form.partOfSpeech || "unknown") + ".",
+      "Mechanical role: " + (form.mechanicalRole || "AtomicAction") + ".",
+      "Output tier: " + String(form.outputTier != null ? form.outputTier : 0) + ".",
+      form.functionalDescription ? "Functional description: " + form.functionalDescription : "",
+      form.mechanismPrompt ? "Mechanism prompt: " + form.mechanismPrompt : "",
+      "Respond with a ```json lemma-mechanism-descriptor fence (lemma, posTag, mechanicalRole, outputTier, functionalDescription, compositionChildren, properties).",
+      "Prefer composition from existing builtins when possible.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  async function sendChat(optionalText) {
+    const text =
+      typeof optionalText === "string" && optionalText.trim()
+        ? optionalText.trim()
+        : ($("lb-input").value || "").trim();
     if (!text) return;
     setStatus($("lb-chat-status"), "Sending…");
     $("lb-send").disabled = true;
+    if ($("lb-build-now")) $("lb-build-now").disabled = true;
     try {
       await ensureSession();
       state.messages.push({ role: "user", content: text });
-      $("lb-input").value = "";
+      if (typeof optionalText !== "string") $("lb-input").value = "";
       renderMessages();
       const form = formPayload();
       const res = await fetch("/api/lemma-build/chat", {
@@ -178,22 +214,39 @@
           form,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "chat failed (" + res.status + ")");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(formatChatError(data, res.status));
       const assistant = data.assistant || data.content || data.message || "";
       if (assistant) {
         state.messages.push({ role: "assistant", content: assistant });
         state.lastAssistant = assistant;
       }
       if (data.sessionId) state.sessionId = data.sessionId;
+      if (data.descriptor) {
+        applyForm(data.descriptor);
+        setStatus($("lb-form-status"), "Descriptor applied from build");
+      }
       renderMessages();
       await refreshFiles();
       setStatus($("lb-chat-status"), "ok");
     } catch (e) {
       setStatus($("lb-chat-status"), String(e.message || e), true);
+      setStatus($("lb-form-status"), String(e.message || e), true);
     } finally {
       $("lb-send").disabled = false;
+      if ($("lb-build-now")) $("lb-build-now").disabled = false;
     }
+  }
+
+  async function buildNow() {
+    const form = formPayload();
+    if (!form.lemma) {
+      setStatus($("lb-form-status"), "Enter a lemma / phrase first", true);
+      $("lb-lemma").focus();
+      return;
+    }
+    setStatus($("lb-form-status"), "Building…");
+    await sendChat(buildPromptFromForm());
   }
 
   async function applyDescriptor() {
@@ -265,6 +318,40 @@
     }
   }
 
+  async function probeLmStudio() {
+    const el = $("lb-lm-status");
+    if (!el) return;
+    el.textContent = "LM Studio…";
+    el.classList.remove("is-ok", "is-bad");
+    try {
+      const res = await fetch("/api/lemma-build/lm-status");
+      const data = await res.json().catch(() => ({}));
+      if (!data.reachable) {
+        el.textContent = "LM Studio offline";
+        el.classList.add("is-bad");
+        el.title = data.detail || data.error || "Start LM Studio local server on :1234";
+        return;
+      }
+      const ids = Array.isArray(data.models) ? data.models : [];
+      if (!ids.length) {
+        el.textContent = "LM Studio: no model loaded";
+        el.classList.add("is-bad");
+        return;
+      }
+      el.textContent = "LM Studio ok (" + (data.modelCount || ids.length) + ")";
+      el.classList.add("is-ok");
+      el.title = ids.slice(0, 5).join(", ");
+      if (!state.modelId && ids[0]) {
+        state.modelId = typeof ids[0] === "string" ? ids[0] : ids[0].id || state.modelId;
+        $("lb-model-label").textContent = state.modelId;
+      }
+    } catch (e) {
+      el.textContent = "LM Studio offline";
+      el.classList.add("is-bad");
+      el.title = String(e.message || e);
+    }
+  }
+
   function bind() {
     document.querySelectorAll(".lb-engine-btn").forEach((btn) => {
       btn.addEventListener("click", () => setEngine(btn.getAttribute("data-engine")));
@@ -272,7 +359,8 @@
     $("lb-tier").addEventListener("input", () => {
       $("lb-tier-val").textContent = $("lb-tier").value;
     });
-    $("lb-send").addEventListener("click", sendChat);
+    $("lb-send").addEventListener("click", () => sendChat());
+    $("lb-build-now").addEventListener("click", buildNow);
     $("lb-input").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -300,7 +388,7 @@
 
   bind();
   hydrateFromQuery();
-  loadSettings();
+  loadSettings().then(probeLmStudio);
   if (window.ContinuuuumNav) {
     window.ContinuuuumNav.mount({ app: "lemma-build", theme: "dark" });
   }

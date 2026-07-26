@@ -94,8 +94,31 @@ def main() -> None:
             }
         )
 
-    # Deduplicate by id
+    # Deduplicate by id (first wins for category/pos)
     by_id = {item["id"]: item for item in items}
+
+    # TagOrAddPrime: merge nsm/prime tags onto existing, else add SemanticPrime
+    for m in re.finditer(
+        r'TagOrAddPrime\("([^"]+)", "([^"]+)", "([^"]+)"\)', text
+    ):
+        seg, term, pos = m.groups()
+        eid = urn("en", seg, term)
+        if eid in by_id:
+            tags = list(by_id[eid].get("tags") or [])
+            for t in ("nsm", "prime"):
+                if t not in tags:
+                    tags.append(t)
+            by_id[eid]["tags"] = tags
+        else:
+            by_id[eid] = {
+                "id": eid,
+                "term": term,
+                "posTag": pos,
+                "languageCode": "en",
+                "builtInCategory": "SemanticPrime",
+                "tags": ["nsm", "prime"],
+            }
+
     items = list(by_id.values())
     items.sort(key=lambda x: x["term"])
 

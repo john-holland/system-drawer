@@ -14,6 +14,15 @@ public static class GenericTraversibilityPlannerSolver
         public float requireAsset01;
         public float requireType01;
         public VehicleActor preferredVehicle;
+
+        /// <summary>Unset = NaN. risk &lt;= maxRisk01.</summary>
+        public float maxRisk01;
+        /// <summary>Unset = NaN. risk &gt;= minRisk01.</summary>
+        public float minRisk01;
+        /// <summary>Unset = NaN. safety &gt;= minSafety01 ⇒ risk &lt;= 1 - minSafety01.</summary>
+        public float minSafety01;
+        /// <summary>Unset = NaN. safety &lt;= maxSafety01 ⇒ risk &gt;= 1 - maxSafety01.</summary>
+        public float maxSafety01;
     }
 
     /// <summary>

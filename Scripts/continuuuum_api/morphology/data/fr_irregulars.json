@@ -1,0 +1,84 @@
+{
+  "être": {
+    "indicative|present": {"1|singular": "suis", "2|singular": "es", "3|singular": "est", "1|plural": "sommes", "2|plural": "êtes", "3|plural": "sont"},
+    "indicative|imperfect": {"1|singular": "étais", "2|singular": "étais", "3|singular": "était", "1|plural": "étions", "2|plural": "étiez", "3|plural": "étaient"},
+    "indicative|future": {"1|singular": "serai", "2|singular": "seras", "3|singular": "sera", "1|plural": "serons", "2|plural": "serez", "3|plural": "seront"},
+    "indicative|conditional": {"1|singular": "serais", "2|singular": "serais", "3|singular": "serait", "1|plural": "serions", "2|plural": "seriez", "3|plural": "seraient"},
+    "subjunctive|present": {"1|singular": "sois", "2|singular": "sois", "3|singular": "soit", "1|plural": "soyons", "2|plural": "soyez", "3|plural": "soient"},
+    "participle": "été",
+    "aux": "avoir"
+  },
+  "avoir": {
+    "indicative|present": {"1|singular": "ai", "2|singular": "as", "3|singular": "a", "1|plural": "avons", "2|plural": "avez", "3|plural": "ont"},
+    "indicative|imperfect": {"1|singular": "avais", "2|singular": "avais", "3|singular": "avait", "1|plural": "avions", "2|plural": "aviez", "3|plural": "avaient"},
+    "indicative|future": {"1|singular": "aurai", "2|singular": "auras", "3|singular": "aura", "1|plural": "aurons", "2|plural": "aurez", "3|plural": "auront"},
+    "participle": "eu",
+    "aux": "avoir"
+  },
+  "aller": {
+    "indicative|present": {"1|singular": "vais", "2|singular": "vas", "3|singular": "va", "1|plural": "allons", "2|plural": "allez", "3|plural": "vont"},
+    "indicative|future": {"1|singular": "irai", "2|singular": "iras", "3|singular": "ira", "1|plural": "irons", "2|plural": "irez", "3|plural": "iront"},
+    "participle": "allé",
+    "aux": "être"
+  },
+  "faire": {
+    "indicative|present": {"1|singular": "fais", "2|singular": "fais", "3|singular": "fait", "1|plural": "faisons", "2|plural": "faites", "3|plural": "font"},
+    "indicative|future": {"1|singular": "ferai", "2|singular": "feras", "3|singular": "fera", "1|plural": "ferons", "2|plural": "ferez", "3|plural": "feront"},
+    "participle": "fait",
+    "aux": "avoir"
+  },
+  "dire": {
+    "indicative|present": {"1|singular": "dis", "2|singular": "dis", "3|singular": "dit", "1|plural": "disons", "2|plural": "dites", "3|plural": "disent"},
+    "participle": "dit",
+    "aux": "avoir"
+  },
+  "pouvoir": {
+    "indicative|present": {"1|singular": "peux", "2|singular": "peux", "3|singular": "peut", "1|plural": "pouvons", "2|plural": "pouvez", "3|plural": "peuvent"},
+    "participle": "pu",
+    "aux": "avoir"
+  },
+  "vouloir": {
+    "indicative|present": {"1|singular": "veux", "2|singular": "veux", "3|singular": "veut", "1|plural": "voulons", "2|plural": "voulez", "3|plural": "veulent"},
+    "participle": "voulu",
+    "aux": "avoir"
+  },
+  "savoir": {
+    "indicative|present": {"1|singular": "sais", "2|singular": "sais", "3|singular": "sait", "1|plural": "savons", "2|plural": "savez", "3|plural": "savent"},
+    "participle": "su",
+    "aux": "avoir"
+  },
+  "venir": {
+    "indicative|present": {"1|singular": "viens", "2|singular": "viens", "3|singular": "vient", "1|plural": "venons", "2|plural": "venez", "3|plural": "viennent"},
+    "participle": "venu",
+    "aux": "être"
+  },
+  "voir": {
+    "indicative|present": {"1|singular": "vois", "2|singular": "vois", "3|singular": "voit", "1|plural": "voyons", "2|plural": "voyez", "3|plural": "voient"},
+    "participle": "vu",
+    "aux": "avoir"
+  },
+  "prendre": {
+    "indicative|present": {"1|singular": "prends", "2|singular": "prends", "3|singular": "prend", "1|plural": "prenons", "2|plural": "prenez", "3|plural": "prennent"},
+    "participle": "pris",
+    "aux": "avoir"
+  },
+  "mettre": {
+    "indicative|present": {"1|singular": "mets", "2|singular": "mets", "3|singular": "met", "1|plural": "mettons", "2|plural": "mettez", "3|plural": "mettent"},
+    "participle": "mis",
+    "aux": "avoir"
+  },
+  "penser": {},
+  "arriver": {"aux": "être"},
+  "bouger": {},
+  "toucher": {},
+  "sentir": {
+    "indicative|present": {"1|singular": "sens", "2|singular": "sens", "3|singular": "sent", "1|plural": "sentons", "2|plural": "sentez", "3|plural": "sentent"},
+    "participle": "senti",
+    "aux": "avoir"
+  },
+  "entendre": {
+    "indicative|present": {"1|singular": "entends", "2|singular": "entends", "3|singular": "entend", "1|plural": "entendons", "2|plural": "entendez", "3|plural": "entendent"},
+    "participle": "entendu",
+    "aux": "avoir"
+  }
+}

@@ -18,7 +18,7 @@ public sealed class LifeSystemsServices : MonoBehaviour
         get
         {
             if (_instance == null)
-                _instance = FindObjectOfType<LifeSystemsServices>();
+                _instance = FindFirstObjectByType<LifeSystemsServices>();
             return _instance;
         }
     }
@@ -137,7 +137,7 @@ public sealed class LifeSystemsServices : MonoBehaviour
         // Apply to all known sheets if no actor key; else resolve by name
         if (_sheets.Count == 0)
         {
-            var found = FindObjectsOfType<LifeSystemsSheet>();
+            var found = FindObjectsByType<LifeSystemsSheet>(FindObjectsSortMode.None);
             for (int i = 0; i < found.Length; i++)
                 GetOrCreate(found[i].gameObject);
         }

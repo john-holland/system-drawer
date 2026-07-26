@@ -280,6 +280,37 @@ def register_lemma_build_routes(app, get_conn: GetConn, is_admin: IsAdmin | None
             return jsonify({"error": "models_unreachable", "detail": str(e)}), 502
         return jsonify({"models": models, "baseUrl": s["lmStudioBaseUrl"]})
 
+    @app.route("/api/lemma-build/lm-status", methods=["GET"])
+    def lemma_build_lm_status():
+        """Public reachability probe (no admin). Does not expose the base URL to non-admins."""
+        tenant = request.args.get("tenantId") or "default"
+        conn = get_conn()
+        s = get_settings(conn, tenant)
+        conn.close()
+        base = s["lmStudioBaseUrl"]
+        try:
+            models = _list_models(base)
+            payload = {
+                "ok": True,
+                "reachable": True,
+                "modelCount": len(models),
+                "models": models[:8],
+            }
+            if admin_fn():
+                payload["baseUrl"] = base
+            return jsonify(payload)
+        except Exception as e:
+            payload = {
+                "ok": False,
+                "reachable": False,
+                "modelCount": 0,
+                "error": "models_unreachable",
+                "detail": str(e),
+            }
+            if admin_fn():
+                payload["baseUrl"] = base
+            return jsonify(payload), 200
+
     @app.route("/api/lemma-build/parse-descriptor", methods=["POST"])
     def lemma_build_parse_descriptor():
         body = request.get_json(silent=True) or {}

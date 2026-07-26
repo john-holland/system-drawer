@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>Witcher-style life-force capacity / resilience track.</summary>

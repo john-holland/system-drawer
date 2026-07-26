@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lemma Completion — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/lemma-completion/lemma-completion.css" />
+</head>
+<body class="lc-page">
+  <div id="continuuuum-nav-root"></div>
+  <main class="lc-main">
+    <header class="lc-header">
+      <div>
+        <h1>Lemma Completion</h1>
+        <p class="lc-sub">NSM primes + top-5000 common words — tracking definitions, builtins, and implementation.</p>
+      </div>
+      <div class="lc-header-actions">
+        <a class="lc-link-btn" href="/lemma-build/">Open Lemma Build</a>
+        <button type="button" id="lc-seed">Seed list</button>
+        <button type="button" id="lc-refresh">Refresh</button>
+      </div>
+    </header>
+
+    <section class="lc-scope">
+      <label>Scope
+        <select id="lc-scope">
+          <option value="all">All</option>
+          <option value="common5000" selected>Common 5000</option>
+          <option value="primes">Primes</option>
+        </select>
+      </label>
+    </section>
+
+    <aside id="lc-primes-banner" class="lc-primes-banner hidden" role="note">
+      65 NSM primes — inventory complete when defined + builtin (Seed list applies hand-authored glosses).
+    </aside>
+
+    <section class="lc-stats" id="lc-stats" aria-live="polite"></section>
+
+    <section class="lc-filters">
+      <input type="search" id="lc-q" placeholder="Search term…" />
+      <label><input type="checkbox" id="lc-missing" /> Missing definition</label>
+      <label><input type="checkbox" id="lc-not-impl" /> Not implemented</label>
+      <label><input type="checkbox" id="lc-asset" /> Asset store benefit</label>
+      <label>Rank
+        <input type="number" id="lc-rank-min" placeholder="min" min="1" />
+        –
+        <input type="number" id="lc-rank-max" placeholder="max" min="1" />
+      </label>
+    </section>
+
+    <section class="lc-table-wrap">
+      <table class="lc-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Term</th>
+            <th>Defined</th>
+            <th>Builtin</th>
+            <th>Implemented</th>
+            <th>Asset store</th>
+            <th>Definition</th>
+          </tr>
+        </thead>
+        <tbody id="lc-tbody"></tbody>
+      </table>
+      <div class="lc-pager">
+        <button type="button" id="lc-prev">Prev</button>
+        <span id="lc-page-label"></span>
+        <button type="button" id="lc-next">Next</button>
+      </div>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/lemma-completion/lemma-completion.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+{
+  "ser": {
+    "indicative|present": {"1|singular": "soy", "2|singular": "eres", "3|singular": "es", "1|plural": "somos", "2|plural": "sois", "3|plural": "son"},
+    "indicative|preterite": {"1|singular": "fui", "2|singular": "fuiste", "3|singular": "fue", "1|plural": "fuimos", "2|plural": "fuisteis", "3|plural": "fueron"},
+    "indicative|imperfect": {"1|singular": "era", "2|singular": "eras", "3|singular": "era", "1|plural": "éramos", "2|plural": "erais", "3|plural": "eran"},
+    "indicative|future": {"1|singular": "seré", "2|singular": "serás", "3|singular": "será", "1|plural": "seremos", "2|plural": "seréis", "3|plural": "serán"},
+    "indicative|conditional": {"1|singular": "sería", "2|singular": "serías", "3|singular": "sería", "1|plural": "seríamos", "2|plural": "seríais", "3|plural": "serían"},
+    "subjunctive|present": {"1|singular": "sea", "2|singular": "seas", "3|singular": "sea", "1|plural": "seamos", "2|plural": "seáis", "3|plural": "sean"},
+    "participle": "sido",
+    "gerund": "siendo",
+    "imperative|affirmative": {"2|singular": "sé", "3|singular": "sea", "3|plural": "sean"}
+  },
+  "estar": {
+    "indicative|present": {"1|singular": "estoy", "2|singular": "estás", "3|singular": "está", "1|plural": "estamos", "2|plural": "estáis", "3|plural": "están"},
+    "indicative|preterite": {"1|singular": "estuve", "2|singular": "estuviste", "3|singular": "estuvo", "1|plural": "estuvimos", "2|plural": "estuvisteis", "3|plural": "estuvieron"},
+    "participle": "estado",
+    "gerund": "estando"
+  },
+  "ir": {
+    "indicative|present": {"1|singular": "voy", "2|singular": "vas", "3|singular": "va", "1|plural": "vamos", "2|plural": "vais", "3|plural": "van"},
+    "indicative|preterite": {"1|singular": "fui", "2|singular": "fuiste", "3|singular": "fue", "1|plural": "fuimos", "2|plural": "fuisteis", "3|plural": "fueron"},
+    "indicative|imperfect": {"1|singular": "iba", "2|singular": "ibas", "3|singular": "iba", "1|plural": "íbamos", "2|plural": "ibais", "3|plural": "iban"},
+    "participle": "ido",
+    "gerund": "yendo"
+  },
+  "haber": {
+    "indicative|present": {"1|singular": "he", "2|singular": "has", "3|singular": "ha", "1|plural": "hemos", "2|plural": "habéis", "3|plural": "han"},
+    "participle": "habido",
+    "gerund": "habiendo"
+  },
+  "hacer": {
+    "indicative|present": {"1|singular": "hago", "2|singular": "haces", "3|singular": "hace", "1|plural": "hacemos", "2|plural": "hacéis", "3|plural": "hacen"},
+    "indicative|preterite": {"1|singular": "hice", "2|singular": "hiciste", "3|singular": "hizo", "1|plural": "hicimos", "2|plural": "hicisteis", "3|plural": "hicieron"},
+    "indicative|future": {"1|singular": "haré", "2|singular": "harás", "3|singular": "hará", "1|plural": "haremos", "2|plural": "haréis", "3|plural": "harán"},
+    "participle": "hecho",
+    "gerund": "haciendo"
+  },
+  "decir": {
+    "indicative|present": {"1|singular": "digo", "2|singular": "dices", "3|singular": "dice", "1|plural": "decimos", "2|plural": "decís", "3|plural": "dicen"},
+    "indicative|preterite": {"1|singular": "dije", "2|singular": "dijiste", "3|singular": "dijo", "1|plural": "dijimos", "2|plural": "dijisteis", "3|plural": "dijeron"},
+    "participle": "dicho",
+    "gerund": "diciendo"
+  },
+  "poder": {
+    "stemChange": "o>ue",
+    "indicative|present": {"1|singular": "puedo", "2|singular": "puedes", "3|singular": "puede", "1|plural": "podemos", "2|plural": "podéis", "3|plural": "pueden"},
+    "indicative|preterite": {"1|singular": "pude", "2|singular": "pudiste", "3|singular": "pudo", "1|plural": "pudimos", "2|plural": "pudisteis", "3|plural": "pudieron"},
+    "participle": "podido",
+    "gerund": "pudiendo"
+  },
+  "querer": {
+    "stemChange": "e>ie",
+    "indicative|present": {"1|singular": "quiero", "2|singular": "quieres", "3|singular": "quiere", "1|plural": "queremos", "2|plural": "queréis", "3|plural": "quieren"},
+    "indicative|preterite": {"1|singular": "quise", "2|singular": "quisiste", "3|singular": "quiso", "1|plural": "quisimos", "2|plural": "quisisteis", "3|plural": "quisieron"},
+    "participle": "querido",
+    "gerund": "queriendo"
+  },
+  "tener": {
+    "indicative|present": {"1|singular": "tengo", "2|singular": "tienes", "3|singular": "tiene", "1|plural": "tenemos", "2|plural": "tenéis", "3|plural": "tienen"},
+    "indicative|preterite": {"1|singular": "tuve", "2|singular": "tuviste", "3|singular": "tuvo", "1|plural": "tuvimos", "2|plural": "tuvisteis", "3|plural": "tuvieron"},
+    "participle": "tenido",
+    "gerund": "teniendo"
+  },
+  "venir": {
+    "indicative|present": {"1|singular": "vengo", "2|singular": "vienes", "3|singular": "viene", "1|plural": "venimos", "2|plural": "venís", "3|plural": "vienen"},
+    "indicative|preterite": {"1|singular": "vine", "2|singular": "viniste", "3|singular": "vino", "1|plural": "vinimos", "2|plural": "vinisteis", "3|plural": "vinieron"},
+    "participle": "venido",
+    "gerund": "viniendo"
+  },
+  "ver": {
+    "indicative|present": {"1|singular": "veo", "2|singular": "ves", "3|singular": "ve", "1|plural": "vemos", "2|plural": "veis", "3|plural": "ven"},
+    "indicative|preterite": {"1|singular": "vi", "2|singular": "viste", "3|singular": "vio", "1|plural": "vimos", "2|plural": "visteis", "3|plural": "vieron"},
+    "participle": "visto",
+    "gerund": "viendo"
+  },
+  "dar": {
+    "indicative|present": {"1|singular": "doy", "2|singular": "das", "3|singular": "da", "1|plural": "damos", "2|plural": "dais", "3|plural": "dan"},
+    "indicative|preterite": {"1|singular": "di", "2|singular": "diste", "3|singular": "dio", "1|plural": "dimos", "2|plural": "disteis", "3|plural": "dieron"},
+    "participle": "dado",
+    "gerund": "dando"
+  },
+  "saber": {
+    "indicative|present": {"1|singular": "sé", "2|singular": "sabes", "3|singular": "sabe", "1|plural": "sabemos", "2|plural": "sabéis", "3|plural": "saben"},
+    "indicative|preterite": {"1|singular": "supe", "2|singular": "supiste", "3|singular": "supo", "1|plural": "supimos", "2|plural": "supisteis", "3|plural": "supieron"},
+    "participle": "sabido",
+    "gerund": "sabiendo"
+  },
+  "poner": {
+    "indicative|present": {"1|singular": "pongo", "2|singular": "pones", "3|singular": "pone", "1|plural": "ponemos", "2|plural": "ponéis", "3|plural": "ponen"},
+    "indicative|preterite": {"1|singular": "puse", "2|singular": "pusiste", "3|singular": "puso", "1|plural": "pusimos", "2|plural": "pusisteis", "3|plural": "pusieron"},
+    "participle": "puesto",
+    "gerund": "poniendo"
+  },
+  "salir": {
+    "indicative|present": {"1|singular": "salgo", "2|singular": "sales", "3|singular": "sale", "1|plural": "salimos", "2|plural": "salís", "3|plural": "salen"},
+    "participle": "salido",
+    "gerund": "saliendo"
+  },
+  "oír": {
+    "indicative|present": {"1|singular": "oigo", "2|singular": "oyes", "3|singular": "oye", "1|plural": "oímos", "2|plural": "oís", "3|plural": "oyen"},
+    "participle": "oído",
+    "gerund": "oyendo"
+  },
+  "pensar": {"stemChange": "e>ie"},
+  "mover": {"stemChange": "o>ue"},
+  "sentir": {"stemChange": "e>ie"},
+  "tocar": {},
+  "pasar": {},
+  "hablar": {},
+  "comer": {},
+  "vivir": {}
+}

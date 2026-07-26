@@ -54,8 +54,10 @@ public static class PhysicsIKTrainingRunner
             set.ApplyTo(solver);
 
         RigidbodyConstraints savedConstraints = RigidbodyConstraints.None;
+        bool isParkourOrRope = IsParkourOrRopeCategory(category);
         bool isToolCategory = category == PhysicsIKTrainingCategory.ToolUse || category == PhysicsIKTrainingCategory.Climb
-            || category == PhysicsIKTrainingCategory.Swing || category == PhysicsIKTrainingCategory.Pick || category == PhysicsIKTrainingCategory.Roll;
+            || category == PhysicsIKTrainingCategory.Swing || category == PhysicsIKTrainingCategory.Pick || category == PhysicsIKTrainingCategory.Roll
+            || isParkourOrRope;
         if (ragdollRb != null && isToolCategory && set.rigidbodyConstraints != 0)
         {
             savedConstraints = ragdollRb.constraints;
@@ -228,6 +230,14 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.4f + r() * 0.45f;
             set.powerUsed = power * (0.9f + r() * 0.28f);
         }
+        else if (isParkourOrRope)
+        {
+            // Parkour / rope inchworm: simulated metrics; sherpa carry slightly harder.
+            float sherpa = runAsset != null && runAsset.attachSherpaCarry ? 0.12f : 0f;
+            set.completionTime = 1.1f + (2f - 1f / power) * 0.55f + r() * 0.4f + sherpa;
+            set.accuracyScore = 0.42f + r() * 0.48f - sherpa * 0.5f;
+            set.powerUsed = power * (0.88f + r() * 0.3f + sherpa);
+        }
         else
         {
             if (category == PhysicsIKTrainingCategory.Locomotion &&
@@ -252,6 +262,12 @@ public static class PhysicsIKTrainingRunner
 
         set.seed = seed;
         return set;
+    }
+
+    public static bool IsParkourOrRopeCategory(PhysicsIKTrainingCategory category)
+    {
+        return category >= PhysicsIKTrainingCategory.ParkourLopingStrides
+               && category <= PhysicsIKTrainingCategory.RopeIdling;
     }
 
     static bool TryScoreLocomotionLive(

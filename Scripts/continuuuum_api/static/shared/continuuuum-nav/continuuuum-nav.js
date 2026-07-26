@@ -18,6 +18,7 @@
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
     { id: 'credits', label: 'Credits', path: '/credits' },
     { id: 'lemma-build', label: 'Lemma Build', path: '/lemma-build' },
+    { id: 'lemma-completion', label: 'Lemma Completion', path: '/lemma-completion' },
     { id: 'settings', label: 'Settings', path: '/settings' },
   ];
 
@@ -131,6 +132,7 @@
       'sql-viewer': lemmaBase + '/sql-viewer',
       credits: lemmaBase + '/credits',
       'lemma-build': lemmaBase + '/lemma-build',
+      'lemma-completion': lemmaBase + '/lemma-completion',
       settings: lemmaBase + '/settings',
       lemmaApiBase: lemmaBase,
     };
@@ -155,6 +157,7 @@
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';
     if (path.indexOf('/credits') >= 0) return 'credits';
     if (path.indexOf('/lemma-build') >= 0) return 'lemma-build';
+    if (path.indexOf('/lemma-completion') >= 0) return 'lemma-completion';
     if (path.indexOf('/story-board') >= 0) return 'story-board';
     if (path.indexOf('/project-calendar') >= 0) return 'project-calendar';
     if (path.indexOf('/budget-dashboard') >= 0) return 'budget-dashboard';

@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "language": "en",
+  "hedges": [
+    {
+      "id": "somewhat",
+      "phrase": "somewhat",
+      "aliases": ["some what", "sort of", "sort-of"],
+      "band": "low_mid",
+      "curve": { "kind": "logistic", "k": 8.0, "x0": 0.45, "yMin": 0.15, "yMax": 0.7, "clamp": true },
+      "linked_primes": ["maybe", "little"]
+    },
+    {
+      "id": "mostly",
+      "phrase": "mostly",
+      "aliases": [],
+      "band": "high",
+      "curve": { "kind": "logistic", "k": 10.0, "x0": 0.6, "yMin": 0.55, "yMax": 0.95, "clamp": true },
+      "linked_primes": ["very", "true"]
+    },
+    {
+      "id": "basically",
+      "phrase": "basically",
+      "aliases": [],
+      "band": "high",
+      "curve": { "kind": "logistic", "k": 9.0, "x0": 0.55, "yMin": 0.55, "yMax": 0.92, "clamp": true },
+      "linked_primes": ["true", "more"]
+    },
+    {
+      "id": "maybe",
+      "phrase": "maybe",
+      "aliases": [],
+      "band": "low_mid",
+      "curve": { "kind": "logistic", "k": 6.0, "x0": 0.5, "yMin": 0.2, "yMax": 0.65, "clamp": true },
+      "linked_primes": ["maybe"]
+    },
+    {
+      "id": "very",
+      "phrase": "very",
+      "aliases": [],
+      "band": "concentration",
+      "curve": { "kind": "power", "p": 2.0, "clamp": true },
+      "linked_primes": ["very"]
+    },
+    {
+      "id": "more",
+      "phrase": "more",
+      "aliases": [],
+      "band": "dilation",
+      "curve": { "kind": "power", "p": 0.7, "clamp": true },
+      "linked_primes": ["more"]
+    },
+    {
+      "id": "less",
+      "phrase": "less",
+      "aliases": [],
+      "band": "comparative_down",
+      "curve": { "kind": "power", "p": 1.5, "yScale": 0.7, "clamp": true },
+      "linked_primes": ["little"]
+    },
+    {
+      "id": "little",
+      "phrase": "little",
+      "aliases": [],
+      "band": "low",
+      "curve": { "kind": "logistic", "k": 7.0, "x0": 0.35, "yMin": 0.05, "yMax": 0.45, "clamp": true },
+      "linked_primes": ["little"]
+    },
+    {
+      "id": "much",
+      "phrase": "much",
+      "aliases": [],
+      "band": "high",
+      "curve": { "kind": "logistic", "k": 7.0, "x0": 0.55, "yMin": 0.5, "yMax": 0.95, "clamp": true },
+      "linked_primes": ["much"]
+    },
+    {
+      "id": "just-like",
+      "phrase": "just like",
+      "aliases": ["just-like", "just like"],
+      "band": "high",
+      "curve": { "kind": "logistic", "k": 12.0, "x0": 0.5, "yMin": 0.7, "yMax": 0.98, "clamp": true },
+      "linked_primes": ["like", "true"]
+    }
+  ]
+}
