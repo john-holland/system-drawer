@@ -100,7 +100,9 @@ public enum GoalType
     /// <summary>Stand on a surface (e.g. stand on a chair) with feet plant tow.</summary>
     StandOnSurface,
     /// <summary>Wrestling exchange: clinch, throw, pin (WrestlingCard + topology).</summary>
-    Wrestling
+    Wrestling,
+    /// <summary>Eat food: bite, chew, swallow (FoodItem + MouthInteriorRuntime).</summary>
+    Eat
 }
 
 /// <summary>

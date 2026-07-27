@@ -41,6 +41,7 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Weather", "Weather Service Wizard", "Window/System Drawer/Weather/Service Wizard"),
         new Entry("System Tests", "Audio", "Window/System Drawer/System Tests/Audio"),
         new Entry("System Tests", "Smell", "Window/System Drawer/System Tests/Smell"),
+        new Entry("Hygiene", "Hygiene Editor", "Window/System Drawer/Hygiene/Hygiene Editor"),
         new Entry("System Tests", "Ragdoll Cohesion", "Window/System Drawer/System Tests/Ragdoll Cohesion"),
         new Entry("Continuuuum", "Continuuuum Library", "Window/Continuuuum/Continuuuum Library"),
         new Entry("Diagnostics", "Memory Swizzle View", "Window/System Drawer/Diagnostics/Memory Swizzle View"),

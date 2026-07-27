@@ -183,7 +183,11 @@ public enum PhysicsIKTrainingCategory
     WrestlingLift,
     WrestlingThrow,
     WrestlingDropOn,
-    WrestlingCounter
+    WrestlingCounter,
+    // Eating / hygiene
+    Bite,
+    Chew,
+    Swallow
 }
 
 /// <summary>

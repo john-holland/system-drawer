@@ -266,6 +266,10 @@ namespace Locomotion.Narrative.EditorTools
                     NarrativeActionKind.ChooseWrestlingCard => new NarrativeChooseWrestlingCardAction(),
                     NarrativeActionKind.CommitWrestlingCard => new NarrativeCommitWrestlingCardAction(),
                     NarrativeActionKind.WrestlingBioRhythm => new NarrativeWrestlingBioRhythmAction(),
+                    NarrativeActionKind.Bite => new BiteNarrativeAction(),
+                    NarrativeActionKind.Chew => new ChewNarrativeAction(),
+                    NarrativeActionKind.Swallow => new SwallowNarrativeAction(),
+                    NarrativeActionKind.AnimationChew => new AnimationChewNarrativeAction(),
                     _ => new CallMethodAction()
                 };
                 EditorUtility.SetDirty(tree);
@@ -385,6 +389,28 @@ namespace Locomotion.Narrative.EditorTools
                 bioWrestle.durationSeconds = EditorGUILayout.FloatField("Duration", bioWrestle.durationSeconds);
                 bioWrestle.queueWrestlingGoal = EditorGUILayout.Toggle("Queue Wrestling Goal", bioWrestle.queueWrestlingGoal);
             }
+            else if (a is BiteNarrativeAction bite)
+            {
+                bite.actorKey = EditorGUILayout.TextField("Actor Key", bite.actorKey);
+                bite.duration = EditorGUILayout.FloatField("Duration", bite.duration);
+            }
+            else if (a is ChewNarrativeAction chew)
+            {
+                chew.actorKey = EditorGUILayout.TextField("Actor Key", chew.actorKey);
+                chew.duration = EditorGUILayout.FloatField("Duration", chew.duration);
+            }
+            else if (a is SwallowNarrativeAction swallow)
+            {
+                swallow.actorKey = EditorGUILayout.TextField("Actor Key", swallow.actorKey);
+                swallow.foodKey = EditorGUILayout.TextField("Food Key", swallow.foodKey);
+                swallow.duration = EditorGUILayout.FloatField("Duration", swallow.duration);
+            }
+            else if (a is AnimationChewNarrativeAction animChew)
+            {
+                animChew.actorKey = EditorGUILayout.TextField("Actor Key", animChew.actorKey);
+                animChew.animationGroupTag = EditorGUILayout.TextField("Anim Group Tag", animChew.animationGroupTag);
+                animChew.duration = EditorGUILayout.FloatField("Duration", animChew.duration);
+            }
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -406,7 +432,11 @@ namespace Locomotion.Narrative.EditorTools
             EnterSlowTimeWrestling,
             ChooseWrestlingCard,
             CommitWrestlingCard,
-            WrestlingBioRhythm
+            WrestlingBioRhythm,
+            Bite,
+            Chew,
+            Swallow,
+            AnimationChew
         }
 
         private static NarrativeActionKind GetKind(NarrativeActionSpec a)
@@ -425,6 +455,10 @@ namespace Locomotion.Narrative.EditorTools
                 NarrativeChooseWrestlingCardAction => NarrativeActionKind.ChooseWrestlingCard,
                 NarrativeCommitWrestlingCardAction => NarrativeActionKind.CommitWrestlingCard,
                 NarrativeWrestlingBioRhythmAction => NarrativeActionKind.WrestlingBioRhythm,
+                BiteNarrativeAction => NarrativeActionKind.Bite,
+                ChewNarrativeAction => NarrativeActionKind.Chew,
+                SwallowNarrativeAction => NarrativeActionKind.Swallow,
+                AnimationChewNarrativeAction => NarrativeActionKind.AnimationChew,
                 _ => NarrativeActionKind.CallMethod
             };
         }

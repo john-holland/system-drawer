@@ -31,6 +31,9 @@ public static class OrganCatalog
     public const string EndocrineCluster = "endocrine_cluster";
     public const string Pancreas = "pancreas";
     public const string Spleen = "spleen";
+    public const string Bladder = "bladder";
+    public const string Intestines = "intestines";
+    public const string Urethra = "urethra";
 
     /// <summary>Spawn raw slightly above 1 so normalized reads as Great.</summary>
     public const float GreatSpawnRaw = 1.05f;
@@ -58,6 +61,9 @@ public static class OrganCatalog
             O(EndocrineCluster, "Endocrine Cluster", OrganHostRegion.Torso, LifeSystemsChannelCatalog.Endocrine, LifeSystemsChannelCatalog.Adrenaline),
             O(Pancreas, "Pancreas", OrganHostRegion.Abdomen, LifeSystemsChannelCatalog.BloodSugar),
             O(Spleen, "Spleen", OrganHostRegion.Abdomen, LifeSystemsChannelCatalog.Immune),
+            O(Bladder, "Bladder", OrganHostRegion.Abdomen, LifeSystemsChannelCatalog.BladderFill, LifeSystemsChannelCatalog.Hydration),
+            O(Intestines, "Intestines", OrganHostRegion.Abdomen, LifeSystemsChannelCatalog.BowelFill, LifeSystemsChannelCatalog.BloodSugar),
+            O(Urethra, "Urethra", OrganHostRegion.Abdomen, LifeSystemsChannelCatalog.BladderFill),
         };
         ById = new Dictionary<string, OrganDef>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < All.Length; i++)

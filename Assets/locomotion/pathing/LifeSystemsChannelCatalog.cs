@@ -61,6 +61,8 @@ public static class LifeSystemsChannelCatalog
     public const string Empathy = "empathy";
     public const string Morale = "morale";
     public const string Ablution = "ablution";
+    public const string BladderFill = "bladder_fill";
+    public const string BowelFill = "bowel_fill";
     public const string Depression = "depression";
     public const string Denial = "denial";
     public const string Mania = "mania";
@@ -135,6 +137,8 @@ public static class LifeSystemsChannelCatalog
             Affect(Empathy, 0.65f, "civic_trust", "need_belonging"),
             Affect(Morale, 0.7f, "civic_trust", "need_esteem"),
             Affect(Ablution, 0.7f),
+            U01(BladderFill, "Bladder Fill", 0.2f, 0f, 0.35f, true, null, "need_physiological", LifeSystemsChannelAggregation.Systemic),
+            U01(BowelFill, "Bowel Fill", 0.2f, 0f, 0.35f, true, null, "need_physiological", LifeSystemsChannelAggregation.Systemic),
             Affect(Depression, 0.15f, invert: true),
             Affect(Denial, 0.15f, invert: true),
             Affect(Mania, 0.15f, invert: true),
