@@ -67,9 +67,24 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildStuntSafetyPropertyRecords());
         list.AddRange(BuildWrestlingPropertyRecords());
         list.AddRange(BuildKissPropertyRecords());
+        list.AddRange(BuildActionInputPropertyRecords());
         list.AddRange(BuildSpatialDescriptionPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildActionInputPropertyRecords() => new[]
+    {
+        Spec(ActionInputLemmaPropertyKeys.Id, "String", "",
+            "{P:action|id=jump} action id (alias: action)"),
+        Spec(ActionInputLemmaPropertyKeys.MapsTo, "String", "",
+            "Control token: x, Space, KEY_UP, MOUSE_0, X_AXIS (aliases: to, map)"),
+        Spec(ActionInputLemmaPropertyKeys.Subscribe, "String", "KEY_DOWN",
+            "Edge: KEY_DOWN|KEY_UP|KEY_HELD|AXIS (aliases: edge, on)"),
+        Spec(ActionInputLemmaPropertyKeys.AndMapsTo, "String", "",
+            "Additional OR-bound control token (alias: also)"),
+        Spec(ActionInputLemmaPropertyKeys.Clear, "Bool", "false",
+            "Clear existing bindings for this action before apply"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildKissPropertyRecords() => new[]
     {

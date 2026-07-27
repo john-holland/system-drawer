@@ -34,12 +34,13 @@
     if (!Picker || !Picker.resolveOrCreateLemmaEntry) {
       throw new Error('Lemma picker unavailable');
     }
-    const child = await Picker.resolveOrCreateLemmaEntry(
-      callApi,
-      phrase,
-      parentEntryId ? [parentEntryId] : [],
-      opts,
-    );
+    // Do not exclude parent during lookup: Composition often seeds from the same
+    // selection that is already bound to parentEntryId. Excluding caused POST 409
+    // and left no recoverable entry. Self-composition is skipped below instead.
+    const child = await Picker.resolveOrCreateLemmaEntry(callApi, phrase, [], opts);
+    if (parentEntryId && child && child.id === parentEntryId) {
+      return { lemmaPrompt: '', compositionChildren: [], skippedSelf: true };
+    }
     const term = (child.term || phrase || '').trim();
     return {
       lemmaPrompt: `{P:${term}}`,

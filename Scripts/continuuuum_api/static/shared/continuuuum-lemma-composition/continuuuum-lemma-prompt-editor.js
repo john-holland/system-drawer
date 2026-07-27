@@ -14,7 +14,15 @@
       body: body != null ? JSON.stringify(body) : undefined,
     }).then(async (res) => {
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || res.statusText);
+      if (!res.ok) {
+        const err = new Error(data.error || data.message || res.statusText || 'Request failed');
+        err.code = data.code;
+        err.existingEntryId = data.existingEntryId;
+        err.field = data.field;
+        err.status = res.status;
+        err.payload = data;
+        throw err;
+      }
       return data;
     });
   }
@@ -337,11 +345,14 @@
               state.entryId,
               opts.seedPhrase,
             );
-            state.promptText = prep.lemmaPrompt;
-            state.children = prep.compositionChildren;
-            if (state.aceEditor) state.aceEditor.setValue(state.promptText, -1);
-            if (state.compEditor) state.compEditor.setChildren(state.children);
-            renderChips();
+            // Skip when seed resolves to the parent lemma (same selection as the binding).
+            if (!prep.skippedSelf && (prep.compositionChildren || []).length) {
+              state.promptText = prep.lemmaPrompt;
+              state.children = prep.compositionChildren;
+              if (state.aceEditor) state.aceEditor.setValue(state.promptText, -1);
+              if (state.compEditor) state.compEditor.setChildren(state.children);
+              renderChips();
+            }
           } catch (e) {
             msgEl.textContent = e.message || 'Could not seed composition';
             msgEl.style.color = '#c62828';

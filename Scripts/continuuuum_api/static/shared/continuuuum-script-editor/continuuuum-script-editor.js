@@ -570,6 +570,7 @@
                 draftEpisodeId: options.draftEpisodeId || options.draftId,
                 scriptText: text,
                 seedPhrase: snippet,
+                callApi: (method, path, body) => ContinuuuumScriptEditor.callApi(method, path, body),
                 onSaved: () => {
                   if (options.onBindingsChanged) options.onBindingsChanged();
                 },

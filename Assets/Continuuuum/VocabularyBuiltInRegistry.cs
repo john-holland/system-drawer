@@ -115,6 +115,11 @@ public static class VocabularyBuiltInRegistry
         foreach (var w in new[] { "kiss", "peck", "smooch", "smooching", "making-out", "make-out" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, kissTags);
 
+        // Action keymap / button-map lemmas ({P:action|id=jump|maps-to=x})
+        string[] inputTags = { "input", "controller", "keymap" };
+        foreach (var w in new[] { "action", "keymap", "maps" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, inputTags);
+
         // Stuntman / Safety Warden / parkour lemmas
         string[] stuntTags = { "stunt", "parkour", "travel" };
         string[] safetyTags = { "safety", "travel", "warden" };

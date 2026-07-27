@@ -197,7 +197,16 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                 has_component_metadata=has_component_metadata,
                 spatial_dimension=spatial_dimension,
             )
-            items.sort(key=lambda x: ((x.get("term") or "").lower(), x.get("id") or ""))
+            q_norm = (q or "").strip().lower()
+
+            def _entry_sort_key(x: dict[str, Any]):
+                term = (x.get("term") or "").lower()
+                # Exact term matches first so resolve-or-create / pickers see built-ins
+                # even when many substring hits would otherwise fill the page.
+                exact = 0 if q_norm and term == q_norm else 1
+                return (exact, term, x.get("id") or "")
+
+            items.sort(key=_entry_sort_key)
             total = len(items)
             page = items[offset : offset + limit]
             return jsonify({"items": [_entry_json(e) for e in page], "total": total}), 200
