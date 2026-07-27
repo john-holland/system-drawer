@@ -32,6 +32,8 @@ public sealed class MouthInteriorRuntime : MonoBehaviour
 
     [Header("Jaw")]
     public Transform jawBone;
+    [Tooltip("Optional authored kiss / lip-midpoint override (world pose driven by GetLipLoopMidpointWorld).")]
+    public Transform lipMidOverride;
     [Tooltip("Vertical bite open (0 closed … 1 open).")]
     public float jawOpen01;
     [Tooltip("Molar 3D roll degrees (applied as yaw/roll on jaw).")]
@@ -61,8 +63,63 @@ public sealed class MouthInteriorRuntime : MonoBehaviour
 
     readonly List<Transform> _toothVisuals = new List<Transform>();
     MaterialPropertyBlock _gumBlock;
+    Transform _lipMidRuntimeAnchor;
 
     public bool PreferRightChewSide => seed != null && seed.PreferRightSide;
+
+    /// <summary>
+    /// Middle of the lip loop — default kiss target. Prefers authored override, then saliva/rim loop,
+    /// then front upper/lower arch average, then jaw / this transform.
+    /// </summary>
+    public Vector3 GetLipLoopMidpointWorld()
+    {
+        if (lipMidOverride != null)
+            return lipMidOverride.position;
+        if (salivaLoop == null)
+            salivaLoop = GetComponentInChildren<MouthExteriorEdgeLoop>();
+        if (salivaLoop != null)
+            return salivaLoop.CenterWorld;
+
+        EnsureDefaultTeeth();
+        Vector3 sum = Vector3.zero;
+        int n = 0;
+        if (teeth != null)
+        {
+            for (int i = 0; i < teeth.Count; i++)
+            {
+                var s = teeth[i];
+                if (s == null || !s.present || s.zone != ToothZone.Front) continue;
+                sum += ResolveToothWorld(s);
+                n++;
+            }
+        }
+        if (n > 0)
+            return sum / n;
+        if (jawBone != null)
+            return jawBone.position;
+        return transform.position;
+    }
+
+    /// <summary>Ensures a Transform at the lip midpoint for IkTow / kiss anchors.</summary>
+    public Transform EnsureLipMidAnchor()
+    {
+        if (lipMidOverride != null)
+            return lipMidOverride;
+        if (_lipMidRuntimeAnchor == null)
+        {
+            var existing = transform.Find("LipMidAnchor");
+            if (existing != null)
+                _lipMidRuntimeAnchor = existing;
+            else
+            {
+                var go = new GameObject("LipMidAnchor");
+                go.transform.SetParent(transform, false);
+                _lipMidRuntimeAnchor = go.transform;
+            }
+        }
+        _lipMidRuntimeAnchor.position = GetLipLoopMidpointWorld();
+        return _lipMidRuntimeAnchor;
+    }
 
     void Awake()
     {
@@ -91,6 +148,8 @@ public sealed class MouthInteriorRuntime : MonoBehaviour
     {
         ApplyJawPose();
         UpdateFoodPresenceVisual();
+        if (_lipMidRuntimeAnchor != null && lipMidOverride == null)
+            _lipMidRuntimeAnchor.position = GetLipLoopMidpointWorld();
     }
 
     void FixedUpdate()

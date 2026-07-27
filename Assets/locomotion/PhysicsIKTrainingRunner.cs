@@ -237,6 +237,18 @@ public static class PhysicsIKTrainingRunner
             set.accuracyScore = 0.4f + r() * 0.45f;
             set.powerUsed = power * (0.9f + r() * 0.28f);
         }
+        else if (category == PhysicsIKTrainingCategory.LoveKiss)
+        {
+            set.completionTime = 0.9f + (2f - 1f / power) * 0.28f + r() * 0.2f;
+            set.accuracyScore = 0.5f + r() * 0.4f;
+            set.powerUsed = power * (0.35f + r() * 0.2f);
+        }
+        else if (category == PhysicsIKTrainingCategory.LoveHeavyPetting)
+        {
+            set.completionTime = 1.3f + (2f - 1f / power) * 0.35f + r() * 0.25f;
+            set.accuracyScore = 0.42f + r() * 0.45f;
+            set.powerUsed = power * (0.45f + r() * 0.25f);
+        }
         else if (isParkourOrRope)
         {
             // Parkour / rope inchworm: simulated metrics; sherpa carry slightly harder.

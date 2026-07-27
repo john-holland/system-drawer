@@ -62,12 +62,22 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildDrinkPropertyRecords());
         list.AddRange(BuildOpenClosePropertyRecords());
         list.AddRange(BuildLifeSystemsPropertyRecords());
+        list.AddRange(BuildInventoryWaypointPropertyRecords());
         list.AddRange(BuildNsmPropertyRecords());
         list.AddRange(BuildStuntSafetyPropertyRecords());
         list.AddRange(BuildWrestlingPropertyRecords());
+        list.AddRange(BuildKissPropertyRecords());
         list.AddRange(BuildSpatialDescriptionPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildKissPropertyRecords() => new[]
+    {
+        Spec(LoveMakingKissLemmaPropertyKeys.KissAnimation, "String", "",
+            "{P:kiss|kiss-animation=key} explicit kiss animation (e.g. slimer-kiss)"),
+        Spec(LoveMakingKissLemmaPropertyKeys.KissAnimationIntensity, "Float", "0.35",
+            "0–1 kiss intensity (peck→making out); maps to LoveCard.kissAnimationIntensity"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildWrestlingPropertyRecords() => new[]
     {
@@ -104,6 +114,19 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         Spec("spatial-description", "String", "", "Description / place key for SG paint and filters"),
         Spec("spatial-skin-key", "String", "", "Stylesheet / skin key override"),
         Spec("spatial-adj-paint", "String", "", "Adjective term for ShaderGrammarIndex paint"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildInventoryWaypointPropertyRecords() => new[]
+    {
+        Spec("inv-op", "String", "have", "inventory op: have|give|take|transfer|assert"),
+        Spec("inv-item", "String", "", "Loadout item name"),
+        Spec("inv-from", "String", "", "Source actor id"),
+        Spec("inv-to", "String", "", "Target actor id"),
+        Spec("wp-name", "String", "A", "Waypoint name / id"),
+        Spec("wp-x", "Float", "0", "Waypoint X"),
+        Spec("wp-y", "Float", "0", "Waypoint Y"),
+        Spec("wp-z", "Float", "0", "Waypoint Z"),
+        Spec("wp-formation", "String", "triangle", "Formation id for leg"),
     };
 
     public static LocalizationPropertySpecRecord[] BuildLifeSystemsPropertyRecords() => new[]

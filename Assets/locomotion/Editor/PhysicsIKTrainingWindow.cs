@@ -1443,6 +1443,30 @@ public class PhysicsIKTrainingWindow : EditorWindow
             if (GUI.changed) EditorUtility.SetDirty(runAsset);
         }
 
+        bool isLoveKissOrPetting = testCategory == PhysicsIKTrainingCategory.LoveKiss
+            || testCategory == PhysicsIKTrainingCategory.LoveHeavyPetting;
+        if (isLoveKissOrPetting && runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField(
+                testCategory == PhysicsIKTrainingCategory.LoveKiss ? "Love Kiss" : "Heavy Petting",
+                EditorStyles.miniLabel);
+            runAsset.heavyPettingIkAnimation = (HeavyPettingIKAnimation)EditorGUILayout.ObjectField(
+                "Heavy Petting IK Animation", runAsset.heavyPettingIkAnimation, typeof(HeavyPettingIKAnimation), false);
+            SerializedObject soLove = new SerializedObject(runAsset);
+            SerializedProperty loveActors = soLove.FindProperty("loveTrainAgainstActors");
+            SerializedProperty loveKeys = soLove.FindProperty("loveTrainAgainstActorKeys");
+            if (loveActors != null)
+                EditorGUILayout.PropertyField(loveActors, new GUIContent("Train against actors"), true);
+            if (loveKeys != null)
+                EditorGUILayout.PropertyField(loveKeys, new GUIContent("Train against actor keys"), true);
+            soLove.ApplyModifiedPropertiesWithoutUndo();
+            EditorGUILayout.HelpBox(
+                "Actors resolve via HeavyPettingIKActorRegistry keys when listed; fitness uses lip/contact distance scaffolds.",
+                MessageType.None);
+            if (GUI.changed) EditorUtility.SetDirty(runAsset);
+        }
+
         EditorGUILayout.Space(4);
 
         EditorGUILayout.LabelField("Sweep", EditorStyles.boldLabel);

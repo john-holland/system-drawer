@@ -72,6 +72,8 @@ public sealed class RomanceProfile : MonoBehaviour
     public bool defaultConsentWithSteadyPartner = true;
     public float relationshipAgeDays;
     [Range(0f, 1f)] public float sexTalkExplicitness01 = 0.2f;
+    [Tooltip("When true, unwanted/unrequited advances get a harsh visceral reaction (BP drop, reflux).")]
+    public bool harshRejectionResponse;
 
     public bool AllowsIntimacyWith(GameObject other)
     {

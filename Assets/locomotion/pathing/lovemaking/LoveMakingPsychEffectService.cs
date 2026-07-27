@@ -9,6 +9,7 @@ public static class LoveMakingPsychEffectService
         float intensity = card != null ? card.desireIntensity01 : 0.4f;
         float phys = card != null ? card.physicality01 : 0.35f;
         bool requited = true;
+        bool poorResponse = card != null && card.kissResponseNegative;
         if (a != null && b != null)
         {
             var pa = a.GetComponent<RomanceProfile>();
@@ -17,13 +18,35 @@ public static class LoveMakingPsychEffectService
                 requited = false;
             if (pb != null && pb.direction == RomanceDirection.Unrequited)
                 requited = false;
+            if (!poorResponse && pb != null)
+                poorResponse = DetectPoorKissResponse(pb);
         }
 
-        ApplyTo(a, intensity, phys, requited, giveFull: true);
-        ApplyTo(b, intensity, phys, requited, giveFull: requited);
+        bool isKiss = card != null && card.loveMoveKind == LoveMakingMoveKind.Kiss;
+        float kissK = isKiss && card != null ? Mathf.Clamp01(card.kissAnimationIntensity) : 0f;
+
+        ApplyTo(a, intensity, phys, requited, giveFull: true, isKiss, kissK, poorResponse);
+        ApplyTo(b, intensity, phys, requited, giveFull: requited, isKiss, kissK, poorResponse && !requited);
     }
 
-    static void ApplyTo(GameObject actor, float intensity, float phys, bool requited, bool giveFull)
+    static bool DetectPoorKissResponse(RomanceProfile partner)
+    {
+        if (partner == null) return false;
+        if (partner.harshRejectionResponse) return true;
+        return partner.direction == RomanceDirection.Unrequited &&
+               (partner.severity == RomanceSeverity.FriendZone ||
+                partner.severity >= RomanceSeverity.OnTheRocks);
+    }
+
+    static void ApplyTo(
+        GameObject actor,
+        float intensity,
+        float phys,
+        bool requited,
+        bool giveFull,
+        bool isKiss,
+        float kissIntensityK,
+        bool poorKissResponse)
     {
         if (actor == null) return;
         var life = LifeSystemsServices.Instance;
@@ -41,5 +64,26 @@ public static class LoveMakingPsychEffectService
         if (!requited)
             sheet.Adjust01(LifeSystemsChannelCatalog.Jealousy, 0.04f * intensity);
         sheet.bioRhythm?.ApplyAmplitudeDelta(0.03f * intensity);
+
+        if (isKiss)
+        {
+            float oxK = requited ? k : k * 0.35f;
+            sheet.Adjust01(LifeSystemsChannelCatalog.Serotonin, 0.10f * kissIntensityK * k);
+            sheet.Adjust01(LifeSystemsChannelCatalog.Oxytocin, 0.08f * kissIntensityK * oxK);
+            sheet.Adjust01(LifeSystemsChannelCatalog.Affection, 0.03f * kissIntensityK * k);
+            sheet.Adjust01(LifeSystemsChannelCatalog.Morale, 0.04f * kissIntensityK * k);
+            if (kissIntensityK >= 0.7f)
+                sheet.Adjust01(LifeSystemsChannelCatalog.Arousal, 0.05f * kissIntensityK * k);
+
+            if (!requited && poorKissResponse)
+            {
+                // Visceral flinch: blood pressure drop + reflux / acidity spike
+                sheet.AdjustClinical(LifeSystemsChannelCatalog.BloodPressureSys, -28f);
+                sheet.AdjustClinical(LifeSystemsChannelCatalog.BloodPressureDia, -14f);
+                sheet.Adjust01(LifeSystemsChannelCatalog.Acidity, 0.22f * Mathf.Max(0.35f, kissIntensityK));
+                sheet.Adjust01(LifeSystemsChannelCatalog.Reflux, 0.28f * Mathf.Max(0.35f, kissIntensityK));
+                sheet.Adjust01(LifeSystemsChannelCatalog.Morale, -0.08f);
+            }
+        }
     }
 }

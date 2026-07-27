@@ -504,6 +504,19 @@ public sealed class CardPlanningEditorWindow : EditorWindow
             love.desireIntensity01 = EditorGUILayout.Slider("Desire Intensity", love.desireIntensity01, 0f, 1f);
             love.requiresConsent = EditorGUILayout.Toggle("Requires Consent", love.requiresConsent);
             love.maxParticipants = EditorGUILayout.IntField("Max Participants", love.maxParticipants);
+            if (love.loveMoveKind == LoveMakingMoveKind.Kiss)
+            {
+                love.kissAnimationIntensity = EditorGUILayout.Slider(
+                    "Kiss Animation Intensity", love.kissAnimationIntensity, 0f, 1f);
+                love.kissAnimationKey = EditorGUILayout.TextField("Kiss Animation Key", love.kissAnimationKey ?? "");
+                love.kissJawOpen01 = EditorGUILayout.FloatField("Kiss Jaw Open (-1=auto)", love.kissJawOpen01);
+                love.selfActorKey = EditorGUILayout.TextField("Self Actor Key", love.selfActorKey ?? "");
+                love.partnerActorKey = EditorGUILayout.TextField("Partner Actor Key", love.partnerActorKey ?? "");
+                love.heavyPettingIk = (HeavyPettingIKAnimation)EditorGUILayout.ObjectField(
+                    "Heavy Petting IK", love.heavyPettingIk, typeof(HeavyPettingIKAnimation), false);
+                love.kissResponseNegative = EditorGUILayout.Toggle("Kiss Response Negative", love.kissResponseNegative);
+                EditorGUILayout.LabelField("Anim Tag", love.LoveAnimationGroupTag);
+            }
             love.isLoveMakingGoal = true;
             love.isWrestlingGoal = false;
             CombatCardEditorWindow.DrawProxy(love.instrumentProxy ??= new CardInstrumentProxyOptions());

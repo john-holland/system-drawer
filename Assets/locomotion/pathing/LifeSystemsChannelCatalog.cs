@@ -83,6 +83,10 @@ public static class LifeSystemsChannelCatalog
     public const string Attachment = "attachment";
     public const string Jealousy = "jealousy";
     public const string Arousal = "arousal";
+    public const string Serotonin = "serotonin";
+    public const string Oxytocin = "oxytocin";
+    public const string Acidity = "acidity";
+    public const string Reflux = "reflux";
 
     static readonly LifeSystemsChannelDef[] All;
     static readonly Dictionary<string, LifeSystemsChannelDef> ById;
@@ -165,6 +169,10 @@ public static class LifeSystemsChannelCatalog
             Affect(Attachment, 0.4f, null, "need_belonging"),
             Affect(Jealousy, 0.15f, invert: true),
             Affect(Arousal, 0.15f),
+            Affect(Serotonin, 0.45f, null, "need_belonging"),
+            Affect(Oxytocin, 0.4f, null, "need_belonging"),
+            U01(Acidity, "Acidity", 0.25f, 0.1f, 0.4f, true, "healthcareCoverage", "need_physiological", LifeSystemsChannelAggregation.Systemic),
+            U01(Reflux, "Reflux", 0.1f, 0f, 0.25f, true, "healthcareCoverage", "need_physiological", LifeSystemsChannelAggregation.Systemic),
         };
     }
 

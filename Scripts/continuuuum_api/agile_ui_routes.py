@@ -12,6 +12,7 @@ STATIC_LEGAL = Path(__file__).resolve().parent / "static" / "legal-tracker"
 STATIC_BUDGET = Path(__file__).resolve().parent / "static" / "budget-dashboard"
 STATIC_SETTINGS = Path(__file__).resolve().parent / "static" / "settings"
 STATIC_CREDITS = Path(__file__).resolve().parent / "static" / "credits"
+STATIC_INVENTORY_LOADOUTS = Path(__file__).resolve().parent / "static" / "inventory-loadouts"
 
 
 def register_agile_ui_routes(app) -> None:
@@ -86,3 +87,15 @@ def register_agile_ui_routes(app) -> None:
     @app.route("/credits/<path:asset>")
     def credits_assets(asset: str):
         return send_from_directory(STATIC_CREDITS, asset)
+
+    @app.route("/inventory-loadouts")
+    def inventory_loadouts_redirect():
+        return redirect("/inventory-loadouts/", code=302)
+
+    @app.route("/inventory-loadouts/")
+    def inventory_loadouts_page():
+        return send_from_directory(STATIC_INVENTORY_LOADOUTS, "index.html")
+
+    @app.route("/inventory-loadouts/<path:asset>")
+    def inventory_loadouts_assets(asset: str):
+        return send_from_directory(STATIC_INVENTORY_LOADOUTS, asset)

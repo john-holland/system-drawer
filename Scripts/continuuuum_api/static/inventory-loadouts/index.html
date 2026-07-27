@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Loadouts — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0f1419; color: #e6edf3; }
+    .il-wrap { max-width: 1200px; margin: 1rem auto; padding: 0 1rem 2rem; }
+    h1 { font-size: 1.4rem; }
+    .il-toolbar { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: end; margin: 1rem 0; }
+    label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: #9da7b3; }
+    input, select, button { padding: 0.4rem 0.55rem; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #e6edf3; }
+    input[type="number"] { width: 5.5rem; }
+    input[type="checkbox"] { width: auto; align-self: start; margin-top: 0.35rem; }
+    button { cursor: pointer; background: #238636; border-color: #2ea043; }
+    button.secondary { background: #21262d; }
+    button.danger { background: #da3633; border-color: #f85149; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    th, td { border-bottom: 1px solid #30363d; padding: 0.45rem 0.35rem; text-align: left; vertical-align: middle; }
+    th { color: #9da7b3; font-weight: 600; }
+    tr.selected { background: #1c2a3a; }
+    tr:hover { background: #161b22; }
+    .msg { margin-top: 0.75rem; color: #7ee787; }
+    .err { color: #ff7b72; }
+    .il-hint { color: #9da7b3; font-size: 0.85rem; margin: 0.25rem 0 0; }
+    .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+      width: min(1100px, 100%); max-height: 90vh; overflow: auto; padding: 1rem 1.1rem 1.1rem;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+    }
+    .modal h2 { margin: 0 0 0.35rem; font-size: 1.15rem; }
+    .modal-sub { margin: 0 0 0.75rem; color: #9da7b3; font-size: 0.85rem; }
+    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; position: sticky; bottom: 0; background: #161b22; padding-top: 0.75rem; }
+    .modal-table-wrap { overflow: auto; max-height: calc(90vh - 8rem); border: 1px solid #30363d; border-radius: 8px; }
+    .modal-table { margin: 0; min-width: 980px; }
+    .modal-table th { position: sticky; top: 0; background: #21262d; z-index: 1; }
+    .modal-table input[type="text"],
+    .modal-table input[type="number"] { width: 100%; min-width: 4.5rem; box-sizing: border-box; }
+    .modal-table input.blank { border-color: #d29922; }
+    .modal-table td.cb { text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <div class="il-wrap">
+    <h1>Inventory Loadouts</h1>
+    <p>Author loadout rows (name, icon, prefab, ownership, ground XYZ). Unity <code>InventoryManager</code> syncs these for NPCs and PCs.</p>
+    <div class="il-toolbar">
+      <label>Loadout set
+        <select id="il-set"></select>
+      </label>
+      <label>New set id
+        <input id="il-new-set" type="text" placeholder="e.g. raid_alpha" />
+      </label>
+      <button type="button" id="il-refresh" class="secondary">Refresh</button>
+      <button type="button" id="il-ensure" class="secondary">Ensure schema</button>
+      <button type="button" id="il-edit" class="secondary" disabled>Edit selected</button>
+      <button type="button" id="il-delete-sel" class="danger" disabled>Delete selected</button>
+    </div>
+    <div class="il-toolbar" id="il-create">
+      <label>Name <input id="il-name" type="text" /></label>
+      <label>Icon asset <input id="il-icon" type="text" /></label>
+      <label>Prefab id <input id="il-prefab" type="text" /></label>
+      <label>Owned by <input id="il-owned" type="text" /></label>
+      <label>Held by <input id="il-held" type="text" /></label>
+      <label>Ground X <input id="il-x" type="number" step="any" value="0" /></label>
+      <label>Ground Y <input id="il-y" type="number" step="any" value="0" /></label>
+      <label>Ground Z <input id="il-z" type="number" step="any" value="0" /></label>
+      <label>Takeout <input id="il-takeout" type="checkbox" /></label>
+      <label>Putaway <input id="il-putaway" type="checkbox" /></label>
+      <button type="button" id="il-add">Add item</button>
+    </div>
+    <p class="il-hint">Click a checkbox to select. Shift-click another to select a range. Edit selected opens a multi-row table editor (works for one or many).</p>
+    <div id="il-msg" class="msg"></div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:2rem"><input type="checkbox" id="il-check-all" title="Select all" /></th>
+          <th>Name</th><th>Icon</th><th>Prefab</th><th>Owned</th><th>Held</th>
+          <th>X</th><th>Y</th><th>Z</th>
+          <th>Takeout</th><th>Putaway</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="il-body"></tbody>
+    </table>
+  </div>
+
+  <div class="modal-backdrop" id="il-modal" role="dialog" aria-modal="true" aria-labelledby="il-modal-title">
+    <div class="modal">
+      <h2 id="il-modal-title">Edit selected loadouts</h2>
+      <p class="modal-sub" id="il-modal-sub">Edit fields below, then Save all.</p>
+      <div class="modal-table-wrap">
+        <table class="modal-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Icon</th>
+              <th>Prefab</th>
+              <th>Owned by</th>
+              <th>Held by</th>
+              <th>X</th>
+              <th>Y</th>
+              <th>Z</th>
+              <th>Set</th>
+              <th>Takeout</th>
+              <th>Putaway</th>
+            </tr>
+          </thead>
+          <tbody id="em-body"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="em-cancel" class="secondary">Cancel</button>
+        <button type="button" id="em-save">Save all</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script>
+    ContinuuuumNav.mount({ app: 'inventory-loadouts', theme: 'dark' });
+
+    let items = [];
+    let lastCheckIndex = null;
+
+    const TEXT_FIELDS = ['name', 'icon', 'prefab', 'owned', 'held', 'x', 'y', 'z', 'set'];
+
+    const msg = (t, err) => {
+      const el = document.getElementById('il-msg');
+      el.textContent = t || '';
+      el.className = err ? 'msg err' : 'msg';
+    };
+
+    function num(v, fallback = 0) {
+      if (v === null || v === undefined || v === '') return fallback;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function fmtNum(v) {
+      if (v === null || v === undefined || v === '') return '';
+      const n = Number(v);
+      return Number.isFinite(n) ? String(n) : '';
+    }
+
+    async function api(path, opts) {
+      const r = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts || {}));
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || r.statusText);
+      return j;
+    }
+
+    function selectedIds() {
+      return Array.from(document.querySelectorAll('#il-body input.il-row-check:checked')).map(c => c.value);
+    }
+
+    function updateSelectionUi() {
+      const ids = selectedIds();
+      document.getElementById('il-edit').disabled = ids.length === 0;
+      document.getElementById('il-delete-sel').disabled = ids.length === 0;
+      document.querySelectorAll('#il-body tr').forEach(tr => {
+        const cb = tr.querySelector('input.il-row-check');
+        tr.classList.toggle('selected', !!(cb && cb.checked));
+      });
+      const all = document.querySelectorAll('#il-body input.il-row-check');
+      const checked = document.querySelectorAll('#il-body input.il-row-check:checked');
+      const master = document.getElementById('il-check-all');
+      master.checked = all.length > 0 && checked.length === all.length;
+      master.indeterminate = checked.length > 0 && checked.length < all.length;
+    }
+
+    function onRowCheckClick(ev, index) {
+      const boxes = Array.from(document.querySelectorAll('#il-body input.il-row-check'));
+      if (!boxes[index]) return;
+
+      if (ev.shiftKey && lastCheckIndex != null && lastCheckIndex !== index) {
+        ev.preventDefault();
+        const from = Math.min(lastCheckIndex, index);
+        const to = Math.max(lastCheckIndex, index);
+        const turnOn = boxes[lastCheckIndex].checked;
+        for (let i = from; i <= to; i++) boxes[i].checked = turnOn;
+      } else {
+        lastCheckIndex = index;
+      }
+      updateSelectionUi();
+    }
+
+    function openMultiModal(selectedItems) {
+      if (!selectedItems || !selectedItems.length) return;
+      const body = document.getElementById('em-body');
+      body.innerHTML = '';
+      document.getElementById('il-modal-title').textContent =
+        selectedItems.length === 1 ? 'Edit loadout item' : 'Edit selected loadouts (' + selectedItems.length + ')';
+      document.getElementById('il-modal-sub').textContent =
+        'Edit any fields in the table, then Save all. Blank fields are allowed after a confirm prompt.';
+
+      selectedItems.forEach(it => {
+        const tr = document.createElement('tr');
+        tr.dataset.id = it.id;
+        tr.innerHTML =
+          `<td><input type="text" data-f="name" value="${escapeAttr(it.name || '')}" /></td>` +
+          `<td><input type="text" data-f="icon" value="${escapeAttr(it.icon_asset || '')}" /></td>` +
+          `<td><input type="text" data-f="prefab" value="${escapeAttr(it.prefab_id || '')}" /></td>` +
+          `<td><input type="text" data-f="owned" value="${escapeAttr(it.ownedby_actor_id || '')}" /></td>` +
+          `<td><input type="text" data-f="held" value="${escapeAttr(it.heldby_actor_id || '')}" /></td>` +
+          `<td><input type="number" step="any" data-f="x" value="${escapeAttr(fmtNum(it.onground_x))}" /></td>` +
+          `<td><input type="number" step="any" data-f="y" value="${escapeAttr(fmtNum(it.onground_y))}" /></td>` +
+          `<td><input type="number" step="any" data-f="z" value="${escapeAttr(fmtNum(it.onground_z))}" /></td>` +
+          `<td><input type="text" data-f="set" value="${escapeAttr(it.loadout_set_id || 'default')}" /></td>` +
+          `<td class="cb"><input type="checkbox" data-f="takeout" ${it.use_takeout_animation ? 'checked' : ''} /></td>` +
+          `<td class="cb"><input type="checkbox" data-f="putaway" ${it.use_putaway_animation ? 'checked' : ''} /></td>`;
+        body.appendChild(tr);
+      });
+
+      body.querySelectorAll('input[type="text"], input[type="number"]').forEach(inp => {
+        inp.addEventListener('input', () => {
+          inp.classList.toggle('blank', !String(inp.value || '').trim());
+        });
+        inp.classList.toggle('blank', !String(inp.value || '').trim());
+      });
+
+      document.getElementById('il-modal').classList.add('open');
+      const first = body.querySelector('input[data-f="name"]');
+      if (first) first.focus();
+    }
+
+    function closeModal() {
+      document.getElementById('il-modal').classList.remove('open');
+    }
+
+    function collectMultiRows() {
+      const rows = [];
+      const blanks = [];
+      document.querySelectorAll('#em-body tr').forEach((tr, rowIndex) => {
+        const get = (f) => {
+          const el = tr.querySelector(`[data-f="${f}"]`);
+          if (!el) return '';
+          if (el.type === 'checkbox') return el.checked;
+          return el.value;
+        };
+        const payload = {
+          id: tr.dataset.id,
+          name: String(get('name') || '').trim(),
+          icon_asset: String(get('icon') || '').trim(),
+          prefab_id: String(get('prefab') || '').trim(),
+          ownedby_actor_id: String(get('owned') || '').trim() || null,
+          heldby_actor_id: String(get('held') || '').trim() || null,
+          onground_x: num(get('x'), 0),
+          onground_y: num(get('y'), 0),
+          onground_z: num(get('z'), 0),
+          loadout_set_id: String(get('set') || '').trim() || 'default',
+          use_takeout_animation: !!get('takeout'),
+          use_putaway_animation: !!get('putaway')
+        };
+        TEXT_FIELDS.forEach(f => {
+          const el = tr.querySelector(`[data-f="${f}"]`);
+          if (el && !String(el.value || '').trim()) {
+            blanks.push(`Row ${rowIndex + 1} (${payload.name || payload.id || 'unnamed'}): ${f}`);
+            el.classList.add('blank');
+          }
+        });
+        rows.push(payload);
+      });
+      return { rows, blanks };
+    }
+
+    function createPayloadFromForm(prefix) {
+      const g = (id) => document.getElementById(prefix + id);
+      return {
+        name: g('name').value || 'item',
+        icon_asset: g('icon').value,
+        prefab_id: g('prefab').value,
+        ownedby_actor_id: g('owned').value || null,
+        heldby_actor_id: g('held').value || null,
+        onground_x: num(g('x').value, 0),
+        onground_y: num(g('y').value, 0),
+        onground_z: num(g('z').value, 0),
+        use_takeout_animation: g('takeout').checked,
+        use_putaway_animation: g('putaway').checked
+      };
+    }
+
+    async function loadSets() {
+      await api('/api/loadouts/ensure', { method: 'POST' }).catch(() => ({}));
+      const data = await api('/api/loadouts/sets');
+      const sel = document.getElementById('il-set');
+      const cur = sel.value;
+      sel.innerHTML = '';
+      (data.sets || ['default']).forEach(s => {
+        const o = document.createElement('option');
+        o.value = s;
+        o.textContent = s;
+        sel.appendChild(o);
+      });
+      if (cur) sel.value = cur;
+    }
+
+    async function loadItems() {
+      const set = document.getElementById('il-set').value || 'default';
+      const data = await api('/api/loadouts?set=' + encodeURIComponent(set));
+      items = data.items || [];
+      lastCheckIndex = null;
+      const body = document.getElementById('il-body');
+      body.innerHTML = '';
+      items.forEach((it, index) => {
+        const tr = document.createElement('tr');
+        tr.dataset.id = it.id;
+        tr.innerHTML =
+          `<td><input type="checkbox" class="il-row-check" value="${it.id}" /></td>` +
+          `<td>${escapeHtml(it.name || '')}</td>` +
+          `<td>${escapeHtml(it.icon_asset || '')}</td>` +
+          `<td>${escapeHtml(it.prefab_id || '')}</td>` +
+          `<td>${escapeHtml(it.ownedby_actor_id || '')}</td>` +
+          `<td>${escapeHtml(it.heldby_actor_id || '')}</td>` +
+          `<td class="num">${fmtNum(it.onground_x)}</td>` +
+          `<td class="num">${fmtNum(it.onground_y)}</td>` +
+          `<td class="num">${fmtNum(it.onground_z)}</td>` +
+          `<td>${it.use_takeout_animation ? 'yes' : ''}</td>` +
+          `<td>${it.use_putaway_animation ? 'yes' : ''}</td>` +
+          `<td><button type="button" class="secondary" data-edit="${it.id}">Edit</button> ` +
+          `<button type="button" class="secondary" data-del="${it.id}">Delete</button></td>`;
+        body.appendChild(tr);
+
+        const cb = tr.querySelector('input.il-row-check');
+        cb.addEventListener('click', (ev) => onRowCheckClick(ev, index));
+        tr.addEventListener('dblclick', (ev) => {
+          if (ev.target.closest('input, button')) return;
+          openMultiModal([it]);
+        });
+      });
+
+      body.querySelectorAll('[data-del]').forEach(btn => {
+        btn.onclick = async () => {
+          await api('/api/loadouts/' + btn.getAttribute('data-del'), { method: 'DELETE' });
+          msg('Deleted');
+          await loadItems();
+        };
+      });
+      body.querySelectorAll('[data-edit]').forEach(btn => {
+        btn.onclick = () => {
+          const it = items.find(x => x.id === btn.getAttribute('data-edit'));
+          openMultiModal(it ? [it] : []);
+        };
+      });
+      updateSelectionUi();
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escapeAttr(s) {
+      return escapeHtml(s).replace(/'/g, '&#39;');
+    }
+
+    document.getElementById('il-check-all').addEventListener('change', (ev) => {
+      document.querySelectorAll('#il-body input.il-row-check').forEach(cb => { cb.checked = ev.target.checked; });
+      lastCheckIndex = null;
+      updateSelectionUi();
+    });
+
+    document.getElementById('il-edit').onclick = () => {
+      const ids = selectedIds();
+      if (!ids.length) return;
+      const selected = ids.map(id => items.find(x => x.id === id)).filter(Boolean);
+      openMultiModal(selected);
+    };
+
+    document.getElementById('il-delete-sel').onclick = async () => {
+      const ids = selectedIds();
+      if (!ids.length) return;
+      if (!confirm('Delete ' + ids.length + ' item(s)?')) return;
+      for (const id of ids) await api('/api/loadouts/' + id, { method: 'DELETE' });
+      msg('Deleted ' + ids.length);
+      await loadItems();
+    };
+
+    document.getElementById('em-cancel').onclick = closeModal;
+    document.getElementById('il-modal').addEventListener('click', (ev) => {
+      if (ev.target.id === 'il-modal') closeModal();
+    });
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') closeModal();
+    });
+
+    document.getElementById('em-save').onclick = async () => {
+      const { rows, blanks } = collectMultiRows();
+      if (!rows.length) return;
+      if (blanks.length) {
+        const preview = blanks.slice(0, 12).join('\n') + (blanks.length > 12 ? '\n…' : '');
+        const ok = confirm(
+          blanks.length + ' blank field(s) detected.\n\n' +
+          preview +
+          '\n\nSave anyway?'
+        );
+        if (!ok) return;
+      }
+      for (const row of rows) {
+        const id = row.id;
+        const body = Object.assign({}, row);
+        delete body.id;
+        await api('/api/loadouts/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      }
+      msg('Saved ' + rows.length + ' item(s)');
+      closeModal();
+      await loadSets();
+      await loadItems();
+    };
+
+    document.getElementById('il-refresh').onclick = async () => {
+      await loadSets();
+      await loadItems();
+      msg('Refreshed');
+    };
+    document.getElementById('il-ensure').onclick = async () => {
+      await api('/api/loadouts/ensure', { method: 'POST' });
+      msg('Schema ok');
+      await loadSets();
+    };
+    document.getElementById('il-set').onchange = () => loadItems();
+
+    document.getElementById('il-add').onclick = async () => {
+      const newSet = document.getElementById('il-new-set').value.trim();
+      const set = newSet || document.getElementById('il-set').value || 'default';
+      const body = createPayloadFromForm('il-');
+      body.loadout_set_id = set;
+      await api('/api/loadouts', { method: 'POST', body: JSON.stringify(body) });
+      msg('Added');
+      await loadSets();
+      document.getElementById('il-set').value = set;
+      await loadItems();
+    };
+
+    loadSets().then(loadItems).catch(e => msg(String(e), true));
+  </script>
+</body>
+</html>

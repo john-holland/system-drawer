@@ -138,6 +138,11 @@ public sealed class LifeSystemsSheet : MonoBehaviour
         Set01(channelId, Get01(channelId) + delta01);
     }
 
+    public void AdjustClinical(string channelId, float deltaClinical)
+    {
+        SetClinical(channelId, GetClinical(channelId) + deltaClinical);
+    }
+
     public float GetRegional01(string channelId, BodyPartLifeModifier part)
     {
         float systemic = Get01(channelId);

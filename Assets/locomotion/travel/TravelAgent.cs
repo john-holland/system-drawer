@@ -87,6 +87,9 @@ public class TravelAgent : MonoBehaviour
     [Tooltip("When set, safety-lock warden gates vehicle/weapon fire force.")]
     public SafetyLockWardenPlannerService safetyLockWardenPlanner;
 
+    [Tooltip("Optional waypoint-troupe feature gates (Stuntman / Safety Warden / multibody / …).")]
+    public TravelFeatureCoefficients waypointFeatureCoeffs = new TravelFeatureCoefficients();
+
     [Tooltip("GoodSection cards offered as tool modality candidates for preview planning.")]
     public List<GoodSection> toolSectionsForPreview = new List<GoodSection>();
 
@@ -346,8 +349,13 @@ public class TravelAgent : MonoBehaviour
         GenericTraversibilityPlannerSolver.PlannerHints hints,
         GameObject actorGo)
     {
-        var stunt = stuntmanPlanner != null ? stuntmanPlanner : GetComponent<StuntmanPlannerService>();
-        var warden = safetyWardenPlanner != null ? safetyWardenPlanner : GetComponent<SafetyWardenPlannerService>();
+        var coeffs = waypointFeatureCoeffs ?? new TravelFeatureCoefficients();
+        var stunt = coeffs.AllowStuntman
+            ? (stuntmanPlanner != null ? stuntmanPlanner : GetComponent<StuntmanPlannerService>())
+            : null;
+        var warden = coeffs.AllowSafetyWarden
+            ? (safetyWardenPlanner != null ? safetyWardenPlanner : GetComponent<SafetyWardenPlannerService>())
+            : null;
         var wrestle = wrestlingPlanner != null ? wrestlingPlanner : GetComponent<WrestlingPlannerService>();
         var referee = refereeWardenPlanner != null ? refereeWardenPlanner : GetComponent<RefereeWardenPlannerService>();
         var love = loveMakingPlanner != null ? loveMakingPlanner : GetComponent<LoveMakingPlannerService>();

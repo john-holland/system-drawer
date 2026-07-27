@@ -184,6 +184,10 @@ public enum PhysicsIKTrainingCategory
     WrestlingThrow,
     WrestlingDropOn,
     WrestlingCounter,
+    /// <summary>Lip-midpoint / kiss clinch fitness.</summary>
+    LoveKiss,
+    /// <summary>Multi-contact heavy-petting section fitness.</summary>
+    LoveHeavyPetting,
     // Eating / hygiene
     Bite,
     Chew,
@@ -342,6 +346,14 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
     public ThrowHandMode shootHandMode = ThrowHandMode.Right;
     [Tooltip("Optional shoot animation trees.")]
     public List<AnimationBehaviorTreeNode> shootAnimationTrees = new List<AnimationBehaviorTreeNode>();
+
+    [Header("Love Kiss / Heavy Petting")]
+    [Tooltip("Partner / train-against actors for LoveKiss and LoveHeavyPetting categories.")]
+    public List<GameObject> loveTrainAgainstActors = new List<GameObject>();
+    [Tooltip("Optional actor keys resolved via HeavyPettingIKActorRegistry.")]
+    public List<string> loveTrainAgainstActorKeys = new List<string>();
+    [Tooltip("Optional HeavyPettingIKAnimation asset for contact / section params.")]
+    public HeavyPettingIKAnimation heavyPettingIkAnimation;
 
     [Header("Parkour / Rope inchworm")]
     [Tooltip("Animation group tag (ParkourAnimationGroup / RopeInchwormAnimationGroup).")]

@@ -23,6 +23,19 @@ public class LoveCard : WrestlingCard
     public int maxParticipants = 2;
     public string preferredPartnerAspect;
 
+    [Header("Kiss")]
+    [Tooltip("0–1 kiss animation intensity (peck → making out). Default 0.35 (standard kiss).")]
+    [Range(0f, 1f)] public float kissAnimationIntensity = LoveMakingAnimationGroup.DefaultKissIntensity;
+    [Tooltip("Optional explicit animation key from {P:kiss|kiss-animation=...}. Empty = intensity band.")]
+    public string kissAnimationKey;
+    [Tooltip("Override jaw open for kiss; negative derives from kissAnimationIntensity.")]
+    public float kissJawOpen01 = -1f;
+    public string selfActorKey;
+    public string partnerActorKey;
+    public HeavyPettingIKAnimation heavyPettingIk;
+    [Tooltip("When true, partner responded poorly to an unrequited kiss (visceral chemistry).")]
+    public bool kissResponseNegative;
+
     public LoveCard()
     {
         isWrestlingGoal = false;
@@ -37,7 +50,7 @@ public class LoveCard : WrestlingCard
     }
 
     public string LoveAnimationGroupTag =>
-        LoveMakingAnimationGroup.ForMove(loveMoveKind, intimateStyle);
+        LoveMakingAnimationGroup.ForMove(loveMoveKind, intimateStyle, kissAnimationIntensity, kissAnimationKey);
 
     public bool MeetsLoveRequirements(GameObject actor, GameObject partner, RagdollSystem actorRagdoll = null)
     {
@@ -62,8 +75,13 @@ public class LoveCard : WrestlingCard
         LoveMakingMoveKind kind,
         GameObject partner,
         RagdollState state,
-        bool intimateStyle = false)
+        bool intimateStyle = false,
+        float kissAnimationIntensity = -1f,
+        string kissAnimationKey = null)
     {
+        float kissI = kissAnimationIntensity >= 0f
+            ? Mathf.Clamp01(kissAnimationIntensity)
+            : LoveMakingAnimationGroup.DefaultKissIntensity;
         var card = new LoveCard
         {
             loveMode = mode,
@@ -87,9 +105,21 @@ public class LoveCard : WrestlingCard
             limits = new SectionLimits { maxForce = 120f, maxTorque = 40f, maxVelocityChange = 1.2f },
             dropHitBoneName = kind == LoveMakingMoveKind.Kiss ? "Head" : "Chest",
             moveKind = WrestlingMoveKind.LockGrapple,
-            mode = WrestlingMode.Play
+            mode = WrestlingMode.Play,
+            kissAnimationIntensity = kissI,
+            kissAnimationKey = kissAnimationKey
         };
         return card;
+    }
+
+    public void ApplyKissLemma(LoveMakingKissLemmaProperties props)
+    {
+        if (!string.IsNullOrEmpty(props.lemmaHint) && props.kissAnimationIntensity < 0f)
+            kissAnimationIntensity = LoveMakingAnimationGroup.DefaultIntensityForLemma(props.lemmaHint);
+        if (props.kissAnimationIntensity >= 0f)
+            kissAnimationIntensity = Mathf.Clamp01(props.kissAnimationIntensity);
+        if (!string.IsNullOrEmpty(props.kissAnimation))
+            kissAnimationKey = props.kissAnimation;
     }
 
     public static float DefaultPhysicality(LoveMakingMoveKind kind)

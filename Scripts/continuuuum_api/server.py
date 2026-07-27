@@ -244,6 +244,9 @@ try:
     from continuuuum_api.life_systems_routes import register_life_systems_routes
 
 
+    from continuuuum_api.loadouts_routes import register_loadouts_routes
+
+
     from continuuuum_api.nsm_routes import register_change_of_basis_routes, register_nsm_routes
 
 
@@ -296,6 +299,9 @@ except ImportError:
 
 
     from life_systems_routes import register_life_systems_routes
+
+
+    from loadouts_routes import register_loadouts_routes
 
 
     from nsm_routes import register_change_of_basis_routes, register_nsm_routes
@@ -4084,6 +4090,9 @@ register_lemma_completion_routes(app, get_conn)
 
 
 register_life_systems_routes(app, get_conn)
+
+
+register_loadouts_routes(app, get_conn)
 
 
 register_nsm_routes(app, get_conn)

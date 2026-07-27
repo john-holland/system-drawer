@@ -17,6 +17,7 @@
     { id: 'table-read', label: 'Table Read', path: '/table-read' },
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
     { id: 'credits', label: 'Credits', path: '/credits' },
+    { id: 'inventory-loadouts', label: 'Inventory Loadouts', path: '/inventory-loadouts' },
     { id: 'lemma-build', label: 'Lemma Build', path: '/lemma-build' },
     { id: 'lemma-completion', label: 'Lemma Completion', path: '/lemma-completion' },
     { id: 'settings', label: 'Settings', path: '/settings' },
@@ -131,6 +132,7 @@
       'table-read': lemmaBase + '/table-read',
       'sql-viewer': lemmaBase + '/sql-viewer',
       credits: lemmaBase + '/credits',
+      'inventory-loadouts': lemmaBase + '/inventory-loadouts',
       'lemma-build': lemmaBase + '/lemma-build',
       'lemma-completion': lemmaBase + '/lemma-completion',
       settings: lemmaBase + '/settings',
@@ -156,6 +158,7 @@
     if (path.indexOf('/table-read') >= 0) return 'table-read';
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';
     if (path.indexOf('/credits') >= 0) return 'credits';
+    if (path.indexOf('/inventory-loadouts') >= 0) return 'inventory-loadouts';
     if (path.indexOf('/lemma-build') >= 0) return 'lemma-build';
     if (path.indexOf('/lemma-completion') >= 0) return 'lemma-completion';
     if (path.indexOf('/story-board') >= 0) return 'story-board';

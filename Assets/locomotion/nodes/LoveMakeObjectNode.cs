@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Executes a LoveCard: session/solver pick → topology BeginEmbrace → impulse stack → psych + societal.
+/// Executes a LoveCard: session/solver pick → topology BeginEmbrace (or KissingExecution for Kiss)
+/// → impulse stack → psych + societal.
 /// </summary>
 public class LoveMakeObjectNode : BehaviorTreeNode
 {
@@ -9,15 +10,18 @@ public class LoveMakeObjectNode : BehaviorTreeNode
     public LoveMakingTopologyRuntime topology;
     public LoveMakingSession session;
     public LoveMakingPlannerService planner;
+    public HeavyPettingIKActorRegistry heavyPettingRegistry;
     public float maxExecuteSeconds = 4f;
 
     bool _started;
+    bool _kissPath;
     GoodSection _active;
     float _elapsed;
 
     public override void OnEnter(BehaviorTree tree)
     {
         _started = false;
+        _kissPath = false;
         _active = null;
         _elapsed = 0f;
         status = BehaviorTreeStatus.Running;
@@ -30,8 +34,13 @@ public class LoveMakeObjectNode : BehaviorTreeNode
             _active.Stop();
             _active = null;
         }
-        topology?.EndExchange();
+        RagdollSystem ragdoll = tree != null ? tree.GetComponent<RagdollSystem>() : null;
+        if (_kissPath && ragdoll != null)
+            KissingExecution.End(ragdoll.gameObject);
+        else
+            topology?.EndExchange();
         _started = false;
+        _kissPath = false;
     }
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)
@@ -86,9 +95,6 @@ public class LoveMakeObjectNode : BehaviorTreeNode
             if (!card.IsFeasible(state) || !card.MeetsLoveRequirements(ragdoll.gameObject, partner, ragdoll))
                 return BehaviorTreeStatus.Failure;
 
-            if (topology == null)
-                topology = ragdoll.GetComponent<LoveMakingTopologyRuntime>()
-                            ?? ragdoll.gameObject.AddComponent<LoveMakingTopologyRuntime>();
             if (session == null)
                 session = ragdoll.GetComponent<LoveMakingSession>()
                            ?? ragdoll.gameObject.AddComponent<LoveMakingSession>();
@@ -96,7 +102,20 @@ public class LoveMakeObjectNode : BehaviorTreeNode
                 session.Begin(new[] { ragdoll.gameObject, partner }, session.timeBudgetSeconds, session.goals);
 
             session.activeCard = card;
-            topology.BeginEmbrace(ragdoll.gameObject, partner, card);
+            _kissPath = card.loveMoveKind == LoveMakingMoveKind.Kiss;
+            if (_kissPath)
+            {
+                if (!KissingExecution.Begin(ragdoll.gameObject, partner, card, heavyPettingRegistry))
+                    return BehaviorTreeStatus.Failure;
+            }
+            else
+            {
+                if (topology == null)
+                    topology = ragdoll.GetComponent<LoveMakingTopologyRuntime>()
+                                ?? ragdoll.gameObject.AddComponent<LoveMakingTopologyRuntime>();
+                topology.BeginEmbrace(ragdoll.gameObject, partner, card);
+            }
+
             card.Execute(state);
             _active = card;
             _started = true;
@@ -104,21 +123,27 @@ public class LoveMakeObjectNode : BehaviorTreeNode
         }
 
         _elapsed += Time.deltaTime;
+        if (_kissPath)
+            KissingExecution.Tick(ragdoll.gameObject, Time.deltaTime);
         session?.Tick(Time.deltaTime);
         RagdollState current = ragdoll.GetCurrentState();
         bool still = _active != null && _active.Update(current, Time.deltaTime);
 
         if (!still || _elapsed >= maxExecuteSeconds || (session != null && session.AllRequiredGoalsMet()))
         {
-            if (!session.psychApplied)
+            if (session != null && !session.psychApplied)
             {
                 LoveMakingPsychEffectService.Apply(session, ragdoll.gameObject, partner, card);
                 RomanceSocietalImpactService.ApplyLoveEvent(ragdoll.gameObject, partner, card, session);
                 session.psychApplied = true;
             }
-            topology?.EndExchange();
+            if (_kissPath)
+                KissingExecution.End(ragdoll.gameObject);
+            else
+                topology?.EndExchange();
             _active = null;
             _started = false;
+            _kissPath = false;
             return BehaviorTreeStatus.Success;
         }
 

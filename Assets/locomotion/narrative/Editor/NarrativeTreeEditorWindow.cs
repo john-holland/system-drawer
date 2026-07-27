@@ -273,6 +273,8 @@ namespace Locomotion.Narrative.EditorTools
                     NarrativeActionKind.EnterSlowTimeCombat => new NarrativeEnterSlowTimeCombatAction(),
                     NarrativeActionKind.ChooseCombatCard => new NarrativeChooseCombatCardAction(),
                     NarrativeActionKind.CommitCombatCard => new NarrativeCommitCombatCardAction(),
+                    NarrativeActionKind.CombatCommunique => new CombatCommuniqueNarrativeAction(),
+                    NarrativeActionKind.Trade => new NarrativeTradeAction(),
                     NarrativeActionKind.Bite => new BiteNarrativeAction(),
                     NarrativeActionKind.Chew => new ChewNarrativeAction(),
                     NarrativeActionKind.Swallow => new SwallowNarrativeAction(),
@@ -439,6 +441,25 @@ namespace Locomotion.Narrative.EditorTools
             {
                 commitCombat.sessionKey = EditorGUILayout.TextField("Session Key", commitCombat.sessionKey);
             }
+            else if (a is CombatCommuniqueNarrativeAction communique)
+            {
+                communique.facilitatorKey = EditorGUILayout.TextField("Facilitator Key", communique.facilitatorKey);
+                communique.issuerKey = EditorGUILayout.TextField("Issuer Key", communique.issuerKey);
+                communique.troupeId = EditorGUILayout.TextField("Troupe Id", communique.troupeId);
+                communique.channel = (CombatCommuniqueChannel)EditorGUILayout.EnumPopup("Channel", communique.channel);
+                communique.callToArms = EditorGUILayout.Toggle("Call To Arms", communique.callToArms);
+                communique.ignoreCallToArmsRange = EditorGUILayout.Toggle("Ignore Range", communique.ignoreCallToArmsRange);
+                communique.dialogueSpanRef = EditorGUILayout.TextField("Dialogue Span", communique.dialogueSpanRef);
+            }
+            else if (a is NarrativeTradeAction trade)
+            {
+                trade.selfKey = EditorGUILayout.TextField("Self Key", trade.selfKey);
+                trade.otherKey = EditorGUILayout.TextField("Other Key", trade.otherKey);
+                trade.faceDistance = EditorGUILayout.FloatField("Face Distance", trade.faceDistance);
+                trade.requireConversationBeforeTransfer = EditorGUILayout.Toggle("Require Conversation", trade.requireConversationBeforeTransfer);
+                trade.aiAutoAccept = EditorGUILayout.Toggle("AI Auto Accept", trade.aiAutoAccept);
+                trade.iconMode = (TradeIconMode)EditorGUILayout.EnumPopup("Icon Mode", trade.iconMode);
+            }
             else if (a is BiteNarrativeAction bite)
             {
                 bite.actorKey = EditorGUILayout.TextField("Actor Key", bite.actorKey);
@@ -490,6 +511,8 @@ namespace Locomotion.Narrative.EditorTools
             EnterSlowTimeCombat,
             ChooseCombatCard,
             CommitCombatCard,
+            CombatCommunique,
+            Trade,
             Bite,
             Chew,
             Swallow,
@@ -519,6 +542,8 @@ namespace Locomotion.Narrative.EditorTools
                 NarrativeEnterSlowTimeCombatAction => NarrativeActionKind.EnterSlowTimeCombat,
                 NarrativeChooseCombatCardAction => NarrativeActionKind.ChooseCombatCard,
                 NarrativeCommitCombatCardAction => NarrativeActionKind.CommitCombatCard,
+                CombatCommuniqueNarrativeAction => NarrativeActionKind.CombatCommunique,
+                NarrativeTradeAction => NarrativeActionKind.Trade,
                 BiteNarrativeAction => NarrativeActionKind.Bite,
                 ChewNarrativeAction => NarrativeActionKind.Chew,
                 SwallowNarrativeAction => NarrativeActionKind.Swallow,

@@ -110,6 +110,11 @@ public static class VocabularyBuiltInRegistry
         foreach (var w in new[] { "go", "move", "open", "close", "take", "use", "place", "connect", "set", "run", "drink" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, null);
 
+        // Kiss / romance lemmas ({P:kiss|kiss-animation=...})
+        string[] kissTags = { "romance", "kiss", "lovemaking" };
+        foreach (var w in new[] { "kiss", "peck", "smooch", "smooching", "making-out", "make-out" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, kissTags);
+
         // Stuntman / Safety Warden / parkour lemmas
         string[] stuntTags = { "stunt", "parkour", "travel" };
         string[] safetyTags = { "safety", "travel", "warden" };
@@ -214,6 +219,13 @@ public static class VocabularyBuiltInRegistry
         TagOrAddPrime("verb", "there-is", "verb");
         TagOrAddPrime("verb", "be-someone", "verb");
         TagOrAddPrime("verb", "have", "verb");
+        TagOrAddPrime("verb", "give", "verb");
+        TagOrAddPrime("verb", "take", "verb");
+        TagOrAddPrime("verb", "transfer", "verb");
+        TagOrAddPrime("noun", "waypoint", "noun");
+        TagOrAddPrime("noun", "formation", "noun");
+        TagOrAddPrime("noun", "triangle", "noun");
+        TagOrAddPrime("noun", "pineapple", "noun");
         // Life and death
         TagOrAddPrime("verb", "live", "verb");
         TagOrAddPrime("verb", "die", "verb");
