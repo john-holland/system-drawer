@@ -75,6 +75,15 @@ public sealed class PeeStreamDirector : MonoBehaviour
             var m = flood.GetType().GetMethod("EmitFromFlow", new[] { typeof(float) });
             m?.Invoke(flood, new object[] { litersPerSec });
         }
-        _ = streamRenderer;
+        if (streamRenderer != null)
+        {
+            // Duck-typed DrinkStreamRenderer: SetDirection / SetFlow / Emit
+            var t = streamRenderer.GetType();
+            t.GetMethod("SetDirection", new[] { typeof(Vector3) })?.Invoke(streamRenderer, new object[] { dir });
+            t.GetMethod("SetFlow", new[] { typeof(float) })?.Invoke(streamRenderer, new object[] { litersPerSec });
+            var tip = groin != null ? groin.TipPosition : transform.position;
+            t.GetMethod("SetOrigin", new[] { typeof(Vector3) })?.Invoke(streamRenderer, new object[] { tip });
+            t.GetMethod("EmitFromFlow", new[] { typeof(float) })?.Invoke(streamRenderer, new object[] { litersPerSec });
+        }
     }
 }

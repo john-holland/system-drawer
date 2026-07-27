@@ -1,57 +1,70 @@
 # Body interior, eating, and bathroom hygiene
 
+## Goal wiring (working loops)
+
+Add [`BodyHygieneGoalRouterNode`](../nodes/BodyHygieneGoalRouterNode.cs) under the actor BT root (or as a Selector child). It dispatches:
+
+| GoalType | Node | Card flags / tags |
+|----------|------|-------------------|
+| `Eat` | `EatObjectNode` → `EatFoodNode` | `isEatGoal`, tag `eat` |
+| `Toilet` | `ToiletVisitNode` (before → excrete → after) | `isToiletGoal`, tag `toilet` |
+| `Hygiene` | `HygieneGoalNode` | `isHygieneGoal` + `hygieneKind` |
+| `Interaction` + `free_excrete` | `FreeExcreteNode` | — |
+
+[`ConsiderBodyHygieneCards`](../ingestion/ConsiderBodyHygieneCards.cs) auto-emits default cards into `PhysicsCardSolver`. [`PhysicsCardSolver.FindCardMatchingGoal`](../PhysicsCardSolver.cs) matches Eat / Toilet / Hygiene.
+
+Bowel threshold queue uses **`GoalType.Toilet`** (not Sit).
+
 ## Mouth / teeth
 
-- `MouthInteriorRuntime` — upper/lower spline teeth, gum height maps, saliva edge loop, food-in-mouth sphere, mouthfeel longevity
+- `MouthInteriorRuntime` — upper/lower spline teeth, gum maps, saliva edge loop, food-in-mouth sphere/mesh, preferred chew side
+- Spawns tooth visuals (`RebuildToothVisuals`); binds gum heightmaps via material property blocks
+- Front bite = `DriveFrontBite` (vertical jaw); molar chew = `DriveMolarRoll` (3D roll + lateral)
 - Default adult set (32): incisors/canines = **Front**; premolars+ = **MolarBack**
-- Front bite = up/down; molar chew = 3D roll; cheese tongue = parabola; meat = progressive back molars + preferred side
 - `DeveloperRespectsSeed` — preferred chew side in **[0.50, 0.55]**
-- Lip wrap: `Locomotion/LipEdgeWrap` + `LipEdgeWrapDriver` (capsule tracks for brush/finger/tools)
-- Gum maps: `GumHeightMapGenerator` (tongue channel + bezel from 50% tooth height)
+- Lip wrap: `Locomotion/LipEdgeWrap` + `LipEdgeWrapDriver`
+- Brush faces: **buccal / lingual / occlusal** via `ResolveToothFaceNormals`
 
 ## Eating
 
 - `FoodItem` + `FoodKind` (Meat / Cheese / FruitVegetable)
-- `ChewConvexTreeBakeService` — section breakup vs front-teeth ellipsoid
+- `ChewConvexTreeBakeService` — public `ConvexMeshTreeCache.Leaves` bounds (no private reflection)
 - BT: `EatFoodNode`, `BiteNode`, `ChewNode`, `SwallowNode`, `AnimationChewNode`
-- `GoalType.Eat`
-- Narrative: `BiteNarrativeAction` / `ChewNarrativeAction` / `SwallowNarrativeAction` / `AnimationChewNarrativeAction` + `NarrativeBehaviorSpec` builders
-- IK categories: `Bite`, `Chew`, `Swallow`
+- `EatingAnimationDriver` maps `animationGroupTag` → `PhysicsIKTrainingCategory` Bite/Chew/Swallow
+- Bake sections drive progressive molar chew count; fruit discard/put-back duck-types open/close
 
 ## Digestion
 
-- `FoodProcessorBioRhythmService` — swallow → nutrients; adjust-to-normal setpoints; smell whitelist; optional poop queue
+- `FoodProcessorBioRhythmService.OnSwallow` → nutrients + smell whitelist + `pendingPoop` payload
+- `CreatePoop` / `SpawnPoopFromPayload` — explicit factory; clears bowel fill after spawn
 - Organs: `bladder`, `intestines`, `urethra` + channels `bladder_fill` / `bowel_fill`
-- `BowelBladderRuntime` / `IOrganSystemHost` (ragdoll + vehicle weak hosts)
+- `BowelBladderRuntime` / `IOrganSystemHost` / `VehicleOrganHost` (vehicles via `VehicleActor`)
 
 ## Bathroom
 
-- `PaperScrollSystem` — spool-style cylinder, sheet/empty textures, off-roll length
-- `ScrunchToiletPaperNode` — 3–5 sheets + Mandelbrot bun fold
-- `ToiletStation` — `includesBidet=true` default; before/after sit nodes; optional TP BT
-- `PeeStreamDirector` — urethra tip; jitter over first 90° (`peeDirectionJitterDegrees`, 0 = off)
-- `PoopRuntime` — wetness/smell/texture; SDF or coil visuals
-- `FreeExcreteNode` / `ExcreteOnToiletNode`
+- `PaperScrollSystem` — spool cylinder, sheet/empty textures
+- `ScrunchToiletPaperNode` — Mandelbrot bun fold
+- `ToiletStation` — `includesBidet=true`; bidet clears groin smells; else TP BT
+- `PeeStreamDirector` — urethra tip; jitter first 90° (`peeDirectionJitterDegrees`, 0 = off); duck-typed flood + stream renderer
+- `PoopRuntime.SpawnInBowl` — rope-style coil capsules + SDF scale + smell emitter
+- `FreeExcreteNode` — ground spawn + vehicle organ host
 
 ## Hygiene BTs
 
 | Node | Role |
 |------|------|
-| `BrushTeethNode` | Per tooth × 3 sides |
+| `BrushTeethNode` | Per tooth × buccal/lingual/occlusal |
 | `BrushTongueNode` | Tongue curl/pocket |
 | `FlossTeethNode` | Adjacent pairs |
 | `WashHandsNode` | Sink open/close + hand smell clear + manifold whitelist |
 | `ShowerNode` | Whole-body smell clear + manifold lists (skin blacklisted) |
 
-Clear APIs: `HygieneSmellClearService`, `HygieneManifoldClearService`.
-
 ## Editor
 
-`Window/System Drawer/Hygiene/Hygiene Editor` — Mouth (RT preview, tooth sliders, gum generate), Toilet, Sink, Shower. Hub: `SystemDrawerHubMenuCatalog`.
+`Window/System Drawer/Hygiene/Hygiene Editor` — Mouth (RT tooth preview, jaw/gum, rebuild visuals), Toilet, Sink/Shower (topology bake + manifold clear preview). Hub: `SystemDrawerHubMenuCatalog`.
 
 ## Cross-links
 
-- Drink mouth/nozzle (sip alignment) — eat bridges LifeSystems (drink still does not)
-- Open/close topologies for peels/lids/sinks/showers (duck-typed from Runtime to avoid asm cycles)
-- Rope spool APIs inspired `PaperScrollSystem` (not `rope_grapple`)
-- `SLOW_TIME_GAMBIT.md` / wrestling docs for narrative registration pattern
+- Open/close topologies for peels/lids/sinks/showers (duck-typed; no Runtime→Open asmref)
+- Drink nozzle/flood APIs used via reflection for saliva/pee
+- Card Planning Editor can author Eat/Toilet/Hygiene goals as plan nodes

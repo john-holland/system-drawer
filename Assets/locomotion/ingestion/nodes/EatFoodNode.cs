@@ -3,6 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Pruneable/mergeable eat sequence: bake → bite → chew → swallow.
+/// Front bite = vertical jaw; molars = 3D roll; sections drive progressive chew count.
 /// </summary>
 public sealed class EatFoodNode : BehaviorTreeNode
 {
@@ -16,6 +17,7 @@ public sealed class EatFoodNode : BehaviorTreeNode
     int _phaseIndex;
     float _elapsed;
     int _sectionIndex;
+    int _sectionChewsRemaining;
     bool _started;
 
     public override void OnEnter(BehaviorTree tree)
@@ -24,6 +26,7 @@ public sealed class EatFoodNode : BehaviorTreeNode
         _phaseIndex = 0;
         _elapsed = 0f;
         _sectionIndex = 0;
+        _sectionChewsRemaining = 0;
         status = BehaviorTreeStatus.Running;
     }
 
@@ -45,6 +48,7 @@ public sealed class EatFoodNode : BehaviorTreeNode
                 _phases.RemoveAll(p => p == ChewPhase.OpenClosePeel);
             _started = true;
             mouth.SetFoodInMouth(food.biteFitRadius, food.mouthfeelLongevitySeconds);
+            PrimeSectionChews();
         }
 
         if (_phases == null || _phases.Count == 0)
@@ -56,13 +60,24 @@ public sealed class EatFoodNode : BehaviorTreeNode
 
         float dur = phaseSeconds;
         if (phase == ChewPhase.ChewMolarsProgressive || phase == ChewPhase.TongueParabola)
+        {
             dur = Mathf.Max(phaseSeconds, mouth.mouthfeelLongevityRemaining > 0f
                 ? Mathf.Min(2.5f, mouth.mouthfeelLongevityRemaining * 0.25f)
                 : phaseSeconds);
+            // Extra time for remaining chewable sections.
+            if (_sectionChewsRemaining > 0)
+                dur += _sectionChewsRemaining * 0.08f;
+        }
 
         if (_elapsed >= dur)
         {
             _elapsed = 0f;
+            if (phase == ChewPhase.ChewMolarsProgressive && _sectionChewsRemaining > 0)
+            {
+                _sectionChewsRemaining--;
+                AdvanceSection();
+                return BehaviorTreeStatus.Running;
+            }
             _phaseIndex++;
             if (_phaseIndex >= _phases.Count)
             {
@@ -72,9 +87,35 @@ public sealed class EatFoodNode : BehaviorTreeNode
                 processor?.OnSwallow(tree.gameObject, food);
                 return BehaviorTreeStatus.Success;
             }
+            if (_phases[_phaseIndex] == ChewPhase.ChewMolarsProgressive)
+                PrimeSectionChews();
         }
 
         return BehaviorTreeStatus.Running;
+    }
+
+    void PrimeSectionChews()
+    {
+        _sectionChewsRemaining = 0;
+        if (_bake?.sections == null) return;
+        for (int i = 0; i < _bake.sections.Count; i++)
+        {
+            if (_bake.sections[i] != null && !_bake.sections[i].inedible)
+                _sectionChewsRemaining++;
+        }
+        _sectionChewsRemaining = Mathf.Max(1, _sectionChewsRemaining);
+        AdvancePastInedible();
+    }
+
+    void AdvanceSection()
+    {
+        _sectionIndex++;
+        AdvancePastInedible();
+        if (_bake?.sections != null && _sectionIndex < _bake.sections.Count)
+        {
+            float r = _bake.sections[_sectionIndex].fitRadius;
+            mouth.foodInMouthRadius = Mathf.Max(0.002f, r);
+        }
     }
 
     void TickPhase(ChewPhase phase)
@@ -86,11 +127,10 @@ public sealed class EatFoodNode : BehaviorTreeNode
             case ChewPhase.FrontCut:
             case ChewPhase.BiteToFit:
             case ChewPhase.ChewFront:
-                mouth.jawOpen01 = Mathf.PingPong(t * 2f, 1f); // up-down front bite
+                mouth.DriveFrontBite(Mathf.PingPong(t * 2f, 1f));
                 break;
             case ChewPhase.ChewMolarsProgressive:
-                // 3D roll for molars
-                mouth.jawOpen01 = 0.35f + 0.2f * Mathf.Sin(t * Mathf.PI * 4f);
+                mouth.DriveMolarRoll(t, preferRight);
                 if (mouth.tongue != null)
                     mouth.tongue.SetFoodPocketLocal(ChewStrategy.TongueOffsetForMeat(t, preferRight));
                 break;
@@ -100,12 +140,14 @@ public sealed class EatFoodNode : BehaviorTreeNode
                 break;
             case ChewPhase.TongueParabola:
                 mouth.tongue?.SetPocketParabola(t);
+                mouth.DriveMolarRoll(t, preferRight);
                 break;
             case ChewPhase.DiscardInedible:
                 AdvancePastInedible();
+                // Duck-typed put-back / open for inedible peels.
+                TryPutBackInedible(t);
                 break;
             case ChewPhase.OpenClosePeel:
-                // Optional open/close joint on food (Locomotion.Open) via duck-typed SetOpen01.
                 var drivers = food.GetComponentsInChildren<MonoBehaviour>(true);
                 for (int i = 0; i < drivers.Length; i++)
                 {
@@ -116,9 +158,24 @@ public sealed class EatFoodNode : BehaviorTreeNode
                 }
                 break;
             case ChewPhase.Swallow:
-                mouth.jawOpen01 = Mathf.Lerp(0.4f, 0.1f, t);
+                mouth.DriveFrontBite(Mathf.Lerp(0.4f, 0.1f, t));
                 mouth.foodInMouthRadius = Mathf.Lerp(mouth.foodInMouthRadius, 0f, t);
                 break;
+        }
+    }
+
+    void TryPutBackInedible(float t)
+    {
+        if (_bake?.sections == null || food == null) return;
+        if (_sectionIndex >= _bake.sections.Count) return;
+        if (!_bake.sections[_sectionIndex].inedible) return;
+        var drivers = food.GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < drivers.Length; i++)
+        {
+            var d = drivers[i];
+            if (d == null) continue;
+            var m = d.GetType().GetMethod("SetOpen01", new[] { typeof(float) });
+            m?.Invoke(d, new object[] { Mathf.Clamp01(1f - t) });
         }
     }
 
@@ -148,7 +205,7 @@ public sealed class BiteNode : BehaviorTreeNode
     {
         if (mouth == null) return BehaviorTreeStatus.Failure;
         _t += Time.deltaTime;
-        mouth.jawOpen01 = Mathf.PingPong(_t * 4f, 1f);
+        mouth.DriveFrontBite(Mathf.PingPong(_t * 4f, 1f));
         return _t >= duration ? BehaviorTreeStatus.Success : BehaviorTreeStatus.Running;
     }
 }
@@ -172,7 +229,7 @@ public sealed class ChewNode : BehaviorTreeNode
         if (mouth == null) return BehaviorTreeStatus.Failure;
         _t += Time.deltaTime;
         float u = Mathf.Clamp01(_t / duration);
-        mouth.jawOpen01 = 0.35f + 0.2f * Mathf.Sin(u * Mathf.PI * 4f);
+        mouth.DriveMolarRoll(u, mouth.PreferRightChewSide);
         mouth.tongue?.SetFoodPocketLocal(ChewStrategy.TongueOffsetForMeat(u, mouth.PreferRightChewSide));
         return _t >= duration ? BehaviorTreeStatus.Success : BehaviorTreeStatus.Running;
     }
@@ -198,7 +255,7 @@ public sealed class SwallowNode : BehaviorTreeNode
         if (mouth == null) return BehaviorTreeStatus.Failure;
         _t += Time.deltaTime;
         float u = Mathf.Clamp01(_t / duration);
-        mouth.jawOpen01 = Mathf.Lerp(0.4f, 0.1f, u);
+        mouth.DriveFrontBite(Mathf.Lerp(0.4f, 0.1f, u));
         if (_t >= duration)
         {
             mouth.ClearFoodInMouth();

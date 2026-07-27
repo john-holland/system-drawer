@@ -12,6 +12,14 @@ public sealed class BeforeToiletSitNode : BehaviorTreeNode
         if (toilet == null && tree?.currentGoal?.target != null)
             toilet = tree.currentGoal.target.GetComponent<ToiletStation>();
         status = BehaviorTreeStatus.Running;
+        TryOpenLid();
+    }
+
+    void TryOpenLid()
+    {
+        if (toilet == null) return;
+        WashHandsNode.TryBakeOpenClose(toilet.lidPlan, toilet.lidTopology);
+        WashHandsNode.TryBeginOpen(toilet.seatAnchor != null ? toilet.seatAnchor : toilet.transform);
     }
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)
@@ -28,7 +36,7 @@ public sealed class BeforeToiletSitNode : BehaviorTreeNode
     }
 }
 
-/// <summary>After-toilet-sit sequence (bidet or TP scrunch).</summary>
+/// <summary>After-toilet-sit sequence (bidet wash or TP scrunch).</summary>
 public sealed class AfterToiletSitNode : BehaviorTreeNode
 {
     public ToiletStation toilet;
@@ -51,7 +59,18 @@ public sealed class AfterToiletSitNode : BehaviorTreeNode
         if (!_hygieneDone)
         {
             bool bidet = toilet.includesBidet && (toilet.options == null || toilet.options.preferBidetOverTp);
-            if (!bidet && toilet.useToiletPaperBt)
+            if (bidet)
+            {
+                // Bidet wash: clear groin/stool smells instead of only skipping TP.
+                if (tree != null)
+                {
+                    HygieneSmellClearService.ClearSignatures(tree.gameObject,
+                        new[] { "poop", "pee", "groin", "urine", "fecal" });
+                    tree.GetComponent<LifeSystemsSheet>()
+                        ?.Adjust01(LifeSystemsChannelCatalog.Ablution, 0.12f);
+                }
+            }
+            else if (toilet.useToiletPaperBt)
             {
                 if (scrunch == null)
                 {
@@ -97,6 +116,7 @@ public sealed class ExcreteOnToiletNode : BehaviorTreeNode
         if (!_started)
         {
             var actor = tree != null ? tree.gameObject : null;
+            VehicleOrganHost.FindOrCreate(actor);
             var bladder = actor != null ? BowelBladderRuntime.FindOrCreate(actor) : null;
             if (pee == null && actor != null)
                 pee = actor.GetComponent<PeeStreamDirector>() ?? actor.AddComponent<PeeStreamDirector>();
@@ -110,19 +130,24 @@ public sealed class ExcreteOnToiletNode : BehaviorTreeNode
                     pee.BeginRelease(seed);
                 }
             }
-            if (doPoop && toilet != null && poopPrefab != null)
+            if (doPoop && actor != null)
             {
-                var go = Object.Instantiate(poopPrefab.gameObject);
-                var pr = go.GetComponent<PoopRuntime>();
-                int seed = actor != null && actor.GetComponent<DeveloperRespectsSeed>() != null
-                    ? actor.GetComponent<DeveloperRespectsSeed>().Seed
-                    : 1;
-                pr.SpawnInBowl(toilet.bowlAnchor != null ? toilet.bowlAnchor : toilet.transform, seed);
-                if (bladder != null)
+                var proc = FoodProcessorBioRhythmService.Instance
+                           ?? actor.GetComponent<FoodProcessorBioRhythmService>();
+                Transform bowl = toilet != null
+                    ? (toilet.bowlAnchor != null ? toilet.bowlAnchor : toilet.transform)
+                    : null;
+                if (bladder?.pendingPoop != null && proc != null)
+                    proc.SpawnPoopFromPayload(actor, bladder.pendingPoop, bowl);
+                else if (proc != null)
+                {
+                    int seed = actor.GetComponent<DeveloperRespectsSeed>()?.Seed ?? 1;
+                    var payload = proc.CreatePoopPayload(null, seed);
+                    proc.SpawnPoopFromPayload(actor, payload, bowl);
+                }
+                else if (bladder != null)
                     bladder.bowelFill01 = 0f;
             }
-            else if (doPoop && bladder != null)
-                bladder.bowelFill01 = 0f;
             _started = true;
         }
 
@@ -148,8 +173,10 @@ public sealed class FreeExcreteNode : BehaviorTreeNode
     public override void OnEnter(BehaviorTree tree)
     {
         _t = 0f;
-        _pee = tree != null ? tree.GetComponent<PeeStreamDirector>() : null;
-        if (_pee == null && tree != null)
+        if (tree == null) return;
+        VehicleOrganHost.FindOrCreate(tree.gameObject);
+        _pee = tree.GetComponent<PeeStreamDirector>();
+        if (_pee == null)
             _pee = tree.gameObject.AddComponent<PeeStreamDirector>();
         if (doPee && _pee != null)
         {
@@ -159,8 +186,18 @@ public sealed class FreeExcreteNode : BehaviorTreeNode
         }
         if (doPoop)
         {
-            var b = BowelBladderRuntime.FindOrCreate(tree.gameObject);
-            b.bowelFill01 = 0f;
+            var proc = FoodProcessorBioRhythmService.Instance
+                       ?? tree.GetComponent<FoodProcessorBioRhythmService>();
+            var bladder = BowelBladderRuntime.FindOrCreate(tree.gameObject);
+            if (bladder.pendingPoop != null && proc != null)
+                proc.SpawnPoopFromPayload(tree.gameObject, bladder.pendingPoop, null);
+            else if (proc != null)
+            {
+                int seed = tree.GetComponent<DeveloperRespectsSeed>()?.Seed ?? 1;
+                proc.SpawnPoopFromPayload(tree.gameObject, proc.CreatePoopPayload(null, seed), null);
+            }
+            else
+                bladder.bowelFill01 = 0f;
         }
     }
 

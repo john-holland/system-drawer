@@ -45,20 +45,34 @@ public sealed class AnimationChewNode : BehaviorTreeNode
     public float duration = 1f;
     public MouthInteriorRuntime mouth;
     float _t;
+    EatingAnimationDriver _driver;
 
     public override void OnEnter(BehaviorTree tree)
     {
         _t = 0f;
         if (mouth == null && tree != null)
             mouth = tree.GetComponent<MouthInteriorRuntime>();
+        if (tree != null)
+        {
+            _driver = EatingAnimationDriver.FindOrCreate(tree.gameObject);
+            _driver.PlayTag(animationGroupTag, duration);
+        }
     }
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)
     {
         _t += Time.deltaTime;
+        float u = Mathf.Clamp01(_t / Mathf.Max(1e-3f, duration));
         if (mouth != null)
-            mouth.jawOpen01 = 0.35f + 0.2f * Mathf.Sin(_t * Mathf.PI * 4f);
-        // Animation group tag is available for IK training / ABT selection.
+        {
+            var cat = EatingAnimationDriver.CategoryForTag(animationGroupTag);
+            if (cat == PhysicsIKTrainingCategory.Bite)
+                mouth.DriveFrontBite(Mathf.PingPong(u * 2f, 1f));
+            else if (cat == PhysicsIKTrainingCategory.Swallow)
+                mouth.DriveFrontBite(Mathf.Lerp(0.4f, 0.1f, u));
+            else
+                mouth.DriveMolarRoll(u, mouth.PreferRightChewSide);
+        }
         return _t >= duration ? BehaviorTreeStatus.Success : BehaviorTreeStatus.Running;
     }
 }

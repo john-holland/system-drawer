@@ -106,10 +106,21 @@ public sealed class AnimationChewNarrativeAction : NarrativeActionSpec
         if (!ctx.TryResolveGameObject(actorKey, out var actor) || actor == null)
             return Locomotion.Narrative.BehaviorTreeStatus.Failure;
         var mouth = actor.GetComponent<MouthInteriorRuntime>() ?? actor.AddComponent<MouthInteriorRuntime>();
-        if (!_started) { _started = true; _t = 0f; }
+        if (!_started)
+        {
+            _started = true;
+            _t = 0f;
+            EatingAnimationDriver.FindOrCreate(actor).PlayTag(animationGroupTag, duration);
+        }
         _t += Time.deltaTime;
-        mouth.jawOpen01 = 0.35f + 0.2f * Mathf.Sin(_t * Mathf.PI * 4f);
-        _ = animationGroupTag;
+        float u = Mathf.Clamp01(_t / Mathf.Max(1e-3f, duration));
+        var cat = EatingAnimationDriver.CategoryForTag(animationGroupTag);
+        if (cat == PhysicsIKTrainingCategory.Bite)
+            mouth.DriveFrontBite(Mathf.PingPong(u * 2f, 1f));
+        else if (cat == PhysicsIKTrainingCategory.Swallow)
+            mouth.DriveFrontBite(Mathf.Lerp(0.4f, 0.1f, u));
+        else
+            mouth.DriveMolarRoll(u, mouth.PreferRightChewSide);
         if (_t >= duration) { _started = false; return Locomotion.Narrative.BehaviorTreeStatus.Success; }
         return Locomotion.Narrative.BehaviorTreeStatus.Running;
     }

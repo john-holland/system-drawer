@@ -102,7 +102,11 @@ public enum GoalType
     /// <summary>Wrestling exchange: clinch, throw, pin (WrestlingCard + topology).</summary>
     Wrestling,
     /// <summary>Eat food: bite, chew, swallow (FoodItem + MouthInteriorRuntime).</summary>
-    Eat
+    Eat,
+    /// <summary>Toilet visit: before sit → excrete → after sit (bidet/TP).</summary>
+    Toilet,
+    /// <summary>Hygiene: brush/floss/tongue/wash hands/shower.</summary>
+    Hygiene
 }
 
 /// <summary>

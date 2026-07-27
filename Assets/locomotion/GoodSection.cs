@@ -224,6 +224,16 @@ public class GoodSection
     [Tooltip("Wrestling exchange card (GoalType.Wrestling).")]
     public bool isWrestlingGoal;
 
+    [Header("Eat / Toilet / Hygiene")]
+    [Tooltip("Eat food card (GoalType.Eat → EatFoodNode).")]
+    public bool isEatGoal;
+    [Tooltip("Toilet visit card (GoalType.Toilet → ToiletVisitNode).")]
+    public bool isToiletGoal;
+    [Tooltip("Hygiene card (GoalType.Hygiene → HygieneGoalNode).")]
+    public bool isHygieneGoal;
+    [Tooltip("When isHygieneGoal: brush_teeth, brush_tongue, floss, wash_hands, shower.")]
+    public string hygieneKind;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;

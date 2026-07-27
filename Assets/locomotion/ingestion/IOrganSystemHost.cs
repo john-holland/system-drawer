@@ -16,6 +16,8 @@ public sealed class BowelBladderRuntime : MonoBehaviour, IOrganSystemHost
     [Range(0f, 1f)] public float bladderFill01;
     public bool preferToiletWhenAvailable = true;
     public ToiletStation preferredToilet;
+    [Tooltip("Queued stool from swallow; spawned at excrete.")]
+    public PoopPayload pendingPoop;
 
     public GameObject HostObject => gameObject;
 
@@ -40,7 +42,7 @@ public sealed class BowelBladderRuntime : MonoBehaviour, IOrganSystemHost
             bt.SetGoal(new BehaviorTreeGoal
             {
                 goalName = "use_toilet",
-                type = GoalType.Sit,
+                type = GoalType.Toilet,
                 target = toilet.gameObject,
                 priority = 7
             });

@@ -287,6 +287,21 @@ public class PhysicsCardSolver : MonoBehaviour
                 return new List<PhysicsCard> { generated };
         }
 
+        // Eat / Toilet / Hygiene: synthesize default cards when pool has no match
+        if (goal.type == GoalType.Eat)
+            return new List<PhysicsCard> { ConsiderBodyHygieneCards.MakeEatCard() };
+        if (goal.type == GoalType.Toilet)
+            return new List<PhysicsCard> { ConsiderBodyHygieneCards.MakeToiletCard() };
+        if (goal.type == GoalType.Hygiene)
+        {
+            string kind = !string.IsNullOrEmpty(goal.goalName) && goal.goalName.Contains("shower")
+                ? "shower"
+                : (!string.IsNullOrEmpty(goal.goalName) && goal.goalName.Contains("wash")
+                    ? "wash_hands"
+                    : "brush_teeth");
+            return new List<PhysicsCard> { ConsiderBodyHygieneCards.MakeHygieneCard(kind) };
+        }
+
         return new List<PhysicsCard>();
     }
 
@@ -503,6 +518,45 @@ public class PhysicsCardSolver : MonoBehaviour
             {
                 if (card == null) continue;
                 if (card.isWrestlingGoal || card is WrestlingCard) return card;
+            }
+        }
+
+        // Eat
+        if (goal.type == GoalType.Eat)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isEatGoal ||
+                    (!string.IsNullOrEmpty(card.physicalPathingTag) &&
+                     card.physicalPathingTag.StartsWith("eat", System.StringComparison.OrdinalIgnoreCase)))
+                    return card;
+            }
+        }
+
+        // Toilet
+        if (goal.type == GoalType.Toilet)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isToiletGoal ||
+                    (!string.IsNullOrEmpty(card.physicalPathingTag) &&
+                     card.physicalPathingTag.StartsWith("toilet", System.StringComparison.OrdinalIgnoreCase)))
+                    return card;
+            }
+        }
+
+        // Hygiene
+        if (goal.type == GoalType.Hygiene)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isHygieneGoal ||
+                    (!string.IsNullOrEmpty(card.physicalPathingTag) &&
+                     card.physicalPathingTag.StartsWith("hygiene", System.StringComparison.OrdinalIgnoreCase)))
+                    return card;
             }
         }
 

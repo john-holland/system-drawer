@@ -74,28 +74,13 @@ public static class ChewConvexTreeBakeService
     {
         var list = new List<Bounds>();
         if (cache == null) return list;
-        // Reflect leaf world bounds if public API varies — fall back empty.
-        try
+        var leaves = cache.Leaves;
+        if (leaves == null) return list;
+        for (int i = 0; i < leaves.Count; i++)
         {
-            var field = typeof(ConvexMeshTreeCache).GetField("_leaves",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-            if (field == null) return list;
-            var leavesObj = field.GetValue(cache) as System.Collections.IList;
-            if (leavesObj == null) return list;
-            for (int i = 0; i < leavesObj.Count; i++)
-            {
-                var leaf = leavesObj[i];
-                if (leaf == null) continue;
-                var bProp = leaf.GetType().GetField("worldBounds")
-                            ?? leaf.GetType().GetField("WorldBounds")
-                            ?? leaf.GetType().GetField("bounds");
-                if (bProp != null && bProp.GetValue(leaf) is Bounds wb)
-                    list.Add(wb);
-            }
-        }
-        catch
-        {
-            // ignore
+            var leaf = leaves[i];
+            if (leaf == null) continue;
+            list.Add(leaf.Bounds);
         }
         return list;
     }

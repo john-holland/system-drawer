@@ -31,4 +31,13 @@ public sealed class VehicleActor : BaseAmbulatingActor
 
     [Tooltip("Optional proxy that retargets local instruments onto a remote vehicle.")]
     public VehicleInstrumentPhysicsProxy instrumentPhysicsProxy;
+
+    [Tooltip("Weak organ host for free pee/poop on vehicles.")]
+    public VehicleOrganHost organHost;
+
+    void Awake()
+    {
+        if (organHost == null)
+            organHost = VehicleOrganHost.FindOrCreate(gameObject);
+    }
 }

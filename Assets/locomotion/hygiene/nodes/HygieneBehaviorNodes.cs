@@ -2,7 +2,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using Weather;
 
-/// <summary>Brush each present tooth on 3 sides.</summary>
+/// <summary>Tooth face for brushing (not world axes).</summary>
+public enum ToothBrushFace
+{
+    Buccal = 0,
+    Lingual = 1,
+    Occlusal = 2
+}
+
+/// <summary>Brush each present tooth on buccal / lingual / occlusal faces.</summary>
 public sealed class BrushTeethNode : BehaviorTreeNode
 {
     public MouthInteriorRuntime mouth;
@@ -10,7 +18,7 @@ public sealed class BrushTeethNode : BehaviorTreeNode
     public Transform brushTip;
     public float secondsPerSide = 0.08f;
 
-    List<(ToothSlot tooth, int side)> _plan;
+    List<(ToothSlot tooth, ToothBrushFace face)> _plan;
     int _i;
     float _t;
 
@@ -22,12 +30,15 @@ public sealed class BrushTeethNode : BehaviorTreeNode
             mouth = tree.GetComponent<MouthInteriorRuntime>() ?? tree.GetComponentInChildren<MouthInteriorRuntime>();
         if (lipWrap == null && mouth != null)
             lipWrap = mouth.lipWrap;
-        _plan = new List<(ToothSlot, int)>();
+        _plan = new List<(ToothSlot, ToothBrushFace)>();
         if (mouth != null)
         {
             foreach (var tooth in mouth.EnumeratePresent())
-                for (int s = 0; s < 3; s++)
-                    _plan.Add((tooth, s));
+            {
+                _plan.Add((tooth, ToothBrushFace.Buccal));
+                _plan.Add((tooth, ToothBrushFace.Lingual));
+                _plan.Add((tooth, ToothBrushFace.Occlusal));
+            }
         }
         if (brushTip != null && lipWrap != null)
             lipWrap.UpsertTrack(brushTip, 0.008f, 0.05f);
@@ -38,12 +49,15 @@ public sealed class BrushTeethNode : BehaviorTreeNode
     {
         if (_plan == null || _plan.Count == 0) return BehaviorTreeStatus.Success;
         _t += Time.deltaTime;
-        var (tooth, side) = _plan[_i];
+        var (tooth, face) = _plan[_i];
         if (mouth != null && brushTip != null)
         {
             Vector3 p = mouth.ResolveToothWorld(tooth);
-            Vector3 n = side == 0 ? Vector3.forward : (side == 1 ? Vector3.right : Vector3.left);
+            mouth.ResolveToothFaceNormals(tooth, out var buccal, out var lingual, out var occlusal);
+            Vector3 n = face == ToothBrushFace.Buccal ? buccal
+                : (face == ToothBrushFace.Lingual ? lingual : occlusal);
             brushTip.position = p + n * 0.005f;
+            brushTip.rotation = Quaternion.LookRotation(n, mouth.transform.up);
         }
         if (_t >= secondsPerSide)
         {
