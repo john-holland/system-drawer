@@ -1,0 +1,259 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8d5f02b3e9a4b1f0d4c6e7f80912345, type: 3}
+  m_Name: CardPlan
+  m_EditorClassIdentifier: Locomotion.Runtime::CardPlanAsset
+  planName: CardPlan
+  defaultGoalType: 6
+  notes: 
+  roots:
+  - id: b9a9bb08d8664408974c93bdcca625fd
+    label: chair_rotate
+    kind: 0
+    foldedOut: 1
+    cardPartial:
+      displayName: chair_rotate
+      template:
+        rid: 867949549755826331
+    goalType: 16
+    actionKind: 9
+    children: []
+  - id: 0643ce156bd94ecba1884013c0fa727a
+    label: sit
+    kind: 0
+    foldedOut: 1
+    cardPartial:
+      displayName: sit
+      template:
+        rid: 867949549755826332
+    goalType: 16
+    actionKind: 9
+    children: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 867949549755826331
+      type: {class: ChairRotateCard, ns: , asm: Locomotion.Runtime}
+      data:
+        sectionName: chair_rotate
+        description: Rotate swivel chair under occupant with thigh/abs/foot caster-dodge
+          sequence
+        physicalPathingMedium: 0
+        physicalPathingTag: 
+        driveAnimationPhase: 0
+        driveInstrumentId: 
+        terminalLegMode: 0
+        impulseStack: []
+        requiredState:
+          rootPosition: {x: 0, y: 0, z: 0}
+          rootRotation: {x: 0, y: 0, z: 0, w: 0}
+          rootVelocity: {x: 0, y: 0, z: 0}
+          rootAngularVelocity: {x: 0, y: 0, z: 0}
+        targetState:
+          rootPosition: {x: 0, y: 0, z: 0}
+          rootRotation: {x: 0, y: 0, z: 0, w: 0}
+          rootVelocity: {x: 0, y: 0, z: 0}
+          rootAngularVelocity: {x: 0, y: 0, z: 0}
+        limits:
+          maxDegreesDifference: 180
+          maxTorque: 1000
+          maxForce: 2000
+          maxVelocityChange: 10
+          maxAngularVelocityChange: 10
+          useRadialLimits: 0
+          maxRadialDistance: 0
+          maxRadialRotation: 0
+          radialReferencePosition: {x: 0, y: 0, z: 0}
+          lowerRadialReferenceRotation: {x: 0, y: 0, z: 0}
+          upperRadialReferenceRotation: {x: 0, y: 0, z: 0}
+          fuelCost: 0
+        connectedSectionNames: []
+        behaviorTree: {fileID: 0}
+        enablesTraversability: 0
+        traversabilityMode: 0
+        traversabilityTag: 
+        useValidInVolume: 0
+        validInVolumeCenter: {x: 0, y: 0, z: 0}
+        validInVolumeSize: {x: 1, y: 1, z: 1}
+        validInVolumeTMin: 0
+        validInVolumeTMax: 1
+        requiredToolKey: 
+        requiredTool: {fileID: 0}
+        requiredTools: []
+        maxToolCount: 0
+        maxTargetCount: 1
+        targets: []
+        requireAllTargetsToMakeContact: 0
+        requireAllHeldToolsToMakeContact: 0
+        toolReachDistance: 0
+        isThrowGoalOnly: 0
+        needsToBeThrown: 0
+        thrownObject: {fileID: 0}
+        throwHandMode: 1
+        throwMinRange: 0
+        throwMaxRange: 0
+        isCarry: 0
+        carriedObject: {fileID: 0}
+        pleaseHold: 1
+        skipRelease: 0
+        skipReturn: 0
+        repeatCount: 1
+        carryAttachBoneName: 
+        isIsometric: 0
+        isPlaceGoal: 0
+        placeTargetOffset: {x: 0, y: 0, z: 0}
+        isHitGoal: 0
+        hitLimbBoneName: 
+        hitLimbBoneNames: []
+        useToolForHit: 0
+        hitTool: {fileID: 0}
+        isWeightlift: 0
+        weightliftTool: {fileID: 0}
+        weightliftMuscleGroupName: 
+        isCatchGoal: 0
+        catchLimbBoneName: 
+        catchLimbBoneNames: []
+        isShootGoal: 0
+        shootLaunchedObject: {fileID: 0}
+        shootHandMode: 1
+        shootMinRange: 0
+        shootMaxRange: 0
+        isSitGoal: 1
+        isStandOnSurfaceGoal: 0
+        isChairRotateGoal: 1
+        isChairSchoochGoal: 0
+        isWrestlingGoal: 0
+        hipVertexPosition: {x: 0, y: 0, z: 0}
+        ledgeNormal: {x: 0, y: 0, z: 0}
+        seatedVertices: []
+        ledgeEdges: []
+        maxHangOverDistance: 0.1
+        safeEdgeDistance: 0.2
+        surfaceContact:
+          host: {fileID: 0}
+          hostBody: {fileID: 0}
+          localPlanePoint: {x: 0, y: 0, z: 0}
+          localPlaneNormal: {x: 0, y: 1, z: 0}
+          localPolygon: []
+          halfExtentX: 0.25
+          halfExtentZ: 0.25
+        occupancyMode: 0
+        yawDegrees: 45
+        sequenceStepSeconds: 0.12
+        casterLocalBounds:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0.225, y: 0.075, z: 0.225}
+    - rid: 867949549755826332
+      type: {class: SitCard, ns: , asm: Locomotion.Runtime}
+      data:
+        sectionName: sit
+        description: Sit on surface
+        physicalPathingMedium: 0
+        physicalPathingTag: 
+        driveAnimationPhase: 0
+        driveInstrumentId: 
+        terminalLegMode: 0
+        impulseStack: []
+        requiredState:
+          rootPosition: {x: 0, y: 0, z: 0}
+          rootRotation: {x: 0, y: 0, z: 0, w: 0}
+          rootVelocity: {x: 0, y: 0, z: 0}
+          rootAngularVelocity: {x: 0, y: 0, z: 0}
+        targetState:
+          rootPosition: {x: 0, y: 0, z: 0}
+          rootRotation: {x: 0, y: 0, z: 0, w: 0}
+          rootVelocity: {x: 0, y: 0, z: 0}
+          rootAngularVelocity: {x: 0, y: 0, z: 0}
+        limits:
+          maxDegreesDifference: 180
+          maxTorque: 1000
+          maxForce: 2000
+          maxVelocityChange: 10
+          maxAngularVelocityChange: 10
+          useRadialLimits: 0
+          maxRadialDistance: 0
+          maxRadialRotation: 0
+          radialReferencePosition: {x: 0, y: 0, z: 0}
+          lowerRadialReferenceRotation: {x: 0, y: 0, z: 0}
+          upperRadialReferenceRotation: {x: 0, y: 0, z: 0}
+          fuelCost: 0
+        connectedSectionNames: []
+        behaviorTree: {fileID: 0}
+        enablesTraversability: 0
+        traversabilityMode: 0
+        traversabilityTag: 
+        useValidInVolume: 0
+        validInVolumeCenter: {x: 0, y: 0, z: 0}
+        validInVolumeSize: {x: 1, y: 1, z: 1}
+        validInVolumeTMin: 0
+        validInVolumeTMax: 1
+        requiredToolKey: 
+        requiredTool: {fileID: 0}
+        requiredTools: []
+        maxToolCount: 0
+        maxTargetCount: 1
+        targets: []
+        requireAllTargetsToMakeContact: 0
+        requireAllHeldToolsToMakeContact: 0
+        toolReachDistance: 0
+        isThrowGoalOnly: 0
+        needsToBeThrown: 0
+        thrownObject: {fileID: 0}
+        throwHandMode: 1
+        throwMinRange: 0
+        throwMaxRange: 0
+        isCarry: 0
+        carriedObject: {fileID: 0}
+        pleaseHold: 0
+        skipRelease: 0
+        skipReturn: 0
+        repeatCount: 1
+        carryAttachBoneName: 
+        isIsometric: 0
+        isPlaceGoal: 0
+        placeTargetOffset: {x: 0, y: 0, z: 0}
+        isHitGoal: 0
+        hitLimbBoneName: 
+        hitLimbBoneNames: []
+        useToolForHit: 0
+        hitTool: {fileID: 0}
+        isWeightlift: 0
+        weightliftTool: {fileID: 0}
+        weightliftMuscleGroupName: 
+        isCatchGoal: 0
+        catchLimbBoneName: 
+        catchLimbBoneNames: []
+        isShootGoal: 0
+        shootLaunchedObject: {fileID: 0}
+        shootHandMode: 1
+        shootMinRange: 0
+        shootMaxRange: 0
+        isSitGoal: 1
+        isStandOnSurfaceGoal: 0
+        isChairRotateGoal: 0
+        isChairSchoochGoal: 0
+        isWrestlingGoal: 0
+        hipVertexPosition: {x: 0, y: 0, z: 0}
+        ledgeNormal: {x: 0, y: 0, z: 0}
+        seatedVertices: []
+        ledgeEdges: []
+        maxHangOverDistance: 0.1
+        safeEdgeDistance: 0.2
+        surfaceContact:
+          host: {fileID: 0}
+          hostBody: {fileID: 0}
+          localPlanePoint: {x: 0, y: 0, z: 0}
+          localPlaneNormal: {x: 0, y: 1, z: 0}
+          localPolygon: []
+          halfExtentX: 0.25
+          halfExtentZ: 0.25
+        occupancyMode: 0

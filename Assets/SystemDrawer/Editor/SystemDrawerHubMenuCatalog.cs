@@ -35,6 +35,7 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Ragdoll", "Systems Matrix", "Window/System Drawer/Ragdoll/Systems Matrix"),
         new Entry("Physics", "Nervous System Impulse Viewer", "Window/System Drawer/Physics/Nervous System Impulse Viewer"),
         new Entry("Physics", "Card Game Visualizer", "Window/System Drawer/Physics/Card Game Visualizer"),
+        new Entry("Physics", "Card Planning Editor", "Window/System Drawer/Physics/Card Planning Editor"),
         new Entry("Physics", "Physics Bridge Editor", "Window/System Drawer/Physics/Physics Bridge Editor"),
         new Entry("Physics", "Aquaplane Demo Setup", "Window/System Drawer/Physics/Aquaplane Demo Setup"),
         new Entry("Audio", "Sound Cache Generator", "Window/System Drawer/Audio/Sound Cache Generator"),
