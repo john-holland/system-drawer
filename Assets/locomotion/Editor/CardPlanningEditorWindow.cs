@@ -77,7 +77,7 @@ public sealed class CardPlanningEditorWindow : EditorWindow
         if (_plan == null)
         {
             EditorGUILayout.HelpBox(
-                "Create or assign a Card Plan asset. Defaults below add Wrestling / Sit / Goal / Action / Tree nodes.",
+                "Create or assign a Card Plan asset. Defaults below add Wrestling / LoveMaking / Sit / Goal / Action / Tree nodes.",
                 MessageType.Info);
             DrawDefaultsBar();
             return;
@@ -481,7 +481,21 @@ public sealed class CardPlanningEditorWindow : EditorWindow
         card.description = EditorGUILayout.TextField("Description", card.description);
         card.physicalPathingTag = EditorGUILayout.TextField("Pathing Tag", card.physicalPathingTag);
 
-        if (card is WrestlingCard w)
+        if (card is LoveCard love)
+        {
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("Love Making Partial", EditorStyles.boldLabel);
+            love.loveMode = (LoveMakingMode)EditorGUILayout.EnumPopup("Mode", love.loveMode);
+            love.loveMoveKind = (LoveMakingMoveKind)EditorGUILayout.EnumPopup("Move", love.loveMoveKind);
+            love.intimateStyle = EditorGUILayout.Toggle("Intimate Style", love.intimateStyle);
+            love.physicality01 = EditorGUILayout.Slider("Physicality", love.physicality01, 0f, 1f);
+            love.desireIntensity01 = EditorGUILayout.Slider("Desire Intensity", love.desireIntensity01, 0f, 1f);
+            love.requiresConsent = EditorGUILayout.Toggle("Requires Consent", love.requiresConsent);
+            love.maxParticipants = EditorGUILayout.IntField("Max Participants", love.maxParticipants);
+            love.isLoveMakingGoal = true;
+            love.isWrestlingGoal = false;
+        }
+        else if (card is WrestlingCard w)
         {
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("Wrestling Partial", EditorStyles.boldLabel);
@@ -531,6 +545,8 @@ public sealed class CardPlanningEditorWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Wrestling"))
             p.template = WrestlingCard.Generate(WrestlingMode.Play, WrestlingMoveKind.LockGrapple, null, null);
+        if (GUILayout.Button("LoveMaking"))
+            p.template = LoveCard.Generate(LoveMakingMode.Tender, LoveMakingMoveKind.Embrace, null, null);
         if (GUILayout.Button("Sit"))
             p.template = new SitCard { sectionName = "sit", isSitGoal = true };
         if (GUILayout.Button("GoodSection"))
@@ -682,12 +698,12 @@ public sealed class CardPlanningEditorWindow : EditorWindow
     {
         switch (kind)
         {
-            case CardPlanNodeKind.Card: return new Color(0.55f, 0.75f, 1f);
-            case CardPlanNodeKind.Goal: return new Color(0.7f, 1f, 0.7f);
-            case CardPlanNodeKind.Action: return new Color(1f, 0.75f, 0.55f);
+            case CardPlanNodeKind.Card: return new Color(0.95f, 0.45f, 0.65f); // love / intimacy pink
+            case CardPlanNodeKind.Goal: return new Color(0.3f, 0.6f, 1f); // health/goal blue
+            case CardPlanNodeKind.Action: return new Color(0.6f, 0.4f, 0.9f); // political purple
             case CardPlanNodeKind.Sequence: return new Color(0.85f, 0.85f, 0.85f);
             case CardPlanNodeKind.Selector: return new Color(1f, 0.9f, 0.5f);
-            case CardPlanNodeKind.Choice: return new Color(1f, 0.8f, 0.4f);
+            case CardPlanNodeKind.Choice: return new Color(1f, 0.85f, 0.4f);
             default: return Color.white;
         }
     }
@@ -712,10 +728,30 @@ public sealed class CardPlanningEditorWindow : EditorWindow
             {
                 label = $"W:{m}",
                 tooltip = $"Add WrestlingCard partial ({m})",
-                tint = new Color(0.55f, 0.7f, 1f),
+                tint = new Color(0.45f, 0.65f, 0.95f),
                 factory = () => CardPlanNode.NewCard(CardPartial.FromCard(
                     WrestlingCard.Generate(WrestlingMode.Play, m, null, null),
                     $"wrestling_{m}"))
+            });
+        }
+
+        // Love-making defaults
+        foreach (LoveMakingMoveKind move in Enum.GetValues(typeof(LoveMakingMoveKind)))
+        {
+            var m = move;
+            float phys = LoveCard.DefaultPhysicality(m);
+            var tint = Color.Lerp(
+                new Color(0.95f, 0.45f, 0.65f),
+                new Color(0.9f, 0.2f, 0.25f),
+                phys);
+            list.Add(new DefaultChip
+            {
+                label = $"L:{m}",
+                tooltip = $"Add LoveCard partial ({m})",
+                tint = tint,
+                factory = () => CardPlanNode.NewCard(CardPartial.FromCard(
+                    LoveCard.Generate(LoveMakingMode.Tender, m, null, null),
+                    $"lovemaking_{m}"))
             });
         }
 
@@ -772,7 +808,7 @@ public sealed class CardPlanningEditorWindow : EditorWindow
         foreach (GoalType g in Enum.GetValues(typeof(GoalType)))
         {
             var goal = g;
-            list.Add(Chip($"G:{goal}", $"GoalType.{goal}", new Color(0.7f, 1f, 0.7f),
+            list.Add(Chip($"G:{goal}", $"GoalType.{goal}", new Color(0.3f, 0.6f, 1f),
                 () => CardPlanNode.NewGoal(goal)));
         }
 
@@ -780,7 +816,7 @@ public sealed class CardPlanningEditorWindow : EditorWindow
         foreach (CardPlanActionKind a in Enum.GetValues(typeof(CardPlanActionKind)))
         {
             var action = a;
-            list.Add(Chip($"A:{action}", $"Action {action}", new Color(1f, 0.8f, 0.6f),
+            list.Add(Chip($"A:{action}", $"Action {action}", new Color(0.6f, 0.4f, 0.9f),
                 () => CardPlanNode.NewAction(action)));
         }
 

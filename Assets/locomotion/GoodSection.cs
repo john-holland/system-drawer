@@ -234,6 +234,10 @@ public class GoodSection
     [Tooltip("When isHygieneGoal: brush_teeth, brush_tongue, floss, wash_hands, shower.")]
     public string hygieneKind;
 
+    [Header("Love Making")]
+    [Tooltip("Love making exchange card (GoalType.LoveMaking).")]
+    public bool isLoveMakingGoal;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;

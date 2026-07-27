@@ -19,10 +19,20 @@ namespace Locomotion.Narrative
         [Tooltip("When an event has spatiotemporalVolume, these keys are used to resolve player/listener positions from bindings for region check. Event triggers when any key resolves to a GameObject inside the volume. Event can override with its own positionKeys.")]
         public List<string> positionKeys = new List<string> { "player" };
 
+        [Header("BioRhythm")]
+        [Tooltip("Forwards to NarrativeCalendarAsset.showBioRhythmEvents when calendar is assigned.")]
+        public bool showBioRhythmEvents;
+
         [Header("Debug")]
         public bool debugLogging = false;
 
         private readonly List<NarrativeCalendarEvent> scratch = new List<NarrativeCalendarEvent>(64);
+
+        private void OnValidate()
+        {
+            if (calendar != null)
+                calendar.showBioRhythmEvents = showBioRhythmEvents;
+        }
 
         private void OnEnable()
         {
@@ -32,12 +42,18 @@ namespace Locomotion.Narrative
                 if (executor == null) executor = FindAnyObjectByType<NarrativeExecutor>();
             }
 
+            if (calendar != null)
+                showBioRhythmEvents = calendar.showBioRhythmEvents;
+
             if (applyPastEventsOnEnable)
                 ApplyEventsUpToNow();
         }
 
         private void Update()
         {
+            if (calendar != null)
+                calendar.showBioRhythmEvents = showBioRhythmEvents;
+
             if (calendar == null || clock == null || executor == null)
                 return;
 

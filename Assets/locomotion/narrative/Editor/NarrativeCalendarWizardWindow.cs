@@ -24,6 +24,7 @@ namespace Locomotion.Narrative.EditorTools
         private VisualElement eventBarsRoot;
 
         private bool _refreshScheduled;
+        private GameObject _bioRhythmActor;
 
         [MenuItem("Window/System Drawer/Narrative/Calendar Wizard", false, 201)]
         public static void ShowWindow()
@@ -129,6 +130,44 @@ namespace Locomotion.Narrative.EditorTools
             top.Add(weatherWizardBtn);
             top.Add(headerLabel);
             root.Add(top);
+
+            // BioRhythm overlay controls
+            var bioRow = new VisualElement();
+            bioRow.style.flexDirection = FlexDirection.Row;
+            bioRow.style.alignItems = Align.Center;
+            bioRow.style.marginTop = 4;
+
+            var bioToggleHost = new IMGUIContainer(() =>
+            {
+                if (calendar == null) return;
+                EditorGUI.BeginChangeCheck();
+                bool on = EditorGUILayout.ToggleLeft("Show BioRhythm Events", calendar.showBioRhythmEvents, GUILayout.Width(180));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(calendar, "Toggle BioRhythm Events");
+                    calendar.showBioRhythmEvents = on;
+                    EditorUtility.SetDirty(calendar);
+                    ScheduleRefresh();
+                }
+            });
+            bioToggleHost.style.width = 190;
+            bioToggleHost.style.marginRight = 8;
+
+            var actorHost = new IMGUIContainer(() =>
+            {
+                EditorGUI.BeginChangeCheck();
+                _bioRhythmActor = (GameObject)EditorGUILayout.ObjectField(
+                    "Actor", _bioRhythmActor, typeof(GameObject), true, GUILayout.Width(280));
+                if (EditorGUI.EndChangeCheck())
+                    ScheduleRefresh();
+                if (GUILayout.Button("Pick Scene Actor…", GUILayout.Width(120)))
+                    ShowActorDropdown();
+            });
+            actorHost.style.flexGrow = 1f;
+
+            bioRow.Add(bioToggleHost);
+            bioRow.Add(actorHost);
+            root.Add(bioRow);
 
             // Main split
             var body = new VisualElement();
@@ -502,7 +541,7 @@ namespace Locomotion.Narrative.EditorTools
 
             int daysInMonth = DateTime.DaysInMonth(viewYear, viewMonth);
             var eventsWithRange = GetEventsWithDayRangeForMonth(daysInMonth);
-            if (eventsWithRange.Count == 0)
+            if (eventsWithRange.Count == 0 && (calendar == null || !calendar.showBioRhythmEvents))
             {
                 var noBars = new Label("No events with time range in this month.");
                 noBars.style.color = new Color(0.5f, 0.5f, 0.5f);
@@ -513,14 +552,91 @@ namespace Locomotion.Narrative.EditorTools
             for (int i = 0; i < eventsWithRange.Count; i++)
             {
                 var (evt, startDay, endDay) = eventsWithRange[i];
-                Color barColor = EventBarColors[i % EventBarColors.Length];
+                Color barColor;
+                if (calendar != null && calendar.showBioRhythmEvents)
+                {
+                    var kind = RomanceBioRhythmCalendarColors.InferKindFromTags(evt.tags);
+                    float phys = 0.35f;
+                    if (kind == RomanceBioRhythmCalendarColors.Kind.Love)
+                    {
+                        // Prefer tag "physicality=0.7" when present.
+                        phys = TryReadPhysicalityTag(evt.tags, 0.35f);
+                    }
+                    barColor = RomanceBioRhythmCalendarColors.ForKind(kind, phys);
+                    if (kind == RomanceBioRhythmCalendarColors.Kind.Health && calendar.bioRhythmHealthColor.a > 0.01f)
+                        barColor = calendar.bioRhythmHealthColor;
+                    else if (kind == RomanceBioRhythmCalendarColors.Kind.Political && calendar.bioRhythmPoliticalColor.a > 0.01f)
+                        barColor = calendar.bioRhythmPoliticalColor;
+                }
+                else
+                {
+                    barColor = EventBarColors[i % EventBarColors.Length];
+                }
 
+                AddEventBarRow(evt.title ?? "(event)", startDay, endDay, daysInMonth, barColor, i);
+            }
+
+            if (calendar != null && calendar.showBioRhythmEvents)
+                AppendSyntheticBioRhythmBars(daysInMonth);
+        }
+
+        static float TryReadPhysicalityTag(List<string> tags, float fallback)
+        {
+            if (tags == null) return fallback;
+            for (int i = 0; i < tags.Count; i++)
+            {
+                var t = tags[i];
+                if (string.IsNullOrEmpty(t)) continue;
+                if (t.StartsWith("physicality=", System.StringComparison.OrdinalIgnoreCase) &&
+                    float.TryParse(t.Substring("physicality=".Length), out float v))
+                    return Mathf.Clamp01(v);
+            }
+            return fallback;
+        }
+
+        void AppendSyntheticBioRhythmBars(int daysInMonth)
+        {
+            int mid = Mathf.Clamp(selectedDay, 1, daysInMonth);
+            int start = Mathf.Max(1, mid - 1);
+            int end = Mathf.Min(daysInMonth, mid + 1);
+
+            float phys = 0.35f;
+            int participants = 2;
+            if (_bioRhythmActor != null)
+            {
+                var session = _bioRhythmActor.GetComponent<LoveMakingSession>();
+                if (session != null && session.activeCard != null)
+                {
+                    phys = session.activeCard.physicality01;
+                    participants = Mathf.Max(2, session.participants != null ? session.participants.Count : 2);
+                }
+                var sheet = _bioRhythmActor.GetComponent<LifeSystemsSheet>();
+                if (sheet != null)
+                {
+                    AddEventBarRow("Health · bioRhythm", start, end, daysInMonth,
+                        calendar != null ? calendar.bioRhythmHealthColor : RomanceBioRhythmCalendarColors.HealthBlue, 900);
+                    float lib = sheet.Get01(LifeSystemsChannelCatalog.Liberalism);
+                    float cons = sheet.Get01(LifeSystemsChannelCatalog.Conservatism);
+                    if (lib > 0.55f || cons > 0.55f)
+                    {
+                        AddEventBarRow("Political spike", start, end, daysInMonth,
+                            calendar != null ? calendar.bioRhythmPoliticalColor : RomanceBioRhythmCalendarColors.PoliticalPurple, 901);
+                    }
+                }
+            }
+
+            AddEventBarRow("Love · physicality", start, end, daysInMonth,
+                RomanceBioRhythmCalendarColors.LoveTint(phys, participants), 902);
+        }
+
+        void AddEventBarRow(string title, int startDay, int endDay, int daysInMonth, Color barColor, int userData)
+        {
                 var row = new VisualElement();
                 row.style.flexDirection = FlexDirection.Row;
                 row.style.alignItems = Align.Center;
                 row.style.height = 24;
                 row.style.marginBottom = 2;
-                row.userData = i;
+                row.userData = userData;
                 row.tooltip = "Click to select calendar in Inspector";
                 row.RegisterCallback<MouseEnterEvent>(_ =>
                 {
@@ -540,7 +656,7 @@ namespace Locomotion.Narrative.EditorTools
                 });
                 row.pickingMode = PickingMode.Position;
 
-                var titleLabel = new Label(evt.title ?? "(event)");
+                var titleLabel = new Label(title);
                 titleLabel.style.width = 140;
                 titleLabel.style.overflow = Overflow.Hidden;
                 titleLabel.style.textOverflow = TextOverflow.Ellipsis;
@@ -572,7 +688,47 @@ namespace Locomotion.Narrative.EditorTools
                 }
                 row.Add(strip);
                 eventBarsRoot.Add(row);
+        }
+
+        void ShowActorDropdown()
+        {
+            var menu = new GenericMenu();
+            var sheets = Resources.FindObjectsOfTypeAll<LifeSystemsSheet>();
+            int added = 0;
+            for (int i = 0; i < sheets.Length; i++)
+            {
+                var sheet = sheets[i];
+                if (sheet == null || sheet.gameObject == null) continue;
+                if (!EditorUtility.IsPersistent(sheet) && sheet.gameObject.scene.IsValid())
+                {
+                    var go = sheet.gameObject;
+                    menu.AddItem(new GUIContent(go.name), _bioRhythmActor == go, () =>
+                    {
+                        _bioRhythmActor = go;
+                        ScheduleRefresh();
+                    });
+                    added++;
+                }
             }
+            var ragdolls = Resources.FindObjectsOfTypeAll<RagdollSystem>();
+            for (int i = 0; i < ragdolls.Length; i++)
+            {
+                var rd = ragdolls[i];
+                if (rd == null || rd.gameObject == null) continue;
+                if (!EditorUtility.IsPersistent(rd) && rd.gameObject.scene.IsValid())
+                {
+                    var go = rd.gameObject;
+                    menu.AddItem(new GUIContent("Ragdoll/" + go.name), _bioRhythmActor == go, () =>
+                    {
+                        _bioRhythmActor = go;
+                        ScheduleRefresh();
+                    });
+                    added++;
+                }
+            }
+            if (added == 0)
+                menu.AddDisabledItem(new GUIContent("(no scene actors with LifeSystemsSheet / Ragdoll)"));
+            menu.ShowAsContext();
         }
 
         /// <summary>Events that overlap the visible month with (startDay, endDay) in 1-based day of month.</summary>

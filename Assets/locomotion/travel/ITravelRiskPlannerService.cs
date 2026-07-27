@@ -38,7 +38,7 @@ public sealed class StuntDiscoveryContext
     }
 }
 
-/// <summary>Applies Stuntman then Safety Warden (propose → gate), then optional wrestling/referee.</summary>
+/// <summary>Applies Stuntman then Safety Warden (propose → gate), then optional wrestling/referee and love-making/consent.</summary>
 public static class TravelRiskPlannerPipeline
 {
     public static GenericMultiModalPathPlan Apply(
@@ -48,7 +48,7 @@ public static class TravelRiskPlannerPipeline
         StuntmanPlannerService stuntman,
         SafetyWardenPlannerService warden)
     {
-        return Apply(plan, in hints, actor, stuntman, warden, null, null);
+        return Apply(plan, in hints, actor, stuntman, warden, null, null, null, null);
     }
 
     public static GenericMultiModalPathPlan Apply(
@@ -59,6 +59,20 @@ public static class TravelRiskPlannerPipeline
         SafetyWardenPlannerService warden,
         WrestlingPlannerService wrestling,
         RefereeWardenPlannerService referee)
+    {
+        return Apply(plan, in hints, actor, stuntman, warden, wrestling, referee, null, null);
+    }
+
+    public static GenericMultiModalPathPlan Apply(
+        GenericMultiModalPathPlan plan,
+        in GenericTraversibilityPlannerSolver.PlannerHints hints,
+        GameObject actor,
+        StuntmanPlannerService stuntman,
+        SafetyWardenPlannerService warden,
+        WrestlingPlannerService wrestling,
+        RefereeWardenPlannerService referee,
+        LoveMakingPlannerService loveMaking,
+        ConsentWardenPlannerService consentWarden)
     {
         if (plan == null)
             return plan;
@@ -95,6 +109,16 @@ public static class TravelRiskPlannerPipeline
         {
             referee.EnrichDiscovery(ctx);
             plan = referee.RescoreOrRewrite(plan, in hints) ?? plan;
+        }
+        if (loveMaking != null && loveMaking.isActiveAndEnabled)
+        {
+            loveMaking.EnrichDiscovery(ctx);
+            plan = loveMaking.RescoreOrRewrite(plan, in hints) ?? plan;
+        }
+        if (consentWarden != null && consentWarden.isActiveAndEnabled)
+        {
+            consentWarden.EnrichDiscovery(ctx);
+            plan = consentWarden.RescoreOrRewrite(plan, in hints) ?? plan;
         }
 
         plan.RecomputePlanTotals();

@@ -106,7 +106,9 @@ public enum GoalType
     /// <summary>Toilet visit: before sit → excrete → after sit (bidet/TP).</summary>
     Toilet,
     /// <summary>Hygiene: brush/floss/tongue/wash hands/shower.</summary>
-    Hygiene
+    Hygiene,
+    /// <summary>Love making exchange: embrace, kiss, hold (LoveCard + topology).</summary>
+    LoveMaking
 }
 
 /// <summary>

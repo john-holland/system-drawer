@@ -78,6 +78,10 @@ public class TravelAgent : MonoBehaviour
     public WrestlingPlannerService wrestlingPlanner;
     [Tooltip("When set, referee soft-gates high-damage Play spots.")]
     public RefereeWardenPlannerService refereeWardenPlanner;
+    [Tooltip("When set, love-making planner stamps intimacy tags and filters consent.")]
+    public LoveMakingPlannerService loveMakingPlanner;
+    [Tooltip("When set, consent warden soft-gates love-making physicality.")]
+    public ConsentWardenPlannerService consentWardenPlanner;
 
     [Tooltip("GoodSection cards offered as tool modality candidates for preview planning.")]
     public List<GoodSection> toolSectionsForPreview = new List<GoodSection>();
@@ -342,7 +346,9 @@ public class TravelAgent : MonoBehaviour
         var warden = safetyWardenPlanner != null ? safetyWardenPlanner : GetComponent<SafetyWardenPlannerService>();
         var wrestle = wrestlingPlanner != null ? wrestlingPlanner : GetComponent<WrestlingPlannerService>();
         var referee = refereeWardenPlanner != null ? refereeWardenPlanner : GetComponent<RefereeWardenPlannerService>();
-        return TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stunt, warden, wrestle, referee);
+        var love = loveMakingPlanner != null ? loveMakingPlanner : GetComponent<LoveMakingPlannerService>();
+        var consent = consentWardenPlanner != null ? consentWardenPlanner : GetComponent<ConsentWardenPlannerService>();
+        return TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stunt, warden, wrestle, referee, love, consent);
     }
 
     /// <summary>

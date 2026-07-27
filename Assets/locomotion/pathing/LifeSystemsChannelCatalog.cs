@@ -76,6 +76,14 @@ public static class LifeSystemsChannelCatalog
     public const string Socialism = "socialism";
     public const string Communism = "communism";
 
+    // Romance / love-making psychology
+    public const string Affection = "affection";
+    public const string Intimacy = "intimacy";
+    public const string Trust = "trust";
+    public const string Attachment = "attachment";
+    public const string Jealousy = "jealousy";
+    public const string Arousal = "arousal";
+
     static readonly LifeSystemsChannelDef[] All;
     static readonly Dictionary<string, LifeSystemsChannelDef> ById;
 
@@ -151,6 +159,12 @@ public static class LifeSystemsChannelCatalog
             Affect(Conservatism, 0.35f, "congressStability", "need_safety"),
             Affect(Socialism, 0.3f, "welfareBenefits", "need_belonging"),
             Affect(Communism, 0.25f, "welfareBenefits", "need_belonging"),
+            Affect(Affection, 0.45f, "civic_trust", "need_belonging"),
+            Affect(Intimacy, 0.35f, null, "need_belonging"),
+            Affect(Trust, 0.55f, "civic_trust", "need_safety"),
+            Affect(Attachment, 0.4f, null, "need_belonging"),
+            Affect(Jealousy, 0.15f, invert: true),
+            Affect(Arousal, 0.15f),
         };
     }
 

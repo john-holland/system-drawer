@@ -58,6 +58,14 @@ namespace Locomotion.Narrative
         [Tooltip("Gizmo color for causal link lines.")]
         public Color causalLinkGizmoColor = new Color(1f, 0.8f, 0.2f, 0.8f);
 
+        [Header("BioRhythm Overlay")]
+        [Tooltip("When true, Calendar Wizard draws health (blue), love (pink→red), political (purple) biorhythm bars.")]
+        public bool showBioRhythmEvents = false;
+        public Color bioRhythmHealthColor = new Color(0.3f, 0.6f, 1f, 0.9f);
+        public Color bioRhythmLovePink = new Color(0.95f, 0.45f, 0.65f, 0.9f);
+        public Color bioRhythmLoveRed = new Color(0.9f, 0.2f, 0.25f, 0.9f);
+        public Color bioRhythmPoliticalColor = new Color(0.6f, 0.4f, 0.9f, 0.9f);
+
         private void OnDrawGizmosSelected()
         {
             if (!showCausalOverlay || causalLinks == null || events == null)

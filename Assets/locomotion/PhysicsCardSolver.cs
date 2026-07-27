@@ -301,6 +301,8 @@ public class PhysicsCardSolver : MonoBehaviour
                     : "brush_teeth");
             return new List<PhysicsCard> { ConsiderBodyHygieneCards.MakeHygieneCard(kind) };
         }
+        if (goal.type == GoalType.LoveMaking)
+            return new List<PhysicsCard> { ConsiderLoveMakingCards.MakeDefaultCard() };
 
         return new List<PhysicsCard>();
     }
@@ -511,13 +513,24 @@ public class PhysicsCardSolver : MonoBehaviour
             }
         }
 
-        // Wrestling
+        // Wrestling — prefer WrestlingCard; LoveCard also inherits WrestlingCard so check Love first when goal is wrestling-only
         if (goal.type == GoalType.Wrestling)
         {
             foreach (var card in cards)
             {
                 if (card == null) continue;
+                if (card is LoveCard) continue;
                 if (card.isWrestlingGoal || card is WrestlingCard) return card;
+            }
+        }
+
+        // Love making
+        if (goal.type == GoalType.LoveMaking)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isLoveMakingGoal || card is LoveCard) return card;
             }
         }
 

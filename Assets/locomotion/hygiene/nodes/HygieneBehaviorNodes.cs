@@ -179,7 +179,7 @@ public sealed class WashHandsNode : BehaviorTreeNode
         return _t >= duration ? BehaviorTreeStatus.Success : BehaviorTreeStatus.Running;
     }
 
-    internal static void TryBakeOpenClose(MonoBehaviour plan, ScriptableObject topology)
+    public static void TryBakeOpenClose(MonoBehaviour plan, ScriptableObject topology)
     {
         if (plan == null || topology == null) return;
         var topoField = plan.GetType().GetField("topology");
@@ -187,7 +187,7 @@ public sealed class WashHandsNode : BehaviorTreeNode
         plan.GetType().GetMethod("BakeFromTopology")?.Invoke(plan, null);
     }
 
-    internal static void TryBeginOpen(Transform root)
+    public static void TryBeginOpen(Transform root)
     {
         if (root == null) return;
         var mbs = root.GetComponentsInChildren<MonoBehaviour>(true);

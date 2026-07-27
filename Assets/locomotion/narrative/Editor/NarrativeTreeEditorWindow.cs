@@ -266,6 +266,10 @@ namespace Locomotion.Narrative.EditorTools
                     NarrativeActionKind.ChooseWrestlingCard => new NarrativeChooseWrestlingCardAction(),
                     NarrativeActionKind.CommitWrestlingCard => new NarrativeCommitWrestlingCardAction(),
                     NarrativeActionKind.WrestlingBioRhythm => new NarrativeWrestlingBioRhythmAction(),
+                    NarrativeActionKind.EnterSlowTimeLoveMaking => new NarrativeEnterSlowTimeLoveMakingAction(),
+                    NarrativeActionKind.ChooseLoveMakingCard => new NarrativeChooseLoveMakingCardAction(),
+                    NarrativeActionKind.CommitLoveMakingCard => new NarrativeCommitLoveMakingCardAction(),
+                    NarrativeActionKind.LoveMakingBioRhythm => new NarrativeLoveMakingBioRhythmAction(),
                     NarrativeActionKind.Bite => new BiteNarrativeAction(),
                     NarrativeActionKind.Chew => new ChewNarrativeAction(),
                     NarrativeActionKind.Swallow => new SwallowNarrativeAction(),
@@ -389,6 +393,31 @@ namespace Locomotion.Narrative.EditorTools
                 bioWrestle.durationSeconds = EditorGUILayout.FloatField("Duration", bioWrestle.durationSeconds);
                 bioWrestle.queueWrestlingGoal = EditorGUILayout.Toggle("Queue Wrestling Goal", bioWrestle.queueWrestlingGoal);
             }
+            else if (a is NarrativeEnterSlowTimeLoveMakingAction enterLove)
+            {
+                enterLove.sessionKey = EditorGUILayout.TextField("Session Key", enterLove.sessionKey);
+                enterLove.considerKey = EditorGUILayout.TextField("Consider Key", enterLove.considerKey);
+                enterLove.partnerKey = EditorGUILayout.TextField("Partner Key", enterLove.partnerKey);
+                enterLove.mode = (LoveMakingMode)EditorGUILayout.EnumPopup("Mode", enterLove.mode);
+                enterLove.timeScaleCoefficient = EditorGUILayout.Slider("Time Scale", enterLove.timeScaleCoefficient, 0f, 1f);
+            }
+            else if (a is NarrativeChooseLoveMakingCardAction chooseLove)
+            {
+                chooseLove.sessionKey = EditorGUILayout.TextField("Session Key", chooseLove.sessionKey);
+                chooseLove.requirePlayerConfirm = EditorGUILayout.Toggle("Require Player Confirm", chooseLove.requirePlayerConfirm);
+                chooseLove.timeoutUnscaledSeconds = EditorGUILayout.FloatField("Timeout (unscaled)", chooseLove.timeoutUnscaledSeconds);
+            }
+            else if (a is NarrativeCommitLoveMakingCardAction commitLove)
+            {
+                commitLove.sessionKey = EditorGUILayout.TextField("Session Key", commitLove.sessionKey);
+            }
+            else if (a is NarrativeLoveMakingBioRhythmAction bioLove)
+            {
+                bioLove.actorKey = EditorGUILayout.TextField("Actor Key", bioLove.actorKey);
+                bioLove.partnerKey = EditorGUILayout.TextField("Partner Key", bioLove.partnerKey);
+                bioLove.mode = (LoveMakingMode)EditorGUILayout.EnumPopup("Mode", bioLove.mode);
+                bioLove.queueLoveMakingGoal = EditorGUILayout.Toggle("Queue LoveMaking Goal", bioLove.queueLoveMakingGoal);
+            }
             else if (a is BiteNarrativeAction bite)
             {
                 bite.actorKey = EditorGUILayout.TextField("Actor Key", bite.actorKey);
@@ -433,6 +462,10 @@ namespace Locomotion.Narrative.EditorTools
             ChooseWrestlingCard,
             CommitWrestlingCard,
             WrestlingBioRhythm,
+            EnterSlowTimeLoveMaking,
+            ChooseLoveMakingCard,
+            CommitLoveMakingCard,
+            LoveMakingBioRhythm,
             Bite,
             Chew,
             Swallow,
@@ -455,6 +488,10 @@ namespace Locomotion.Narrative.EditorTools
                 NarrativeChooseWrestlingCardAction => NarrativeActionKind.ChooseWrestlingCard,
                 NarrativeCommitWrestlingCardAction => NarrativeActionKind.CommitWrestlingCard,
                 NarrativeWrestlingBioRhythmAction => NarrativeActionKind.WrestlingBioRhythm,
+                NarrativeEnterSlowTimeLoveMakingAction => NarrativeActionKind.EnterSlowTimeLoveMaking,
+                NarrativeChooseLoveMakingCardAction => NarrativeActionKind.ChooseLoveMakingCard,
+                NarrativeCommitLoveMakingCardAction => NarrativeActionKind.CommitLoveMakingCard,
+                NarrativeLoveMakingBioRhythmAction => NarrativeActionKind.LoveMakingBioRhythm,
                 BiteNarrativeAction => NarrativeActionKind.Bite,
                 ChewNarrativeAction => NarrativeActionKind.Chew,
                 SwallowNarrativeAction => NarrativeActionKind.Swallow,
