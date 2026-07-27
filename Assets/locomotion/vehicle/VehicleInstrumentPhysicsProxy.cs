@@ -95,6 +95,23 @@ public sealed class VehicleInstrumentPhysicsProxy : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// One-shot fire pulse for combat/ranged cards: resolve local surface and apply a brief impulse.
+    /// Falls back to RouteCard when the card already has a valid instrument impulse stack.
+    /// </summary>
+    public bool TryFirePulse(string localSurfaceId, PhysicsCard card, float dt)
+    {
+        if (!string.IsNullOrEmpty(localSurfaceId) && TryResolve(localSurfaceId, out var surface) && surface != null)
+        {
+            float act = 1f;
+            if (card?.impulseStack != null && card.impulseStack.Count > 0 && card.impulseStack[0] != null)
+                act = card.impulseStack[0].activation;
+            surface.ApplyImpulse(act, Mathf.Max(dt, 1f / 60f));
+            return true;
+        }
+        return RouteCard(card, dt);
+    }
+
     public void InvalidateCache()
     {
         _resolved.Clear();

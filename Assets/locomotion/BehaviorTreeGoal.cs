@@ -108,7 +108,9 @@ public enum GoalType
     /// <summary>Hygiene: brush/floss/tongue/wash hands/shower.</summary>
     Hygiene,
     /// <summary>Love making exchange: embrace, kiss, hold (LoveCard + topology).</summary>
-    LoveMaking
+    LoveMaking,
+    /// <summary>Combat exchange: CQC through ranged/vehicle weapons (CombatCard + topology).</summary>
+    Combat
 }
 
 /// <summary>

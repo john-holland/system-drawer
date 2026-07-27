@@ -28,6 +28,8 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
     public RefereeWardenPlannerService refereeWardenPlanner;
     public LoveMakingPlannerService loveMakingPlanner;
     public ConsentWardenPlannerService consentWardenPlanner;
+    public CombatPlannerService combatPlanner;
+    public SafetyLockWardenPlannerService safetyLockWardenPlanner;
 
     [Header("Execution")]
     public float waypointReachedDistance = 0.5f;
@@ -151,7 +153,8 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             ConsiderStuntmanHints.EnrichPlan(plan, actorGo, origin, destination);
             ConsiderSafetyWardenHints.EnrichPlan(plan, actorGo, origin, destination);
             plan = TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stuntmanPlanner, safetyWardenPlanner,
-                wrestlingPlanner, refereeWardenPlanner, loveMakingPlanner, consentWardenPlanner);
+                wrestlingPlanner, refereeWardenPlanner, loveMakingPlanner, consentWardenPlanner,
+                combatPlanner, safetyLockWardenPlanner);
         }
 
         if (plan == null || plan.IsEmpty)

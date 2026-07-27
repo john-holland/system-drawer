@@ -38,7 +38,7 @@ public sealed class StuntDiscoveryContext
     }
 }
 
-/// <summary>Applies Stuntman then Safety Warden (propose → gate), then optional wrestling/referee and love-making/consent.</summary>
+/// <summary>Applies Stuntman then Safety Warden (propose → gate), then optional wrestling/referee, love-making/consent, combat/safety-lock.</summary>
 public static class TravelRiskPlannerPipeline
 {
     public static GenericMultiModalPathPlan Apply(
@@ -48,7 +48,7 @@ public static class TravelRiskPlannerPipeline
         StuntmanPlannerService stuntman,
         SafetyWardenPlannerService warden)
     {
-        return Apply(plan, in hints, actor, stuntman, warden, null, null, null, null);
+        return Apply(plan, in hints, actor, stuntman, warden, null, null, null, null, null, null);
     }
 
     public static GenericMultiModalPathPlan Apply(
@@ -60,7 +60,7 @@ public static class TravelRiskPlannerPipeline
         WrestlingPlannerService wrestling,
         RefereeWardenPlannerService referee)
     {
-        return Apply(plan, in hints, actor, stuntman, warden, wrestling, referee, null, null);
+        return Apply(plan, in hints, actor, stuntman, warden, wrestling, referee, null, null, null, null);
     }
 
     public static GenericMultiModalPathPlan Apply(
@@ -73,6 +73,22 @@ public static class TravelRiskPlannerPipeline
         RefereeWardenPlannerService referee,
         LoveMakingPlannerService loveMaking,
         ConsentWardenPlannerService consentWarden)
+    {
+        return Apply(plan, in hints, actor, stuntman, warden, wrestling, referee, loveMaking, consentWarden, null, null);
+    }
+
+    public static GenericMultiModalPathPlan Apply(
+        GenericMultiModalPathPlan plan,
+        in GenericTraversibilityPlannerSolver.PlannerHints hints,
+        GameObject actor,
+        StuntmanPlannerService stuntman,
+        SafetyWardenPlannerService warden,
+        WrestlingPlannerService wrestling,
+        RefereeWardenPlannerService referee,
+        LoveMakingPlannerService loveMaking,
+        ConsentWardenPlannerService consentWarden,
+        CombatPlannerService combat,
+        SafetyLockWardenPlannerService safetyLock)
     {
         if (plan == null)
             return plan;
@@ -119,6 +135,16 @@ public static class TravelRiskPlannerPipeline
         {
             consentWarden.EnrichDiscovery(ctx);
             plan = consentWarden.RescoreOrRewrite(plan, in hints) ?? plan;
+        }
+        if (combat != null && combat.isActiveAndEnabled)
+        {
+            combat.EnrichDiscovery(ctx);
+            plan = combat.RescoreOrRewrite(plan, in hints) ?? plan;
+        }
+        if (safetyLock != null && safetyLock.isActiveAndEnabled)
+        {
+            safetyLock.EnrichDiscovery(ctx);
+            plan = safetyLock.RescoreOrRewrite(plan, in hints) ?? plan;
         }
 
         plan.RecomputePlanTotals();

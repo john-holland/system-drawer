@@ -270,6 +270,9 @@ namespace Locomotion.Narrative.EditorTools
                     NarrativeActionKind.ChooseLoveMakingCard => new NarrativeChooseLoveMakingCardAction(),
                     NarrativeActionKind.CommitLoveMakingCard => new NarrativeCommitLoveMakingCardAction(),
                     NarrativeActionKind.LoveMakingBioRhythm => new NarrativeLoveMakingBioRhythmAction(),
+                    NarrativeActionKind.EnterSlowTimeCombat => new NarrativeEnterSlowTimeCombatAction(),
+                    NarrativeActionKind.ChooseCombatCard => new NarrativeChooseCombatCardAction(),
+                    NarrativeActionKind.CommitCombatCard => new NarrativeCommitCombatCardAction(),
                     NarrativeActionKind.Bite => new BiteNarrativeAction(),
                     NarrativeActionKind.Chew => new ChewNarrativeAction(),
                     NarrativeActionKind.Swallow => new SwallowNarrativeAction(),
@@ -418,6 +421,24 @@ namespace Locomotion.Narrative.EditorTools
                 bioLove.mode = (LoveMakingMode)EditorGUILayout.EnumPopup("Mode", bioLove.mode);
                 bioLove.queueLoveMakingGoal = EditorGUILayout.Toggle("Queue LoveMaking Goal", bioLove.queueLoveMakingGoal);
             }
+            else if (a is NarrativeEnterSlowTimeCombatAction enterCombat)
+            {
+                enterCombat.sessionKey = EditorGUILayout.TextField("Session Key", enterCombat.sessionKey);
+                enterCombat.considerKey = EditorGUILayout.TextField("Consider Key", enterCombat.considerKey);
+                enterCombat.targetKey = EditorGUILayout.TextField("Target Key", enterCombat.targetKey);
+                enterCombat.mode = (CombatMode)EditorGUILayout.EnumPopup("Mode", enterCombat.mode);
+                enterCombat.timeScaleCoefficient = EditorGUILayout.Slider("Time Scale", enterCombat.timeScaleCoefficient, 0f, 1f);
+            }
+            else if (a is NarrativeChooseCombatCardAction chooseCombat)
+            {
+                chooseCombat.sessionKey = EditorGUILayout.TextField("Session Key", chooseCombat.sessionKey);
+                chooseCombat.requirePlayerConfirm = EditorGUILayout.Toggle("Require Player Confirm", chooseCombat.requirePlayerConfirm);
+                chooseCombat.timeoutUnscaledSeconds = EditorGUILayout.FloatField("Timeout (unscaled)", chooseCombat.timeoutUnscaledSeconds);
+            }
+            else if (a is NarrativeCommitCombatCardAction commitCombat)
+            {
+                commitCombat.sessionKey = EditorGUILayout.TextField("Session Key", commitCombat.sessionKey);
+            }
             else if (a is BiteNarrativeAction bite)
             {
                 bite.actorKey = EditorGUILayout.TextField("Actor Key", bite.actorKey);
@@ -466,6 +487,9 @@ namespace Locomotion.Narrative.EditorTools
             ChooseLoveMakingCard,
             CommitLoveMakingCard,
             LoveMakingBioRhythm,
+            EnterSlowTimeCombat,
+            ChooseCombatCard,
+            CommitCombatCard,
             Bite,
             Chew,
             Swallow,
@@ -492,6 +516,9 @@ namespace Locomotion.Narrative.EditorTools
                 NarrativeChooseLoveMakingCardAction => NarrativeActionKind.ChooseLoveMakingCard,
                 NarrativeCommitLoveMakingCardAction => NarrativeActionKind.CommitLoveMakingCard,
                 NarrativeLoveMakingBioRhythmAction => NarrativeActionKind.LoveMakingBioRhythm,
+                NarrativeEnterSlowTimeCombatAction => NarrativeActionKind.EnterSlowTimeCombat,
+                NarrativeChooseCombatCardAction => NarrativeActionKind.ChooseCombatCard,
+                NarrativeCommitCombatCardAction => NarrativeActionKind.CommitCombatCard,
                 BiteNarrativeAction => NarrativeActionKind.Bite,
                 ChewNarrativeAction => NarrativeActionKind.Chew,
                 SwallowNarrativeAction => NarrativeActionKind.Swallow,

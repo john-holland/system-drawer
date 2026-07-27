@@ -303,6 +303,8 @@ public class PhysicsCardSolver : MonoBehaviour
         }
         if (goal.type == GoalType.LoveMaking)
             return new List<PhysicsCard> { ConsiderLoveMakingCards.MakeDefaultCard() };
+        if (goal.type == GoalType.Combat)
+            return new List<PhysicsCard> { ConsiderCombatCards.MakeDefaultCard() };
 
         return new List<PhysicsCard>();
     }
@@ -531,6 +533,16 @@ public class PhysicsCardSolver : MonoBehaviour
             {
                 if (card == null) continue;
                 if (card.isLoveMakingGoal || card is LoveCard) return card;
+            }
+        }
+
+        // Combat
+        if (goal.type == GoalType.Combat)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isCombatGoal || card is CombatCard) return card;
             }
         }
 

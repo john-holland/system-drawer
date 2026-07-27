@@ -19,3 +19,7 @@ Retarget local vehicle instruments onto remote vehicle control surfaces (e.g. ej
 3. Drive cards that pass the source map are routed with `proxy.RouteCard(card, dt)`.
 
 `VehicleInteriorManifold.TryGetPathToInstrument` resolves instrument transforms by instance id or proxy binding origins (straight segment v1).
+
+## Combat / Love / Wrestling cards
+
+`CardInstrumentProxyOptions` on Combat, Love, and Wrestling cards can route fire/commit through `VehicleInstrumentPhysicsProxy.TryFirePulse` (map slot + ~22 N / 5 lbf safety lock). See [CombatTopology.md](CombatTopology.md).

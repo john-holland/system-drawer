@@ -34,6 +34,9 @@ public class WrestlingCard : GoodSection
     public string inputActionName;
     public Transform aimAnchorOverride;
 
+    [Header("Proxy instrument")]
+    public CardInstrumentProxyOptions instrumentProxy = new CardInstrumentProxyOptions();
+
     [System.NonSerialized] public GameObject opponent;
 
     public WrestlingCard()

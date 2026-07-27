@@ -238,6 +238,10 @@ public class GoodSection
     [Tooltip("Love making exchange card (GoalType.LoveMaking).")]
     public bool isLoveMakingGoal;
 
+    [Header("Combat")]
+    [Tooltip("Combat exchange card (GoalType.Combat).")]
+    public bool isCombatGoal;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;

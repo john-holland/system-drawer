@@ -77,7 +77,7 @@ public sealed class CardPlanningEditorWindow : EditorWindow
         if (_plan == null)
         {
             EditorGUILayout.HelpBox(
-                "Create or assign a Card Plan asset. Defaults below add Wrestling / LoveMaking / Sit / Goal / Action / Tree nodes.",
+                "Create or assign a Card Plan asset. Defaults below add Wrestling / LoveMaking / Combat / Sit / Goal / Action / Tree nodes.",
                 MessageType.Info);
             DrawDefaultsBar();
             return;
@@ -481,7 +481,19 @@ public sealed class CardPlanningEditorWindow : EditorWindow
         card.description = EditorGUILayout.TextField("Description", card.description);
         card.physicalPathingTag = EditorGUILayout.TextField("Pathing Tag", card.physicalPathingTag);
 
-        if (card is LoveCard love)
+        if (card is CombatCard combat)
+        {
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("Combat Partial", EditorStyles.boldLabel);
+            combat.combatMode = (CombatMode)EditorGUILayout.EnumPopup("Mode", combat.combatMode);
+            combat.combatMoveKind = (CombatMoveKind)EditorGUILayout.EnumPopup("Move", combat.combatMoveKind);
+            if (combat.impact == null) combat.impact = new CombatImpactSpec();
+            combat.impact.damageType = (CombatDamageType)EditorGUILayout.EnumPopup("Damage", combat.impact.damageType);
+            combat.impact.damage01 = EditorGUILayout.Slider("Damage 01", combat.impact.damage01, 0f, 1f);
+            combat.isCombatGoal = true;
+            CombatCardEditorWindow.DrawProxy(combat.instrumentProxy ??= new CardInstrumentProxyOptions());
+        }
+        else if (card is LoveCard love)
         {
             EditorGUILayout.Space(4f);
             EditorGUILayout.LabelField("Love Making Partial", EditorStyles.boldLabel);
@@ -494,6 +506,7 @@ public sealed class CardPlanningEditorWindow : EditorWindow
             love.maxParticipants = EditorGUILayout.IntField("Max Participants", love.maxParticipants);
             love.isLoveMakingGoal = true;
             love.isWrestlingGoal = false;
+            CombatCardEditorWindow.DrawProxy(love.instrumentProxy ??= new CardInstrumentProxyOptions());
         }
         else if (card is WrestlingCard w)
         {
@@ -508,6 +521,7 @@ public sealed class CardPlanningEditorWindow : EditorWindow
             w.liftBranch = (WrestlingMoveKind)EditorGUILayout.EnumPopup("Lift Branch", w.liftBranch);
             w.throwBranch = (WrestlingMoveKind)EditorGUILayout.EnumPopup("Throw Branch", w.throwBranch);
             w.isWrestlingGoal = true;
+            CombatCardEditorWindow.DrawProxy(w.instrumentProxy ??= new CardInstrumentProxyOptions());
         }
         else if (card is SitCard sit)
         {
@@ -547,6 +561,8 @@ public sealed class CardPlanningEditorWindow : EditorWindow
             p.template = WrestlingCard.Generate(WrestlingMode.Play, WrestlingMoveKind.LockGrapple, null, null);
         if (GUILayout.Button("LoveMaking"))
             p.template = LoveCard.Generate(LoveMakingMode.Tender, LoveMakingMoveKind.Embrace, null, null);
+        if (GUILayout.Button("Combat"))
+            p.template = CombatCard.Generate(CombatMode.Melee, CombatMoveKind.Strike, null);
         if (GUILayout.Button("Sit"))
             p.template = new SitCard { sectionName = "sit", isSitGoal = true };
         if (GUILayout.Button("GoodSection"))
@@ -752,6 +768,21 @@ public sealed class CardPlanningEditorWindow : EditorWindow
                 factory = () => CardPlanNode.NewCard(CardPartial.FromCard(
                     LoveCard.Generate(LoveMakingMode.Tender, m, null, null),
                     $"lovemaking_{m}"))
+            });
+        }
+
+        // Combat defaults
+        foreach (CombatMoveKind move in Enum.GetValues(typeof(CombatMoveKind)))
+        {
+            var m = move;
+            list.Add(new DefaultChip
+            {
+                label = $"C:{m}",
+                tooltip = $"Add CombatCard partial ({m})",
+                tint = new Color(0.75f, 0.7f, 0.45f),
+                factory = () => CardPlanNode.NewCard(CardPartial.FromCard(
+                    CombatCard.Generate(CombatMode.Melee, m, null),
+                    $"combat_{m}"))
             });
         }
 
