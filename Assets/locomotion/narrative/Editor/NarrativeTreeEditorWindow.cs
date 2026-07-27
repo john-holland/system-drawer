@@ -262,6 +262,10 @@ namespace Locomotion.Narrative.EditorTools
                     NarrativeActionKind.EnterSlowTimeGambit => new NarrativeEnterSlowTimeGambitAction(),
                     NarrativeActionKind.ChooseGambitAperture => new NarrativeChooseGambitApertureAction(),
                     NarrativeActionKind.CommitGambitPath => new NarrativeCommitGambitPathAction(),
+                    NarrativeActionKind.EnterSlowTimeWrestling => new NarrativeEnterSlowTimeWrestlingAction(),
+                    NarrativeActionKind.ChooseWrestlingCard => new NarrativeChooseWrestlingCardAction(),
+                    NarrativeActionKind.CommitWrestlingCard => new NarrativeCommitWrestlingCardAction(),
+                    NarrativeActionKind.WrestlingBioRhythm => new NarrativeWrestlingBioRhythmAction(),
                     _ => new CallMethodAction()
                 };
                 EditorUtility.SetDirty(tree);
@@ -353,6 +357,34 @@ namespace Locomotion.Narrative.EditorTools
             {
                 commitGambit.sessionKey = EditorGUILayout.TextField("Session Key", commitGambit.sessionKey);
             }
+            else if (a is NarrativeEnterSlowTimeWrestlingAction enterWrestle)
+            {
+                enterWrestle.sessionKey = EditorGUILayout.TextField("Session Key", enterWrestle.sessionKey);
+                enterWrestle.considerKey = EditorGUILayout.TextField("Consider Key", enterWrestle.considerKey);
+                enterWrestle.opponentKey = EditorGUILayout.TextField("Opponent Key", enterWrestle.opponentKey);
+                enterWrestle.mode = (WrestlingMode)EditorGUILayout.EnumPopup("Mode", enterWrestle.mode);
+                enterWrestle.timeScaleCoefficient = EditorGUILayout.Slider("Time Scale", enterWrestle.timeScaleCoefficient, 0f, 1f);
+            }
+            else if (a is NarrativeChooseWrestlingCardAction chooseWrestle)
+            {
+                chooseWrestle.sessionKey = EditorGUILayout.TextField("Session Key", chooseWrestle.sessionKey);
+                chooseWrestle.requirePlayerConfirm = EditorGUILayout.Toggle("Require Player Confirm", chooseWrestle.requirePlayerConfirm);
+                chooseWrestle.timeoutUnscaledSeconds = EditorGUILayout.FloatField("Timeout (unscaled)", chooseWrestle.timeoutUnscaledSeconds);
+            }
+            else if (a is NarrativeCommitWrestlingCardAction commitWrestle)
+            {
+                commitWrestle.sessionKey = EditorGUILayout.TextField("Session Key", commitWrestle.sessionKey);
+            }
+            else if (a is NarrativeWrestlingBioRhythmAction bioWrestle)
+            {
+                bioWrestle.actorKey = EditorGUILayout.TextField("Actor Key", bioWrestle.actorKey);
+                bioWrestle.opponentKey = EditorGUILayout.TextField("Opponent Key", bioWrestle.opponentKey);
+                bioWrestle.mode = (WrestlingMode)EditorGUILayout.EnumPopup("Mode", bioWrestle.mode);
+                bioWrestle.bioRhythmAmplitudeDelta = EditorGUILayout.FloatField("Bio Rhythm Δ", bioWrestle.bioRhythmAmplitudeDelta);
+                bioWrestle.adrenalineChannelDelta = EditorGUILayout.FloatField("Adrenaline Δ", bioWrestle.adrenalineChannelDelta);
+                bioWrestle.durationSeconds = EditorGUILayout.FloatField("Duration", bioWrestle.durationSeconds);
+                bioWrestle.queueWrestlingGoal = EditorGUILayout.Toggle("Queue Wrestling Goal", bioWrestle.queueWrestlingGoal);
+            }
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -370,7 +402,11 @@ namespace Locomotion.Narrative.EditorTools
             SendThought,
             EnterSlowTimeGambit,
             ChooseGambitAperture,
-            CommitGambitPath
+            CommitGambitPath,
+            EnterSlowTimeWrestling,
+            ChooseWrestlingCard,
+            CommitWrestlingCard,
+            WrestlingBioRhythm
         }
 
         private static NarrativeActionKind GetKind(NarrativeActionSpec a)
@@ -385,6 +421,10 @@ namespace Locomotion.Narrative.EditorTools
                 NarrativeEnterSlowTimeGambitAction => NarrativeActionKind.EnterSlowTimeGambit,
                 NarrativeChooseGambitApertureAction => NarrativeActionKind.ChooseGambitAperture,
                 NarrativeCommitGambitPathAction => NarrativeActionKind.CommitGambitPath,
+                NarrativeEnterSlowTimeWrestlingAction => NarrativeActionKind.EnterSlowTimeWrestling,
+                NarrativeChooseWrestlingCardAction => NarrativeActionKind.ChooseWrestlingCard,
+                NarrativeCommitWrestlingCardAction => NarrativeActionKind.CommitWrestlingCard,
+                NarrativeWrestlingBioRhythmAction => NarrativeActionKind.WrestlingBioRhythm,
                 _ => NarrativeActionKind.CallMethod
             };
         }

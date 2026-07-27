@@ -24,6 +24,8 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
     public float maxSafety01 = float.NaN;
     public StuntmanPlannerService stuntmanPlanner;
     public SafetyWardenPlannerService safetyWardenPlanner;
+    public WrestlingPlannerService wrestlingPlanner;
+    public RefereeWardenPlannerService refereeWardenPlanner;
 
     [Header("Execution")]
     public float waypointReachedDistance = 0.5f;
@@ -146,7 +148,8 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
         {
             ConsiderStuntmanHints.EnrichPlan(plan, actorGo, origin, destination);
             ConsiderSafetyWardenHints.EnrichPlan(plan, actorGo, origin, destination);
-            plan = TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stuntmanPlanner, safetyWardenPlanner);
+            plan = TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stuntmanPlanner, safetyWardenPlanner,
+                wrestlingPlanner, refereeWardenPlanner);
         }
 
         if (plan == null || plan.IsEmpty)

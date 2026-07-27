@@ -171,7 +171,19 @@ public enum PhysicsIKTrainingCategory
     RopeLowering,
     RopeClimbingUp,
     RopeClimbOntoLedge,
-    RopeIdling
+    RopeIdling,
+    // Wrestling group (tag-driven; animationGroupTag preferred)
+    WrestlingLunge,
+    WrestlingPull,
+    WrestlingPush,
+    WrestlingLock,
+    WrestlingPry,
+    WrestlingBlock,
+    WrestlingDeflect,
+    WrestlingLift,
+    WrestlingThrow,
+    WrestlingDropOn,
+    WrestlingCounter
 }
 
 /// <summary>

@@ -220,6 +220,10 @@ public class GoodSection
     [Tooltip("Non-rotating chair schooch / scoot tool-use card.")]
     public bool isChairSchoochGoal;
 
+    [Header("Wrestling")]
+    [Tooltip("Wrestling exchange card (GoalType.Wrestling).")]
+    public bool isWrestlingGoal;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;

@@ -38,7 +38,7 @@ public sealed class StuntDiscoveryContext
     }
 }
 
-/// <summary>Applies Stuntman then Safety Warden (propose → gate).</summary>
+/// <summary>Applies Stuntman then Safety Warden (propose → gate), then optional wrestling/referee.</summary>
 public static class TravelRiskPlannerPipeline
 {
     public static GenericMultiModalPathPlan Apply(
@@ -47,6 +47,18 @@ public static class TravelRiskPlannerPipeline
         GameObject actor,
         StuntmanPlannerService stuntman,
         SafetyWardenPlannerService warden)
+    {
+        return Apply(plan, in hints, actor, stuntman, warden, null, null);
+    }
+
+    public static GenericMultiModalPathPlan Apply(
+        GenericMultiModalPathPlan plan,
+        in GenericTraversibilityPlannerSolver.PlannerHints hints,
+        GameObject actor,
+        StuntmanPlannerService stuntman,
+        SafetyWardenPlannerService warden,
+        WrestlingPlannerService wrestling,
+        RefereeWardenPlannerService referee)
     {
         if (plan == null)
             return plan;
@@ -73,6 +85,16 @@ public static class TravelRiskPlannerPipeline
         {
             warden.EnrichDiscovery(ctx);
             plan = warden.RescoreOrRewrite(plan, in hints) ?? plan;
+        }
+        if (wrestling != null && wrestling.isActiveAndEnabled)
+        {
+            wrestling.EnrichDiscovery(ctx);
+            plan = wrestling.RescoreOrRewrite(plan, in hints) ?? plan;
+        }
+        if (referee != null && referee.isActiveAndEnabled)
+        {
+            referee.EnrichDiscovery(ctx);
+            plan = referee.RescoreOrRewrite(plan, in hints) ?? plan;
         }
 
         plan.RecomputePlanTotals();

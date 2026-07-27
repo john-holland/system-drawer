@@ -111,8 +111,17 @@ namespace Locomotion.Open
         public void SetAnimationProgress(float normalized01)
         {
             animationNormalizedTime = Mathf.Clamp01(normalized01);
-            if (driveMode == OpenCloseDriveMode.Animation || driveMode == OpenCloseDriveMode.Hybrid)
-                ApplyAngleFromOpen01(state == OpenableJointState.Closing ? 1f - animationNormalizedTime : animationNormalizedTime);
+            if (driveMode != OpenCloseDriveMode.Animation && driveMode != OpenCloseDriveMode.Hybrid)
+                return;
+
+            float open01 = state == OpenableJointState.Closing
+                ? 1f - animationNormalizedTime
+                : animationNormalizedTime;
+            ApplyAngleFromOpen01(open01);
+            if (state == OpenableJointState.Opening && _open01 >= 0.99f)
+                state = OpenableJointState.Open;
+            else if (state == OpenableJointState.Closing && _open01 <= 0.01f)
+                state = OpenableJointState.Closed;
         }
 
         public void SetOpen01(float open01)

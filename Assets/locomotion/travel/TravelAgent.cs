@@ -74,6 +74,10 @@ public class TravelAgent : MonoBehaviour
     public StuntmanPlannerService stuntmanPlanner;
     [Tooltip("When set, Safety Warden gates/rewrites plans outside the risk band.")]
     public SafetyWardenPlannerService safetyWardenPlanner;
+    [Tooltip("When set, wrestling planner expands move branches and stamps anim tags.")]
+    public WrestlingPlannerService wrestlingPlanner;
+    [Tooltip("When set, referee soft-gates high-damage Play spots.")]
+    public RefereeWardenPlannerService refereeWardenPlanner;
 
     [Tooltip("GoodSection cards offered as tool modality candidates for preview planning.")]
     public List<GoodSection> toolSectionsForPreview = new List<GoodSection>();
@@ -336,7 +340,9 @@ public class TravelAgent : MonoBehaviour
     {
         var stunt = stuntmanPlanner != null ? stuntmanPlanner : GetComponent<StuntmanPlannerService>();
         var warden = safetyWardenPlanner != null ? safetyWardenPlanner : GetComponent<SafetyWardenPlannerService>();
-        return TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stunt, warden);
+        var wrestle = wrestlingPlanner != null ? wrestlingPlanner : GetComponent<WrestlingPlannerService>();
+        var referee = refereeWardenPlanner != null ? refereeWardenPlanner : GetComponent<RefereeWardenPlannerService>();
+        return TravelRiskPlannerPipeline.Apply(plan, hints, actorGo, stunt, warden, wrestle, referee);
     }
 
     /// <summary>

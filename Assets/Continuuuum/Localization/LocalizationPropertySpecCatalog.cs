@@ -64,9 +64,17 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildLifeSystemsPropertyRecords());
         list.AddRange(BuildNsmPropertyRecords());
         list.AddRange(BuildStuntSafetyPropertyRecords());
+        list.AddRange(BuildWrestlingPropertyRecords());
         list.AddRange(BuildSpatialDescriptionPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildWrestlingPropertyRecords() => new[]
+    {
+        Spec(WrestlingLemmaPropertyKeys.SpecMode, "String", "Play", "Wrestling mode: Play|Subdue|Pin"),
+        Spec(WrestlingLemmaPropertyKeys.SpecMove, "String", "", "Wrestling move kind (LockGrapple, Throw, ...)"),
+        Spec(WrestlingLemmaPropertyKeys.SpecProfessional, "Bool", "false", "Prefer kayfabe / .pro animation tags"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildStuntSafetyPropertyRecords() => new[]
     {

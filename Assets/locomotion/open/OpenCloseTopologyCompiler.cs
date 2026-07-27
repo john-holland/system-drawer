@@ -78,7 +78,7 @@ namespace Locomotion.Open
 
             var mode = OpenCloseTopologyBtBuilder.ResolveAutoClose(
                 node,
-                lemmaOverrides ?? default,
+                lemmaOverrides ?? OpenCloseLemmaProperties.Defaults,
                 asset.defaultAutoCloseBt);
             result.previewLines.Add($"{Indent(depth)}Ambulate → {(node.jointKind == OpenCloseJointKind.LatchOnly ? "Unlock" : "Open")} [{node.nodeId}] blend={node.arrivalBlendCoefficient:F2} autoClose={mode}");
             result.openNodeCount++;

@@ -98,7 +98,9 @@ public enum GoalType
     /// <summary>Sit on a surface (chair, stack, wall, books) with hierarchical CoG tow.</summary>
     Sit,
     /// <summary>Stand on a surface (e.g. stand on a chair) with feet plant tow.</summary>
-    StandOnSurface
+    StandOnSurface,
+    /// <summary>Wrestling exchange: clinch, throw, pin (WrestlingCard + topology).</summary>
+    Wrestling
 }
 
 /// <summary>

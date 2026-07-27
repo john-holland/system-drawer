@@ -97,7 +97,7 @@ namespace Locomotion.Open
             for (int i = 0; i < result.flatNodes.Count; i++)
             {
                 var node = result.flatNodes[i];
-                var autoClose = ResolveAutoClose(node, default, topology.defaultAutoCloseBt);
+                var autoClose = ResolveAutoClose(node, OpenCloseLemmaProperties.Defaults, topology.defaultAutoCloseBt);
                 if (autoClose == AutoCloseBtMode.OnSequenceEnd)
                     result.closeStack.Push(node);
             }
@@ -110,11 +110,33 @@ namespace Locomotion.Open
             OpenCloseLemmaProperties lemma,
             AutoCloseBtMode assetDefault)
         {
+            // default(OpenCloseLemmaProperties) zeros autoCloseBt to None, which would
+            // incorrectly force None over node settings. Treat a fully-unset lemma as
+            // Defaults (OnStopExit = defer to node / assetDefault).
+            if (IsUnsetLemma(lemma))
+                lemma = OpenCloseLemmaProperties.Defaults;
+
             if (lemma.autoCloseBt != OpenCloseLemmaAutoCloseBtMode.OnStopExit)
                 return OpenCloseLemmaPropertyResolver.ToRuntimeAutoClose(lemma.autoCloseBt);
             if (node != null && node.autoCloseBt != AutoCloseBtMode.OnStopExit)
                 return node.autoCloseBt;
             return assetDefault;
+        }
+
+        static bool IsUnsetLemma(OpenCloseLemmaProperties lemma)
+        {
+            return lemma.openAngleDeg == 0f
+                   && lemma.driveMode == default
+                   && lemma.autoCloseBt == OpenCloseLemmaAutoCloseBtMode.None
+                   && lemma.arrivalBlendCoefficient == 0f
+                   && lemma.reachRadiusMeters == 0f
+                   && !lemma.requireFacingTarget
+                   && !lemma.unlockBeforeOpen
+                   && !lemma.linearOnly
+                   && !lemma.autoCloseOnExit
+                   && !lemma.compileCloseAmbulation
+                   && string.IsNullOrEmpty(lemma.openAnimationRef)
+                   && string.IsNullOrEmpty(lemma.requireToolLemma);
         }
 
         public static OpenCloseAmbulateToStopNode CreateAmbulateNode(

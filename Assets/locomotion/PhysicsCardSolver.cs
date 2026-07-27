@@ -496,6 +496,16 @@ public class PhysicsCardSolver : MonoBehaviour
             }
         }
 
+        // Wrestling
+        if (goal.type == GoalType.Wrestling)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isWrestlingGoal || card is WrestlingCard) return card;
+            }
+        }
+
         // Flying: prefer wing cards then jet cards (use procedural flying where possible)
         if (goal.type == GoalType.Flying)
         {
