@@ -1,0 +1,3162 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a39dcee74864d47a5cc2f8ff9b4c0c, type: 3}
+  m_Name: HairdoSdf_HairPlumeConfig_2
+  m_EditorClassIdentifier: SdfMax::SdfMax.SdfMaxCompositionAsset
+  rootNodeIndex: 120
+  nodes:
+  - op: 0
+    primitiveType: 0
+    localPosition: {x: 0, y: 0.05, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.1375
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.1375
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 7
+    localPosition: {x: 0, y: 0.078715, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.51
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 2.2136335
+    noiseOctaves: 5
+    noisePersistence: 0.40150002
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.41705
+    stampFootprintMeters: 100
+  - op: 8
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.066999994
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 0
+    childIndexB: 1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.21807623, y: 0.026115334, z: 0}
+    localRotationEuler: {x: 338.3904, y: 270, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 2
+    childIndexB: 3
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.21259251, y: 0.026484448, z: 0.04852286}
+    localRotationEuler: {x: 338.4728, y: 257.14285, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 4
+    childIndexB: 5
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.19642864, y: 0.027391966, z: 0.09459505}
+    localRotationEuler: {x: 338.67584, y: 244.2857, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 6
+    childIndexB: 7
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.17041476, y: 0.028538218, z: 0.13590126}
+    localRotationEuler: {x: 338.93326, y: 231.42856, z: 0.000000914925}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 8
+    childIndexB: 9
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.13587153, y: 0.029624036, z: 0.17037752}
+    localRotationEuler: {x: 339.17804, y: 218.57143, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 10
+    childIndexB: 11
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.09453861, y: 0.030350892, z: 0.1963115}
+    localRotationEuler: {x: 339.34244, y: 205.71428, z: -0.00000045621917}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 12
+    childIndexB: 13
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.048483565, y: 0.03049066, z: 0.21242045}
+    localRotationEuler: {x: 339.37408, y: 192.85715, z: -0.0000002280621}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 14
+    childIndexB: 15
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.000000009523979, y: 0.030490657, z: 0.21788324}
+    localRotationEuler: {x: 339.3741, y: 180, z: -1.0874847e-13}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 16
+    childIndexB: 17
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.04848361, y: 0.030490657, z: 0.21242045}
+    localRotationEuler: {x: 339.37408, y: 167.14285, z: 0.0000004561242}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 18
+    childIndexB: 19
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.09453883, y: 0.030341573, z: 0.19631186}
+    localRotationEuler: {x: 339.34033, y: 154.2857, z: 0.00000045622542}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 20
+    childIndexB: 21
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.13587315, y: 0.029566247, z: 0.17037947}
+    localRotationEuler: {x: 339.165, y: 141.42856, z: 0.0000004567547}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 22
+    childIndexB: 23
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.17041926, y: 0.028407983, z: 0.13590482}
+    localRotationEuler: {x: 338.90396, y: 128.57143, z: 0.00000091510543}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 24
+    childIndexB: 25
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.19643693, y: 0.02718521, z: 0.094599}
+    localRotationEuler: {x: 338.62955, y: 115.71428, z: 0.00000091681}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 26
+    childIndexB: 27
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.21260417, y: 0.02621707, z: 0.048525512}
+    localRotationEuler: {x: 338.41312, y: 102.857155, z: -0.0000009181737}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 28
+    childIndexB: 29
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.21808931, y: 0.025823291, z: -0.000000019065972}
+    localRotationEuler: {x: 338.32532, y: 90, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024854166
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024854166
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 30
+    childIndexB: 31
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.21305886, y: 0.025809202, z: -0.04862928}
+    localRotationEuler: {x: 338.36252, y: 77.14286, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024876978
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024876978
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 32
+    childIndexB: 33
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.19793877, y: 0.025774058, z: -0.09532236}
+    localRotationEuler: {x: 338.45813, y: 64.28569, z: -0.00000091788866}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024935808
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024935808
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 34
+    childIndexB: 35
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.17300239, y: 0.025728598, z: -0.13796484}
+    localRotationEuler: {x: 338.588, y: 51.428562, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 36
+    childIndexB: 37
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.13904032, y: 0.025683302, z: -0.17435111}
+    localRotationEuler: {x: 338.7287, y: 38.571415, z: 0.0000004580954}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 38
+    childIndexB: 39
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.097444616, y: 0.025648184, z: -0.20234573}
+    localRotationEuler: {x: 338.8576, y: 25.7143, z: -0.0000009153914}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 40
+    childIndexB: 41
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.050232835, y: 0.025632814, z: -0.22008485}
+    localRotationEuler: {x: 338.95312, y: 12.857119, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 42
+    childIndexB: 43
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.0000000026973233, y: 0.025646515, z: -0.22619289}
+    localRotationEuler: {x: 338.99423, y: -0.00000068324533, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 44
+    childIndexB: 45
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.05023235, y: 0.0256951, z: -0.22008221}
+    localRotationEuler: {x: 338.96667, y: 347.14285, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 46
+    childIndexB: 47
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.097442344, y: 0.025770158, z: -0.20234102}
+    localRotationEuler: {x: 338.88422, y: 334.2857, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 48
+    childIndexB: 49
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.13903564, y: 0.025859784, z: -0.17434508}
+    localRotationEuler: {x: 338.76743, y: 321.42856, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 50
+    childIndexB: 51
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.17299476, y: 0.02595187, z: -0.13795874}
+    localRotationEuler: {x: 338.6373, y: 308.57144, z: 0.00000091676145}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.025
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.025
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 52
+    childIndexB: 53
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.19792843, y: 0.026033862, z: -0.09531732}
+    localRotationEuler: {x: 338.51575, y: 295.7143, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024935808
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024935808
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 54
+    childIndexB: 55
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.21304652, y: 0.026092766, z: -0.04862646}
+    localRotationEuler: {x: 338.42563, y: 282.85715, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.024876978
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.024876978
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 56
+    childIndexB: 57
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 0
+    localPosition: {x: 0, y: 0.01721515, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.07083333
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.07083333
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 7
+    localPosition: {x: 0, y: 0.02754424, z: 0.0044999993}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.3188606
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1.6
+    noiseOctaves: 3
+    noisePersistence: 0.4
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.09732485
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 59
+    childIndexB: 60
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.21770833, y: 0.00688606, z: 0}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 61
+    childIndexB: 62
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.11076388, y: 0.00688606, z: 0.19184868}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 63
+    childIndexB: 64
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.118402794, y: 0.00688606, z: 0.20507963}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 65
+    childIndexB: 66
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.22916667, y: 0.00688606, z: -0.000000020034387}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 67
+    childIndexB: 68
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.107899286, y: 0.00688606, z: -0.1868871}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 69
+    childIndexB: 70
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.10407984, y: 0.00688606, z: -0.18027161}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 71
+    childIndexB: 72
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 8
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.046666667
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 58
+    childIndexB: 73
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 0
+    localPosition: {x: 0, y: 0.0344303, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.07083333
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.07083333
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 7
+    localPosition: {x: 0, y: 0.05508848, z: -0.0030000007}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.38772118
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1.7
+    noiseOctaves: 3
+    noisePersistence: 0.4
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.1146497
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 75
+    childIndexB: 76
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.240625, y: 0.01377212, z: 0}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 77
+    childIndexB: 78
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.11935763, y: 0.01377212, z: 0.20673351}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 79
+    childIndexB: 80
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.11553821, y: 0.01377212, z: 0.20011802}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 81
+    childIndexB: 82
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.23489584, y: 0.01377212, z: -0.000000020535246}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 83
+    childIndexB: 84
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.12126733, y: 0.01377212, z: -0.21004124}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 85
+    childIndexB: 86
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.12508678, y: 0.01377212, z: -0.21665673}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 87
+    childIndexB: 88
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 8
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.046666667
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 74
+    childIndexB: 89
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 0
+    localPosition: {x: 0, y: 0.041166663, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.07083333
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.07083333
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 7
+    localPosition: {x: 0, y: 0.065866664, z: -0.004500001}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.41466665
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1.75
+    noiseOctaves: 3
+    noisePersistence: 0.4
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.12106667
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 91
+    childIndexB: 92
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.22916667, y: 0.016466666, z: 0}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 93
+    childIndexB: 94
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.11362847, y: 0.016466666, z: 0.1968103}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 95
+    childIndexB: 96
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.10980904, y: 0.016466666, z: 0.19019482}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 97
+    childIndexB: 98
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.2234375, y: 0.016466666, z: -0.000000019533527}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 99
+    childIndexB: 100
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: -0.11649303, y: 0.016466666, z: -0.2017719}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 101
+    childIndexB: 102
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0.12413193, y: 0.016466666, z: -0.21500286}
+    localRotationEuler: {x: 270, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.015
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.015
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 103
+    childIndexB: 104
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 8
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.046666667
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 90
+    childIndexB: 105
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 2
+    localPosition: {x: 0, y: -0.0025224984, z: 0}
+    localRotationEuler: {x: 90, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.0875
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.0875
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 106
+    childIndexB: 107
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 0
+    localPosition: {x: 0, y: -0.040039998, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.055
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 0.055
+    stampFootprintMeters: 100
+  - op: 8
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.05
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 108
+    childIndexB: 109
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 1
+    localPosition: {x: 0.07822647, y: 0.0034666667, z: 0.1975775}
+    localRotationEuler: {x: 2.5, y: 25, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.02, y: 0.0052, z: 0.015}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 110
+    childIndexB: 111
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 1
+    localPosition: {x: 0.03981851, y: 0.0034666667, z: 0.20873605}
+    localRotationEuler: {x: 2.5, y: 12.5, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.02, y: 0.0052, z: 0.015}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 112
+    childIndexB: 113
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 1
+    localPosition: {x: -0.00000000928867, y: 0.0034666667, z: 0.2125}
+    localRotationEuler: {x: 2.5, y: -0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.02, y: 0.0052, z: 0.015}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 114
+    childIndexB: 115
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 1
+    localPosition: {x: -0.03981853, y: 0.0034666667, z: 0.20873605}
+    localRotationEuler: {x: 2.5, y: -12.5, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.02, y: 0.0052, z: 0.015}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 116
+    childIndexB: 117
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 0
+    primitiveType: 1
+    localPosition: {x: -0.078226484, y: 0.0034666667, z: 0.19757749}
+    localRotationEuler: {x: 2.5, y: -25, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.02, y: 0.0052, z: 0.015}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: -1
+    childIndexB: -1
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100
+  - op: 2
+    primitiveType: 1
+    localPosition: {x: 0, y: 0, z: 0}
+    localRotationEuler: {x: 0, y: 0, z: 0}
+    localScale: {x: 1, y: 1, z: 1}
+    radius: 0.5
+    halfExtents: {x: 0.5, y: 0.5, z: 0.5}
+    constantValue: 0
+    blendK: 0.1
+    smoothRadius: 0.25
+    tMin: 0
+    tMax: 1
+    weight: 1
+    gizmoColor: {r: 0.2, g: 0.7, b: 1, a: 0.35}
+    childIndexA: 118
+    childIndexB: 119
+    noiseSeed: 0
+    noiseFrequency: 1
+    noiseOctaves: 4
+    noisePersistence: 0.5
+    noiseLacunarity: 2
+    mandelbrotIterations: 32
+    mandelbrotEscape: 4
+    planarFeatureIndex: -1
+    sphereRadius: 1
+    stampFootprintMeters: 100

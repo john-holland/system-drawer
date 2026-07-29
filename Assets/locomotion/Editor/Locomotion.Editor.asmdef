@@ -9,7 +9,9 @@
     "SystemDrawer",
     "BedogaGenerator",
     "Planetary",
-    "Weather.Runtime"
+    "Weather.Runtime",
+    "SdfMax",
+    "SdfMax.Editor"
   ],
   "includePlatforms": [
     "Editor"
