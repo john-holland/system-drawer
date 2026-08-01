@@ -21,8 +21,22 @@
   const GROUPS = [
     { id: 'script-output', label: 'Script Output', enabled: true },
     { id: 'lemma-library', label: 'Lemma Library', enabled: true },
+    { id: 'civil-lod', label: 'Civil LOD', enabled: true },
     { id: 'table-read', label: 'Table Read', enabled: false },
   ];
+
+  const DEFAULT_CIVIL_LOD = {
+    kindPriorityOrder: ['Kitchen', 'School', 'Church', 'Library', 'Mall', 'Generic'],
+    developerMaxSpeedMps: 12,
+    logFalloffBase: 10,
+    lodFloor: 0.15,
+    maxFullSimVenues: 4,
+    maxWokenActors: 24,
+    featureBudgetId: 'civil_systems',
+    featureBudgetImportanceHint: 'Civil Systems / Persona Day — wake retinues under FeatureBudget Auto',
+  };
+
+  const CIVIL_KINDS = ['Kitchen', 'School', 'Church', 'Library', 'Mall', 'Generic'];
 
   const DEFAULT_LEMMA_LIBRARY = {
     lmStudioBaseUrl: 'http://localhost:1234/v1',
@@ -40,7 +54,26 @@
     return {
       scriptOutput: deepClone(DEFAULT_SCRIPT_OUTPUT),
       lemmaLibrary: deepClone(DEFAULT_LEMMA_LIBRARY),
+      civilLod: deepClone(DEFAULT_CIVIL_LOD),
     };
+  }
+
+  function normalizeCivilKindOrder(list) {
+    const out = [];
+    const seen = new Set();
+    (list || []).forEach((k) => {
+      if (CIVIL_KINDS.includes(k) && !seen.has(k)) {
+        out.push(k);
+        seen.add(k);
+      }
+    });
+    CIVIL_KINDS.forEach((k) => {
+      if (!seen.has(k)) {
+        out.push(k);
+        seen.add(k);
+      }
+    });
+    return out;
   }
 
   function normalizePriority(list) {
@@ -78,6 +111,11 @@
           ...DEFAULT_LEMMA_LIBRARY,
           ...(parsed.lemmaLibrary || {}),
         },
+        civilLod: {
+          ...DEFAULT_CIVIL_LOD,
+          ...(parsed.civilLod || {}),
+          kindPriorityOrder: normalizeCivilKindOrder(parsed.civilLod?.kindPriorityOrder),
+        },
       };
     } catch (_) {
       return defaultSettings();
@@ -96,6 +134,11 @@
       lemmaLibrary: {
         ...DEFAULT_LEMMA_LIBRARY,
         ...(settings.lemmaLibrary || {}),
+      },
+      civilLod: {
+        ...DEFAULT_CIVIL_LOD,
+        ...(settings.civilLod || {}),
+        kindPriorityOrder: normalizeCivilKindOrder(settings.civilLod?.kindPriorityOrder),
       },
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -141,10 +184,13 @@
   const ContinuuuumSettings = {
     STORAGE_KEY,
     AUTO_ADD_TYPES,
+    CIVIL_KINDS,
     GROUPS,
     DEFAULT_LEMMA_LIBRARY,
+    DEFAULT_CIVIL_LOD,
     defaultSettings,
     normalizePriority,
+    normalizeCivilKindOrder,
     swapPrioritySlots,
     movePrioritySlot,
     typeLabel,
@@ -180,6 +226,18 @@
         ...lemmaLibrary,
       };
       return saveRaw(all).lemmaLibrary;
+    },
+    getCivilLod() {
+      return loadRaw().civilLod;
+    },
+    saveCivilLod(civilLod) {
+      const all = loadRaw();
+      all.civilLod = {
+        ...DEFAULT_CIVIL_LOD,
+        ...civilLod,
+        kindPriorityOrder: normalizeCivilKindOrder(civilLod?.kindPriorityOrder),
+      };
+      return saveRaw(all).civilLod;
     },
   };
 

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 348dce93fc9f4d50b7e8ae9c43609d19, type: 3}
+  m_Name: CombatDamageProfile
+  m_EditorClassIdentifier: Locomotion.Runtime::CombatDamageProfileAsset
+  damageType: 4
+  healthMode: 1
+  materialKind: 0
+  defaultAmount01: 0
+  defaultDepth01: 0
+  throughOrStop: 0
+  cutterProfileId: 
+  cutProfileId: 
+  cutInterval: 0.2
+  smellSignature: lilac and lavendar faintly peaches
+  autoSuture: 0
+  notes: 

@@ -14,6 +14,16 @@ public sealed class FeatureBudgetProfile : ScriptableObject
     {
         if (entries == null || entries.Count == 0)
             entries = FeatureBudgetDefaults.CreateDefaultEntries();
+        else
+        {
+            // Merge newly added default feature ids (e.g. civil_systems) into existing profiles
+            var defaults = FeatureBudgetDefaults.CreateDefaultEntries();
+            for (int i = 0; i < defaults.Count; i++)
+            {
+                if (FindEntry(defaults[i].featureId) == null)
+                    entries.Add(defaults[i]);
+            }
+        }
         if (ratioBindings == null || ratioBindings.Count == 0)
             ratioBindings = FeatureBudgetDefaults.CreateDefaultRatioBindings();
     }

@@ -13,6 +13,8 @@
     { id: 'network', label: 'Network', path: '/network-definitions' },
     { id: 'cities', label: 'Cities', path: '/city-config' },
     { id: 'society', label: 'Society', path: '/society-dashboard' },
+    { id: 'restaurants', label: 'Restaurants', path: '/restaurants' },
+    { id: 'stations', label: 'Stations', path: '/stations' },
     { id: 'camera', label: 'Camera', path: '/camera-pathing' },
     { id: 'table-read', label: 'Table Read', path: '/table-read' },
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
@@ -128,6 +130,8 @@
       network: lemmaBase + '/network-definitions',
       cities: lemmaBase + '/city-config',
       society: lemmaBase + '/society-dashboard',
+      restaurants: lemmaBase + '/restaurants',
+      stations: lemmaBase + '/stations',
       camera: lemmaBase + '/camera-pathing',
       'table-read': lemmaBase + '/table-read',
       'sql-viewer': lemmaBase + '/sql-viewer',
@@ -154,6 +158,8 @@
     if (path.indexOf('/network-definitions') >= 0) return 'network';
     if (path.indexOf('/city-config') >= 0) return 'cities';
     if (path.indexOf('/society-dashboard') >= 0) return 'society';
+    if (path.indexOf('/restaurants') >= 0) return 'restaurants';
+    if (path.indexOf('/stations') >= 0) return 'stations';
     if (path.indexOf('/camera-pathing') >= 0 || path.indexOf('/camera-scenes') >= 0) return 'camera';
     if (path.indexOf('/table-read') >= 0) return 'table-read';
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';

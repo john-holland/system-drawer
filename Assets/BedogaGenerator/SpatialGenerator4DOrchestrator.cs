@@ -340,6 +340,55 @@ public class SpatialGenerator4DOrchestrator : MonoBehaviour
     {
         ClearCausalityHistory();
     }
+
+    /// <summary>
+    /// Walk station hierarchy (parentStableId) under this orchestrator's scene, optionally binding nearest SG4D leaf ids.
+    /// </summary>
+    public List<StationHierarchyNode> EnumerateStationHierarchy(bool bindNearestLeafIds = true)
+    {
+        var registry = StationRegistry.Instance;
+        if (registry == null)
+        {
+            var go = gameObject;
+            registry = go.GetComponent<StationRegistry>() ?? go.AddComponent<StationRegistry>();
+        }
+        var ordered = registry.OrderedHierarchy();
+        if (bindNearestLeafIds)
+            BindStationLeafIds(ordered);
+        return ordered;
+    }
+
+    void BindStationLeafIds(List<StationHierarchyNode> stations)
+    {
+        if (stations == null || spatialGenerators == null) return;
+        SpatialGenerator4D sg4 = null;
+        for (int i = 0; i < spatialGenerators.Count; i++)
+        {
+            if (spatialGenerators[i] is SpatialGenerator4D g)
+            {
+                sg4 = g;
+                break;
+            }
+        }
+        if (sg4 == null) return;
+        float t = 0f;
+        if (narrativeCalendar != null)
+        {
+            // Use zero if no clock; leaf search still useful for spatial region
+            t = 0f;
+        }
+        for (int i = 0; i < stations.Count; i++)
+        {
+            var st = stations[i];
+            if (st == null || !string.IsNullOrEmpty(st.causalityLeafId)) continue;
+            var region = new Bounds(st.transform.position, Vector3.one * 2f);
+            var markers = new List<GameObject>();
+            var leafIds = new List<string>();
+            sg4.SearchWithLeafIds(region, t, markers, leafIds);
+            if (leafIds.Count > 0)
+                st.causalityLeafId = leafIds[0];
+        }
+    }
 }
 
 /// <summary>Queues layout placement until causality/BT gate opens.</summary>

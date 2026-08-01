@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS loadouts (
   onground_x REAL,
   onground_y REAL,
   onground_z REAL,
-  loadout_set_id TEXT NOT NULL DEFAULT 'default'
+  loadout_set_id TEXT NOT NULL DEFAULT 'default',
+  context_path TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_loadouts_set ON loadouts(loadout_set_id);

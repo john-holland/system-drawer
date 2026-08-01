@@ -45,6 +45,7 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Asteroid belt | Disc opacity × granularity |
 | Planet streaming | Tile LOD offset + radius chunks |
 | Pathing | Replan interval + horizon distance ratio |
+| Civil systems | `PersonaDayManager` tick interval via `CivilSystemsFeatureBudgetConsumer` |
 
 ## Adding a new ratio field
 

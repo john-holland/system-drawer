@@ -121,7 +121,7 @@ public sealed class FoodProcessorBioRhythmService : MonoBehaviour
         return pr;
     }
     // todo: dodo
-    // hehehehe
+    // eehehehehe
     public PoopPayload CreatePoopPayload(FoodItem food, int seed)
     {
         float wet = defaultPoopWetness01;

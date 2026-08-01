@@ -110,7 +110,13 @@ public enum GoalType
     /// <summary>Love making exchange: embrace, kiss, hold (LoveCard + topology).</summary>
     LoveMaking,
     /// <summary>Combat exchange: CQC through ranged/vehicle weapons (CombatCard + topology).</summary>
-    Combat
+    Combat,
+    /// <summary>Kitchen / chef duty (ChefCard + CookDutyNode).</summary>
+    Cooking,
+    /// <summary>Threat escalation (ThreatCard + ThreatWarden).</summary>
+    Threat,
+    /// <summary>Corrective justice action (JusticeCard, e.g. shut off heat).</summary>
+    Justice
 }
 
 /// <summary>

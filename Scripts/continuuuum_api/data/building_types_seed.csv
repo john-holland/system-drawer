@@ -6,3 +6,9 @@ church_small,Small Church,religious,church,,90000
 corner_store,Corner Store,commercial,retail-corner,,200000
 hobby_center,Community Hobby Center,hobby_venue,hobby-venue,,150000
 treatment_clinic,Addiction Treatment Clinic,addiction_venue,addiction-treatment,,350000
+restaurant,Restaurant,commercial,restaurant,,280000
+school,School,public,school,,420000
+mall,Mall,commercial,mall,,650000
+library,Library,public,library,,310000
+train_station,Train Station,public,train-station,,500000
+bus_depot,Bus Depot,public,bus-depot,,320000

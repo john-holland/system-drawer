@@ -244,6 +244,15 @@ try:
     from continuuuum_api.life_systems_routes import register_life_systems_routes
 
 
+    from continuuuum_api.restaurant_routes import register_restaurant_routes
+
+
+    from continuuuum_api.persona_day_routes import register_persona_day_routes
+
+
+    from continuuuum_api.station_routes import register_station_routes
+
+
     from continuuuum_api.loadouts_routes import register_loadouts_routes
 
 
@@ -299,6 +308,15 @@ except ImportError:
 
 
     from life_systems_routes import register_life_systems_routes
+
+
+    from restaurant_routes import register_restaurant_routes
+
+
+    from persona_day_routes import register_persona_day_routes
+
+
+    from station_routes import register_station_routes
 
 
     from loadouts_routes import register_loadouts_routes
@@ -4090,6 +4108,15 @@ register_lemma_completion_routes(app, get_conn)
 
 
 register_life_systems_routes(app, get_conn)
+
+
+register_restaurant_routes(app, get_conn)
+
+
+register_persona_day_routes(app, get_conn)
+
+
+register_station_routes(app, get_conn)
 
 
 register_loadouts_routes(app, get_conn)

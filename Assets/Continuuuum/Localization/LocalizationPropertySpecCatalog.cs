@@ -69,8 +69,37 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildKissPropertyRecords());
         list.AddRange(BuildActionInputPropertyRecords());
         list.AddRange(BuildSpatialDescriptionPropertyRecords());
+        list.AddRange(BuildChefPropertyRecords());
+        list.AddRange(BuildThreatPropertyRecords());
+        list.AddRange(BuildTasteNotesPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildTasteNotesPropertyRecords() => new[]
+    {
+        Spec(TasteNotesLemmaPropertyKeys.SpecNotes, "String", "sour,spicy", "Taste notes csv: sour|spicy|sweet|bitter|umami|salty"),
+        Spec(TasteNotesLemmaPropertyKeys.SpecIntensity, "Float", "0.5", "Taste intensity 0-1"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildChefPropertyRecords() => new[]
+    {
+        Spec(ChefLemmaPropertyKeys.SpecOp, "String", "duty", "chef op: duty|activity|wash|ticket"),
+        Spec(ChefLemmaPropertyKeys.SpecActivity, "String", "sear", "ChefActivity: sear|pour|filet|stir|..."),
+        Spec(ChefLemmaPropertyKeys.SpecMode, "String", "Line", "ChefDutyMode: Prep|Line|Pass|Expo|Dish|Hygiene"),
+        Spec(ChefLemmaPropertyKeys.SpecStation, "String", "", "Station / context id"),
+        Spec(ChefLemmaPropertyKeys.SpecItem, "String", "", "Ingredient or tool name"),
+        Spec(ChefLemmaPropertyKeys.SpecOrder, "String", "", "Order ticket id"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildThreatPropertyRecords() => new[]
+    {
+        Spec(ThreatLemmaPropertyKeys.SpecOp, "String", "raise", "threat op: raise|clear|query|dialog"),
+        Spec(ThreatLemmaPropertyKeys.SpecLevel, "String", "localized", "Threat level tag"),
+        Spec(ThreatLemmaPropertyKeys.SpecAlert, "String", "on-edge", "Alert: on-edge|all-clear|under-attack|..."),
+        Spec(ThreatLemmaPropertyKeys.SpecAgency, "String", "kitchen", "Agency id"),
+        Spec(ThreatLemmaPropertyKeys.SpecKind, "String", "generic", "ThreatKind"),
+        Spec(ThreatLemmaPropertyKeys.SpecLemma, "String", "on-edge", "Alertness lemma tag"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildActionInputPropertyRecords() => new[]
     {
@@ -133,10 +162,11 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
 
     public static LocalizationPropertySpecRecord[] BuildInventoryWaypointPropertyRecords() => new[]
     {
-        Spec("inv-op", "String", "have", "inventory op: have|give|take|transfer|assert"),
+        Spec("inv-op", "String", "have", "inventory op: have|give|take|transfer|assert|putaway"),
         Spec("inv-item", "String", "", "Loadout item name"),
         Spec("inv-from", "String", "", "Source actor id"),
         Spec("inv-to", "String", "", "Target actor id"),
+        Spec("inv-context", "String", "", "Put-away context GameObject name / path"),
         Spec("wp-name", "String", "A", "Waypoint name / id"),
         Spec("wp-x", "Float", "0", "Waypoint X"),
         Spec("wp-y", "Float", "0", "Waypoint Y"),

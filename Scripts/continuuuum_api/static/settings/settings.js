@@ -260,6 +260,131 @@
     }
   }
 
+  async function hydrateCivilLodFromServer() {
+    try {
+      const res = await fetch('/api/persona-day/settings');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.settings) {
+        draft.civilLod = {
+          ...(CS.DEFAULT_CIVIL_LOD || {}),
+          ...(draft.civilLod || {}),
+          ...data.settings,
+          kindPriorityOrder: CS.normalizeCivilKindOrder(
+            data.settings.kindPriorityOrder || draft.civilLod?.kindPriorityOrder,
+          ),
+        };
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  function renderCivilLodPanel() {
+    const cl = draft.civilLod || CS.DEFAULT_CIVIL_LOD || {};
+    const order = CS.normalizeCivilKindOrder(cl.kindPriorityOrder);
+    const rows = order
+      .map(
+        (kind, idx) =>
+          `<div class="cs-priority-row" data-slot="${idx}">
+            <label>Priority ${idx + 1}</label>
+            <span>${esc(kind)}</span>
+            <span class="cs-reorder">
+              <button type="button" data-dir="-1" data-slot="${idx}" aria-label="Move up">↑</button>
+              <button type="button" data-dir="1" data-slot="${idx}" aria-label="Move down">↓</button>
+            </span>
+          </div>`,
+      )
+      .join('');
+    return `
+      <h1>Civil LOD</h1>
+      <p class="cs-hint">PersonaDayManager lattice: venue kind priority, developer speed bounds (log falloff),
+      and FeatureBudget <code>civil_systems</code> caps. Syncs to <code>/api/persona-day/settings</code>.</p>
+      <section aria-labelledby="cl-priority-heading">
+        <h2 id="cl-priority-heading" style="font-size:1rem;margin:0 0 12px">Kind priority (1 = FullSim first)</h2>
+        ${rows}
+      </section>
+      <label>Developer max speed (m/s)
+        <input type="number" id="cl-vmax" step="0.1" min="0.1" value="${esc(cl.developerMaxSpeedMps ?? 12)}" />
+      </label>
+      <label>Log falloff base
+        <input type="number" id="cl-logbase" step="0.1" min="2" value="${esc(cl.logFalloffBase ?? 10)}" />
+      </label>
+      <label>LOD floor
+        <input type="number" id="cl-floor" step="0.01" min="0.05" max="1" value="${esc(cl.lodFloor ?? 0.15)}" />
+      </label>
+      <label>Max FullSim venues
+        <input type="number" id="cl-max-full" min="0" max="64" value="${esc(cl.maxFullSimVenues ?? 4)}" />
+      </label>
+      <label>Max woken actors
+        <input type="number" id="cl-max-woken" min="0" max="512" value="${esc(cl.maxWokenActors ?? 24)}" />
+      </label>
+      <p class="cs-hint">Feature budget id: <code>${esc(cl.featureBudgetId || 'civil_systems')}</code><br/>
+      ${esc(cl.featureBudgetImportanceHint || '')}</p>
+      <div class="cs-actions">
+        <button type="button" id="cs-save-btn">Save Civil LOD</button>
+        <span id="cs-status"></span>
+      </div>`;
+  }
+
+  function bindCivilLodPanel() {
+    const panel = document.getElementById('cs-panel');
+    if (!panel) return;
+
+    const syncDraft = () => {
+      draft.civilLod = {
+        ...(draft.civilLod || CS.DEFAULT_CIVIL_LOD),
+        developerMaxSpeedMps: Number(panel.querySelector('#cl-vmax')?.value || 12),
+        logFalloffBase: Number(panel.querySelector('#cl-logbase')?.value || 10),
+        lodFloor: Number(panel.querySelector('#cl-floor')?.value || 0.15),
+        maxFullSimVenues: Number(panel.querySelector('#cl-max-full')?.value || 4),
+        maxWokenActors: Number(panel.querySelector('#cl-max-woken')?.value || 24),
+        kindPriorityOrder: CS.normalizeCivilKindOrder(draft.civilLod?.kindPriorityOrder),
+      };
+    };
+
+    panel.querySelectorAll('input').forEach((el) => {
+      el.addEventListener('change', syncDraft);
+      el.addEventListener('input', syncDraft);
+    });
+
+    panel.querySelectorAll('.cs-reorder button').forEach((btn) => {
+      btn.onclick = () => {
+        const slot = Number(btn.dataset.slot);
+        const dir = Number(btn.dataset.dir);
+        const list = CS.normalizeCivilKindOrder(draft.civilLod?.kindPriorityOrder);
+        const to = slot + dir;
+        if (to < 0 || to >= list.length) return;
+        const tmp = list[slot];
+        list[slot] = list[to];
+        list[to] = tmp;
+        draft.civilLod = { ...(draft.civilLod || {}), kindPriorityOrder: list };
+        renderPanelContent();
+      };
+    });
+
+    const saveBtn = panel.querySelector('#cs-save-btn');
+    if (saveBtn) {
+      saveBtn.onclick = async () => {
+        syncDraft();
+        try {
+          CS.saveCivilLod(draft.civilLod);
+          const res = await fetch('/api/persona-day/settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ settings: draft.civilLod }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Save failed');
+          draft.civilLod = { ...draft.civilLod, ...(data.settings || {}) };
+          setStatus('Civil LOD settings saved.');
+        } catch (e) {
+          setStatus(e.message || 'Save failed', true);
+        }
+      };
+    }
+  }
+
   function renderPanelContent() {
     const panel = document.getElementById('cs-panel');
     if (!panel) return;
@@ -269,6 +394,9 @@
     } else if (activeGroup === 'lemma-library') {
       panel.innerHTML = renderLemmaLibraryPanel();
       bindLemmaLibraryPanel();
+    } else if (activeGroup === 'civil-lod') {
+      panel.innerHTML = renderCivilLodPanel();
+      bindCivilLodPanel();
     } else {
       panel.innerHTML = '<h1>Coming soon</h1><p class="cs-hint">This settings group is not available yet.</p>';
     }
@@ -290,5 +418,5 @@
 
   activeGroup = groupFromHash();
   draft = CS.load();
-  hydrateLemmaLibraryFromServer().finally(render);
+  Promise.all([hydrateLemmaLibraryFromServer(), hydrateCivilLodFromServer()]).finally(render);
 })();

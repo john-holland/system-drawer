@@ -3,8 +3,10 @@
     "rootNamespace": "",
     "references": [
         "Continuuuum.Runtime",
+        "Locomotion.Runtime",
         "Locomotion.Narrative.Runtime",
         "Locomotion.Drink.Runtime",
+        "BedogaGenerator",
         "SystemDrawer.Lemmas",
         "SystemDrawer.Lemmas.Editor"
     ],

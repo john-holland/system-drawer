@@ -15,8 +15,8 @@ INVENTORY_PROPERTY_SPECS: list[dict[str, str | None]] = [
         "key": "inv-op",
         "value_type": "String",
         "default_value": "have",
-        "description": "inventory op: have|give|take|transfer|assert",
-        "allowed_values_json": '["have","give","take","transfer","assert"]',
+        "description": "inventory op: have|give|take|transfer|assert|putaway",
+        "allowed_values_json": '["have","give","take","transfer","assert","putaway"]',
     },
     {
         "key": "inv-item",
@@ -37,6 +37,13 @@ INVENTORY_PROPERTY_SPECS: list[dict[str, str | None]] = [
         "value_type": "String",
         "default_value": "",
         "description": "Target actor id",
+        "allowed_values_json": None,
+    },
+    {
+        "key": "inv-context",
+        "value_type": "String",
+        "default_value": "",
+        "description": "Put-away context GameObject name / path",
         "allowed_values_json": None,
     },
     {
@@ -95,7 +102,8 @@ CREATE TABLE IF NOT EXISTS loadouts (
   onground_x REAL,
   onground_y REAL,
   onground_z REAL,
-  loadout_set_id TEXT NOT NULL DEFAULT 'default'
+  loadout_set_id TEXT NOT NULL DEFAULT 'default',
+  context_path TEXT
 );
 """
     conn.executescript(sql)
@@ -113,6 +121,8 @@ CREATE TABLE IF NOT EXISTS loadouts (
         alters.append("ALTER TABLE loadouts ADD COLUMN onground_z REAL")
     if "loadout_set_id" not in cols:
         alters.append("ALTER TABLE loadouts ADD COLUMN loadout_set_id TEXT NOT NULL DEFAULT 'default'")
+    if "context_path" not in cols:
+        alters.append("ALTER TABLE loadouts ADD COLUMN context_path TEXT")
     for stmt in alters:
         conn.execute(stmt)
     conn.commit()
@@ -238,8 +248,8 @@ def register_loadouts_routes(app: Flask, get_conn: GetConn) -> None:
             conn.execute(
                 """INSERT INTO loadouts
                    (id, name, icon_asset, prefab_id, use_takeout_animation, use_putaway_animation,
-                    ownedby_actor_id, heldby_actor_id, onground_x, onground_y, onground_z, loadout_set_id)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    ownedby_actor_id, heldby_actor_id, onground_x, onground_y, onground_z, loadout_set_id, context_path)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     item_id,
                     body.get("name") or "item",
@@ -253,6 +263,7 @@ def register_loadouts_routes(app: Flask, get_conn: GetConn) -> None:
                     float(body.get("onground_y", body.get("ongroundY", 0) or 0)),
                     float(body.get("onground_z", body.get("ongroundZ", 0) or 0)),
                     body.get("loadout_set_id") or body.get("loadoutSetId") or "default",
+                    body.get("context_path") or body.get("contextPath"),
                 ),
             )
             conn.commit()
@@ -283,6 +294,8 @@ def register_loadouts_routes(app: Flask, get_conn: GetConn) -> None:
                 cur["heldby_actor_id"] = body["heldbyActorId"]
             if "loadoutSetId" in body:
                 cur["loadout_set_id"] = body["loadoutSetId"]
+            if "contextPath" in body:
+                cur["context_path"] = body["contextPath"]
             if "useTakeoutAnimation" in body:
                 cur["use_takeout_animation"] = 1 if body["useTakeoutAnimation"] else 0
             if "usePutawayAnimation" in body:
@@ -296,7 +309,7 @@ def register_loadouts_routes(app: Flask, get_conn: GetConn) -> None:
             conn.execute(
                 """UPDATE loadouts SET
                    name=?, icon_asset=?, prefab_id=?, use_takeout_animation=?, use_putaway_animation=?,
-                   ownedby_actor_id=?, heldby_actor_id=?, onground_x=?, onground_y=?, onground_z=?, loadout_set_id=?
+                   ownedby_actor_id=?, heldby_actor_id=?, onground_x=?, onground_y=?, onground_z=?, loadout_set_id=?, context_path=?
                    WHERE id=?""",
                 (
                     cur.get("name"),
@@ -310,6 +323,7 @@ def register_loadouts_routes(app: Flask, get_conn: GetConn) -> None:
                     float(cur.get("onground_y") or 0),
                     float(cur.get("onground_z") or 0),
                     cur.get("loadout_set_id") or "default",
+                    cur.get("context_path"),
                     item_id,
                 ),
             )

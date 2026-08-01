@@ -266,6 +266,75 @@ LIFE_DISCOVERY_TOKENS = {
 }
 
 
+CHEF_DISCOVERY_TOKENS = frozenset(
+    {
+        "chef",
+        "cook",
+        "kitchen",
+        "sear",
+        "filet",
+        "plating",
+        "line-chef",
+        "prep",
+        "stir",
+        "pour",
+    }
+)
+
+THREAT_DISCOVERY_TOKENS = frozenset(
+    {
+        "threat",
+        "on-edge",
+        "all-clear",
+        "under-attack",
+        "potential-intruders",
+        "alert",
+    }
+)
+
+
+def _chef_prompt_candidate(span: dict[str, Any], selection_text: str) -> dict[str, Any] | None:
+    token = (selection_text or "").strip().lower()
+    if token not in CHEF_DISCOVERY_TOKENS:
+        return None
+    if token in ("sear", "filet", "stir", "pour", "plating", "prep"):
+        value = f"{{P:chef|op=activity|activity={token}}}"
+    elif token == "kitchen":
+        value = "{P:chef|op=wash}"
+    else:
+        value = "{P:chef|op=duty|mode=Line}"
+    return {
+        "bindingKind": "prompt_placeholder",
+        "propertyKey": "chef",
+        "propertyValue": value,
+        "promptPlaceholderName": "chef",
+        "charStart": span["charStart"],
+        "charEnd": span["charEnd"],
+        "selectionText": selection_text,
+    }
+
+
+def _threat_prompt_candidate(span: dict[str, Any], selection_text: str) -> dict[str, Any] | None:
+    token = (selection_text or "").strip().lower()
+    if token not in THREAT_DISCOVERY_TOKENS:
+        return None
+    if token == "all-clear":
+        value = "{P:threat|op=clear|alert=all-clear}"
+    elif token in ("on-edge", "under-attack", "potential-intruders"):
+        value = f"{{P:threat|op=raise|lemma={token}|alert={token}}}"
+    else:
+        value = "{P:threat|op=raise|alert=on-edge}"
+    return {
+        "bindingKind": "prompt_placeholder",
+        "propertyKey": "threat",
+        "propertyValue": value,
+        "promptPlaceholderName": "threat",
+        "charStart": span["charStart"],
+        "charEnd": span["charEnd"],
+        "selectionText": selection_text,
+    }
+
+
 def _life_systems_prompt_candidate(span: dict[str, Any], selection_text: str) -> dict[str, Any] | None:
     token = (selection_text or "").strip().lower()
     if token not in LIFE_DISCOVERY_TOKENS:
@@ -358,6 +427,20 @@ def build_span_candidates(
         if key not in applied and key not in seen:
             seen.add(key)
             candidates.append(life_tpl)
+
+    chef_tpl = _chef_prompt_candidate(span, selection_text)
+    if chef_tpl:
+        key = binding_template_key(chef_tpl)
+        if key not in applied and key not in seen:
+            seen.add(key)
+            candidates.append(chef_tpl)
+
+    threat_tpl = _threat_prompt_candidate(span, selection_text)
+    if threat_tpl:
+        key = binding_template_key(threat_tpl)
+        if key not in applied and key not in seen:
+            seen.add(key)
+            candidates.append(threat_tpl)
 
     return candidates
 

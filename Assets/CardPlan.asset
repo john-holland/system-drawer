@@ -38,9 +38,22 @@ MonoBehaviour:
     goalType: 16
     actionKind: 9
     children: []
+  - id: 8d19c3bfb9984fc988ed8d581989d873
+    label: Goal:LoveMaking
+    kind: 1
+    foldedOut: 1
+    cardPartial:
+      displayName: 
+      template:
+        rid: -2
+    goalType: 20
+    actionKind: 9
+    children: []
   references:
     version: 2
     RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
     - rid: 867949549755826331
       type: {class: ChairRotateCard, ns: , asm: Locomotion.Runtime}
       data:
@@ -132,6 +145,12 @@ MonoBehaviour:
         isChairRotateGoal: 1
         isChairSchoochGoal: 0
         isWrestlingGoal: 0
+        isEatGoal: 0
+        isToiletGoal: 0
+        isHygieneGoal: 0
+        hygieneKind: 
+        isLoveMakingGoal: 0
+        isCombatGoal: 0
         hipVertexPosition: {x: 0, y: 0, z: 0}
         ledgeNormal: {x: 0, y: 0, z: 0}
         seatedVertices: []
@@ -242,6 +261,12 @@ MonoBehaviour:
         isChairRotateGoal: 0
         isChairSchoochGoal: 0
         isWrestlingGoal: 0
+        isEatGoal: 0
+        isToiletGoal: 0
+        isHygieneGoal: 0
+        hygieneKind: 
+        isLoveMakingGoal: 0
+        isCombatGoal: 0
         hipVertexPosition: {x: 0, y: 0, z: 0}
         ledgeNormal: {x: 0, y: 0, z: 0}
         seatedVertices: []

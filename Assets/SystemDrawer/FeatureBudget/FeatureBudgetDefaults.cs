@@ -41,6 +41,8 @@ public static class FeatureBudgetDefaults
                 new[] { "PoliticalSim", "Society" }, null, false),
             Entry(FeatureBudgetIds.Usc, "USC Build", 12,
                 new[] { "USC", "SemanticCompress" }, null, false),
+            Entry(FeatureBudgetIds.CivilSystems, "Civil Systems / Persona Day", 13,
+                new[] { "PersonaDay", "CivilVenue", "CivilSystem" }, null, true),
         };
     }
 

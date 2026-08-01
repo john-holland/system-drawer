@@ -48,6 +48,7 @@ public static class LifeSystemsChannelCatalog
     public const string Endocrine = "endocrine";
     public const string Vitamins = "vitamins";
     public const string Adrenaline = "adrenaline";
+    public const string Endorphin = "endorphin";
     public const string Fatigue = "fatigue";
     public const string HomeostasisError = "homeostasis_error";
     public const string LifeForce = "life_force";
@@ -136,6 +137,7 @@ public static class LifeSystemsChannelCatalog
             U01(Endocrine, "Endocrine", 0.75f, 0.65f, 0.9f, false, "healthcareCoverage", "need_physiological", LifeSystemsChannelAggregation.RegionalCapable),
             U01(Vitamins, "Vitamins", 0.75f, 0.65f, 0.9f, false, "healthcareCoverage", "need_physiological", LifeSystemsChannelAggregation.Systemic),
             U01(Adrenaline, "Adrenaline", 0.08f, 0f, 0.25f, false, null, null, LifeSystemsChannelAggregation.Systemic),
+            U01(Endorphin, "Endorphin", 0.1f, 0f, 0.3f, false, null, null, LifeSystemsChannelAggregation.Systemic),
             U01(Fatigue, "Fatigue", 0.1f, 0f, 0.3f, true, null, null, LifeSystemsChannelAggregation.Systemic),
             U01(HomeostasisError, "Homeostasis Error", 0f, 0f, 0.1f, true, null, null, LifeSystemsChannelAggregation.Systemic),
             U01(LifeForce, "Life Force", 0.85f, 0.75f, 0.95f, false, null, null, LifeSystemsChannelAggregation.Systemic),

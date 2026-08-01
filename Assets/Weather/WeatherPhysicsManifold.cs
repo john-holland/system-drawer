@@ -121,6 +121,56 @@ namespace Weather
             EnsureCellDataAllocatedCore();
             if (nearFieldGraph == null)
                 nearFieldGraph = FindAnyObjectByType<NearField.NearFieldWindInteractionGraph>();
+            TryRegisterSceneService();
+        }
+
+        void OnEnable() => TryRegisterSceneService();
+
+        void Start() => TryRegisterSceneService();
+
+        void OnDestroy()
+        {
+            TryUnregisterSceneService();
+        }
+
+        /// <summary>Register under weather.physicsManifold without a SystemDrawer asmdef reference.</summary>
+        void TryRegisterSceneService()
+        {
+            try
+            {
+                var serviceType = System.Type.GetType("SystemDrawerService, SystemDrawer");
+                if (serviceType == null) return;
+                var instanceProp = serviceType.GetProperty("Instance",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var instance = instanceProp?.GetValue(null);
+                if (instance == null) return;
+                var register = serviceType.GetMethod("Register",
+                    new[] { typeof(string), typeof(UnityEngine.Object) });
+                register?.Invoke(instance, new object[] { "weather.physicsManifold", this });
+            }
+            catch
+            {
+                // Optional SystemDrawer package / service not present
+            }
+        }
+
+        void TryUnregisterSceneService()
+        {
+            try
+            {
+                var serviceType = System.Type.GetType("SystemDrawerService, SystemDrawer");
+                if (serviceType == null) return;
+                var instanceProp = serviceType.GetProperty("Instance",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var instance = instanceProp?.GetValue(null);
+                if (instance == null) return;
+                var unregister = serviceType.GetMethod("Unregister", new[] { typeof(string) });
+                unregister?.Invoke(instance, new object[] { "weather.physicsManifold" });
+            }
+            catch
+            {
+                // ignore
+            }
         }
 
         void EnsureCellDataAllocated()

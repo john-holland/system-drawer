@@ -362,6 +362,38 @@ public class SpatialGenerator : SpatialGeneratorBase
         {
             TraverseBehaviorTree(rootNode);
         }
+
+        PlacedInstancesChanged?.Invoke(this);
+    }
+
+    /// <summary>Fired after a successful Generate() finishes placing instances.</summary>
+    public static event Action<SpatialGenerator> PlacedInstancesChanged;
+
+    /// <summary>Public enumerator of placed scene instances (node name + GameObject). No private map leak.</summary>
+    public IEnumerable<(string nodeKey, GameObject instance)> EnumeratePlacedInstances()
+    {
+        if (behaviorNodeToSceneInstance == null)
+            yield break;
+        foreach (var kv in behaviorNodeToSceneInstance)
+        {
+            string key = kv.Key != null ? kv.Key.name : "";
+            var list = kv.Value;
+            if (list == null) continue;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] != null)
+                    yield return (key, list[i]);
+            }
+        }
+    }
+
+    /// <summary>Flat list helper for PersonaDayManager wake binding.</summary>
+    public List<GameObject> CollectPlacedGameObjects()
+    {
+        var outList = new List<GameObject>();
+        foreach (var (_, go) in EnumeratePlacedInstances())
+            outList.Add(go);
+        return outList;
     }
     
     /// <summary>Collect placement requests in BFS order, then process in two phases: (1) place all root instances first, (2) place children so each parent instance gets its full set (walls, table, sign, spotlights per room).</summary>

@@ -24,6 +24,7 @@ public sealed class LifeSystemsSheet : MonoBehaviour
 
     readonly Dictionary<string, int> _index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     bool _indexed;
+    bool _ensuringDefaults;
 
     void Awake()
     {
@@ -32,43 +33,53 @@ public sealed class LifeSystemsSheet : MonoBehaviour
 
     public void EnsureDefaults()
     {
-        if (channelValues == null)
-            channelValues = new List<ChannelValue>();
-        if (organs == null)
-            organs = new OrganHealthState();
-        if (lifeForce == null)
-            lifeForce = new LifeForceChannel();
-        if (bioRhythm == null)
-            bioRhythm = new BioRhythmClock();
-        if (activeEffects == null)
-            activeEffects = new List<LifeSystemsActiveEffect>();
+        if (_ensuringDefaults)
+            return;
+        _ensuringDefaults = true;
+        try
+        {
+            if (channelValues == null)
+                channelValues = new List<ChannelValue>();
+            if (organs == null)
+                organs = new OrganHealthState();
+            if (lifeForce == null)
+                lifeForce = new LifeForceChannel();
+            if (bioRhythm == null)
+                bioRhythm = new BioRhythmClock();
+            if (activeEffects == null)
+                activeEffects = new List<LifeSystemsActiveEffect>();
 
-        var channels = LifeSystemsChannelCatalog.Channels;
-        var have = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        for (int i = 0; i < channelValues.Count; i++)
-        {
-            if (channelValues[i] != null && !string.IsNullOrEmpty(channelValues[i].channelId))
-                have.Add(channelValues[i].channelId);
-        }
-        for (int i = 0; i < channels.Count; i++)
-        {
-            var def = channels[i];
-            if (have.Contains(def.id))
-                continue;
-            float v01 = def.setpoint01;
-            channelValues.Add(new ChannelValue
+            var channels = LifeSystemsChannelCatalog.Channels;
+            var have = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < channelValues.Count; i++)
             {
-                channelId = def.id,
-                value01 = v01,
-                clinicalValue = LifeSystemsChannelCatalog.ClinicalFrom01(def, v01)
-            });
-        }
+                if (channelValues[i] != null && !string.IsNullOrEmpty(channelValues[i].channelId))
+                    have.Add(channelValues[i].channelId);
+            }
+            for (int i = 0; i < channels.Count; i++)
+            {
+                var def = channels[i];
+                if (have.Contains(def.id))
+                    continue;
+                float v01 = def.setpoint01;
+                channelValues.Add(new ChannelValue
+                {
+                    channelId = def.id,
+                    value01 = v01,
+                    clinicalValue = LifeSystemsChannelCatalog.ClinicalFrom01(def, v01)
+                });
+            }
 
-        organs.EnsureCatalogDefaults();
-        if (LifeSystemsChannelCatalog.TryGet(LifeSystemsChannelCatalog.LifeForce, out _))
-            Set01(LifeSystemsChannelCatalog.LifeForce, lifeForce.lifeForce01);
-        _indexed = false;
-        RebuildIndex();
+            organs.EnsureCatalogDefaults();
+            _indexed = false;
+            RebuildIndex();
+            // Write LifeForce directly — must not call Set01 (that would re-enter EnsureDefaults).
+            Apply01(LifeSystemsChannelCatalog.LifeForce, lifeForce.lifeForce01);
+        }
+        finally
+        {
+            _ensuringDefaults = false;
+        }
     }
 
     void RebuildIndex()
@@ -112,7 +123,13 @@ public sealed class LifeSystemsSheet : MonoBehaviour
 
     public void Set01(string channelId, float value01)
     {
-        EnsureDefaults();
+        if (!_ensuringDefaults)
+            EnsureDefaults();
+        Apply01(channelId, value01);
+    }
+
+    void Apply01(string channelId, float value01)
+    {
         if (!TryGetChannel(channelId, out var cv))
             return;
         cv.value01 = value01;

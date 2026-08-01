@@ -14,4 +14,5 @@ public static class FeatureBudgetIds
     public const string DreamCycle = "dreamcycle";
     public const string Society = "society";
     public const string Usc = "usc";
+    public const string CivilSystems = "civil_systems";
 }

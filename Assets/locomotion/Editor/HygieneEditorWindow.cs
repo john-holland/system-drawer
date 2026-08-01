@@ -260,7 +260,11 @@ public sealed class HygieneEditorWindow : EditorWindow
                 DestroyImmediate(_previewTeeth[i]);
         }
         _previewTeeth.Clear();
-        if (_previewCam != null) DestroyImmediate(_previewCam.gameObject);
+        if (_previewCam != null)
+        {
+            _previewCam.targetTexture = null;
+            DestroyImmediate(_previewCam.gameObject);
+        }
         if (_previewRoot != null) DestroyImmediate(_previewRoot);
         if (_mouthRt != null)
         {

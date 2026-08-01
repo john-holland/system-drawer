@@ -68,6 +68,47 @@ public sealed class InventoryLoadoutTests
     }
 
     [Test]
+    public void PutAwayToVehicleInterior_TransfersIntoVehicleActorInventory()
+    {
+        var mgrGo = new GameObject("InvMgrPutAway");
+        var actorGo = new GameObject("Chef");
+        var van = new GameObject("Van");
+        try
+        {
+            var mgr = mgrGo.AddComponent<InventoryManager>();
+            mgr.scriptMentionGate = false;
+            var actorInv = actorGo.AddComponent<ActorInventory>();
+            actorInv.actorId = "Chef";
+            var item = new InventoryItem
+            {
+                id = "flour1",
+                name = "flour",
+                ownedByActorId = "Chef",
+                heldByActorId = "Chef"
+            };
+            actorInv.items.Add(item);
+            mgr.UpsertLocal(item);
+
+            var interior = van.AddComponent<VehicleInterior>();
+            Assert.IsTrue(mgr.PutAwayToVehicleInterior(item, interior, "Chef"));
+
+            var vehicleInv = van.GetComponent<ActorInventory>();
+            Assert.IsNotNull(vehicleInv);
+            Assert.IsNotNull(vehicleInv.FindByName("flour"));
+            Assert.IsNull(actorInv.FindByName("flour"));
+            Assert.AreEqual(vehicleInv.actorId, item.ownedByActorId);
+            Assert.IsNull(item.heldByActorId);
+            Assert.AreEqual(van, item.contextGameObject);
+        }
+        finally
+        {
+            Object.DestroyImmediate(mgrGo);
+            Object.DestroyImmediate(actorGo);
+            Object.DestroyImmediate(van);
+        }
+    }
+
+    [Test]
     public void Trade_DoesNotTransferUntilConversationAccept()
     {
         var self = new GameObject("Self");

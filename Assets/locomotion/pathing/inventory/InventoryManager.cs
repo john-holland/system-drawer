@@ -16,6 +16,9 @@ public sealed class InventoryItem
     public Vector3? onGround;
     public string loadoutSetId = "default";
     public GameObject spawnedInstance;
+    [Tooltip("Alternate inventory context space (station, pantry, vehicle).")]
+    public GameObject contextGameObject;
+    public string contextPath;
 }
 
 [AddComponentMenu("Locomotion/Inventory/Actor Inventory")]
@@ -142,6 +145,112 @@ public sealed class InventoryManager : MonoBehaviour
             item.spawnedInstance.transform.position = world;
     }
 
+    /// <summary>
+    /// Place item into a VehicleInterior marker context space (put-away).
+    /// Transfers into the vehicle <see cref="ActorInventory"/> (created on interior if absent)
+    /// and removes the item from any other actor bags. Lemma: {P:have|op=putaway|item=…|context=…}
+    /// </summary>
+    /// <param name="actorId">Previous holder id (audit only); transfer target is always the vehicle inventory.</param>
+    public bool PutAwayToVehicleInterior(InventoryItem item, VehicleInterior interior, string actorId = null)
+    {
+        if (item == null || interior == null) return false;
+        if (!string.IsNullOrEmpty(item.name) && !IsMentioned(item.name) && scriptMentionGate)
+            return false;
+
+        var vehicleInv = GetOrCreateVehicleInventory(interior);
+        item.contextGameObject = interior.gameObject;
+        item.contextPath = interior.gameObject.name;
+        item.heldByActorId = null;
+        item.ownedByActorId = vehicleInv.actorId;
+        item.onGround = null;
+        if (item.spawnedInstance != null)
+        {
+            item.spawnedInstance.transform.SetParent(interior.transform, true);
+            item.spawnedInstance.transform.localPosition = Vector3.zero;
+        }
+
+        RemoveFromAllActorInventories(item);
+        AddOrUpdateActorInventory(vehicleInv, item);
+        UpsertLocal(item);
+        return true;
+    }
+
+    public bool PutAwayToContext(InventoryItem item, GameObject context, string actorId = null)
+    {
+        if (item == null || context == null) return false;
+        var interior = context.GetComponent<VehicleInterior>() ?? context.GetComponentInChildren<VehicleInterior>();
+        if (interior != null)
+            return PutAwayToVehicleInterior(item, interior, actorId);
+        item.contextGameObject = context;
+        item.contextPath = context.name;
+        item.heldByActorId = null;
+        if (item.spawnedInstance != null)
+        {
+            item.spawnedInstance.transform.SetParent(context.transform, true);
+            item.spawnedInstance.transform.localPosition = Vector3.zero;
+        }
+        UpsertLocal(item);
+        return true;
+    }
+
+    /// <summary>Find ActorInventory on interior or parents; create on interior if missing.</summary>
+    public static ActorInventory GetOrCreateVehicleInventory(VehicleInterior interior)
+    {
+        if (interior == null) return null;
+        var inv = interior.GetComponent<ActorInventory>()
+                  ?? interior.GetComponentInParent<ActorInventory>();
+        if (inv != null)
+        {
+            if (string.IsNullOrEmpty(inv.actorId))
+                inv.actorId = inv.gameObject.name;
+            return inv;
+        }
+        inv = interior.gameObject.AddComponent<ActorInventory>();
+        inv.actorId = interior.gameObject.name;
+        if (inv.items == null)
+            inv.items = new List<InventoryItem>();
+        return inv;
+    }
+
+    static bool ItemMatches(InventoryItem a, InventoryItem b)
+    {
+        if (a == null || b == null) return false;
+        if (!string.IsNullOrEmpty(a.id) && !string.IsNullOrEmpty(b.id))
+            return string.Equals(a.id, b.id, StringComparison.Ordinal);
+        return !string.IsNullOrEmpty(a.name) &&
+               string.Equals(a.name, b.name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    void RemoveFromAllActorInventories(InventoryItem item)
+    {
+        if (item == null) return;
+        var inventories = FindObjectsByType<ActorInventory>(FindObjectsSortMode.None);
+        for (int i = 0; i < inventories.Length; i++)
+        {
+            var inv = inventories[i];
+            if (inv?.items == null) continue;
+            for (int j = inv.items.Count - 1; j >= 0; j--)
+            {
+                if (ItemMatches(inv.items[j], item))
+                    inv.items.RemoveAt(j);
+            }
+        }
+    }
+
+    static void AddOrUpdateActorInventory(ActorInventory inv, InventoryItem item)
+    {
+        if (inv == null || item == null) return;
+        if (inv.items == null)
+            inv.items = new List<InventoryItem>();
+        for (int i = 0; i < inv.items.Count; i++)
+        {
+            if (!ItemMatches(inv.items[i], item)) continue;
+            inv.items[i] = item;
+            return;
+        }
+        inv.items.Add(item);
+    }
+
     void SyncActorComponent(string actorId, InventoryItem item)
     {
         var inventories = FindObjectsByType<ActorInventory>(FindObjectsSortMode.None);
@@ -156,6 +265,8 @@ public sealed class InventoryManager : MonoBehaviour
                 existing.heldByActorId = item.heldByActorId;
                 existing.ownedByActorId = item.ownedByActorId;
                 existing.onGround = item.onGround;
+                existing.contextGameObject = item.contextGameObject;
+                existing.contextPath = item.contextPath;
             }
             else
                 inv.items.Add(item);
@@ -176,7 +287,8 @@ public sealed class InventoryManager : MonoBehaviour
             usePutawayAnimation = Bool(row, "use_putaway_animation"),
             ownedByActorId = Str(row, "ownedby_actor_id"),
             heldByActorId = Str(row, "heldby_actor_id"),
-            loadoutSetId = Str(row, "loadout_set_id") ?? "default"
+            loadoutSetId = Str(row, "loadout_set_id") ?? "default",
+            contextPath = Str(row, "context_path")
         };
         if (row.ContainsKey("onground_x") && row["onground_x"] != null)
         {

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Restaurants — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/restaurants/restaurants.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="rest-main">
+    <h1>Restaurants</h1>
+    <p class="rest-lead">Sim hospitality — menu, tickets, commodities, retinue (no POS payments).</p>
+    <label class="rest-row">Restaurant
+      <select id="rest-select"></select>
+    </label>
+    <nav class="rest-tabs" id="rest-tabs">
+      <button type="button" data-tab="menu" class="active">Menu</button>
+      <button type="button" data-tab="orders">Orders</button>
+      <button type="button" data-tab="commodities">Commodities</button>
+      <button type="button" data-tab="retinue">Retinue</button>
+      <button type="button" data-tab="chef">ChefCard graph</button>
+    </nav>
+    <div id="rest-msg" class="rest-msg" hidden></div>
+    <section id="tab-menu" class="rest-panel active"></section>
+    <section id="tab-orders" class="rest-panel"></section>
+    <section id="tab-commodities" class="rest-panel"></section>
+    <section id="tab-retinue" class="rest-panel"></section>
+    <section id="tab-chef" class="rest-panel">
+      <svg id="chef-graph" width="100%" height="420"></svg>
+    </section>
+  </main>
+
+  <div class="rest-modal-backdrop" id="rest-modal" role="dialog" aria-modal="true" hidden>
+    <div class="rest-modal">
+      <h2 id="rest-modal-title">Edit</h2>
+      <p class="rest-modal-sub" id="rest-modal-sub"></p>
+      <form id="rest-modal-form" class="rest-modal-form"></form>
+      <div class="rest-modal-actions">
+        <button type="button" id="rest-modal-cancel" class="rest-btn-secondary">Cancel</button>
+        <button type="button" id="rest-modal-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-cave-shell.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-tome-bootstrap.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/restaurants/restaurants.js"></script>
+</body>
+</html>

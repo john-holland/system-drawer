@@ -305,6 +305,12 @@ public class PhysicsCardSolver : MonoBehaviour
             return new List<PhysicsCard> { ConsiderLoveMakingCards.MakeDefaultCard() };
         if (goal.type == GoalType.Combat)
             return new List<PhysicsCard> { ConsiderCombatCards.MakeDefaultCard() };
+        if (goal.type == GoalType.Cooking)
+            return new List<PhysicsCard> { ConsiderChefCards.MakeDefaultCard() };
+        if (goal.type == GoalType.Threat)
+            return new List<PhysicsCard> { ThreatCard.Generate(ThreatKind.Generic, gameObject, goal.target) };
+        if (goal.type == GoalType.Justice)
+            return new List<PhysicsCard> { JusticeCard.Generate(JusticeAction.ShutOffHeat, goal.target) };
 
         return new List<PhysicsCard>();
     }
@@ -335,8 +341,10 @@ public class PhysicsCardSolver : MonoBehaviour
             if (card != null && !availableCards.Contains(card))
             {
                 availableCards.Add(card);
+                CardHistoryManager.Instance?.RecordCard(card, this, "added");
             }
         }
+        CardHistoryManager.Instance?.RecordPool(this, "pool");
     }
 
     /// <summary>
@@ -349,8 +357,11 @@ public class PhysicsCardSolver : MonoBehaviour
 
         foreach (var card in cards)
         {
+            if (card != null && availableCards.Contains(card))
+                CardHistoryManager.Instance?.RecordCard(card, this, "removed");
             availableCards.Remove(card);
         }
+        CardHistoryManager.Instance?.RecordPool(this, "pool");
     }
 
     /// <summary>
@@ -359,6 +370,7 @@ public class PhysicsCardSolver : MonoBehaviour
     public void ClearCards()
     {
         availableCards.Clear();
+        CardHistoryManager.Instance?.RecordPool(this, "clear");
     }
 
     // Helper methods for feasibility scoring
@@ -543,6 +555,36 @@ public class PhysicsCardSolver : MonoBehaviour
             {
                 if (card == null) continue;
                 if (card.isCombatGoal || card is CombatCard) return card;
+            }
+        }
+
+        // Cooking / Chef
+        if (goal.type == GoalType.Cooking)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isChefGoal || card is ChefCard) return card;
+            }
+        }
+
+        // Threat
+        if (goal.type == GoalType.Threat)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isThreatGoal || card is ThreatCard) return card;
+            }
+        }
+
+        // Justice
+        if (goal.type == GoalType.Justice)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isJusticeGoal || card is JusticeCard) return card;
             }
         }
 

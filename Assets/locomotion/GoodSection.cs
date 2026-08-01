@@ -242,6 +242,14 @@ public class GoodSection
     [Tooltip("Combat exchange card (GoalType.Combat).")]
     public bool isCombatGoal;
 
+    [Header("Kitchen / Threat")]
+    [Tooltip("Chef / cooking duty card (GoalType.Cooking).")]
+    public bool isChefGoal;
+    [Tooltip("Threat escalation card (GoalType.Threat).")]
+    public bool isThreatGoal;
+    [Tooltip("Corrective justice card (GoalType.Justice).")]
+    public bool isJusticeGoal;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;

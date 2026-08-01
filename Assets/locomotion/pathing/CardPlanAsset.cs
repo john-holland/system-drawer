@@ -46,7 +46,12 @@ public enum CardPlanActionKind
     Carry,
     Drop,
     PathTo,
-    Eat
+    Eat,
+    CookDuty,
+    PrepPlate,
+    PrepServe,
+    TearDown,
+    WashDish
 }
 
 /// <summary>One node in a card plan tree (card, goal, action, or branch container).</summary>
