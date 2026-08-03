@@ -250,6 +250,16 @@ public class GoodSection
     [Tooltip("Corrective justice card (GoalType.Justice).")]
     public bool isJusticeGoal;
 
+    [Header("Civil Life")]
+    [Tooltip("Building / civic repair card (GoalType.Civic).")]
+    public bool isCivicGoal;
+    [Tooltip("Civilian personal-duty card (GoalType.Civil).")]
+    public bool isCivilGoal;
+    [Tooltip("Travel agent / patrol card (GoalType.TravelAgent).")]
+    public bool isTravelAgentGoal;
+    [Tooltip("Plumbing card (GoalType.Plumbing).")]
+    public bool isPlumbingGoal;
+
     // Execution state
     private int currentActionIndex = 0;
     private bool isExecuting = false;

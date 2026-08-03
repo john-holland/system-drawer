@@ -205,6 +205,8 @@ namespace DestructibleEnvironment
                 return;
             if (collision.impulse.magnitude < minImpulseN)
                 return;
+            Vector3 hitPt = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
+            ImpulseMaterialMemory.NotifyImpulse(gameObject, collision.impulse.magnitude, hitPt);
             Activate(DestructibleImpactContext.FromCollision(collision, gravityDir));
         }
 
@@ -213,6 +215,7 @@ namespace DestructibleEnvironment
             if (_activated || bake == null || bake.pieces == null || bake.pieces.Count == 0)
                 return;
 
+            ImpulseMaterialMemory.NotifyImpulse(gameObject, ctx.impulseN, ctx.worldPoint);
             _activated = true;
             DiscoverSources();
 

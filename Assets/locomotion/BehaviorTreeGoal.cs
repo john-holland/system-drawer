@@ -116,7 +116,15 @@ public enum GoalType
     /// <summary>Threat escalation (ThreatCard + ThreatWarden).</summary>
     Threat,
     /// <summary>Corrective justice action (JusticeCard, e.g. shut off heat).</summary>
-    Justice
+    Justice,
+    /// <summary>Building / civic repair &amp; service (CivicCard).</summary>
+    Civic,
+    /// <summary>Individual civilian duty (CivilCard / CivicDuty).</summary>
+    Civil,
+    /// <summary>TravelAgentCard composing JusticeCard + pathing.</summary>
+    TravelAgent,
+    /// <summary>Plumbing: clog / plunge / snake (plumbing cards).</summary>
+    Plumbing
 }
 
 /// <summary>

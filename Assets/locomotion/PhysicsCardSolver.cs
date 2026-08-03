@@ -311,6 +311,14 @@ public class PhysicsCardSolver : MonoBehaviour
             return new List<PhysicsCard> { ThreatCard.Generate(ThreatKind.Generic, gameObject, goal.target) };
         if (goal.type == GoalType.Justice)
             return new List<PhysicsCard> { JusticeCard.Generate(JusticeAction.ShutOffHeat, goal.target) };
+        if (goal.type == GoalType.Civic)
+            return new List<PhysicsCard> { ConsiderCivicCards.MakeDefaultCard() };
+        if (goal.type == GoalType.Civil)
+            return new List<PhysicsCard> { ConsiderCivilCards.MakeDefaultCard() };
+        if (goal.type == GoalType.TravelAgent)
+            return new List<PhysicsCard> { TravelAgentCard.GenerateDefault(goal.target) };
+        if (goal.type == GoalType.Plumbing)
+            return new List<PhysicsCard> { ConsiderPlumbingCards.MakeDefaultCard() };
 
         return new List<PhysicsCard>();
     }
@@ -585,6 +593,47 @@ public class PhysicsCardSolver : MonoBehaviour
             {
                 if (card == null) continue;
                 if (card.isJusticeGoal || card is JusticeCard) return card;
+            }
+        }
+
+        // Civic repair / service
+        if (goal.type == GoalType.Civic)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isCivicGoal || card is CivicCard) return card;
+            }
+        }
+
+        // Civilian duty
+        if (goal.type == GoalType.Civil)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isCivilGoal || card is CivilCard) return card;
+            }
+        }
+
+        // Travel agent
+        if (goal.type == GoalType.TravelAgent)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isTravelAgentGoal || card is TravelAgentCard) return card;
+            }
+        }
+
+        // Plumbing
+        if (goal.type == GoalType.Plumbing)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isPlumbingGoal || card is ClogToiletCard || card is PlungeToiletCard || card is SnakeToiletCard)
+                    return card;
             }
         }
 

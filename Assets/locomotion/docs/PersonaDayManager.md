@@ -46,3 +46,7 @@ FeatureBudget Auto floor still wins when granularity is lower.
 ## Types
 
 `Assets/locomotion/pathing/persona/` — manager, lattice, LOD, cron, would-have-been, wake source, venue bio.
+
+## BuildingRagdoll / civil life
+
+See [BuildingRagdoll.md](BuildingRagdoll.md) and [CivilLifeInstitutions.md](CivilLifeInstitutions.md). PersonaDayManager now fetches `/api/persona-day/request` when bundle cache misses, ticks `PersonalSchedule` + `BuildingRagdoll` / `StoreBase` on woke venues.

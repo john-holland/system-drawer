@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using Locomotion.Narrative;
 
 /// <summary>
@@ -39,9 +41,11 @@ public sealed class PersonaDayManager : MonoBehaviour
     [Header("Prefs")]
     public bool applyGovGloveBias = true;
     public bool driveTravelAgentOnWake = true;
+    public bool fetchPersonaBundlesFromApi = true;
 
     float _accum;
     readonly Dictionary<string, PersonaRequestBundle> _bundleCache = new Dictionary<string, PersonaRequestBundle>(StringComparer.OrdinalIgnoreCase);
+    readonly HashSet<string> _fetchInFlight = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     void Awake()
     {
@@ -99,6 +103,7 @@ public sealed class PersonaDayManager : MonoBehaviour
                 EnsureRetinueBound(venue);
                 ApplyPersona(venue);
                 WakeVenue(venue, tier);
+                TickCivilianSchedules(venue, utcNow);
                 wokenActors += venue.CountWokenActors();
                 if (wokenActors > lodController.maxWokenActors)
                 {
@@ -190,6 +195,8 @@ public sealed class PersonaDayManager : MonoBehaviour
             var key = venue.retinue[0].personaKey;
             if (!string.IsNullOrEmpty(key) && _bundleCache.TryGetValue(key, out var cached))
                 bundle = cached;
+            else if (fetchPersonaBundlesFromApi && !string.IsNullOrEmpty(key) && _fetchInFlight.Add(key))
+                StartCoroutine(FetchPersonaBundle(key, venue.kind, venue.stableId));
         }
         if (bundle == null)
             bundle = PersonaRequestBundle.CreateDefault(venue.stableId, venue.kind);
@@ -203,9 +210,76 @@ public sealed class PersonaDayManager : MonoBehaviour
             sheet.EnsureDefaults();
             LifeSystemsGovGloveBias.ApplyBaselineBias(sheet, bundle.societyFeatures, bundle.needSatisfied01);
             sheet.bioRhythm?.ApplyAmplitudeDelta((bundle.biorhythmAmplitudeSeed - 0.5f) * 0.1f);
+            // Phase seed reserved for bio oscillators (stored on schedule if present).
+            var sched = e.actor.GetComponent<PersonalSchedule>();
+            if (sched != null)
+                sched.personaKey = e.personaKey ?? sched.personaKey;
         }
         if (venue.venueBio != null)
             venue.venueBio.ApplyPersonaSeed(bundle.biorhythmAmplitudeSeed);
+
+        var ragdoll = venue.contextOwner != null ? venue.contextOwner.GetComponent<BuildingRagdoll>() : null;
+        ragdoll?.Tick(Time.deltaTime);
+        if (ragdoll?.bio != null)
+            ragdoll.bio.ApplyPersonaSeed(bundle.biorhythmAmplitudeSeed);
+    }
+
+    IEnumerator FetchPersonaBundle(string personaKey, CivilSystemKind kind, string venueStableId)
+    {
+        string url =
+            $"{apiBaseUrl.TrimEnd('/')}/api/persona-day/request?cityId={UnityWebRequest.EscapeURL(cityId)}" +
+            $"&personaKey={UnityWebRequest.EscapeURL(personaKey)}" +
+            $"&civilKind={UnityWebRequest.EscapeURL(kind.ToString())}" +
+            $"&venueStableId={UnityWebRequest.EscapeURL(venueStableId ?? "")}";
+        using (var req = UnityWebRequest.Get(url))
+        {
+            yield return req.SendWebRequest();
+            _fetchInFlight.Remove(personaKey);
+            if (req.result != UnityWebRequest.Result.Success)
+                yield break;
+            try
+            {
+                var wrap = JsonUtility.FromJson<PersonaDayApiWrap>(req.downloadHandler.text);
+                if (wrap?.bundle == null) yield break;
+                var b = new PersonaRequestBundle
+                {
+                    personaKey = string.IsNullOrEmpty(wrap.bundle.personaKey) ? personaKey : wrap.bundle.personaKey,
+                    actorType = wrap.bundle.actorType,
+                    cityId = wrap.bundle.cityId,
+                    venueStableId = wrap.bundle.venueStableId,
+                    civilKind = kind,
+                    dutyCron = wrap.bundle.dutyCron,
+                    peckingOrder = wrap.bundle.peckingOrder,
+                    biorhythmAmplitudeSeed = wrap.bundle.biorhythmAmplitudeSeed,
+                    biorhythmPhase01 = wrap.bundle.biorhythmPhase01
+                };
+                CacheBundle(b);
+            }
+            catch
+            {
+                // keep defaults
+                Debug.LogWarning($"Failed to fetch persona bundle for {personaKey}: {req.error}");
+            }
+        }
+    }
+
+    [Serializable]
+    sealed class PersonaDayApiWrap
+    {
+        public PersonaDayApiBundle bundle;
+    }
+
+    [Serializable]
+    sealed class PersonaDayApiBundle
+    {
+        public string personaKey;
+        public string actorType;
+        public string cityId;
+        public string venueStableId;
+        public string dutyCron;
+        public int peckingOrder;
+        public float biorhythmAmplitudeSeed;
+        public float biorhythmPhase01;
     }
 
     void WakeVenue(CivilVenueNode venue, CivilLodTier tier)
@@ -280,5 +354,24 @@ public sealed class PersonaDayManager : MonoBehaviour
             venue.kitchenBio?.Tick(dt);
         else
             venue.venueBio?.Tick(dt);
+        var ragdoll = venue.contextOwner != null ? venue.contextOwner.GetComponent<BuildingRagdoll>() : null;
+        ragdoll?.Tick(dt);
+        _ = MunicipalWaterService.Instance; // ubiquitous supply when civil venues tick
+        var stub = venue.contextOwner != null ? venue.contextOwner.GetComponent<CivilInstitutionStub>() : null;
+        stub?.SetAwake(venue.isOpen);
+        var store = venue.contextOwner != null ? venue.contextOwner.GetComponent<StoreBase>() : null;
+        store?.TickHours(DateTime.UtcNow);
+    }
+
+    void TickCivilianSchedules(CivilVenueNode venue, DateTime utcNow)
+    {
+        if (venue.retinue == null) return;
+        for (int i = 0; i < venue.retinue.Count; i++)
+        {
+            var a = venue.retinue[i]?.actor;
+            if (a == null) continue;
+            var sched = a.GetComponent<PersonalSchedule>();
+            sched?.Tick(utcNow);
+        }
     }
 }

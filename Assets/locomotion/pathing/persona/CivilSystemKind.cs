@@ -6,7 +6,29 @@ public enum CivilSystemKind
     School = 2,
     Mall = 3,
     Library = 4,
-    Church = 5
+    Church = 5,
+    SoupKitchen = 6,
+    Factory = 7,
+    LiquorStore = 8,
+    PoliceStation = 9,
+    Bathroom = 10,
+    CarRepair = 11,
+    Gym = 12,
+    House = 13,
+    GasStation = 14,
+    TownHall = 15,
+    NightClub = 16,
+    Bar = 17,
+    Inn = 18,
+    Hotel = 19,
+    MilitaryCheckpoint = 20,
+    SpyAgency = 21,
+    Embassy = 22,
+    GovLegislative = 23,
+    Monarchic = 24,
+    Spa = 25,
+    PrivateIndustry = 26,
+    BarberShop = 27
 }
 
 /// <summary>Per-venue simulation fidelity under budget + speed LOD.</summary>

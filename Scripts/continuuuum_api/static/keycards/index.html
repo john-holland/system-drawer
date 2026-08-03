@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Keycards — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/keycards/keycards.css">
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="kc-main">
+    <h1>Keycards</h1>
+    <p class="kc-lead">Bind keycards to SG4D / door nodes and list actors present at that node.</p>
+    <div id="kc-msg" class="kc-msg" hidden></div>
+    <section class="kc-panel">
+      <h2>Register / update</h2>
+      <form id="kc-form" class="kc-form">
+        <label>Keycard id <input name="keycardId" required placeholder="room-12-guest" /></label>
+        <label>Label <input name="label" placeholder="Room 12" /></label>
+        <label>Bound node id <input name="boundNodeId" required placeholder="sg4d.hotel.room12.door" /></label>
+        <label>Allowed node ids (comma) <input name="allowedNodeIds" placeholder="sg4d.hotel.room12.door" /></label>
+        <label>Actor ids at node (comma) <input name="actorIdsAtNode" placeholder="guest-a" /></label>
+        <button type="submit">Save keycard</button>
+      </form>
+    </section>
+    <section class="kc-panel">
+      <h2>Registry</h2>
+      <button type="button" id="kc-refresh">Refresh</button>
+      <ul id="kc-list" class="kc-list"></ul>
+    </section>
+    <section class="kc-panel">
+      <h2>Companies (thin CRUD)</h2>
+      <form id="co-form" class="kc-form">
+        <label>Company id <input name="companyId" required placeholder="inn-nepotism" /></label>
+        <label>Display name <input name="displayName" placeholder="The Copper Inn" /></label>
+        <label>Parent company id <input name="parentCompanyId" placeholder="" /></label>
+        <button type="submit">Save company</button>
+      </form>
+      <ul id="co-list" class="kc-list"></ul>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/keycards/keycards.js"></script>
+</body>
+</html>

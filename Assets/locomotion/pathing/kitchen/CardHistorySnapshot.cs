@@ -15,6 +15,9 @@ public sealed class CardHistorySnapshot
     public bool isLoveMakingGoal;
     public bool isThreatGoal;
     public bool isJusticeGoal;
+    public bool isCivicGoal;
+    public bool isCivilGoal;
+    public bool isTravelAgentGoal;
     public bool isEatGoal;
     public string dutyOrActivitySummary;
     public string eventKind; // added | removed | pool
@@ -41,6 +44,9 @@ public sealed class CardHistorySnapshot
         snap.isLoveMakingGoal = card.isLoveMakingGoal || card is LoveCard;
         snap.isThreatGoal = card.isThreatGoal || card is ThreatCard;
         snap.isJusticeGoal = card.isJusticeGoal || card is JusticeCard;
+        snap.isCivicGoal = card.isCivicGoal || card is CivicCard;
+        snap.isCivilGoal = card.isCivilGoal || card is CivilCard;
+        snap.isTravelAgentGoal = card.isTravelAgentGoal || card is TravelAgentCard;
         snap.isEatGoal = card.isEatGoal;
         if (card is ChefCard chef)
             snap.dutyOrActivitySummary = chef.DutySummary();
@@ -48,6 +54,10 @@ public sealed class CardHistorySnapshot
             snap.dutyOrActivitySummary = $"{threat.threatKind}:{threat.alertLemma}";
         else if (card is JusticeCard justice)
             snap.dutyOrActivitySummary = justice.justiceAction.ToString();
+        else if (card is CivicCard civic)
+            snap.dutyOrActivitySummary = civic.DutySummary();
+        else if (card is CivilCard civil)
+            snap.dutyOrActivitySummary = civil.DutySummary();
         else
             snap.dutyOrActivitySummary = card.description ?? "";
         return snap;

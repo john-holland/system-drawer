@@ -20,6 +20,8 @@ namespace DestructibleEnvironment
                 return;
             if (collision.impulse.magnitude < _minImpulseN)
                 return;
+            Vector3 pt = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
+            ImpulseMaterialMemory.NotifyImpulse(gameObject, collision.impulse.magnitude, pt);
             _target.Activate(DestructibleImpactContext.FromCollision(collision, _target.gravityDir));
         }
     }

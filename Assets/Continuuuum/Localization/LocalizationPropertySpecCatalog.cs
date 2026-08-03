@@ -70,6 +70,7 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildActionInputPropertyRecords());
         list.AddRange(BuildSpatialDescriptionPropertyRecords());
         list.AddRange(BuildChefPropertyRecords());
+        list.AddRange(BuildHousingPropertyRecords());
         list.AddRange(BuildThreatPropertyRecords());
         list.AddRange(BuildTasteNotesPropertyRecords());
         return list.ToArray();
@@ -89,6 +90,12 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         Spec(ChefLemmaPropertyKeys.SpecStation, "String", "", "Station / context id"),
         Spec(ChefLemmaPropertyKeys.SpecItem, "String", "", "Ingredient or tool name"),
         Spec(ChefLemmaPropertyKeys.SpecOrder, "String", "", "Order ticket id"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildHousingPropertyRecords() => new[]
+    {
+        Spec(HousingLemmaPropertyKeys.SpecSize, "String", "good_size", "quaint|good_size|mc_mansion|mansion|cabin|cottage|townhome"),
+        Spec(HousingLemmaPropertyKeys.SpecStyle, "String", "", "Freeform architecture style tag"),
     };
 
     public static LocalizationPropertySpecRecord[] BuildThreatPropertyRecords() => new[]

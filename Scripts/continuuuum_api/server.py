@@ -250,7 +250,13 @@ try:
     from continuuuum_api.persona_day_routes import register_persona_day_routes
 
 
+    from continuuuum_api.building_ragdoll_routes import register_building_ragdoll_routes
+
+
     from continuuuum_api.station_routes import register_station_routes
+
+
+    from continuuuum_api.hospitality_security_routes import register_hospitality_security_routes
 
 
     from continuuuum_api.loadouts_routes import register_loadouts_routes
@@ -316,7 +322,13 @@ except ImportError:
     from persona_day_routes import register_persona_day_routes
 
 
+    from building_ragdoll_routes import register_building_ragdoll_routes
+
+
     from station_routes import register_station_routes
+
+
+    from hospitality_security_routes import register_hospitality_security_routes
 
 
     from loadouts_routes import register_loadouts_routes
@@ -4116,7 +4128,13 @@ register_restaurant_routes(app, get_conn)
 register_persona_day_routes(app, get_conn)
 
 
+register_building_ragdoll_routes(app, get_conn)
+
+
 register_station_routes(app, get_conn)
+
+
+register_hospitality_security_routes(app, get_conn)
 
 
 register_loadouts_routes(app, get_conn)

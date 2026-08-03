@@ -12,10 +12,32 @@ public sealed class CivilSystemLattice
     public List<CivilSystemKind> kindPriorityOrder = new List<CivilSystemKind>
     {
         CivilSystemKind.Kitchen,
+        CivilSystemKind.SoupKitchen,
         CivilSystemKind.School,
+        CivilSystemKind.PoliceStation,
         CivilSystemKind.Church,
         CivilSystemKind.Library,
         CivilSystemKind.Mall,
+        CivilSystemKind.Factory,
+        CivilSystemKind.Gym,
+        CivilSystemKind.TownHall,
+        CivilSystemKind.GasStation,
+        CivilSystemKind.LiquorStore,
+        CivilSystemKind.House,
+        CivilSystemKind.CarRepair,
+        CivilSystemKind.Bathroom,
+        CivilSystemKind.MilitaryCheckpoint,
+        CivilSystemKind.Embassy,
+        CivilSystemKind.SpyAgency,
+        CivilSystemKind.GovLegislative,
+        CivilSystemKind.Monarchic,
+        CivilSystemKind.Hotel,
+        CivilSystemKind.Inn,
+        CivilSystemKind.NightClub,
+        CivilSystemKind.Bar,
+        CivilSystemKind.Spa,
+        CivilSystemKind.BarberShop,
+        CivilSystemKind.PrivateIndustry,
         CivilSystemKind.Generic
     };
 
@@ -74,12 +96,35 @@ public sealed class CivilSystemLattice
     {
         if (string.IsNullOrEmpty(buildingTypeId)) return CivilSystemKind.Generic;
         var id = buildingTypeId.ToLowerInvariant();
+        if (id.Contains("soup")) return CivilSystemKind.SoupKitchen;
+        if (id.Contains("nightclub") || id.Contains("night_club") || id.Contains("disco")) return CivilSystemKind.NightClub;
+        if (id.Contains("barbershop") || id.Contains("barber_shop") || id.Contains("barber")) return CivilSystemKind.BarberShop;
+        if (id.Contains("hotel")) return CivilSystemKind.Hotel;
+        if (id == "inn" || id.StartsWith("inn_") || id.EndsWith("_inn") || id.Contains("motel")) return CivilSystemKind.Inn;
+        if (id.Contains("checkpoint") || id.Contains("military_gate")) return CivilSystemKind.MilitaryCheckpoint;
+        if (id.Contains("spy") || id.Contains("intelligence")) return CivilSystemKind.SpyAgency;
+        if (id.Contains("embassy") || id.Contains("consulate")) return CivilSystemKind.Embassy;
+        if (id.Contains("legislative") || id.Contains("capitol") || id.Contains("parliament")) return CivilSystemKind.GovLegislative;
+        if (id.Contains("monarch") || id.Contains("palace") || id.Contains("royal")) return CivilSystemKind.Monarchic;
+        if (id == "spa" || id.StartsWith("spa_") || id.EndsWith("_spa") || id.Contains("bathhouse")) return CivilSystemKind.Spa;
+        if (id.Contains("private_industry") || id.Contains("office_building") || id.EndsWith("_office") || id.Contains("home_business")) return CivilSystemKind.PrivateIndustry;
+        // Bar after barber/hotel to avoid false positives on substrings.
+        if (id == "bar" || id.EndsWith("_bar") || id.Contains("tavern") || id.Contains("pub")) return CivilSystemKind.Bar;
         if (id.Contains("restaurant") || id.Contains("kitchen")) return CivilSystemKind.Kitchen;
         if (id.Contains("school")) return CivilSystemKind.School;
+        if (id.Contains("police")) return CivilSystemKind.PoliceStation;
         // Church before mall — "church_small" contains substring "mall".
         if (id.Contains("church")) return CivilSystemKind.Church;
         if (id.Contains("library")) return CivilSystemKind.Library;
+        if (id.Contains("liquor")) return CivilSystemKind.LiquorStore;
         if (id.Contains("mall")) return CivilSystemKind.Mall;
+        if (id.Contains("factory")) return CivilSystemKind.Factory;
+        if (id.Contains("gym")) return CivilSystemKind.Gym;
+        if (id.Contains("town_hall") || id.Contains("townhall") || id.Contains("city_hall")) return CivilSystemKind.TownHall;
+        if (id.Contains("gas")) return CivilSystemKind.GasStation;
+        if (id.Contains("house") || id.Contains("home") || id.Contains("residence")) return CivilSystemKind.House;
+        if (id.Contains("car_repair") || id.Contains("auto_repair") || id.Contains("garage")) return CivilSystemKind.CarRepair;
+        if (id.Contains("bathroom") || id.Contains("restroom")) return CivilSystemKind.Bathroom;
         return CivilSystemKind.Generic;
     }
 }

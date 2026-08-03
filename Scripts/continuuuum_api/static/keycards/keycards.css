@@ -1,0 +1,101 @@
+:root {
+  --kc-ink: #1a2420;
+  --kc-muted: #5a6a62;
+  --kc-accent: #2f6f5e;
+  --kc-bg: #e8efe9;
+  --kc-panel: rgba(255, 255, 255, 0.72);
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+  color: var(--kc-ink);
+  background:
+    radial-gradient(ellipse at 20% 0%, #c9ddd4 0%, transparent 50%),
+    linear-gradient(165deg, #dfe8e2 0%, var(--kc-bg) 55%, #d2dcd6 100%);
+  min-height: 100vh;
+}
+
+.kc-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem;
+}
+
+.kc-main h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.85rem;
+  letter-spacing: -0.02em;
+}
+
+.kc-lead {
+  color: var(--kc-muted);
+  margin: 0 0 1.25rem;
+}
+
+.kc-panel {
+  background: var(--kc-panel);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(47, 111, 94, 0.18);
+}
+
+.kc-panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.kc-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.kc-form label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--kc-muted);
+}
+
+.kc-form input {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(26, 36, 32, 0.25);
+  background: #fff;
+  font: inherit;
+}
+
+.kc-form button,
+#kc-refresh {
+  justify-self: start;
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.9rem;
+  border: none;
+  background: var(--kc-accent);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.kc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.kc-list li {
+  padding: 0.55rem 0;
+  border-top: 1px solid rgba(26, 36, 32, 0.1);
+  font-size: 0.9rem;
+}
+
+.kc-msg {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #dff5ea;
+  border: 1px solid #2f6f5e;
+}
+
+.kc-msg.err {
+  background: #fde8e8;
+  border-color: #a33;
+}
