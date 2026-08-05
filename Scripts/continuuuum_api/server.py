@@ -259,6 +259,9 @@ try:
     from continuuuum_api.hospitality_security_routes import register_hospitality_security_routes
 
 
+    from continuuuum_api.vehicle_inventory_routes import register_vehicle_inventory_routes
+
+
     from continuuuum_api.loadouts_routes import register_loadouts_routes
 
 
@@ -329,6 +332,9 @@ except ImportError:
 
 
     from hospitality_security_routes import register_hospitality_security_routes
+
+
+    from vehicle_inventory_routes import register_vehicle_inventory_routes
 
 
     from loadouts_routes import register_loadouts_routes
@@ -4135,6 +4141,9 @@ register_station_routes(app, get_conn)
 
 
 register_hospitality_security_routes(app, get_conn)
+
+
+register_vehicle_inventory_routes(app, get_conn)
 
 
 register_loadouts_routes(app, get_conn)

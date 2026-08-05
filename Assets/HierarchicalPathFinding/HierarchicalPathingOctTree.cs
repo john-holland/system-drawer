@@ -56,7 +56,12 @@ public sealed class HierarchicalPathingOctTree
     }
 
     /// <summary>A* over leaf centers using face-adjacency between non-blocked leaves.</summary>
-    public static List<Vector3> FindPathThroughLeaves(IReadOnlyList<Leaf> leaves, Vector3 startWorld, Vector3 goalWorld, int maxExpandedNodes = 50000)
+    public static List<Vector3> FindPathThroughLeaves(
+        IReadOnlyList<Leaf> leaves,
+        Vector3 startWorld,
+        Vector3 goalWorld,
+        int maxExpandedNodes = 50000,
+        Func<Vector3, float> softAvoidCostAt = null)
     {
         if (leaves == null || leaves.Count == 0)
             return new List<Vector3>();
@@ -112,7 +117,11 @@ public sealed class HierarchicalPathingOctTree
             {
                 if (closed[ni])
                     continue;
-                float tentative = gScore[ci] + Vector3.Distance(leaves[ci].Center, leaves[ni].Center);
+                float dist = Vector3.Distance(leaves[ci].Center, leaves[ni].Center);
+                float avoidMul = softAvoidCostAt != null
+                    ? Mathf.Max(0.01f, softAvoidCostAt(leaves[ni].Center))
+                    : 1f;
+                float tentative = gScore[ci] + dist * avoidMul;
                 if (tentative < gScore[ni])
                 {
                     cameFrom[ni] = ci;

@@ -59,6 +59,13 @@ public class TravelAgent : MonoBehaviour
     [Tooltip("Secondary modality mix bias used by timeline and traversibility scoring.")]
     public float requireType01 = 0.5f;
 
+    [Header("Traffic avoidance")]
+    [Tooltip("Developer inpaint / balloon override — skip avoid-cop soft costs.")]
+    public bool ignoreTrafficAvoidance;
+    public List<Transform> avoidActors = new List<Transform>();
+    public float avoidRadius = 12f;
+    public float avoidCostMultiplier = 4f;
+
     [Header("Risk / safety band (NaN = unset)")]
     [Tooltip("Refuse routes with risk above this (e.g. 0.3 = jump over, not out a window).")]
     public float maxRisk01 = float.NaN;
@@ -379,6 +386,9 @@ public class TravelAgent : MonoBehaviour
         if (solver == null)
             return;
 
+        ApplyAvoidHintsFromWarden();
+        ApplySoftAvoidToPathingSolver(solver);
+
         Vector3 queryPos = previewStartWorld;
         var hints = new GenericTraversibilityPlannerSolver.PlannerHints
         {
@@ -388,7 +398,11 @@ public class TravelAgent : MonoBehaviour
             maxRisk01 = maxRisk01,
             minRisk01 = minRisk01,
             minSafety01 = minSafety01,
-            maxSafety01 = maxSafety01
+            maxSafety01 = maxSafety01,
+            avoidPoints = CollectAvoidPoints(),
+            avoidRadius = avoidRadius,
+            avoidCostMultiplier = avoidCostMultiplier,
+            ignoreAvoidance = ignoreTrafficAvoidance
         };
 
         PlannerTimelineOptions tl = plannerTimelineOptions;
@@ -482,6 +496,54 @@ public class TravelAgent : MonoBehaviour
     {
         totalPathLengthMeters = TravelPathReverseLimits.ComputeTotalPathLengthMeters(cachedPlan);
         reverseBudgetMeters = TravelPathReverseLimits.ReverseBudgetMeters(reverseLegLimit01, totalPathLengthMeters);
+    }
+
+    /// <summary>Pull active avoid sources from <see cref="TrafficWarden"/> into local avoidActors.</summary>
+    public void ApplyAvoidHintsFromWarden()
+    {
+        if (ignoreTrafficAvoidance) return;
+        var warden = TrafficWarden.Instance;
+        if (warden == null) return;
+        for (int i = 0; i < warden.avoidSources.Count; i++)
+        {
+            var t = warden.avoidSources[i];
+            if (t != null && !avoidActors.Contains(t))
+                avoidActors.Add(t);
+        }
+    }
+
+    Vector3[] CollectAvoidPoints()
+    {
+        if (ignoreTrafficAvoidance) return Array.Empty<Vector3>();
+        var list = new List<Vector3>();
+        for (int i = 0; i < avoidActors.Count; i++)
+        {
+            if (avoidActors[i] != null)
+                list.Add(avoidActors[i].position);
+        }
+        var warden = TrafficWarden.Instance;
+        if (warden != null)
+        {
+            for (int i = 0; i < warden.avoidSources.Count; i++)
+            {
+                var t = warden.avoidSources[i];
+                if (t != null)
+                    list.Add(t.position);
+            }
+        }
+        return list.ToArray();
+    }
+
+    /// <summary>Push current avoid points onto a hierarchical solver (also used from tests).</summary>
+    public void ApplySoftAvoidToPathingSolver(HierarchicalPathingSolver solver = null)
+    {
+        solver = solver != null ? solver : pathingSolverForPreview;
+        if (solver == null) return;
+        solver.SetSoftAvoid(
+            CollectAvoidPoints(),
+            avoidRadius,
+            avoidCostMultiplier,
+            enabled: !ignoreTrafficAvoidance);
     }
 
     /// <summary>Reset reverse limit to plan default (0.5 at ≥500 m, else 1.0).</summary>

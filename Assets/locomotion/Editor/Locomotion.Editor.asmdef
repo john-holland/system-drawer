@@ -4,6 +4,7 @@
   "references": [
     "Locomotion.Runtime",
     "Locomotion.Audio",
+    "Locomotion.Narrative.Runtime",
     "HierarchicalPathFinding",
     "Generated.Runtime",
     "SystemDrawer",

@@ -26,6 +26,7 @@ public sealed class CivilSystemLattice
         CivilSystemKind.House,
         CivilSystemKind.CarRepair,
         CivilSystemKind.Bathroom,
+        CivilSystemKind.FireStation,
         CivilSystemKind.MilitaryCheckpoint,
         CivilSystemKind.Embassy,
         CivilSystemKind.SpyAgency,
@@ -101,6 +102,7 @@ public sealed class CivilSystemLattice
         if (id.Contains("barbershop") || id.Contains("barber_shop") || id.Contains("barber")) return CivilSystemKind.BarberShop;
         if (id.Contains("hotel")) return CivilSystemKind.Hotel;
         if (id == "inn" || id.StartsWith("inn_") || id.EndsWith("_inn") || id.Contains("motel")) return CivilSystemKind.Inn;
+        if (id.Contains("fire_station") || id.Contains("firehouse") || id.Contains("fire_dept")) return CivilSystemKind.FireStation;
         if (id.Contains("checkpoint") || id.Contains("military_gate")) return CivilSystemKind.MilitaryCheckpoint;
         if (id.Contains("spy") || id.Contains("intelligence")) return CivilSystemKind.SpyAgency;
         if (id.Contains("embassy") || id.Contains("consulate")) return CivilSystemKind.Embassy;

@@ -20,4 +20,14 @@ public static class InstitutionBuiltinCards
         var hint = ViolenceTelecomHint.Instance;
         return hint != null ? hint.MakePatrolCardFromLatest() : TravelAgentCard.GeneratePatrol(Vector3.zero);
     }
+
+    public static FiremanCard FiremanRespond() => FiremanCard.Generate("respond");
+
+    public static TravelAgentCard FireScenePatrol(Vector3 fireWorld) =>
+        TravelAgentCard.GeneratePatrol(fireWorld);
+
+    public static CopCard CopPatrol(Vector3 goal) => CopCard.Generate("patrol", goal);
+
+    public static TAMaintenanceCard VehicleBayRepair(VehicleRagdoll vehicle) =>
+        TAMaintenanceCard.GenerateRepair(vehicle);
 }

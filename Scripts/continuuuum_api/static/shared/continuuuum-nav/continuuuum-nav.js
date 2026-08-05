@@ -16,6 +16,7 @@
     { id: 'restaurants', label: 'Restaurants', path: '/restaurants' },
     { id: 'stations', label: 'Stations', path: '/stations' },
     { id: 'keycards', label: 'Keycards', path: '/keycards' },
+    { id: 'vehicle-inventory', label: 'Vehicle Inventory', path: '/vehicle-inventory' },
     { id: 'camera', label: 'Camera', path: '/camera-pathing' },
     { id: 'table-read', label: 'Table Read', path: '/table-read' },
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
@@ -134,6 +135,7 @@
       restaurants: lemmaBase + '/restaurants',
       stations: lemmaBase + '/stations',
       keycards: lemmaBase + '/keycards',
+      'vehicle-inventory': lemmaBase + '/vehicle-inventory',
       camera: lemmaBase + '/camera-pathing',
       'table-read': lemmaBase + '/table-read',
       'sql-viewer': lemmaBase + '/sql-viewer',
@@ -163,6 +165,7 @@
     if (path.indexOf('/restaurants') >= 0) return 'restaurants';
     if (path.indexOf('/stations') >= 0) return 'stations';
     if (path.indexOf('/keycards') >= 0) return 'keycards';
+    if (path.indexOf('/vehicle-inventory') >= 0) return 'vehicle-inventory';
     if (path.indexOf('/camera-pathing') >= 0 || path.indexOf('/camera-scenes') >= 0) return 'camera';
     if (path.indexOf('/table-read') >= 0) return 'table-read';
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';

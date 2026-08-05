@@ -20,7 +20,13 @@ public sealed class CivilInstitutionStub : MonoBehaviour
             store = GetComponent<StoreBase>();
         if (string.IsNullOrEmpty(buildingTypeId))
             buildingTypeId = kind.ToString().ToLowerInvariant();
-        if (IsHospitalityOrSecurityKind(kind) && GetComponent<HospitalityInstitutionBootstrap>() == null)
+        if (kind == CivilSystemKind.FireStation && GetComponent<FireStationBootstrap>() == null)
+            gameObject.AddComponent<FireStationBootstrap>();
+        else if (kind == CivilSystemKind.CarRepair && GetComponent<VehicleRepairCenterBootstrap>() == null)
+            gameObject.AddComponent<VehicleRepairCenterBootstrap>();
+        else if (kind == CivilSystemKind.PoliceStation && GetComponent<PoliceStationBootstrap>() == null)
+            gameObject.AddComponent<PoliceStationBootstrap>();
+        else if (IsHospitalityOrSecurityKind(kind) && GetComponent<HospitalityInstitutionBootstrap>() == null)
             gameObject.AddComponent<HospitalityInstitutionBootstrap>();
     }
 

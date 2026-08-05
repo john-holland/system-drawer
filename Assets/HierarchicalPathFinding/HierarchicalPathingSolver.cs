@@ -85,6 +85,12 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     [Tooltip("Max nodes to expand during a single path query (0 = unlimited).")]
     public int maxExpandedNodes = 20000;
 
+    [Header("Soft avoid (traffic / cops)")]
+    public Vector3[] softAvoidPoints;
+    public float softAvoidRadius = 12f;
+    public float softAvoidCostMultiplier = 4f;
+    public bool softAvoidEnabled = true;
+
     [Header("Fit to Terrain")]
     [Tooltip("When enabled, sample terrain height at each cell so paths and occupancy follow the terrain surface.")]
     public bool fitToTerrain = false;
@@ -296,8 +302,37 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         PhysicsPathingZone.SampleAt((a + b) * 0.5f, out float pathCostMul, out _);
         if (pathingMode == PathingMode.Drive)
             pathCostMul *= DriveCorridorEdgeCostMultiplier((a + b) * 0.5f);
+        pathCostMul *= SoftAvoidEdgeCostMultiplier((a + b) * 0.5f);
         return pathCostMul;
     }
+
+    float SoftAvoidEdgeCostMultiplier(Vector3 midpoint)
+    {
+        if (!softAvoidEnabled || softAvoidPoints == null || softAvoidPoints.Length == 0)
+            return 1f;
+        float r = Mathf.Max(0.01f, softAvoidRadius);
+        float r2 = r * r;
+        float mul = Mathf.Max(1f, softAvoidCostMultiplier);
+        for (int i = 0; i < softAvoidPoints.Length; i++)
+        {
+            Vector3 d = midpoint - softAvoidPoints[i];
+            d.y = 0f;
+            if (d.sqrMagnitude <= r2)
+                return mul;
+        }
+        return 1f;
+    }
+
+    public void SetSoftAvoid(Vector3[] points, float radius, float costMultiplier, bool enabled)
+    {
+        softAvoidPoints = points;
+        softAvoidRadius = radius;
+        softAvoidCostMultiplier = costMultiplier;
+        softAvoidEnabled = enabled;
+    }
+
+    /// <summary>Test / tooling: soft-avoid multiplier at a world point.</summary>
+    public float EvaluateSoftAvoidMultiplier(Vector3 world) => SoftAvoidEdgeCostMultiplier(world);
 
     float DriveCorridorEdgeCostMultiplier(Vector3 midpoint)
     {
@@ -423,7 +458,12 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
                 return path ?? new List<Vector3>();
 
             case HierarchicalPathingBackend.OctreeLeaves:
-                path = HierarchicalPathingOctTree.FindPathThroughLeaves(octTreeBuilt != null ? octTreeBuilt.Leaves : null, startWorld, goalWorld, maxExpandedNodes);
+                path = HierarchicalPathingOctTree.FindPathThroughLeaves(
+                    octTreeBuilt != null ? octTreeBuilt.Leaves : null,
+                    startWorld,
+                    goalWorld,
+                    maxExpandedNodes,
+                    SoftAvoidEdgeCostMultiplier);
                 return path ?? new List<Vector3>();
 
             default:

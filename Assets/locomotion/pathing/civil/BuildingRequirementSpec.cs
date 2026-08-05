@@ -160,6 +160,39 @@ public sealed class BuildingRequirementSpec : ScriptableObject
             list.Add(Slot("sink", "Shampoo sink", true));
             list.Add(Slot("commodities", "Commodities shelf", false));
         }
+        if (id.Contains("fire_station") || id.Contains("firehouse") || id.Contains("fire_dept"))
+        {
+            list.Add(Slot("engine_bay", "Engine bay", true));
+            list.Add(Slot("pole", "Fireman pole", false));
+            list.Add(Slot("sleeping", "Sleeping area", true));
+            list.Add(Slot("meeting", "Meeting room / telecom", true));
+            list.Add(Slot("office", "Office / webtop", true));
+            list.Add(Slot("kitchen", "Kitchen", false));
+            list.Add(Slot("parking", "Parking / apron", true));
+            list.Add(Slot("rail_bay", "Rail firetruck bay", false));
+        }
+        if (id.Contains("car_repair") || id.Contains("auto_repair") || id == "garage"
+            || id.Contains("vehicle_repair"))
+        {
+            list.Add(Slot("maintenance_bay", "Maintenance bay", true));
+            list.Add(Slot("retail", "Retail / commodities", true));
+            list.Add(Slot("kitchen", "Kitchen", false));
+            list.Add(Slot("bathroom", "Bathroom", true));
+            list.Add(Slot("parking", "Parking", true));
+            list.Add(Slot("trash", "Trash", true));
+        }
+        if (id.Contains("police"))
+        {
+            list.Add(Slot("main_hall", "Main office / hall", true));
+            list.Add(Slot("desk_station", "Desk stations", true));
+            list.Add(Slot("meeting_room", "Meeting rooms / telecom", true));
+            list.Add(Slot("private_office", "Private offices", false));
+            list.Add(Slot("interrogation", "Interrogation rooms", true));
+            list.Add(Slot("holding", "Holding cell", true));
+            list.Add(Slot("repair_bay", "Vehicle repair bay", false));
+            list.Add(Slot("parking", "Parking", true));
+            list.Add(Slot("kitchen", "Kitchen", false));
+        }
         return list;
     }
 

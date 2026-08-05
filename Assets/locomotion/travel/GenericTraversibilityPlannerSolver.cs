@@ -23,6 +23,12 @@ public static class GenericTraversibilityPlannerSolver
         public float minSafety01;
         /// <summary>Unset = NaN. safety &lt;= maxSafety01 ⇒ risk &gt;= 1 - maxSafety01.</summary>
         public float maxSafety01;
+
+        /// <summary>Soft-avoid world points (e.g. police cruisers).</summary>
+        public Vector3[] avoidPoints;
+        public float avoidRadius;
+        public float avoidCostMultiplier;
+        public bool ignoreAvoidance;
     }
 
     /// <summary>

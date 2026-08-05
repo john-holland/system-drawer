@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vehicle Inventory — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/vehicle-inventory/vehicle-inventory.css">
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="vi-main">
+    <h1>Vehicle Inventory</h1>
+    <p class="vi-lead">Name a vehicle and configure multiple named interior inventory sections.</p>
+    <div id="vi-msg" class="vi-msg" hidden></div>
+    <section class="vi-panel">
+      <h2>Save vehicle</h2>
+      <form id="vi-form" class="vi-form">
+        <label>Vehicle id <input name="vehicleId" required placeholder="engine-1" /></label>
+        <label>Display name <input name="displayName" placeholder="Engine 1" /></label>
+        <label>Section names (comma) <input name="sections" value="cabin,hose_bed,cargo" /></label>
+        <button type="submit">Save</button>
+      </form>
+    </section>
+    <section class="vi-panel">
+      <h2>Registry</h2>
+      <button type="button" id="vi-refresh">Refresh</button>
+      <ul id="vi-list" class="vi-list"></ul>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/vehicle-inventory/vehicle-inventory.js"></script>
+</body>
+</html>

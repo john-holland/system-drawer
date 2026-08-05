@@ -72,9 +72,18 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildChefPropertyRecords());
         list.AddRange(BuildHousingPropertyRecords());
         list.AddRange(BuildThreatPropertyRecords());
+        list.AddRange(BuildStreetLightPropertyRecords());
         list.AddRange(BuildTasteNotesPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildStreetLightPropertyRecords() => new[]
+    {
+        Spec(StreetLightLemmaPropertyKeys.SpecChangedTo, "String", "red", "changed-to color: red|green|yellow|amber"),
+        Spec(StreetLightLemmaPropertyKeys.SpecRed, "Bool", "true", "Predicate/control red signal"),
+        Spec(StreetLightLemmaPropertyKeys.SpecGreen, "Bool", "true", "Predicate/control green signal"),
+        Spec(StreetLightLemmaPropertyKeys.SpecYellow, "Bool", "true", "Predicate/control yellow/amber signal"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildTasteNotesPropertyRecords() => new[]
     {

@@ -292,6 +292,19 @@ THREAT_DISCOVERY_TOKENS = frozenset(
     }
 )
 
+STREET_LIGHT_DISCOVERY_TOKENS = frozenset(
+    {
+        "street_light",
+        "traffic_signal",
+        "stoplight",
+        "changed-to",
+        "red",
+        "green",
+        "yellow",
+        "amber",
+    }
+)
+
 
 def _chef_prompt_candidate(span: dict[str, Any], selection_text: str) -> dict[str, Any] | None:
     token = (selection_text or "").strip().lower()
@@ -329,6 +342,27 @@ def _threat_prompt_candidate(span: dict[str, Any], selection_text: str) -> dict[
         "propertyKey": "threat",
         "propertyValue": value,
         "promptPlaceholderName": "threat",
+        "charStart": span["charStart"],
+        "charEnd": span["charEnd"],
+        "selectionText": selection_text,
+    }
+
+
+def _street_light_prompt_candidate(span: dict[str, Any], selection_text: str) -> dict[str, Any] | None:
+    token = (selection_text or "").strip().lower()
+    if token not in STREET_LIGHT_DISCOVERY_TOKENS:
+        return None
+    if token in ("red", "green", "yellow", "amber"):
+        value = f"{{P:street_light|changed-to={token}}}"
+    elif token == "changed-to":
+        value = "{P:street_light|changed-to=red}"
+    else:
+        value = "{P:street_light|changed-to=green}"
+    return {
+        "bindingKind": "prompt_placeholder",
+        "propertyKey": "street_light",
+        "propertyValue": value,
+        "promptPlaceholderName": "street_light",
         "charStart": span["charStart"],
         "charEnd": span["charEnd"],
         "selectionText": selection_text,
@@ -441,6 +475,13 @@ def build_span_candidates(
         if key not in applied and key not in seen:
             seen.add(key)
             candidates.append(threat_tpl)
+
+    street_tpl = _street_light_prompt_candidate(span, selection_text)
+    if street_tpl:
+        key = binding_template_key(street_tpl)
+        if key not in applied and key not in seen:
+            seen.add(key)
+            candidates.append(street_tpl)
 
     return candidates
 

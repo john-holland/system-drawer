@@ -28,7 +28,8 @@ public enum CivilSystemKind
     Monarchic = 24,
     Spa = 25,
     PrivateIndustry = 26,
-    BarberShop = 27
+    BarberShop = 27,
+    FireStation = 28
 }
 
 /// <summary>Per-venue simulation fidelity under budget + speed LOD.</summary>
