@@ -17,21 +17,22 @@ public static class PixelLightPrefabFactory
         var optic = go.AddComponent<PixelLightOptic>();
         optic.EnsureBreadPanMesh();
 
-        // Side metallic + top transparent via runtime materials (URP/Built-in Standard fallback).
-        var side = new Material(Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit"));
-        side.color = new Color(0.55f, 0.55f, 0.58f);
-        side.SetFloat("_Metallic", 0.85f);
-        side.SetFloat("_Glossiness", 0.65f);
-        side.EnableKeyword("_EMISSION");
-        side.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        // Side metallic + top transparent via runtime materials (URP/Built-in/Unlit fallback).
+        // EditMode tests often lack Standard/URP shaders — never throw on null Shader.Find.
+        var side = TryCreateMaterial(new Color(0.55f, 0.55f, 0.58f), transparent: false);
+        if (side != null)
+        {
+            side.SetFloat("_Metallic", 0.85f);
+            side.SetFloat("_Glossiness", 0.65f);
+            side.EnableKeyword("_EMISSION");
+            side.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        }
 
-        var top = new Material(Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit"));
-        top.color = new Color(0.7f, 0.85f, 1f, 0.35f);
-        SetTransparent(top);
+        var top = TryCreateMaterial(new Color(0.7f, 0.85f, 1f, 0.35f), transparent: true);
 
         optic.sideMaterial = side;
         optic.topMaterial = top;
-        if (optic.meshRenderer != null)
+        if (optic.meshRenderer != null && side != null && top != null)
             optic.meshRenderer.sharedMaterials = new[] { side, top };
 
         var rig = go.AddComponent<PixelLightRig>();
@@ -43,6 +44,35 @@ public static class PixelLightPrefabFactory
         rig.colorPackage = PixelLightColorPackage.CreateEmergencyRed();
         rig.syncMode = PixelLightSyncMode.Free;
         return go;
+    }
+
+    static readonly string[] LitShaderCandidates =
+    {
+        "Universal Render Pipeline/Lit",
+        "Standard",
+        "Legacy Shaders/Diffuse",
+        "Unlit/Color",
+        "Sprites/Default",
+        "UI/Default"
+    };
+
+    static Shader FindLitShader()
+    {
+        for (int i = 0; i < LitShaderCandidates.Length; i++)
+        {
+            var s = Shader.Find(LitShaderCandidates[i]);
+            if (s != null) return s;
+        }
+        return null;
+    }
+
+    static Material TryCreateMaterial(Color color, bool transparent)
+    {
+        var shader = FindLitShader();
+        if (shader == null) return null;
+        var m = new Material(shader) { color = color };
+        if (transparent) SetTransparent(m);
+        return m;
     }
 
     static void SetTransparent(Material m)

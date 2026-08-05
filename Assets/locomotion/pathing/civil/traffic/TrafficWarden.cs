@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Weather;
 
 /// <summary>
 /// City-scoped traffic coordinator: MST over cached TravelAgent paths, car enqueue,

@@ -170,7 +170,8 @@ public sealed class EmbassyVenueRuntime : MonoBehaviour
     public JusticeCard ArmyJustice()
     {
         var c = JusticeCard.Generate(JusticeAction.SecureArea, gameObject);
-        c.violenceThreshold01 = 1f - armyJusticeSteep01 * 0.45f;
+        // Steeper army justice => lower violence threshold than civilian staff (0.55 default).
+        c.violenceThreshold01 = 1f - armyJusticeSteep01 * 0.55f;
         c.sectionName = "embassy_army_justice";
         return c;
     }
