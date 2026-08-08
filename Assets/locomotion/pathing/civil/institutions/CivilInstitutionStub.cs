@@ -24,6 +24,11 @@ public sealed class CivilInstitutionStub : MonoBehaviour
             gameObject.AddComponent<FireStationBootstrap>();
         else if (kind == CivilSystemKind.CarRepair && GetComponent<VehicleRepairCenterBootstrap>() == null)
             gameObject.AddComponent<VehicleRepairCenterBootstrap>();
+        else if ((kind == CivilSystemKind.BusDepot || kind == CivilSystemKind.TransitHub)
+                 && GetComponent<BusStationBootstrap>() == null)
+            gameObject.AddComponent<BusStationBootstrap>();
+        else if (kind == CivilSystemKind.Airport && GetComponent<AirportBootstrap>() == null)
+            gameObject.AddComponent<AirportBootstrap>();
         else if (kind == CivilSystemKind.PoliceStation && GetComponent<PoliceStationBootstrap>() == null)
             gameObject.AddComponent<PoliceStationBootstrap>();
         else if (IsHospitalityOrSecurityKind(kind) && GetComponent<HospitalityInstitutionBootstrap>() == null)

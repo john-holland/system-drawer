@@ -41,6 +41,7 @@ namespace Locomotion.EditorTools
         private Dictionary<string, bool> categoryFoldouts = new Dictionary<string, bool>();
         private Dictionary<string, List<BodyPartSlot>> bodyPartCategories = new Dictionary<string, List<BodyPartSlot>>();
         private Dictionary<string, bool> handFoldouts = new Dictionary<string, bool>();
+        private int _lastSlotRefreshActorId = int.MinValue;
 
         private class BodyPartSlot
         {
@@ -71,6 +72,8 @@ namespace Locomotion.EditorTools
             }
 
             InitializeBodyPartCategories();
+            _lastSlotRefreshActorId = int.MinValue;
+            RefreshBodyPartSlotReferences(force: true);
         }
 
         private void InitializeBodyPartCategories()
@@ -143,6 +146,9 @@ namespace Locomotion.EditorTools
             DrawRagdollPhysicsTools();
             EditorGUILayout.Space(8);
 
+            DrawHandCapsuleFitSection();
+            EditorGUILayout.Space(8);
+
             DrawPlanetTravelSection();
             EditorGUILayout.Space(8);
 
@@ -177,7 +183,16 @@ namespace Locomotion.EditorTools
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Actor", EditorStyles.boldLabel);
 
+            EditorGUI.BeginChangeCheck();
             actorRoot = (GameObject)EditorGUILayout.ObjectField("Actor Root", actorRoot, typeof(GameObject), true);
+            if (EditorGUI.EndChangeCheck())
+            {
+                animator = actorRoot != null ? RagdollAutoWire.FindAnimator(actorRoot) : null;
+                boneMap = actorRoot != null ? actorRoot.GetComponent<BoneMap>() : null;
+                _lastSlotRefreshActorId = int.MinValue;
+                RefreshBodyPartSlotReferences(force: true);
+            }
+
             if (actorRoot != null)
             {
                 animator = (Animator)EditorGUILayout.ObjectField("Animator", animator != null ? animator : RagdollAutoWire.FindAnimator(actorRoot), typeof(Animator), true);
@@ -208,6 +223,9 @@ namespace Locomotion.EditorTools
                 EditorGUILayout.EndVertical();
                 return;
             }
+
+            // Keep ObjectFields in sync with wired components without requiring per-slot Auto.
+            RefreshBodyPartSlotReferences(force: false);
 
             bodyPartsScroll = EditorGUILayout.BeginScrollView(bodyPartsScroll, GUILayout.Height(400));
 
@@ -249,6 +267,7 @@ namespace Locomotion.EditorTools
                     try
                     {
                         AutoCreateMissingComponents(ragdollSystem);
+                        RefreshBodyPartSlotReferences(force: true);
                     }
                     catch (System.Exception e)
                     {
@@ -363,15 +382,117 @@ namespace Locomotion.EditorTools
             EditorGUI.indentLevel--;
         }
 
+        /// <summary>
+        /// Fill empty slot ObjectFields from RagdollSystem refs / existing hierarchy components.
+        /// Does not create missing parts (use Auto / Auto-Create for that).
+        /// </summary>
+        private void RefreshBodyPartSlotReferences(bool force)
+        {
+            if (actorRoot == null || bodyPartCategories == null || bodyPartCategories.Count == 0)
+            {
+                _lastSlotRefreshActorId = int.MinValue;
+                return;
+            }
+
+            int id = actorRoot.GetInstanceID();
+            if (force && id != _lastSlotRefreshActorId)
+            {
+                // Actor changed — clear stale ObjectField assignments from the previous actor.
+                foreach (var category in bodyPartCategories.Values)
+                {
+                    if (category == null) continue;
+                    for (int i = 0; i < category.Count; i++)
+                        if (category[i] != null) category[i].assignedObject = null;
+                }
+            }
+
+            var ragdollSystem = actorRoot.GetComponent<RagdollSystem>();
+            if (ragdollSystem == null)
+            {
+                _lastSlotRefreshActorId = id;
+                return;
+            }
+
+            foreach (var category in bodyPartCategories.Values)
+            {
+                if (category == null) continue;
+                for (int i = 0; i < category.Count; i++)
+                {
+                    var slot = category[i];
+                    if (slot == null) continue;
+                    // Keep a valid existing assignment; only fill empties or stale refs.
+                    if (slot.assignedObject != null
+                        && slot.assignedObject.GetComponent(slot.componentType) != null)
+                        continue;
+
+                    var existing = ResolveExistingBodyPart(slot, ragdollSystem);
+                    if (existing != null)
+                        slot.assignedObject = existing.gameObject;
+                }
+            }
+
+            _lastSlotRefreshActorId = id;
+        }
+
+        private static Component ResolveExistingBodyPart(BodyPartSlot slot, RagdollSystem ragdollSystem)
+        {
+            if (slot == null || ragdollSystem == null) return null;
+
+            Component fromField = ResolveFromRagdollSystemFields(slot, ragdollSystem);
+            if (fromField != null) return fromField;
+
+            var found = ragdollSystem.GetComponentsInChildren(slot.componentType, true);
+            if (found == null || found.Length == 0) return null;
+
+            if (!slot.side.HasValue)
+                return found[0];
+
+            for (int i = 0; i < found.Length; i++)
+            {
+                if (found[i] is RagdollSidedBodyPart sided && sided.side == slot.side.Value)
+                    return found[i];
+            }
+            return null;
+        }
+
+        private static Component ResolveFromRagdollSystemFields(BodyPartSlot slot, RagdollSystem rs)
+        {
+            string role = slot.roleName ?? "";
+            bool left = slot.side == BodySide.Left;
+            bool right = slot.side == BodySide.Right;
+            switch (role)
+            {
+                case "Head": return rs.headComponent;
+                case "Jaw": return rs.jawComponent;
+                case "Neck": return rs.neckComponent;
+                case "Torso": return rs.torsoComponent;
+                case "Pelvis": return rs.pelvisComponent;
+                case "Hand": return left ? rs.leftHandComponent : right ? rs.rightHandComponent : null;
+                case "Collarbone": return left ? rs.leftCollarboneComponent : right ? rs.rightCollarboneComponent : null;
+                case "Shoulder": return left ? rs.leftShoulderComponent : right ? rs.rightShoulderComponent : null;
+                case "Upperarm": return left ? rs.leftUpperarmComponent : right ? rs.rightUpperarmComponent : null;
+                case "Elbow": return left ? rs.leftElbowComponent : right ? rs.rightElbowComponent : null;
+                case "Forearm": return left ? rs.leftForearmComponent : right ? rs.rightForearmComponent : null;
+                case "Leg": return left ? rs.leftLegComponent : right ? rs.rightLegComponent : null;
+                case "Knee": return left ? rs.leftKneeComponent : right ? rs.rightKneeComponent : null;
+                case "Shin": return left ? rs.leftShinComponent : right ? rs.rightShinComponent : null;
+                case "Foot": return left ? rs.leftFootComponent : right ? rs.rightFootComponent : null;
+                default: return null;
+            }
+        }
+
         private void AutoDetectBodyPart(BodyPartSlot slot, RagdollSystem ragdollSystem)
         {
             if (ragdollSystem == null) return;
 
             UnityEngine.Component component = null;
 
+            // Prefer already-wired refs before FindOrAdd (which may create).
+            component = ResolveExistingBodyPart(slot, ragdollSystem);
+
             // Use reflection to find the appropriate FindOrAdd method
             System.Reflection.MethodInfo method = null;
-            if (slot.side.HasValue)
+            if (component == null && slot.side.HasValue)
             {
                 method = ragdollSystem.GetType().GetMethod($"FindOrAdd{slot.roleName}", 
                     new System.Type[] { typeof(BodySide) });
@@ -380,7 +501,7 @@ namespace Locomotion.EditorTools
                     component = method.Invoke(ragdollSystem, new object[] { slot.side.Value }) as UnityEngine.Component;
                 }
             }
-            else
+            else if (component == null)
             {
                 method = ragdollSystem.GetType().GetMethod($"FindOrAdd{slot.roleName}", new System.Type[0]);
                 if (method != null)
@@ -728,6 +849,139 @@ namespace Locomotion.EditorTools
             EditorGUILayout.EndVertical();
         }
 
+        private void DrawHandCapsuleFitSection()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Hand capsule fit", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "When one ragdoll’s hand capsules look like a wristwatch (90° off), set euler offsets here — no Scene gizmo needed. " +
+                "Fits live on RagdollLimbCapsuleFit under each hand bone.",
+                MessageType.None);
+
+            if (actorRoot == null)
+            {
+                EditorGUILayout.HelpBox("Assign an Actor Root first.", MessageType.Info);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
+            var anim = animator != null ? animator : RagdollAutoWire.FindAnimator(actorRoot);
+            DrawOneHandCapsuleFit("Left hand", anim, HumanBodyBones.LeftHand);
+            DrawOneHandCapsuleFit("Right hand", anim, HumanBodyBones.RightHand);
+
+            using (new EditorGUI.DisabledScope(Application.isPlaying || anim == null || !RagdollAutoWire.IsHumanoid(anim)))
+            {
+                if (GUILayout.Button("Ensure / realign hand capsules from fingers"))
+                {
+                    var left = anim != null ? anim.GetBoneTransform(HumanBodyBones.LeftHand) : null;
+                    var right = anim != null ? anim.GetBoneTransform(HumanBodyBones.RightHand) : null;
+                    // Remove existing fit so EnsureLimbCollider recomputes palm direction.
+                    if (left != null)
+                    {
+                        var fit = left.GetComponent<RagdollLimbCapsuleFit>();
+                        if (fit != null) Undo.DestroyObjectImmediate(fit);
+                        var proxy = left.Find(RagdollLimbCapsuleFit.ProxyName);
+                        if (proxy != null) Undo.DestroyObjectImmediate(proxy.gameObject);
+                    }
+                    if (right != null)
+                    {
+                        var fit = right.GetComponent<RagdollLimbCapsuleFit>();
+                        if (fit != null) Undo.DestroyObjectImmediate(fit);
+                        var proxy = right.Find(RagdollLimbCapsuleFit.ProxyName);
+                        if (proxy != null) Undo.DestroyObjectImmediate(proxy.gameObject);
+                    }
+                    var report = new RagdollAutoWire.Report();
+                    if (left != null) RagdollAutoWire.EnsureLimbCollider(anim, HumanBodyBones.LeftHand, left, report);
+                    if (right != null) RagdollAutoWire.EnsureLimbCollider(anim, HumanBodyBones.RightHand, right, report);
+                }
+
+                if (GUILayout.Button("Copy left hand offsets → right"))
+                {
+                    CopyHandCapsuleFit(HumanBodyBones.LeftHand, HumanBodyBones.RightHand, mirrorX: true);
+                }
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawOneHandCapsuleFit(string label, Animator anim, HumanBodyBones bone)
+        {
+            Transform t = anim != null ? anim.GetBoneTransform(bone) : null;
+            EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
+            if (t == null)
+            {
+                EditorGUILayout.HelpBox("Bone not found.", MessageType.Warning);
+                return;
+            }
+
+            var fit = t.GetComponent<RagdollLimbCapsuleFit>();
+            if (fit == null)
+            {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField("No RagdollLimbCapsuleFit yet.");
+                if (GUILayout.Button("Create", GUILayout.Width(70)))
+                {
+                    RagdollAutoWire.EnsureLimbCollider(anim, bone, t, new RagdollAutoWire.Report());
+                    fit = t.GetComponent<RagdollLimbCapsuleFit>();
+                }
+                EditorGUILayout.EndHorizontal();
+                if (fit == null) return;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            fit.centerOffsetLocal = EditorGUILayout.Vector3Field("Center offset", fit.centerOffsetLocal);
+            fit.eulerOffsetDegrees = EditorGUILayout.Vector3Field("Euler offset °", fit.eulerOffsetDegrees);
+            fit.height = EditorGUILayout.FloatField("Height", fit.height);
+            fit.radius = EditorGUILayout.FloatField("Radius", fit.radius);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(fit, "Edit hand capsule fit");
+                fit.Apply();
+                EditorUtility.SetDirty(fit);
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("+90° X")) { Undo.RecordObject(fit, "Rotate"); fit.RotateAxisDegrees(0, 90f); EditorUtility.SetDirty(fit); }
+            if (GUILayout.Button("+90° Y")) { Undo.RecordObject(fit, "Rotate"); fit.RotateAxisDegrees(1, 90f); EditorUtility.SetDirty(fit); }
+            if (GUILayout.Button("+90° Z")) { Undo.RecordObject(fit, "Rotate"); fit.RotateAxisDegrees(2, 90f); EditorUtility.SetDirty(fit); }
+            if (GUILayout.Button("-90° Z")) { Undo.RecordObject(fit, "Rotate"); fit.RotateAxisDegrees(2, -90f); EditorUtility.SetDirty(fit); }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void CopyHandCapsuleFit(HumanBodyBones from, HumanBodyBones to, bool mirrorX)
+        {
+            var anim = animator != null ? animator : RagdollAutoWire.FindAnimator(actorRoot);
+            if (anim == null) return;
+            Transform a = anim.GetBoneTransform(from);
+            Transform b = anim.GetBoneTransform(to);
+            if (a == null || b == null) return;
+            var src = a.GetComponent<RagdollLimbCapsuleFit>();
+            if (src == null) return;
+            var dst = b.GetComponent<RagdollLimbCapsuleFit>();
+            if (dst == null)
+            {
+                RagdollAutoWire.EnsureLimbCollider(anim, to, b, new RagdollAutoWire.Report());
+                dst = b.GetComponent<RagdollLimbCapsuleFit>();
+            }
+            if (dst == null) return;
+            Undo.RecordObject(dst, "Copy hand capsule fit");
+            Vector3 c = src.centerOffsetLocal;
+            Vector3 e = src.eulerOffsetDegrees;
+            if (mirrorX)
+            {
+                c.x = -c.x;
+                e.y = -e.y;
+                e.z = -e.z;
+            }
+            dst.centerOffsetLocal = c;
+            dst.eulerOffsetDegrees = e;
+            dst.height = src.height;
+            dst.radius = src.radius;
+            dst.direction = src.direction;
+            dst.Apply();
+            EditorUtility.SetDirty(dst);
+        }
+
         private Transform GetRagdollPhysicsRoot()
         {
             if (actorRoot == null)
@@ -878,6 +1132,7 @@ namespace Locomotion.EditorTools
                     try
                     {
                         RunAutoWire();
+                        RefreshBodyPartSlotReferences(force: true);
                         Validate();
                     }
                     catch (System.Exception e)
@@ -890,6 +1145,14 @@ namespace Locomotion.EditorTools
                 if (GUILayout.Button("Select Actor Root"))
                 {
                     Selection.activeGameObject = actorRoot;
+                }
+
+                if (GUILayout.Button("Repair Ragdoll", GUILayout.Height(26)))
+                {
+                    lastReport = new RagdollAutoWire.Report();
+                    RagdollAutoWire.RepairRagdoll(actorRoot, lastReport);
+                    Validate();
+                    EditorUtility.SetDirty(actorRoot);
                 }
             }
 
@@ -1049,7 +1312,10 @@ namespace Locomotion.EditorTools
                 RagdollAutoWire.EnsureSensors(actorRoot, boneMap, animator, lastReport);
 
             if (ensureHybridRagdollPhysics)
+            {
                 RagdollAutoWire.EnsureRagdollPhysicsHybrid(actorRoot, animator, boneMap, lastReport);
+                RagdollAutoWire.RepairRagdoll(actorRoot, lastReport);
+            }
 
             Undo.CollapseUndoOperations(group);
 

@@ -29,7 +29,10 @@ public enum CivilSystemKind
     Spa = 25,
     PrivateIndustry = 26,
     BarberShop = 27,
-    FireStation = 28
+    FireStation = 28,
+    BusDepot = 29,
+    TransitHub = 30,
+    Airport = 31
 }
 
 /// <summary>Per-venue simulation fidelity under budget + speed LOD.</summary>

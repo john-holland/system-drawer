@@ -32,6 +32,7 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Animation", "IK Animation Training", "Window/System Drawer/Animation/IK Animation Training"),
         new Entry("Travel", "Pathing Editor", "Window/System Drawer/Travel/Pathing Editor"),
         new Entry("Ragdoll", "Fitting Wizard", "Window/System Drawer/Ragdoll/Fitting Wizard"),
+        new Entry("Ragdoll", "From-Scratch Replicator", "Window/System Drawer/Ragdoll/From-Scratch Replicator"),
         new Entry("Ragdoll", "Systems Matrix", "Window/System Drawer/Ragdoll/Systems Matrix"),
         new Entry("Physics", "Nervous System Impulse Viewer", "Window/System Drawer/Physics/Nervous System Impulse Viewer"),
         new Entry("Physics", "Card Game Visualizer", "Window/System Drawer/Physics/Card Game Visualizer"),

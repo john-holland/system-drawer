@@ -361,6 +361,15 @@ public sealed class PersonaDayManager : MonoBehaviour
         stub?.SetAwake(venue.isOpen);
         var store = venue.contextOwner != null ? venue.contextOwner.GetComponent<StoreBase>() : null;
         store?.TickHours(DateTime.UtcNow);
+        if (venue.contextOwner != null)
+        {
+            var shifts = venue.contextOwner.GetComponent<PersonaShiftManager>();
+            if (shifts == null && (venue.kind == CivilSystemKind.Airport || venue.kind == CivilSystemKind.BusDepot))
+                shifts = PersonaShiftManager.FindOrCreate(venue.contextOwner);
+            shifts?.Tick(DateTime.UtcNow, venue);
+        }
+        if (venue.kind == CivilSystemKind.Airport && venue.contextOwner != null)
+            venue.contextOwner.GetComponent<AirportRuntime>()?.Tick(DateTime.UtcNow, dt);
     }
 
     void TickCivilianSchedules(CivilVenueNode venue, DateTime utcNow)

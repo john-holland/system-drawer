@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Airplanes — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/airplanes/airplanes.css">
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="ap-main">
+    <h1>Airplanes</h1>
+    <p class="ap-lead">Flight schedules and airplane / gate / ground crew configuration.</p>
+    <div id="ap-msg" class="ap-msg" hidden></div>
+
+    <section class="ap-panel">
+      <h2>Airplane schedule</h2>
+      <form id="ap-schedule-form" class="ap-form">
+        <label>Airplane id <input name="airplaneId" required placeholder="n737-12" /></label>
+        <label>Flight id <input name="flightId" required placeholder="CUU-401" /></label>
+        <label>Cron <input name="cronExpr" value="* 6-22 * * *" /></label>
+        <label>Kind
+          <select name="scheduleKind">
+            <option value="service">service</option>
+            <option value="maintenance">maintenance</option>
+          </select>
+        </label>
+        <label>Label <input name="label" placeholder="Morning hub loop" /></label>
+        <label>Airplane crew JSON <textarea name="airplaneCrewJson" rows="2" placeholder='{"pilot":"p1","fa":"a2"}'></textarea></label>
+        <label>Gate crew JSON <textarea name="gateCrewJson" rows="2" placeholder='{"desk":"g1"}'></textarea></label>
+        <label>Ground crew JSON <textarea name="groundCrewJson" rows="2" placeholder='{"baggage":"b1"}'></textarea></label>
+        <button type="submit">Add airplane schedule</button>
+      </form>
+      <ul id="ap-schedule-list" class="ap-list"></ul>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/airplanes/airplanes.js"></script>
+</body>
+</html>

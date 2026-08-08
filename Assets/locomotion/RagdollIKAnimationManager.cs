@@ -101,6 +101,7 @@ public class RagdollIKAnimationManager : MonoBehaviour
         if (parent == null)
             return;
 
+        bool anyLandSelected = false;
         for (int i = 0; i < selectedSets.Count; i++)
         {
             RagdollAnimationSet set = selectedSets[i];
@@ -119,10 +120,29 @@ public class RagdollIKAnimationManager : MonoBehaviour
             var abt = existing.GetComponent<AnimationBehaviorTree>();
             if (abt != null && set.animationTree != null)
                 abt.animationClip = set.animationTree.animationClip;
+
+            ABTClipConfig cfg = set.animationTree != null ? set.animationTree.GetActiveConfiguration() : null;
+            if (cfg != null && ParkourLandAnimationDriver.IsLandingCategory(cfg.testCategory))
+                anyLandSelected = true;
 #if UNITY_EDITOR
             if (!Application.isPlaying && existing != null)
                 EditorUtility.SetDirty(existing.gameObject);
 #endif
+        }
+
+        if (anyLandSelected)
+        {
+            ParkourLandAnimationDriver landDriver = ParkourLandAnimationDriver.FindOrCreate(parent.gameObject);
+            if (landDriver != null)
+            {
+                landDriver.ikAnimationManager = this;
+                if (landDriver.showGizmo)
+                {
+                    // Preview goal + example impact curve when land anim type is selected.
+                    landDriver.activePrep = landDriver.activePrep ?? new LandAnimationPrep();
+                    landDriver.activePrep.EnsureReady();
+                }
+            }
         }
 #if UNITY_EDITOR
         if (!Application.isPlaying && parent != null)

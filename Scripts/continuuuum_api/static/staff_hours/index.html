@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff Hours — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/staff_hours/staff-hours.css">
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="sh-main">
+    <h1>Staff Hours</h1>
+    <p class="sh-lead">Open / close cron per role and building (airport PersonaShiftManager).</p>
+    <div id="sh-msg" class="sh-msg" hidden></div>
+
+    <section class="sh-panel">
+      <h2>Shift hours</h2>
+      <form id="sh-form" class="sh-form">
+        <label>Building id <input name="buildingId" required placeholder="airport-terminal-1" /></label>
+        <label>Role <input name="role" required placeholder="tsa_agent" /></label>
+        <label>Open cron <input name="openCron" value="* 5-23 * * *" /></label>
+        <label>Close cron <input name="closeCron" placeholder="optional" /></label>
+        <button type="submit">Add staff hours</button>
+      </form>
+      <ul id="sh-list" class="sh-list"></ul>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/staff_hours/staff-hours.js"></script>
+</body>
+</html>

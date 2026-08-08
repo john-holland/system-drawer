@@ -27,6 +27,8 @@ public sealed class TravelExecutionContext
     public bool inReverseTail { get; }
     public AnimationPlaybackPolicyContext policyContext { get; }
     public string activePhrase { get; }
+    /// <summary>Parkour / rope animation group tag from the active <see cref="MultiModalSegment"/>.</summary>
+    public string animationGroupTag { get; }
 
     TravelExecutionContext(
         BehaviorTree tree,
@@ -50,7 +52,8 @@ public sealed class TravelExecutionContext
         float reverseBudgetRemainingMeters,
         bool inReverseTail,
         AnimationPlaybackPolicyContext policyContext,
-        string activePhrase)
+        string activePhrase,
+        string animationGroupTag)
     {
         this.tree = tree;
         this.travelAgent = travelAgent;
@@ -74,6 +77,7 @@ public sealed class TravelExecutionContext
         this.inReverseTail = inReverseTail;
         this.policyContext = policyContext;
         this.activePhrase = activePhrase ?? "";
+        this.animationGroupTag = animationGroupTag ?? "";
     }
 
     /// <summary>Build context for a plan leg or mode transition.</summary>
@@ -134,6 +138,7 @@ public sealed class TravelExecutionContext
             ? agent.GetComponent<AnimationPlaybackPolicyContext>() ?? agent.GetComponentInChildren<AnimationPlaybackPolicyContext>()
             : null;
         string activePhrase = TravelPlaybackPolicyHelper.ResolveActivePhrase(agent, segIndex, policy);
+        string animTag = seg != null ? seg.animationGroupTag : null;
 
         return new TravelExecutionContext(
             tree,
@@ -157,7 +162,8 @@ public sealed class TravelExecutionContext
             revRemaining,
             reverseTail,
             policy,
-            activePhrase);
+            activePhrase,
+            animTag);
     }
 
     static Vector3 ResolveTransitionWorld(MultiModalSegment seg)

@@ -1,0 +1,10 @@
+.sh-main { max-width: 920px; margin: 1.5rem auto; padding: 0 1rem; font-family: Georgia, "Times New Roman", serif; color: #1a1a1a; }
+.sh-lead { opacity: 0.8; margin-bottom: 1.25rem; }
+.sh-panel { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #ccc; }
+.sh-form { display: grid; gap: 0.5rem; max-width: 28rem; }
+.sh-form label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.9rem; }
+.sh-form input, .sh-form button { padding: 0.35rem 0.5rem; }
+.sh-list { list-style: none; padding: 0; margin: 1rem 0 0; }
+.sh-list li { padding: 0.4rem 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; gap: 0.5rem; align-items: center; }
+.sh-msg { background: #eef6ff; padding: 0.5rem 0.75rem; margin-bottom: 1rem; }
+.sh-del { font-size: 0.8rem; }

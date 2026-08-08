@@ -6,6 +6,7 @@ public static class ThreatAgencyId
     public const string Kitchen = "kitchen";
     public const string BuildingMaintenance = "building_maintenance";
     public const string FireDepartment = "fire_department";
+    public const string Police = "police";
     public const string Security = "security";
     public const string Owner = "owner";
 }

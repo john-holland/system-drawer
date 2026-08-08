@@ -535,6 +535,20 @@ public class PhysicsCardSolver : MonoBehaviour
             }
         }
 
+        // Parkour land: prefer plant / stand-on cards, then first available card
+        if (goal.type == GoalType.Land)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card.isStandOnSurfaceGoal || card is StandOnSurfaceCard) return card;
+            }
+            foreach (var card in cards)
+            {
+                if (card != null) return card;
+            }
+        }
+
         // Wrestling — prefer WrestlingCard; LoveCard also inherits WrestlingCard so check Love first when goal is wrestling-only
         if (goal.type == GoalType.Wrestling)
         {

@@ -328,7 +328,12 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
         switch (seg.mode)
         {
             case TravelLegMode.ToolBridge:
+                AddToolSegment(legNode, seg);
+                break;
+
             case TravelLegMode.Acrobatics:
+                if (ParkourLandAnimationDriver.IsLandingTag(seg != null ? seg.animationGroupTag : null))
+                    AddPrepareLandNode(legNode, seg);
                 AddToolSegment(legNode, seg);
                 break;
 
@@ -463,6 +468,20 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
         }
 
         return legNode.children.Count > countBefore;
+    }
+
+    void AddPrepareLandNode(TravelLegSequenceNode legNode, MultiModalSegment seg)
+    {
+        if (legNode == null || seg == null)
+            return;
+        if (legNode.children == null)
+            legNode.children = new List<BehaviorTreeNode>();
+
+        GameObject go = new GameObject($"PrepareLand_{legNode.children.Count}");
+        go.transform.SetParent(legNode.transform, worldPositionStays: false);
+        PrepareLandAnimationNode node = go.AddComponent<PrepareLandAnimationNode>();
+        node.segment = seg;
+        legNode.children.Add(node);
     }
 
     void AddToolSegment(TravelLegSequenceNode legNode, MultiModalSegment seg)

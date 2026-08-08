@@ -96,6 +96,10 @@ public sealed class CityPixelBrushStamp
     public string placementPrompt;
     public int detourGoalCellX;
     public int detourGoalCellY;
+    [Tooltip("When true, corridor cell for this stamp is treated as lane-disabled (airport/road repair).")]
+    public bool laneDisabled;
+    [Tooltip("Detour / roadside decor prefabs facing out from the street.")]
+    public GameObject[] detourPrefabs;
     public float stopRadius = 8f;
     public string scheduleCron = "0 7-9 * * 1-5";
     public float avoidCostMultiplier = 3f;

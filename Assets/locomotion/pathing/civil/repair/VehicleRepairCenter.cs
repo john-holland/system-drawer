@@ -31,7 +31,7 @@ public sealed class VehicleRepairCenterBioRhythm : MonoBehaviour
     }
 }
 
-/// <summary>Standalone vehicle repair center (CivilSystemKind.CarRepair).</summary>
+/// <summary>Standalone vehicle repair center (CivilSystemKind.CarRepair). Nestable under BusStation.</summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Locomotion/Civil/Vehicle Repair Center")]
 public sealed class VehicleRepairCenterRuntime : MonoBehaviour
@@ -48,6 +48,16 @@ public sealed class VehicleRepairCenterRuntime : MonoBehaviour
     public Transform retailShelf;
     public Transform trash;
     public List<VehicleRagdoll> vehiclesInBay = new List<VehicleRagdoll>();
+
+    [Header("Ownership")]
+    [Tooltip("When set, company.parentCompanyId is seeded to this (e.g. public_transit_auth).")]
+    public string parentTransitAuthCompanyId;
+    [Tooltip("Optional conglomerate owning repair separately from transit auth.")]
+    public string repairConglomerateCompanyId;
+    [Tooltip("Optional conglomerate owning the kitchen.")]
+    public string kitchenConglomerateCompanyId;
+    [Tooltip("Optional conglomerate owning fuel commodities.")]
+    public string fuelConglomerateCompanyId;
 
     void Awake()
     {
@@ -67,6 +77,45 @@ public sealed class VehicleRepairCenterRuntime : MonoBehaviour
             kitchenVenue = GetComponentInChildren<RestaurantVenueRuntime>();
         if (company.staff.Count == 0)
             company.staff.Add(new RetinuePeckingEntry { role = "mechanic", peckingOrder = 10, personaKey = "mechanic" });
+        SeedOwnership();
+    }
+
+    public void SeedOwnership()
+    {
+        if (company == null) return;
+        if (!string.IsNullOrEmpty(repairConglomerateCompanyId))
+        {
+            company.companyId = repairConglomerateCompanyId;
+            if (!string.IsNullOrEmpty(parentTransitAuthCompanyId))
+                company.parentCompanyId = parentTransitAuthCompanyId;
+        }
+        else if (!string.IsNullOrEmpty(parentTransitAuthCompanyId) &&
+                 string.IsNullOrEmpty(company.parentCompanyId))
+        {
+            company.parentCompanyId = parentTransitAuthCompanyId;
+        }
+
+        var kitchenCo = kitchenVenue != null ? kitchenVenue.GetComponent<CompanyRegistration>() : null;
+        if (kitchenCo != null)
+        {
+            if (!string.IsNullOrEmpty(kitchenConglomerateCompanyId))
+                kitchenCo.companyId = kitchenConglomerateCompanyId;
+            if (string.IsNullOrEmpty(kitchenCo.parentCompanyId))
+                kitchenCo.parentCompanyId = !string.IsNullOrEmpty(parentTransitAuthCompanyId)
+                    ? parentTransitAuthCompanyId
+                    : company.companyId;
+        }
+
+        if (!string.IsNullOrEmpty(fuelConglomerateCompanyId) && store != null)
+        {
+            var fuelHost = store.GetComponent<CompanyRegistration>();
+            if (fuelHost != null)
+            {
+                fuelHost.companyId = fuelConglomerateCompanyId;
+                if (string.IsNullOrEmpty(fuelHost.parentCompanyId))
+                    fuelHost.parentCompanyId = parentTransitAuthCompanyId;
+            }
+        }
     }
 
     public void SetOpen(bool open)
@@ -99,5 +148,26 @@ public sealed class VehicleRepairCenterRuntime : MonoBehaviour
     {
         if (vehicle == null || vehiclesInBay.Contains(vehicle)) return;
         vehiclesInBay.Add(vehicle);
+    }
+
+    /// <summary>Accept a TA bay park / repair card and enqueue maintenance.</summary>
+    public List<GoodSection> AcceptTaBayCards(TAVehicleBayParkCard park, TAVehicleBayRepairCard repair)
+    {
+        var cards = new List<GoodSection>();
+        BusVehicleRagdoll bus = repair != null ? repair.vehicle : null;
+        if (bus == null && park?.vehicle != null)
+            bus = park.vehicle;
+        if (bus != null)
+            AcceptVehicle(bus);
+        if (park != null)
+            cards.Add(park);
+        if (repair != null)
+        {
+            cards.Add(repair);
+            cards.Add(repair.ToMaintenanceCard());
+        }
+        else if (bus != null)
+            cards.Add(Repair(bus));
+        return cards;
     }
 }

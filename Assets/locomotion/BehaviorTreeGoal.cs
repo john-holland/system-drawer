@@ -99,6 +99,8 @@ public enum GoalType
     Sit,
     /// <summary>Stand on a surface (e.g. stand on a chair) with feet plant tow.</summary>
     StandOnSurface,
+    /// <summary>Parkour / fall land: plant at terminus with impact-curve prep (LandAnimationPrep).</summary>
+    Land,
     /// <summary>Wrestling exchange: clinch, throw, pin (WrestlingCard + topology).</summary>
     Wrestling,
     /// <summary>Eat food: bite, chew, swallow (FoodItem + MouthInteriorRuntime).</summary>

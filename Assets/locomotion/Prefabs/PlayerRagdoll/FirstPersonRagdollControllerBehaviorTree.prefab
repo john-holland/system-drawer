@@ -121,7 +121,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f863d8737e791de438f78769d8df1f8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Locomotion.Runtime::RagdollPlayerSequenceNode
-  nodeType: 3
+  nodeType: 0
   children:
   - {fileID: 7657820604935180209}
   - {fileID: 8462924788910513880}
@@ -130,6 +130,9 @@ MonoBehaviour:
   status: 2
   estimatedDuration: 0
   actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
   useCardEstimation: 1
 --- !u!1 &1903468257887835817
 GameObject:
@@ -180,6 +183,9 @@ MonoBehaviour:
   status: 2
   estimatedDuration: 0
   actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
   useCardEstimation: 1
   yawRoot: {fileID: 0}
   pitchTransform: {fileID: 0}
@@ -232,6 +238,9 @@ MonoBehaviour:
   status: 2
   estimatedDuration: 0
   actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
   useCardEstimation: 1
   facingReference: {fileID: 0}
   cardSolver: {fileID: 0}
@@ -286,6 +295,9 @@ MonoBehaviour:
   status: 2
   estimatedDuration: 0
   actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
   useCardEstimation: 1
   animator: {fileID: 0}
   speedParameter: Speed
@@ -341,4 +353,7 @@ MonoBehaviour:
   status: 2
   estimatedDuration: 0
   actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
   useCardEstimation: 1

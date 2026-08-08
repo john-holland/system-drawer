@@ -32,7 +32,11 @@ public sealed class ConsiderThreatCards : MonoBehaviour
         var cards = new List<GoodSection> { card };
         // Justice shut-off for fire-like threats
         if (card.threatKind == ThreatKind.Fire || card.threatKind == ThreatKind.SmokeDetectorAlarm)
+        {
             cards.Add(JusticeCard.Generate(JusticeAction.ShutOffHeat, card.reportedSource));
+            var fireWarden = Object.FindFirstObjectByType<FireWarden>();
+            fireWarden?.IngestThreatCard(card);
+        }
         solver.AddCards(cards);
 
         // Dialog BT branch marker

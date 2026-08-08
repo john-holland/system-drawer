@@ -181,6 +181,35 @@ public sealed class BuildingRequirementSpec : ScriptableObject
             list.Add(Slot("parking", "Parking", true));
             list.Add(Slot("trash", "Trash", true));
         }
+        if (id.Contains("bus_depot") || id.Contains("bus_station") || id.Contains("transit_hub")
+            || id == "busdepot" || id == "transithub")
+        {
+            list.Add(Slot("platform", "Boarding platforms", true));
+            list.Add(Slot("waiting", "Waiting area", true));
+            list.Add(Slot("bay", "Vehicle bay", true));
+            list.Add(Slot("telecom", "Telecom / dispatch desk", true));
+            list.Add(Slot("cafeteria", "Cafeteria kitchen", false));
+            list.Add(Slot("bathroom", "Bathroom", true));
+            list.Add(Slot("parking", "Parking / apron", true));
+            list.Add(Slot("trash", "Trash", true));
+            list.Add(Slot("maintenance_bay", "Nested repair bay", false));
+        }
+        if (id.Contains("airport") || id.Contains("airport_terminal"))
+        {
+            list.Add(Slot("runway", "Runway", true));
+            list.Add(Slot("taxiway", "Taxiway", true));
+            list.Add(Slot("terminal", "Terminal", true));
+            list.Add(Slot("security", "Security / TSA", true));
+            list.Add(Slot("gate", "Gate / jetway", true));
+            list.Add(Slot("apron", "Apron", true));
+            list.Add(Slot("hangar", "Hangar", false));
+            list.Add(Slot("cafeteria", "Cafeteria kitchen", false));
+            list.Add(Slot("spa", "Spa", false));
+            list.Add(Slot("bathroom", "Bathroom", true));
+            list.Add(Slot("telecom", "Telecom / ATC", true));
+            list.Add(Slot("parking", "Parking", true));
+            list.Add(Slot("trash", "Trash", true));
+        }
         if (id.Contains("police"))
         {
             list.Add(Slot("main_hall", "Main office / hall", true));

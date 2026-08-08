@@ -53,6 +53,10 @@ public class ABTClipConfig
     [Tooltip("When true, prefer Non-IK kinematic sampling for this clip.")]
     public bool nonIkAnimation;
 
+    [Header("Land Animation Prep")]
+    [Tooltip("Landing goal + impact curve for parkour land BT IK (used when testCategory is a landing category).")]
+    public LandAnimationPrep landPrep = new LandAnimationPrep();
+
     /// <summary>
     /// Create a configuration with default values from the given clip.
     /// </summary>
@@ -64,7 +68,8 @@ public class ABTClipConfig
             displayName = clip != null ? clip.name : "New Clip",
             frameSamplingRate = 1,
             useKeyframesOnly = false,
-            interpolationMode = InterpolationMode.Linear
+            interpolationMode = InterpolationMode.Linear,
+            landPrep = new LandAnimationPrep()
         };
         return config;
     }

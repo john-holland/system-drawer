@@ -71,6 +71,23 @@ public static class RagdollMobilityValidator
         if (hybridBuildAddsJointsNotColliders && report.colliderCount < report.rigidbodyCount)
             report.warnings.Add("Hybrid ragdoll build adds joints but not colliders — add colliders before locomotion training.");
 
+        int freeLinearJoints = 0;
+        var joints = ragdollRoot.GetComponentsInChildren<ConfigurableJoint>(true);
+        for (int i = 0; i < joints.Length; i++)
+        {
+            var cj = joints[i];
+            if (cj == null) continue;
+            if (cj.xMotion == ConfigurableJointMotion.Free
+                || cj.yMotion == ConfigurableJointMotion.Free
+                || cj.zMotion == ConfigurableJointMotion.Free)
+                freeLinearJoints++;
+        }
+        if (freeLinearJoints > 0)
+        {
+            report.warnings.Add(
+                $"{freeLinearJoints} ConfigurableJoint(s) have Free linear motion — limbs can separate and fall through the floor, then drag the head. Use RagdollAutoWire.RepairRagdoll or re-run hybrid AutoWire.");
+        }
+
         return report;
     }
 }

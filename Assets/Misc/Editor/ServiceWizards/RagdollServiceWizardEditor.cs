@@ -35,5 +35,7 @@ public class RagdollServiceWizardEditor : Editor
         }
         if (GUILayout.Button("Open Ragdoll Fitting Wizard", GUILayout.Height(22)))
             RagdollFittingWizardWindow.ShowWindow();
+        if (GUILayout.Button("Open From-Scratch Replicator", GUILayout.Height(22)))
+            RagdollFromScratchReplicatorWindow.ShowWindow();
     }
 }
