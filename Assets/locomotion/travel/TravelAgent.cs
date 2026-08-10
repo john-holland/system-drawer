@@ -178,6 +178,16 @@ public class TravelAgent : MonoBehaviour
     [Tooltip("Slot index within cohort when >= 0; -1 = order by stable instance id sort within group.")]
     public int formationSlotIndex = -1;
 
+    [Header("Rail / train consist")]
+    [Tooltip("Train consist id for linked-segment snake multibody and Rail legs.")]
+    public string consistId = "";
+    [Tooltip("Optional rail track segment id.")]
+    public string railSegmentId = "";
+    [Tooltip("Car index within consist (0 = head).")]
+    public int trainCarIndex;
+    [Tooltip("Optional consist runtime for coupler snake spacing.")]
+    public TrainConsistRuntime trainConsist;
+
     [Header("Timeline planner (optional)")]
     public PlannerTimelineOptions plannerTimelineOptions = PlannerTimelineOptions.DefaultLegacy();
 
@@ -715,5 +725,26 @@ public class RoadTravelBinding : MonoBehaviour
         object[] argsEnd = { segment.waypoints[segment.waypoints.Count - 1], null, 0f, 0f };
         if ((bool)nearest.Invoke(roadNetwork, argsEnd))
             segment.distanceAlongEnd = (float)argsEnd[2];
+
+        EnrichDriveSegmentWithRoadLot(segment);
+    }
+
+    /// <summary>If the drive end is near a RoadLot connected to this segment (or any nearest lot), tag roadLotId and leave pad unsnapped.</summary>
+    public void EnrichDriveSegmentWithRoadLot(MultiModalSegment segment)
+    {
+        if (segment?.waypoints == null || segment.waypoints.Count == 0) return;
+        Vector3 end = segment.waypoints[segment.waypoints.Count - 1];
+        RoadLot lot = null;
+        if (!string.IsNullOrEmpty(segment.roadSegmentId))
+            lot = RoadLot.FindConnectedToRoad(segment.roadSegmentId, end);
+        if (lot == null)
+            lot = RoadLot.FindNearest(end, snapDistance * 4f);
+        if (lot == null) return;
+        segment.roadLotId = lot.lotId;
+        // Leave last waypoint on lot pad (height sampled).
+        Vector3 pad = lot.ArrivalWorld;
+        pad.y = lot.SampleHeight(pad);
+        if ((end - pad).sqrMagnitude < (snapDistance * 4f) * (snapDistance * 4f))
+            segment.waypoints[segment.waypoints.Count - 1] = pad;
     }
 }

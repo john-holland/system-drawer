@@ -32,7 +32,10 @@ public enum CivilSystemKind
     FireStation = 28,
     BusDepot = 29,
     TransitHub = 30,
-    Airport = 31
+    Airport = 31,
+    TrainStation = 32,
+    GrainSilo = 33,
+    RailMaintenanceDepot = 34
 }
 
 /// <summary>Per-venue simulation fidelity under budget + speed LOD.</summary>

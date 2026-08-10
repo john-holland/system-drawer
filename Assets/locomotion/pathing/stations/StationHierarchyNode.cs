@@ -48,6 +48,46 @@ public sealed class StationHierarchyNode : MonoBehaviour
                 config.computerStation = GetComponent<ComputerPeripheryStation>()
                                         ?? GetComponentInChildren<ComputerPeripheryStation>();
         }
+        else if (kind == StationKind.Train)
+        {
+            if (config.trainStation == null)
+                config.trainStation = GetComponent<TrainStationRuntime>()
+                                     ?? GetComponentInChildren<TrainStationRuntime>()
+                                     ?? gameObject.AddComponent<TrainStationRuntime>();
+            BridgeTrainCivilVenue(CivilSystemKind.TrainStation, "train_station");
+        }
+        else if (kind == StationKind.Silo)
+        {
+            if (config.grainSilo == null)
+                config.grainSilo = GetComponent<GrainSiloStubRuntime>()
+                                  ?? GetComponentInChildren<GrainSiloStubRuntime>()
+                                  ?? gameObject.AddComponent<GrainSiloStubRuntime>();
+            BridgeTrainCivilVenue(CivilSystemKind.GrainSilo, "grain_silo");
+        }
+        else if (kind == StationKind.RailMaintenance)
+        {
+            if (config.railMaintenanceDepot == null)
+                config.railMaintenanceDepot = GetComponent<RailMaintenanceDepotStub>()
+                                             ?? GetComponentInChildren<RailMaintenanceDepotStub>()
+                                             ?? gameObject.AddComponent<RailMaintenanceDepotStub>();
+            BridgeTrainCivilVenue(CivilSystemKind.RailMaintenanceDepot, "rail_maintenance_depot");
+        }
+    }
+
+    void BridgeTrainCivilVenue(CivilSystemKind civilKind, string buildingTypeId)
+    {
+        var pdm = PersonaDayManager.Instance;
+        if (pdm == null) return;
+        var existing = pdm.lattice.Get(stableId);
+        if (existing != null) return;
+        var node = new CivilVenueNode
+        {
+            stableId = stableId,
+            kind = civilKind,
+            contextOwner = gameObject,
+            buildingTypeId = buildingTypeId
+        };
+        pdm.RegisterVenue(node);
     }
 
     void BridgeToCivilVenue()

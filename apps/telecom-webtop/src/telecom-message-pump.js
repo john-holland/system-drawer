@@ -125,6 +125,59 @@ export function publishWindowCentroids(windows) {
   postToHost({ action: 'windowCentroids', payload: { windows: list } });
 }
 
+/**
+ * Publish UnityRenderPortal bounds2 anchors so Unity can overlay a RenderTexture
+ * over the webtop panel (GPS HUD) instead of streaming frames via cctvFrame.
+ */
+export function publishPortalBounds2(portals, viewport) {
+  const vw = (viewport && viewport.width) || (typeof window !== 'undefined' ? window.innerWidth : 1);
+  const vh = (viewport && viewport.height) || (typeof window !== 'undefined' ? window.innerHeight : 1);
+  const list = (portals || []).map((p) => {
+    const x = p.x ?? 0;
+    const y = p.y ?? 0;
+    const width = p.width ?? 0;
+    const height = p.height ?? 0;
+    return {
+      portalId: p.portalId || p.id || 'gps',
+      x,
+      y,
+      width,
+      height,
+      nx: p.nx != null ? p.nx : x / Math.max(1, vw),
+      ny: p.ny != null ? p.ny : y / Math.max(1, vh),
+      nw: p.nw != null ? p.nw : width / Math.max(1, vw),
+      nh: p.nh != null ? p.nh : height / Math.max(1, vh),
+    };
+  });
+  postToHost({ action: 'portalBounds2', payload: { portals: list } });
+}
+
+/** Collect [data-unity-portal] / .unity-render-portal rects and publish bounds2. */
+export function collectAndPublishPortalBounds2(root = document) {
+  const nodes = root.querySelectorAll
+    ? root.querySelectorAll('[data-unity-portal], .unity-render-portal')
+    : [];
+  const portals = [];
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 1;
+  nodes.forEach((el, i) => {
+    const r = el.getBoundingClientRect();
+    portals.push({
+      portalId: el.dataset.unityPortal || el.id || `portal_${i}`,
+      x: r.left,
+      y: r.top,
+      width: r.width,
+      height: r.height,
+      nx: r.left / Math.max(1, vw),
+      ny: r.top / Math.max(1, vh),
+      nw: r.width / Math.max(1, vw),
+      nh: r.height / Math.max(1, vh),
+    });
+  });
+  publishPortalBounds2(portals, { width: vw, height: vh });
+  return portals;
+}
+
 /** Collect getBoundingClientRect centers for .win elements. */
 export function collectAndPublishWindowCentroids(root = document) {
   const nodes = root.querySelectorAll ? root.querySelectorAll('.win') : [];
@@ -153,6 +206,8 @@ export function initPump() {
     cctvFrame,
     publishWindowCentroids,
     collectAndPublishWindowCentroids,
+    publishPortalBounds2,
+    collectAndPublishPortalBounds2,
     onMessage,
     getDeviceContext,
     handleHostMessage,

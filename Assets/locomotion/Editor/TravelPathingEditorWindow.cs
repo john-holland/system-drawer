@@ -486,6 +486,66 @@ public class TravelPathingEditorWindow : EditorWindow
             }
         }
 
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Road Lots", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Graded pads with height maps and 0..N road outlets. Drive enrich tags roadLotId.",
+            MessageType.None);
+        if (GUILayout.Button("Create RoadLot at preview goal"))
+        {
+            var go = new GameObject("RoadLot_" + focusedAgent.gameObject.name);
+            go.transform.position = focusedAgent.previewGoalWorld;
+            var lot = go.AddComponent<RoadLot>();
+            lot.lotId = go.name;
+            lot.boundary = go.AddComponent<RoadLotBoundarySpline>();
+            lot.boundary.EnsureClosedLoopDefault();
+            Undo.RegisterCreatedObjectUndo(go, "Create RoadLot");
+            Selection.activeGameObject = go;
+        }
+        var nearestLot = RoadLot.FindNearest(focusedAgent.previewGoalWorld, 200f);
+        if (nearestLot != null)
+        {
+            EditorGUILayout.ObjectField("Nearest lot", nearestLot, typeof(RoadLot), true);
+            if (nearestLot.boundary != null && GUILayout.Button("Validate lot wall sections"))
+            {
+                if (!nearestLot.boundary.TryValidateWallSections(out string err))
+                    EditorUtility.DisplayDialog("RoadLot walls", err ?? "invalid", "OK");
+                else
+                    EditorUtility.DisplayDialog("RoadLot walls", "OK (sum = 1)", "OK");
+            }
+        }
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Pilot GPS bake", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Bake CachedPlan into a route texture for UnityRenderPortal GPS HUD (not cctvFrame stream).",
+            MessageType.None);
+        if (GUILayout.Button("Bake route texture cache asset"))
+        {
+            focusedAgent.RebuildCachedPlan();
+            var cache = PilotGpsHudWebtop.BakeFromTravelAgent(focusedAgent, 512, 512);
+            string path = EditorUtility.SaveFilePanelInProject(
+                "Pilot GPS Route Bake", "PilotGpsRouteBake", "asset", "");
+            if (!string.IsNullOrEmpty(path))
+            {
+                AssetDatabase.CreateAsset(cache, path);
+                AssetDatabase.SaveAssets();
+                var heli = focusedAgent.GetComponentInParent<HelicopterVehicleRagdoll>()
+                           ?? UnityEngine.Object.FindFirstObjectByType<HelicopterVehicleRagdoll>();
+                if (heli != null)
+                {
+                    heli.EnsureSystems();
+                    if (heli.gpsHud != null)
+                    {
+                        heli.gpsHud.travelAgent = focusedAgent;
+                        heli.gpsHud.bakeCache = cache;
+                        heli.gpsHud.mode = PilotGpsHudMode.BakedRoute;
+                        EditorUtility.SetDirty(heli);
+                    }
+                }
+            }
+        }
+
         serializedAgent.ApplyModifiedProperties();
 
         EditorGUILayout.EndScrollView();

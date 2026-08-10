@@ -15,4 +15,7 @@ public static class FeatureBudgetIds
     public const string Society = "society";
     public const string Usc = "usc";
     public const string CivilSystems = "civil_systems";
+    public const string PixelLight = "pixel_light";
+    public const string TrainRail = "train_rail";
+    public const string CargoLash = "cargo_lash";
 }

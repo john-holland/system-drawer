@@ -76,6 +76,18 @@ public class TravelAgentMultibodySettings
     [Tooltip("When true, lateral relaxation also clears registered RopePathingFootprint body samples.")]
     public bool enableRopeFootprintClearance = true;
 
+    [Header("Linked segment snake (train)")]
+    [Tooltip("When true, Rail / consistId legs use coupler-linked spacing instead of independent convoy push.")]
+    public bool enableLinkedSegmentSnake = true;
+
+    [Min(0.5f)]
+    [Tooltip("Default coupler spacing when no TrainConsistRuntime is resolved.")]
+    public float linkedSegmentSpacingM = 6f;
+
+    [Min(2)]
+    [Tooltip("Hint car count for snake resample when consist is missing.")]
+    public int linkedSegmentCarCountHint = 4;
+
     public Vector3 ResolveFinalTargetWorld()
     {
         if (useFinalTargetTransform && finalTarget != null)

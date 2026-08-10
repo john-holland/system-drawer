@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 433cde1d9777a0e499945a9e08abbe96, type: 3}
+  m_Name: MagnetoHelicopterConfiguration
+  m_EditorClassIdentifier: Locomotion.Runtime::MagnetoHelicopterConfigurationAsset
+  craftName: Helicopter
+  callsign: CUU-H1
+  prefabId: Helicopter
+  magnetos:
+  - magnetoId: main
+    aspectRatio: 8
+    spanLength: 12
+    bladeCount: 4
+    collectiveMinDeg: -5
+    collectiveMaxDeg: 15
+    cyclicMaxDeg: 10
+    rpmIdle: 200
+    rpmMax: 400
+    tipTwistDeg: 0
+    kinkStops: []
+    tipEndPositionCache: {x: 0, y: 0, z: 0}
+    centerlineLocalPos: {x: 0, y: 0, z: 0}
+    centerlineAngleDeg: 0
+    yawAuthority01: 0.8
+    tailRotorGain: 1
+    antiTorqueBias: 0
+    flappingEnabled: 0
+    flapOpenCloseTopologyId: magneto_flap
+    wingletTurnDegMin: -20
+    wingletTurnDegMax: 20
+    wingletOpenCloseTopologyId: magneto_winglet
+    efficacy01: 1
+    lastAppliedMinLiftN: 0
+    lastAppliedMinClimbMs: 0
+    lastAppliedMinYawRate: 0
+    lastAppliedMinDiskLoading: 0
+  requirements:
+    minLiftN: 20000
+    minClimbMs: 2
+    minYawRateDegPerSec: 20
+    minDiskLoading: 20
+    designMassKg: 2500
+  tailRotor:
+    magnetoId: tail
+    aspectRatio: 8
+    spanLength: 2.5
+    bladeCount: 4
+    collectiveMinDeg: -5
+    collectiveMaxDeg: 15
+    cyclicMaxDeg: 10
+    rpmIdle: 200
+    rpmMax: 400
+    tipTwistDeg: 0
+    kinkStops: []
+    tipEndPositionCache: {x: 0, y: 0, z: 0}
+    centerlineLocalPos: {x: 0, y: 0, z: 0}
+    centerlineAngleDeg: 0
+    yawAuthority01: 0.8
+    tailRotorGain: 1
+    antiTorqueBias: 0
+    flappingEnabled: 0
+    flapOpenCloseTopologyId: magneto_flap
+    wingletTurnDegMin: -20
+    wingletTurnDegMax: 20
+    wingletOpenCloseTopologyId: magneto_winglet
+    efficacy01: 1
+    lastAppliedMinLiftN: 0
+    lastAppliedMinClimbMs: 0
+    lastAppliedMinYawRate: 0
+    lastAppliedMinDiskLoading: 0
+  landingGearOpenCloseTopologyId: heli_landing_gear
+  doorOpenCloseTopologyId: heli_door
+  hasBathroom: 0
+  hasKitchen: 0
+  parentKitchenCompanyId: 
+  seatCount: 4
+  standupSupportBars: 1
+  grabBarShape: 0
+  gpsPortalId: gps
+  defaultHudMode: 1
+  gpsRtWidth: 512
+  gpsRtHeight: 512
+  webtopUrl: http://127.0.0.1:5175
+  pixelLightCatalog: {fileID: 11400000, guid: 43525e6b4a3a54d45bd9758c78e44af6, type: 2}

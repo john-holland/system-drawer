@@ -49,6 +49,7 @@ public static class TravelLegModeExtensions
             case TravelLegMode.Dock:
                 return PathingMode.Fly;
             case TravelLegMode.Drive:
+            case TravelLegMode.Rail:
             case TravelLegMode.Moor:
             case TravelLegMode.ParkWater:
             case TravelLegMode.Beach:

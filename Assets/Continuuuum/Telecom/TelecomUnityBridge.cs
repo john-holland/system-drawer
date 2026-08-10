@@ -63,6 +63,9 @@ namespace Continuuuum.Telecom
         /// <summary>Fired when webtop publishes window frame centroids JSON payload.</summary>
         public static event Action<string> WindowCentroidsReceived;
 
+        /// <summary>Fired when webtop publishes UnityRenderPortal bounds2 anchors (CSS px + optional normalized UV).</summary>
+        public static event Action<string> PortalBounds2Received;
+
         public async Task<TelecomBridgeResponse> HandleAsync(string json)
         {
             TelecomBridgeMessage msg;
@@ -83,6 +86,9 @@ namespace Continuuuum.Telecom
                     return Ok(msg.requestId, "{}");
                 case "windowCentroids":
                     WindowCentroidsReceived?.Invoke(msg.payload ?? "{}");
+                    return Ok(msg.requestId, "{}");
+                case "portalBounds2":
+                    PortalBounds2Received?.Invoke(msg.payload ?? "{}");
                     return Ok(msg.requestId, "{}");
                 default:
                     return Error(msg.requestId, "unknown action");

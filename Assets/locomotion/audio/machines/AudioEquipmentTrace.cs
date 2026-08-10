@@ -19,6 +19,7 @@ namespace Locomotion.Audio
         public string label;
         public AudioEquipmentLaneKind kind = AudioEquipmentLaneKind.Physical;
         public string machineComponentId;
+        [SerializeReference]
         public List<AudioEquipmentTraceNode> children = new List<AudioEquipmentTraceNode>();
 
         public AudioEquipmentTraceNode Find(string nodeId)
@@ -49,6 +50,7 @@ namespace Locomotion.Audio
     [Serializable]
     public sealed class AudioEquipmentTrace
     {
+        [SerializeReference]
         public AudioEquipmentTraceNode root = new AudioEquipmentTraceNode
         {
             id = "root",

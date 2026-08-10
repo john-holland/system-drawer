@@ -220,11 +220,25 @@ public class PilotManeuversCard : AirplaneCard
 
 [Serializable] public class TSALandingCard : AirplaneCard
 {
-    public static TSALandingCard Generate(DispatchRequest request)
+    public string landingGearOverrideTopologyId = "landing_gear";
+    public BehaviorTree landingGearOverrideBt;
+
+    public static TSALandingCard Generate(DispatchRequest request, AirplaneVehicleRagdoll plane = null)
     {
         var c = new TSALandingCard();
         Fill(c, request, "tsa_landing");
+        c.airplane = plane;
+        if (plane != null && !string.IsNullOrEmpty(plane.landingGearOpenCloseTopologyId))
+            c.landingGearOverrideTopologyId = plane.landingGearOpenCloseTopologyId;
+        if (plane != null)
+            c.landingGearOverrideBt = plane.landingGearOverrideBt;
         return c;
+    }
+
+    public void Apply()
+    {
+        airplane?.SetLandingGearDown(true);
+        airplane?.NotifyNarrative(AirplaneNarrativeActionIds.Landing);
     }
 }
 

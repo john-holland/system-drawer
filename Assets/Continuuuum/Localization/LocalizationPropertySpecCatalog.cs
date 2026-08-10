@@ -74,8 +74,22 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildThreatPropertyRecords());
         list.AddRange(BuildStreetLightPropertyRecords());
         list.AddRange(BuildTasteNotesPropertyRecords());
+        list.AddRange(BuildTrainCarPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildTrainCarPropertyRecords() => new[]
+    {
+        Spec("train_car.contained_vehicle", "String", "", "Vehicle id parked in train car bay"),
+        Spec("train_car.limb_state", "String", "Folded", "Limb state: Folded|Unfolding|Unfolded|Refolding|Failed"),
+        Spec("train_car.lash_stable01", "Float", "1", "Live cargo/limb lash stability 0-1"),
+        Spec("train_car.impossible_keep_stable", "Bool", "false", "Impossible physics keep vehicle/limb section stable"),
+        Spec("train_fold_failed", "Bool", "false", "Fold/unfold topology failure leaf"),
+        Spec("train_car.consist_id", "String", "", "Consist / snake formation id"),
+        Spec("train_car.bay_id", "String", "deck", "Containment bay id"),
+        Spec("train_car.limb_role", "String", "Crane", "Limb role: Crane|DigArm|Loader|Generic"),
+        Spec("train_car.stability_mode", "String", "Nominal", "Nominal|SoftLash|ImpossibleKeepStable"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildStreetLightPropertyRecords() => new[]
     {

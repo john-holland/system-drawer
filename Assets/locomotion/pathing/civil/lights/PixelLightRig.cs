@@ -110,12 +110,32 @@ public sealed class PixelLightRig : MonoBehaviour
         PushFrame();
     }
 
+    void SyncGridSizeFromPattern()
+    {
+        if (pattern == null) return;
+        gridWidth = Mathf.Max(1, pattern.gridWidth);
+        gridHeight = Mathf.Max(1, pattern.gridHeight);
+        stepMs = pattern.stepMs;
+    }
+
     void EnsureLuminanceTexture()
     {
+        gridWidth = Mathf.Max(1, gridWidth);
+        gridHeight = Mathf.Max(1, gridHeight);
         if (_lumRt != null && _lumRt.width == gridWidth && _lumRt.height == gridHeight)
             return;
         if (_lumRt != null)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                DestroyImmediate(_lumRt);
+            else
+                Destroy(_lumRt);
+#else
             Destroy(_lumRt);
+#endif
+            _lumRt = null;
+        }
         _lumRt = new Texture2D(gridWidth, gridHeight, TextureFormat.RFloat, false)
         {
             filterMode = FilterMode.Point,
@@ -128,6 +148,7 @@ public sealed class PixelLightRig : MonoBehaviour
 
     public void PushFrame()
     {
+        SyncGridSizeFromPattern();
         EnsureLuminanceTexture();
         float[,] grid;
         if (pattern != null)
@@ -135,13 +156,24 @@ public sealed class PixelLightRig : MonoBehaviour
         else
             grid = new float[gridHeight, gridWidth];
 
+        // Evaluate uses pattern dimensions; keep loops on the evaluated array size.
+        int h = grid.GetLength(0);
+        int w = grid.GetLength(1);
+        if (w != gridWidth || h != gridHeight)
+        {
+            gridWidth = Mathf.Max(1, w);
+            gridHeight = Mathf.Max(1, h);
+            EnsureLuminanceTexture();
+        }
+
         _avgLum = 0f;
         int n = gridWidth * gridHeight;
+        if (_lumRt == null || n <= 0) return;
         var pixels = new Color[n];
         for (int y = 0; y < gridHeight; y++)
         for (int x = 0; x < gridWidth; x++)
         {
-            float v = grid[y, x] * masterBrightness01;
+            float v = (y < h && x < w ? grid[y, x] : 0f) * masterBrightness01;
             _avgLum += v;
             pixels[y * gridWidth + x] = new Color(v, v, v, 1f);
         }

@@ -127,6 +127,12 @@ public sealed class CivilSystemLattice
         if (id.Contains("house") || id.Contains("home") || id.Contains("residence")) return CivilSystemKind.House;
         if (id.Contains("car_repair") || id.Contains("auto_repair") || id.Contains("garage")) return CivilSystemKind.CarRepair;
         if (id.Contains("bathroom") || id.Contains("restroom")) return CivilSystemKind.Bathroom;
+        if (id.Contains("train_station") || id.Contains("rail_station")) return CivilSystemKind.TrainStation;
+        if (id.Contains("grain_silo") || id.Contains("silo")) return CivilSystemKind.GrainSilo;
+        if (id.Contains("rail_maintenance") || id.Contains("rail_depot") || id.Contains("train_depot"))
+            return CivilSystemKind.RailMaintenanceDepot;
+        if (id.Contains("bus_depot")) return CivilSystemKind.BusDepot;
+        if (id.Contains("airport")) return CivilSystemKind.Airport;
         return CivilSystemKind.Generic;
     }
 }

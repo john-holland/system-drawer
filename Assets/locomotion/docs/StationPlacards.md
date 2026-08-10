@@ -29,6 +29,16 @@ Editor: **Window → System Drawer → Stations** — list + **Upload level stat
 
 ## Kinds
 
-`cooking` | `train` | `bus` | `computer` | `generic`
+`cooking` | `train` | `bus` | `computer` | `silo` | `railmaintenance` | `generic`
 
-Building seeds: `train_station`, `bus_depot` (+ existing restaurant for kitchens).
+Building seeds: `train_station`, `bus_depot`, `grain_silo`, `rail_maintenance_depot` (+ existing restaurant for kitchens).
+
+### Train / silo / depot bridges
+
+| Kind | Runtime | CivilSystemKind | BT ops |
+|------|---------|-----------------|--------|
+| Train | `TrainStationRuntime` | TrainStation | couple, swap car, unload bay, limb work |
+| Silo | `GrainSiloStubRuntime` | GrainSilo | load/unload bulk ↔ bay |
+| RailMaintenance | `RailMaintenanceDepotStub` | RailMaintenanceDepot | pull/replace car, lash inspect |
+
+See [`TrainCars.md`](TrainCars.md) for consist, fold, lash, and `ITrainStationOps` cards.

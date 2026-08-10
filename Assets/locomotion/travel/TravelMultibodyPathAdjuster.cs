@@ -91,13 +91,101 @@ public static class TravelMultibodyPathAdjuster
 
             List<Vector3> pts = seg.waypoints;
             var originals = new List<Vector3>(pts);
-            RelaxSegmentXZ(pts, originals, peerPolys, dynamics, selfR, settings, travelFwd);
+
+            if (settings.enableLinkedSegmentSnake
+                && (seg.mode == TravelLegMode.Rail || !string.IsNullOrEmpty(seg.consistId)))
+            {
+                ApplyLinkedSegmentSnakeXZ(pts, settings, selfOptional);
+            }
+            else
+            {
+                RelaxSegmentXZ(pts, originals, peerPolys, dynamics, selfR, settings, travelFwd);
+            }
 
             if (!settings.shouldCollideWithPathObstacles && solver != null)
                 ApplyStaticGoalClearanceXZ(pts, originals, solver, settings);
         }
 
         return working;
+    }
+
+    /// <summary>
+    /// Keep coupler spacing / curvature for a train consist (linked snake) instead of independent convoy push.
+    /// </summary>
+    public static void ApplyLinkedSegmentSnakeXZ(
+        List<Vector3> pts,
+        TravelAgentMultibodySettings settings,
+        TravelAgent selfOptional)
+    {
+        if (pts == null || pts.Count < 2 || settings == null) return;
+        float spacing = Mathf.Max(0.5f, settings.linkedSegmentSpacingM);
+        TrainConsistRuntime consist = null;
+        if (selfOptional != null)
+        {
+            consist = selfOptional.trainConsist;
+            if (consist == null && !string.IsNullOrEmpty(selfOptional.consistId))
+            {
+                foreach (var c in Object.FindObjectsByType<TrainConsistRuntime>(FindObjectsSortMode.None))
+                {
+                    if (c != null && c.consistId == selfOptional.consistId)
+                    {
+                        consist = c;
+                        break;
+                    }
+                }
+            }
+        }
+        if (consist != null && consist.nominalCouplerSpacingM > 0.1f)
+            spacing = consist.nominalCouplerSpacingM;
+
+        // Re-sample polyline to preserve arc length while enforcing min segment length ≈ coupler spacing.
+        float total = 0f;
+        for (int i = 1; i < pts.Count; i++)
+            total += Vector3.Distance(FlattenXZ(pts[i - 1]), FlattenXZ(pts[i]));
+        if (total < 1e-3f) return;
+
+        int carCount = consist != null ? Mathf.Max(2, consist.cars.Count) : Mathf.Max(2, settings.linkedSegmentCarCountHint);
+        int samples = Mathf.Clamp(carCount, 2, 64);
+        var resampled = new List<Vector3>(samples);
+        for (int s = 0; s < samples; s++)
+        {
+            float t = samples == 1 ? 0f : s / (float)(samples - 1);
+            resampled.Add(SamplePolylineXZ(pts, t * total));
+        }
+        // Enforce spacing from head along tangent.
+        for (int i = 1; i < resampled.Count; i++)
+        {
+            Vector3 prev = FlattenXZ(resampled[i - 1]);
+            Vector3 cur = FlattenXZ(resampled[i]);
+            Vector3 dir = cur - prev;
+            float d = dir.magnitude;
+            if (d < 1e-5f) dir = Vector3.forward;
+            else dir /= d;
+            Vector3 target = prev + dir * spacing;
+            resampled[i] = new Vector3(target.x, resampled[i].y, target.z);
+        }
+        pts.Clear();
+        pts.AddRange(resampled);
+    }
+
+    static Vector3 SamplePolylineXZ(IReadOnlyList<Vector3> pts, float distAlong)
+    {
+        float remain = distAlong;
+        for (int i = 1; i < pts.Count; i++)
+        {
+            Vector3 a = FlattenXZ(pts[i - 1]);
+            Vector3 b = FlattenXZ(pts[i]);
+            float segLen = Vector3.Distance(a, b);
+            if (segLen < 1e-6f) continue;
+            if (remain <= segLen)
+            {
+                float u = remain / segLen;
+                Vector3 p = Vector3.Lerp(pts[i - 1], pts[i], u);
+                return p;
+            }
+            remain -= segLen;
+        }
+        return pts[pts.Count - 1];
     }
 
     public static List<Vector3> BuildEffectivePolyline(TravelAgent agent)
@@ -125,7 +213,7 @@ public static class TravelMultibodyPathAdjuster
         if (seg == null)
             return false;
         TravelLegMode m = seg.mode;
-        return m == TravelLegMode.Walk || m == TravelLegMode.Drive || m == TravelLegMode.Fly;
+        return m == TravelLegMode.Walk || m == TravelLegMode.Drive || m == TravelLegMode.Rail || m == TravelLegMode.Fly;
     }
 
     static Vector3 FlattenXZ(Vector3 v)

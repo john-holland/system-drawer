@@ -1,0 +1,170 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43d3652460a43254b863a2e316a39ad4, type: 3}
+  m_Name: PixelLightMultiSlotCatalog
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightMultiSlotCatalog
+  viewScopeSettings:
+  - view: 2
+    scope: 1
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: 11400000, guid: 3403d1d94b2dd1b479ae77a75d457b40, type: 2}
+    colors: {fileID: 11400000, guid: f1bd449b40c099a479cfe058c606f7af, type: 2}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  - view: 0
+    scope: 1
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: 0}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 1
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 80
+    brightness01: 1
+  - view: 0
+    scope: 0
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: 11400000, guid: 3403d1d94b2dd1b479ae77a75d457b40, type: 2}
+    colors: {fileID: 11400000, guid: f1bd449b40c099a479cfe058c606f7af, type: 2}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 10
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  gridSlots:
+  - slotId: 4078063c
+    label: Grid 0,0
+    cellX: 0
+    cellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 083c01cc
+    label: Grid 1,1
+    cellX: 1
+    cellY: 1
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 8c338fa4
+    label: Grid 2,2
+    cellX: 2
+    cellY: 2
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 18b1bdc2
+    label: Grid 3,3
+    cellX: 3
+    cellY: 3
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: f80f2b9d
+    label: Grid 3,0
+    cellX: 3
+    cellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 00817819
+    label: Grid 4,1
+    cellX: 4
+    cellY: 1
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: b8fa6d63
+    label: Grid 5,2
+    cellX: 5
+    cellY: 2
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 81062ebd
+    label: Grid 6,3
+    cellX: 6
+    cellY: 3
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 1
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 83f782be
+    label: e
+    cellX: 0
+    cellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 2
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 148fc172
+    label: e
+    cellX: 0
+    cellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  maxRecommendedSlots: 16

@@ -1,11 +1,15 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// <summary>Airport-focused PixelLight / CityPixelGrid designer — apron/runway/taxi layers + lane disable + detour.</summary>
+/// <summary>Airport-focused PixelLight / CityPixelGrid designer — multi grid slots + layers.</summary>
 public sealed class AirportPixelLightDesignerWindow : EditorWindow
 {
     CityPixelGrid grid;
     PixelLightPatternAsset pattern;
+    PixelLightMultiSlotCatalog catalog;
+    AirplaneVehicleRagdoll airplane;
+    Vector2 _slotsScroll;
     bool disableLane;
     bool detourFaceOut = true;
     GameObject detourPrefab;
@@ -13,6 +17,7 @@ public sealed class AirportPixelLightDesignerWindow : EditorWindow
     GameObject shrubPrefab;
     MonoScript cleanupCrewBt;
     MonoScript maintenanceCrewBt;
+    List<PixelLightGridMountGameObject> _sceneMounts = new List<PixelLightGridMountGameObject>();
 
     [MenuItem("Locomotion/Airport Pixel Light Designer")]
     public static void Open()
@@ -26,11 +31,50 @@ public sealed class AirportPixelLightDesignerWindow : EditorWindow
     {
         EditorGUILayout.LabelField("Airport Pixel Light Designer", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Uses City Pixel Grid bounds/layers with airport-focused Custom layer ids (apron, runway, taxiway, terminal). Assign PixelLight patterns like the timed playbook.",
+            "Uses City Pixel Grid bounds/layers with airport-focused Custom layer ids (apron, runway, taxiway, terminal). Multi grid slots share PixelLightMultiSlotCatalog with heli/airplane.",
             MessageType.Info);
 
         grid = (CityPixelGrid)EditorGUILayout.ObjectField("City Pixel Grid", grid, typeof(CityPixelGrid), false);
         pattern = (PixelLightPatternAsset)EditorGUILayout.ObjectField("PixelLight Pattern", pattern, typeof(PixelLightPatternAsset), false);
+        catalog = (PixelLightMultiSlotCatalog)EditorGUILayout.ObjectField(
+            "Multi-slot catalog", catalog, typeof(PixelLightMultiSlotCatalog), false);
+        airplane = (AirplaneVehicleRagdoll)EditorGUILayout.ObjectField(
+            "Airplane (optional)", airplane, typeof(AirplaneVehicleRagdoll), true);
+        if (airplane != null)
+        {
+            if (catalog == null && airplane.pixelLightCatalog != null)
+                catalog = airplane.pixelLightCatalog;
+            airplane.pixelLightCatalog = catalog;
+        }
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Grid slots (scroll + accordion)", EditorStyles.boldLabel);
+        if (GUILayout.Button("Collect PixelLightGridMount in scene"))
+        {
+            _sceneMounts.Clear();
+            _sceneMounts.AddRange(Object.FindObjectsByType<PixelLightGridMountGameObject>(FindObjectsSortMode.None));
+            catalog?.SyncSlotsFromMounts(_sceneMounts);
+            if (catalog != null) EditorUtility.SetDirty(catalog);
+        }
+        if (catalog == null && GUILayout.Button("Create multi-slot catalog"))
+        {
+            var c = ScriptableObject.CreateInstance<PixelLightMultiSlotCatalog>();
+            string path = EditorUtility.SaveFilePanelInProject(
+                "PixelLight Multi Slot Catalog", "AirportPixelLightMultiSlot", "asset", "");
+            if (!string.IsNullOrEmpty(path))
+            {
+                AssetDatabase.CreateAsset(c, path);
+                catalog = c;
+                if (airplane != null) airplane.pixelLightCatalog = c;
+            }
+        }
+        PixelLightGridSlotAccordionDrawer.Draw(catalog, ref _slotsScroll, null, entry =>
+        {
+            if (entry?.heliSlot != null)
+                Selection.activeGameObject = entry.heliSlot.gameObject;
+            else if (entry?.mount != null)
+                Selection.activeGameObject = entry.mount.gameObject;
+        }, 280f, airplane);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Lane / detour", EditorStyles.boldLabel);
@@ -50,6 +94,9 @@ public sealed class AirportPixelLightDesignerWindow : EditorWindow
 
         if (GUILayout.Button("Stamp roadside decor on selection"))
             StampDecorOnSelection();
+
+        if (GUILayout.Button("Open Pixel Light Timed Designer"))
+            PixelLightTimedDesignerWindow.Open();
     }
 
     void EnsureAirportLayers()
@@ -70,7 +117,7 @@ public sealed class AirportPixelLightDesignerWindow : EditorWindow
     void EnsureLayer(string id)
     {
         if (grid.layers == null)
-            grid.layers = new System.Collections.Generic.List<CityPixelLayer>();
+            grid.layers = new List<CityPixelLayer>();
         for (int i = 0; i < grid.layers.Count; i++)
             if (grid.layers[i] != null && grid.layers[i].layerId == id)
                 return;

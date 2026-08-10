@@ -10,6 +10,7 @@ public enum TravelLegMode
     Walk,
     Fly,
     Drive,
+    Rail,
     ToolBridge,
     Acrobatics,
     Park,
@@ -40,6 +41,15 @@ public class MultiModalSegment
 
     [Tooltip("Optional road segment id when drive leg follows a baked road spline.")]
     public string roadSegmentId;
+
+    [Tooltip("Optional rail segment id when Rail leg follows a track spline.")]
+    public string railSegmentId;
+
+    [Tooltip("Optional train consist id for linked-segment snake multibody.")]
+    public string consistId;
+
+    [Tooltip("Optional RoadLot id when drive/land ends on a graded lot pad.")]
+    public string roadLotId;
 
     [Tooltip("Arc-length along road at leg start (meters).")]
     public float distanceAlongStart;
@@ -185,6 +195,7 @@ public class MultiModalSegment
             optionalVehicleHint = optionalVehicleHint,
             estimatedTimeSec = estimatedTimeSec,
             roadSegmentId = roadSegmentId,
+            roadLotId = roadLotId,
             distanceAlongStart = distanceAlongStart,
             distanceAlongEnd = distanceAlongEnd,
             reverseLeg = reverseLeg,

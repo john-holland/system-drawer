@@ -46,6 +46,16 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Planet streaming | Tile LOD offset + radius chunks |
 | Pathing | Replan interval + horizon distance ratio |
 | Civil systems | `PersonaDayManager` tick interval via `CivilSystemsFeatureBudgetConsumer` |
+| PixelLight | `FeatureBudgetIds.PixelLight` (`pixel_light`) — PixelLight rigs/optics/grid mounts on heli, airplane, airport; catalog `maxRecommendedSlots` soft cap |
+| Train / Rail | `FeatureBudgetIds.TrainRail` (`train_rail`) — consist / coupling / Rail legs |
+| Cargo lash | `FeatureBudgetIds.CargoLash` (`cargo_lash`) — bay/limb lash joints and stability eval |
+
+### PixelLight / grid slots budget
+
+- **Feature id:** `pixel_light` (`FeatureBudgetIds.PixelLight`)
+- **Perf prefixes:** `PixelLight`, `PixelLightRig`, `PixelLightOptic`, `PixelLightGridMount`
+- **Authoring:** `PixelLightMultiSlotCatalog` holds many grid slots + per view×scope settings for helicopter / airplane / airport designers. Prefer keeping `gridSlots.Count ≤ maxRecommendedSlots` (default 16).
+- **Docs:** [`Assets/locomotion/docs/PixelLightMultiSlot.md`](../../locomotion/docs/PixelLightMultiSlot.md)
 
 ## Adding a new ratio field
 

@@ -5,5 +5,7 @@ public enum StationKind
     Cooking = 1,
     Train = 2,
     Bus = 3,
-    Computer = 4
+    Computer = 4,
+    Silo = 5,
+    RailMaintenance = 6
 }

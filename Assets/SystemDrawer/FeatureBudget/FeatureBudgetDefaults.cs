@@ -43,6 +43,12 @@ public static class FeatureBudgetDefaults
                 new[] { "USC", "SemanticCompress" }, null, false),
             Entry(FeatureBudgetIds.CivilSystems, "Civil Systems / Persona Day", 13,
                 new[] { "PersonaDay", "CivilVenue", "CivilSystem" }, null, true),
+            Entry(FeatureBudgetIds.PixelLight, "PixelLight / Grid Slots", 14,
+                new[] { "PixelLight", "PixelLightRig", "PixelLightOptic", "PixelLightGridMount" }, null, true),
+            Entry(FeatureBudgetIds.TrainRail, "Train / Rail Consist", 15,
+                new[] { "TrainCar", "TrainConsist", "TrainCoupling", "Rail" }, null, false),
+            Entry(FeatureBudgetIds.CargoLash, "Cargo Lash / Stability", 16,
+                new[] { "CargoLash", "CargoStability" }, null, true),
         };
     }
 

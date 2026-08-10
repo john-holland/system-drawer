@@ -73,6 +73,7 @@ public class CardPlanNode
     public CardPlanActionKind actionKind = CardPlanActionKind.ChooseWrestlingCard;
 
     [Tooltip("Children for Sequence / Selector / Choice nesting.")]
+    [SerializeReference]
     public List<CardPlanNode> children = new List<CardPlanNode>();
 
     public bool IsBranchContainer =>
@@ -168,6 +169,7 @@ public class CardPlanAsset : ScriptableObject
     public string notes;
 
     [Tooltip("Root nodes of the encounter plan (reorderable; may nest Sequence/Selector/Choice).")]
+    [SerializeReference]
     public List<CardPlanNode> roots = new List<CardPlanNode>();
 
     /// <summary>Depth-first materialize of all Card nodes into concrete GoodSection instances.</summary>

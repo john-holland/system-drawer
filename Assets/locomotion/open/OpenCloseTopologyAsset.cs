@@ -33,8 +33,12 @@ namespace Locomotion.Open
         public Vector3 cameraHintCenter;
         public Vector3 floorTangentHint = Vector3.right;
 
-        /// <summary>Legacy nested storage; cleared on save. Use <see cref="OpenCloseTopologyAsset.GetChildren"/> instead.</summary>
-        [HideInInspector]
+        /// <summary>
+        /// Legacy nested storage only (not serialized). Topology children live in the flat
+        /// <see cref="OpenCloseTopologyAsset.nodes"/> list via <c>parentId</c> — nested
+        /// <c>List&lt;OpenCloseTopologyNode&gt;</c> hits Unity's serialization depth limit.
+        /// </summary>
+        [NonSerialized]
         public List<OpenCloseTopologyNode> children = new List<OpenCloseTopologyNode>();
     }
 

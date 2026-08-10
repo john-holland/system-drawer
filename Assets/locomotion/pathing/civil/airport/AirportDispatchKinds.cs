@@ -36,5 +36,10 @@ public static class AirportDispatchKinds
     public const string TsaPatrol = "tsa_patrol";
     public const string TsaBaggage = "tsa_baggage";
     public const string TsaGateCrew = "tsa_gate_crew";
+    public const string TsaChecklist = "tsa_checklist";
+    public const string TsaTakeoff = "tsa_takeoff";
+    public const string TsaDisaster = "tsa_disaster";
+    public const string AtcHandoff = "atc_handoff";
+    public const string AtcRefuelClearance = "atc_refuel_clearance";
     public const string GateBridge = "airport_gate_bridge";
 }

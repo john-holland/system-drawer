@@ -345,6 +345,8 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             case TravelLegMode.Beach:
             case TravelLegMode.Dock:
                 AddTerminalSegment(legNode, seg);
+                TryMergeHelicopterRoute(legNode, seg, tree);
+                TryMergeAirplaneRoute(legNode, seg, tree);
                 break;
 
             case TravelLegMode.Fly:
@@ -356,9 +358,15 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
                 }
                 else
                     AppendWaypointChain(legNode, seg.waypoints, seg);
+                TryMergeHelicopterRoute(legNode, seg, tree);
+                TryMergeAirplaneRoute(legNode, seg, tree);
                 break;
 
             case TravelLegMode.Drive:
+                AppendDriveWaypointChain(legNode, seg, tree);
+                break;
+
+            case TravelLegMode.Rail:
                 AppendDriveWaypointChain(legNode, seg, tree);
                 break;
 
@@ -505,5 +513,29 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             toolNode.toolUseTo = seg.segmentEnd;
         toolNode.reachedDistance = waypointReachedDistance;
         legNode.children.Add(toolNode);
+    }
+
+    void TryMergeHelicopterRoute(TravelLegSequenceNode legNode, MultiModalSegment seg, BehaviorTree tree)
+    {
+        if (legNode == null || seg == null) return;
+        HelicopterVehicleRagdoll heli = null;
+        if (tree != null)
+            heli = tree.GetComponentInParent<HelicopterVehicleRagdoll>();
+        if (heli == null)
+            heli = GetComponentInParent<HelicopterVehicleRagdoll>();
+        if (heli == null) return;
+        HelicopterTravelRouteMerger.MergeIntoLeg(legNode, heli, seg);
+    }
+
+    void TryMergeAirplaneRoute(TravelLegSequenceNode legNode, MultiModalSegment seg, BehaviorTree tree)
+    {
+        if (legNode == null || seg == null) return;
+        AirplaneVehicleRagdoll plane = null;
+        if (tree != null)
+            plane = tree.GetComponentInParent<AirplaneVehicleRagdoll>();
+        if (plane == null)
+            plane = GetComponentInParent<AirplaneVehicleRagdoll>();
+        if (plane == null) return;
+        AircraftTravelRouteMerger.MergeIntoLeg(legNode, plane, seg);
     }
 }

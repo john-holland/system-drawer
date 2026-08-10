@@ -89,6 +89,20 @@ public sealed class AirPortBioRhythm : DispatchBioRhythm
             case AirportDispatchKinds.TsaLanding:
                 cards.Add(TSALandingCard.Generate(request));
                 break;
+            case AirportDispatchKinds.TsaTakeoff:
+                cards.Add(TSATakeoffCard.Generate(request));
+                cards.Add(PilotTakeOffCard.Generate(request));
+                break;
+            case AirportDispatchKinds.TsaChecklist:
+                cards.Add(TSAChecklistCard.Generate(request));
+                break;
+            case AirportDispatchKinds.TsaDisaster:
+            {
+                var disaster = TSADisasterCard.Generate(request);
+                disaster.ApplyNearestAtc(atc);
+                cards.Add(disaster);
+                break;
+            }
             case AirportDispatchKinds.TsaRecovery:
                 cards.Add(TSARecoveryCrewCard.Generate(request));
                 break;
