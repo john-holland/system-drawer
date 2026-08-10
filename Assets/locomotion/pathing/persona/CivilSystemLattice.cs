@@ -22,6 +22,14 @@ public sealed class CivilSystemLattice
         CivilSystemKind.Gym,
         CivilSystemKind.TownHall,
         CivilSystemKind.GasStation,
+        CivilSystemKind.Park,
+        CivilSystemKind.SanitationFacility,
+        CivilSystemKind.TransitHub,
+        CivilSystemKind.BusDepot,
+        CivilSystemKind.TrainStation,
+        CivilSystemKind.Airport,
+        CivilSystemKind.RailMaintenanceDepot,
+        CivilSystemKind.GrainSilo,
         CivilSystemKind.LiquorStore,
         CivilSystemKind.House,
         CivilSystemKind.CarRepair,
@@ -120,10 +128,16 @@ public sealed class CivilSystemLattice
         if (id.Contains("library")) return CivilSystemKind.Library;
         if (id.Contains("liquor")) return CivilSystemKind.LiquorStore;
         if (id.Contains("mall")) return CivilSystemKind.Mall;
+        if (id.Contains("sanitation") || id.Contains("waste_water") || id.Contains("transfer_station")
+            || id.Contains("sewage") || id.Contains("recycling_plant"))
+            return CivilSystemKind.SanitationFacility;
         if (id.Contains("factory")) return CivilSystemKind.Factory;
         if (id.Contains("gym")) return CivilSystemKind.Gym;
         if (id.Contains("town_hall") || id.Contains("townhall") || id.Contains("city_hall")) return CivilSystemKind.TownHall;
         if (id.Contains("gas")) return CivilSystemKind.GasStation;
+        if (id == "park" || id.StartsWith("park_") || id.EndsWith("_park")
+            || id.Contains("city_park") || id.Contains("plaza_park") || id.Contains("greenway"))
+            return CivilSystemKind.Park;
         if (id.Contains("house") || id.Contains("home") || id.Contains("residence")) return CivilSystemKind.House;
         if (id.Contains("car_repair") || id.Contains("auto_repair") || id.Contains("garage")) return CivilSystemKind.CarRepair;
         if (id.Contains("bathroom") || id.Contains("restroom")) return CivilSystemKind.Bathroom;
@@ -131,7 +145,9 @@ public sealed class CivilSystemLattice
         if (id.Contains("grain_silo") || id.Contains("silo")) return CivilSystemKind.GrainSilo;
         if (id.Contains("rail_maintenance") || id.Contains("rail_depot") || id.Contains("train_depot"))
             return CivilSystemKind.RailMaintenanceDepot;
-        if (id.Contains("bus_depot")) return CivilSystemKind.BusDepot;
+        if (id.Contains("transit_hub") || id == "transithub") return CivilSystemKind.TransitHub;
+        if (id.Contains("bus_depot") || id.Contains("bus_station") || id == "busdepot")
+            return CivilSystemKind.BusDepot;
         if (id.Contains("airport")) return CivilSystemKind.Airport;
         return CivilSystemKind.Generic;
     }

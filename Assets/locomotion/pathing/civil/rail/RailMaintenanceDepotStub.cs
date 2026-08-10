@@ -7,7 +7,7 @@ using UnityEngine;
 public sealed class RailMaintenanceDepotStub : TrainStationOpsBase
 {
     public List<Transform> shopBays = new List<Transform>();
-    public List<TrainCarVehicleRagdoll> carsInShop = new List<TrainCarVehicleRagdoll>();
+    public List<TrainVehicleRagdoll> carsInShop = new List<TrainVehicleRagdoll>();
     public VehicleRepairCenterRuntime nestedRepair;
     public BuildingRagdoll buildingRagdoll;
 
@@ -18,10 +18,10 @@ public sealed class RailMaintenanceDepotStub : TrainStationOpsBase
         if (nestedRepair == null)
             nestedRepair = GetComponentInChildren<VehicleRepairCenterRuntime>();
         if (activeConsist == null)
-            activeConsist = GetComponentInChildren<TrainConsistRuntime>();
+            activeConsist = GetComponentInChildren<TrainVehicleRagdoll>();
     }
 
-    public bool PullCarIntoShop(TrainCarVehicleRagdoll car)
+    public bool PullCarIntoShop(TrainVehicleRagdoll car)
     {
         if (car == null) return false;
         RemoveCar(car);
@@ -42,7 +42,7 @@ public sealed class RailMaintenanceDepotStub : TrainStationOpsBase
         return true;
     }
 
-    public bool ReinsertCar(TrainCarVehicleRagdoll car, int consistIndex = -1)
+    public bool ReinsertCar(TrainVehicleRagdoll car, int consistIndex = -1)
     {
         if (car == null || activeConsist == null) return false;
         carsInShop.Remove(car);
@@ -54,7 +54,7 @@ public sealed class RailMaintenanceDepotStub : TrainStationOpsBase
         return true;
     }
 
-    public bool Relash(TrainCarVehicleRagdoll car)
+    public bool Relash(TrainVehicleRagdoll car)
     {
         if (car?.lashRuntime == null) return false;
         car.lashRuntime.ApplyProfile(car.lashRuntime.profile, car.defaultStabilityMode);

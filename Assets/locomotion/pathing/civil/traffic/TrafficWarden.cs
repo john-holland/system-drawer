@@ -164,6 +164,14 @@ public sealed class TrafficWarden : MonoBehaviour
         return goal;
     }
 
+    /// <summary>Non-ignorable suggested-detour from TARoadWorkRequest — register as avoid point.</summary>
+    public void OnSuggestedDetour(Vector3 world)
+    {
+        var go = new GameObject("suggested_detour_" + avoidSources.Count);
+        go.transform.position = world;
+        RegisterAvoidSource(go.transform);
+    }
+
     public void RegisterAvoidSource(Transform t)
     {
         if (t == null || avoidSources.Contains(t)) return;

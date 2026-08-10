@@ -160,3 +160,51 @@ def test_list_is_prime_filter(app_client):
     data = r.get_json()
     assert data["total"] == 65
     assert all(i["isPrime"] for i in data["items"])
+
+
+def test_seed_marks_builtin_vocabulary_implemented(app_client):
+    _, get_conn = app_client
+    conn = get_conn()
+    result = seed_lemma_completion(conn)
+    assert result.get("builtinTerms", 0) >= 200
+    assert result.get("builtinSynced", 0) + result.get("builtinInserted", 0) >= 200
+    s = summary(conn, scope="all")
+    assert s["implemented"] >= 200
+    assert s["builtin"] >= 200
+    # Civil / life systems from registry export
+    for term in ("factory", "gas-station", "transit-hub", "sanitation", "heart"):
+        row = conn.execute(
+            "SELECT is_builtin, is_implemented FROM lemma_completion WHERE lower(term) = ?",
+            (term,),
+        ).fetchone()
+        assert row is not None, term
+        assert row["is_builtin"] == 1
+        assert row["is_implemented"] == 1
+    conn.close()
+
+
+def test_sync_builtins_endpoint(app_client):
+    client, get_conn = app_client
+    conn = get_conn()
+    seed_lemma_completion(conn)
+    # Clear flags on one known builtin to prove sync restores them
+    conn.execute(
+        "UPDATE lemma_completion SET is_implemented = 0 WHERE lower(term) = ?",
+        ("factory",),
+    )
+    conn.commit()
+    conn.close()
+
+    r = client.post("/api/lemma-completion/sync-builtins")
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["ok"] is True
+    assert data["summary"]["implemented"] >= 200
+
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT is_implemented FROM lemma_completion WHERE lower(term) = ?",
+        ("factory",),
+    ).fetchone()
+    conn.close()
+    assert row["is_implemented"] == 1

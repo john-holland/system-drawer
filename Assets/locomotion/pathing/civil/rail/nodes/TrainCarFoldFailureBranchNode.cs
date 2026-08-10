@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public sealed class TrainCarFoldFailureBranchNode : BehaviorTreeNode
 {
-    public TrainCarVehicleRagdoll car;
+    public TrainVehicleRagdoll car;
     public BehaviorTree failureSubtree;
     public string failureLimbOrBayId;
     int _phase; // 0 primary, 1 failure
@@ -21,7 +21,7 @@ public sealed class TrainCarFoldFailureBranchNode : BehaviorTreeNode
         _enteredPrimary = false;
         _enteredFailure = false;
         if (car == null && tree != null)
-            car = tree.GetComponentInParent<TrainCarVehicleRagdoll>();
+            car = tree.GetComponentInParent<TrainVehicleRagdoll>();
     }
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)

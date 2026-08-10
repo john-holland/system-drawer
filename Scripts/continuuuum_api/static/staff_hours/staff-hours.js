@@ -46,5 +46,9 @@
     load();
   });
 
+  if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === "function") {
+    ContinuuuumNav.mount({ app: "staff-hours", theme: "light" });
+  }
+
   load();
 })();

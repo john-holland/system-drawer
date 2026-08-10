@@ -5,7 +5,7 @@ using UnityEngine;
 [AddComponentMenu("Locomotion/Civil/Rail/Train Coupling")]
 public sealed class TrainCouplingRuntime : MonoBehaviour
 {
-    public TrainCarVehicleRagdoll car;
+    public TrainVehicleRagdoll car;
     public TrainCouplingRuntime frontConnected;
     public TrainCouplingRuntime rearConnected;
     public float couplerSpacingM = 1.2f;
@@ -14,7 +14,7 @@ public sealed class TrainCouplingRuntime : MonoBehaviour
     void Awake()
     {
         if (car == null)
-            car = GetComponent<TrainCarVehicleRagdoll>();
+            car = GetComponent<TrainVehicleRagdoll>();
     }
 
     public bool CoupleFrontTo(TrainCouplingRuntime other)
@@ -77,7 +77,7 @@ public sealed class TrainCouplingRuntime : MonoBehaviour
         car.transform.rotation = other.car.transform.rotation;
     }
 
-    static float EstimateLength(TrainCarVehicleRagdoll c)
+    static float EstimateLength(TrainVehicleRagdoll c)
     {
         if (c == null) return 6f;
         var cols = c.GetComponentsInChildren<Collider>();
@@ -90,17 +90,14 @@ public sealed class TrainCouplingRuntime : MonoBehaviour
 
     void SyncConsist(TrainCouplingRuntime other)
     {
-        var consist = car != null ? car.consist : null;
-        if (consist == null && other.car != null)
-            consist = other.car.consist;
-        if (consist == null && car != null)
-        {
-            consist = car.GetComponentInParent<TrainConsistRuntime>()
-                      ?? car.gameObject.AddComponent<TrainConsistRuntime>();
-            car.consist = consist;
-        }
-        if (consist == null) return;
-        if (other.car != null) other.car.consist = consist;
-        consist.RebuildFromCouplers(car);
+        var host = car != null ? (car.headTrain != null ? car.headTrain : car) : null;
+        if (host == null && other.car != null)
+            host = other.car.headTrain != null ? other.car.headTrain : other.car;
+        if (host == null) return;
+        host.RebuildFromCouplers(car != null ? car : other.car);
+        if (other.car != null)
+            other.car.headTrain = host;
+        if (car != null)
+            car.headTrain = host;
     }
 }

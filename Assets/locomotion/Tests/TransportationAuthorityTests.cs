@@ -165,5 +165,18 @@ public class TransportationAuthorityTests
         Assert.IsTrue(slots.Exists(s => s != null && s.slotId == "waiting"));
         Assert.IsTrue(slots.Exists(s => s != null && s.slotId == "cafeteria"));
     }
+
+    [Test]
+    public void KindFromBuildingType_TransitHubAndBusStation()
+    {
+        Assert.AreEqual(CivilSystemKind.TransitHub,
+            CivilSystemLattice.KindFromBuildingType("transit_hub"));
+        Assert.AreEqual(CivilSystemKind.BusDepot,
+            CivilSystemLattice.KindFromBuildingType("bus_station"));
+        Assert.AreEqual(CivilSystemKind.BusDepot,
+            CivilSystemLattice.KindFromBuildingType("bus_depot"));
+        var hubSlots = BuildingRequirementSpec.DefaultSlotsFor("transit_hub");
+        Assert.IsTrue(hubSlots.Exists(s => s != null && s.slotId == "platform"));
+    }
 }
 #endif

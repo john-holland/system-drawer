@@ -86,17 +86,136 @@ def load_common_words() -> list[dict[str, Any]]:
     return list(data.get("words") or [])
 
 
+def load_builtin_items() -> list[dict[str, Any]]:
+    """Raw items from Unity-exported builtin_vocabulary.json."""
+    if not BUILTIN_PATH.is_file():
+        return []
+    data = json.loads(BUILTIN_PATH.read_text(encoding="utf-8"))
+    return list(data.get("items") or [])
+
+
 def load_builtin_term_ids() -> dict[str, str]:
     """Map lowercase term -> first builtin id."""
-    if not BUILTIN_PATH.is_file():
-        return {}
-    data = json.loads(BUILTIN_PATH.read_text(encoding="utf-8"))
     out: dict[str, str] = {}
-    for item in data.get("items") or []:
+    for item in load_builtin_items():
         term = str(item.get("term") or "").lower()
         if term and term not in out:
             out[term] = str(item["id"])
     return out
+
+
+def _term_aliases(term: str) -> list[str]:
+    t = (term or "").strip().lower()
+    if not t:
+        return []
+    variants = {
+        t,
+        t.replace("-", "_"),
+        t.replace("_", "-"),
+        t.replace("-", " "),
+        t.replace("_", " "),
+        t.replace(" ", "-"),
+        t.replace(" ", "_"),
+    }
+    return [v for v in variants if v]
+
+
+def sync_builtin_implementation(
+    conn: sqlite3.Connection, language_code: str = "en"
+) -> dict[str, int]:
+    """Mark Unity builtin vocabulary terms as builtin + implemented in lemma_completion.
+
+    Source of truth: ``builtin_vocabulary.json`` (export of VocabularyBuiltInRegistry).
+    Inserts missing compound terms (e.g. gas-station) that are not in the common-5000 list.
+    """
+    ensure_lemma_completion_schema(conn)
+    now = _now()
+    updated = 0
+    inserted = 0
+    seen_terms: set[str] = set()
+
+    for item in load_builtin_items():
+        term = str(item.get("term") or "").strip()
+        if not term:
+            continue
+        term_key = term.lower()
+        if term_key in seen_terms:
+            continue
+        seen_terms.add(term_key)
+        entry_id = str(item.get("id") or "") or None
+        pos_tag = str(item.get("posTag") or "").strip() or None
+        aliases = _term_aliases(term)
+        placeholders = ",".join("?" for _ in aliases)
+        row = conn.execute(
+            f"""SELECT id, term FROM lemma_completion
+                WHERE language_code = ? AND lower(term) IN ({placeholders})
+                ORDER BY CASE WHEN lower(term) = ? THEN 0 ELSE 1 END
+                LIMIT 1""",
+            (language_code, *aliases, term_key),
+        ).fetchone()
+        if row:
+            conn.execute(
+                """UPDATE lemma_completion SET
+                     entry_id = COALESCE(?, entry_id),
+                     is_builtin = 1,
+                     is_implemented = 1,
+                     updated_at = ?
+                   WHERE id = ?""",
+                (entry_id, now, row["id"]),
+            )
+            updated += 1
+        else:
+            segment = "noun"
+            if pos_tag:
+                pt = pos_tag.lower()
+                if pt in ("verb",):
+                    segment = "verb"
+                elif pt in ("adjective", "adj"):
+                    segment = "adj"
+                elif pt in ("adverb", "adv"):
+                    segment = "adv"
+                elif pt in ("preposition", "prep"):
+                    segment = "prep"
+                elif pt in ("conjunction", "conj"):
+                    segment = "conj"
+                elif pt in ("determiner", "article"):
+                    segment = "det"
+                elif pt in ("type_name",):
+                    segment = "literal"
+                elif pt in ("pronoun",):
+                    segment = "pron"
+                elif pt in ("numeral",):
+                    segment = "num"
+            desc = None
+            if pos_tag or item.get("builtInCategory") or item.get("tags"):
+                desc = json.dumps(
+                    {
+                        "posTag": pos_tag,
+                        "builtInCategory": item.get("builtInCategory"),
+                        "tags": item.get("tags") or [],
+                        "unityBuiltin": True,
+                    },
+                    ensure_ascii=False,
+                )
+            conn.execute(
+                """INSERT INTO lemma_completion
+                   (id, language_code, term, rank, entry_id, is_prime, is_builtin, is_implemented,
+                    benefits_from_asset_store, nsm_definition, composition_json, descriptor_json, updated_at)
+                   VALUES (?,?,?,?,?,0,1,1,0,NULL,NULL,?,?)""",
+                (
+                    new_id(),
+                    language_code,
+                    term,
+                    None,
+                    entry_id or builtin_urn(segment, term, language_code),
+                    desc,
+                    now,
+                ),
+            )
+            inserted += 1
+
+    conn.commit()
+    return {"builtinSynced": updated, "builtinInserted": inserted, "builtinTerms": len(seen_terms)}
 
 
 def seed_lemma_completion(conn: sqlite3.Connection, language_code: str = "en") -> dict[str, int]:
@@ -176,7 +295,13 @@ def seed_lemma_completion(conn: sqlite3.Connection, language_code: str = "en") -
 
     glossed = seed_prime_glosses(conn, language_code=language_code)
     conn.commit()
-    return {"inserted": inserted, "skipped": skipped, "glossesUpdated": glossed}
+    sync = sync_builtin_implementation(conn, language_code=language_code)
+    return {
+        "inserted": inserted,
+        "skipped": skipped,
+        "glossesUpdated": glossed,
+        **sync,
+    }
 
 
 def seed_prime_glosses(conn: sqlite3.Connection, language_code: str = "en") -> int:

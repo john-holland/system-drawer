@@ -235,6 +235,9 @@ try:
     from continuuuum_api.credits_routes import register_credits_routes
 
 
+    from continuuuum_api.garbage_bag_routes import register_garbage_bag_routes
+
+
     from continuuuum_api.lemma_build_routes import register_lemma_build_routes
 
 
@@ -263,6 +266,8 @@ try:
 
 
     from continuuuum_api.transit_routes import register_transit_routes
+
+    from continuuuum_api.train_seat_routes import register_train_seat_routes
 
 
     from continuuuum_api.airport_routes import register_airport_routes
@@ -316,6 +321,9 @@ except ImportError:
     from credits_routes import register_credits_routes
 
 
+    from garbage_bag_routes import register_garbage_bag_routes
+
+
     from lemma_build_routes import register_lemma_build_routes
 
 
@@ -344,6 +352,8 @@ except ImportError:
 
 
     from transit_routes import register_transit_routes
+
+    from train_seat_routes import register_train_seat_routes
 
 
     from airport_routes import register_airport_routes
@@ -4131,6 +4141,9 @@ register_agile_ui_routes(app)
 register_credits_routes(app, get_conn)
 
 
+register_garbage_bag_routes(app)
+
+
 register_lemma_build_routes(app, get_conn, _is_admin)
 
 
@@ -4159,6 +4172,9 @@ register_vehicle_inventory_routes(app, get_conn)
 
 
 register_transit_routes(app, get_conn)
+
+
+register_train_seat_routes(app, get_conn)
 
 
 register_airport_routes(app, get_conn)

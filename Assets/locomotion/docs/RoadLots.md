@@ -10,14 +10,21 @@
 
 `RoadLotBoundarySpline` closed loop. Walls start as **one section** covering t=0..1. Splits must keep **sum(Length01) == 1** or `ValidateWallSections()` throws.
 
+`BakeWallMesh()` builds mesh + `MeshCollider` for non-gap sections (gaps = open / gate topology id).
+
+## Walk path ribbons
+
+`RoadLot.pathRibbons` — `PlanarSplinePathLocomotion` between pad and road outlets (`EnsureOutletPathRibbons`). `TravelAgent.EnrichWalkSegmentWithRoadLot` tags `roadLotId` and can sample ribbon endpoints.
+
 ## Grass
 
 `LotGrassPlantDef` + `LotGrassGrowthController`:
 
-- SpeedTree prefab ref, start/end growth, stage BT + mesh morph (`LotGrassMeshMorph` shader)
+- SpeedTree prefab spawn, start/end growth, stage BT + mesh morph (`LotGrassMeshMorph` shader)
 - Cuts: severity 0–1; 0 blocks cut-through; 1 blocks next-section growth
 - Leaf→root section resolve; carry cut length on regrowth; forget cuts above pruning cut
+- `PlantCutTakeRuntime` inventory take records for CutTool / chainsaw
 
 ## Editor
 
-Travel Pathing Editor → **Road Lots** / **Pilot GPS bake**.
+Travel Pathing Editor → **Road Lots** / **Pilot GPS bake**. Park plants → **Locomotion → Park Plant Planner**.

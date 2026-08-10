@@ -121,7 +121,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f863d8737e791de438f78769d8df1f8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Locomotion.Runtime::RagdollPlayerSequenceNode
-  nodeType: 0
+  nodeType: 3
   children:
   - {fileID: 7657820604935180209}
   - {fileID: 8462924788910513880}

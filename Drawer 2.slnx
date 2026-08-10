@@ -5,6 +5,7 @@
   <Project Path="SystemDrawer.Editor.csproj" />
   <Project Path="Planetary.csproj" />
   <Project Path="Locomotion.Editor.csproj" />
+  <Project Path="Locomotion.Tests.csproj" />
   <Project Path="Environment.Destructible.Runtime.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
   <Project Path="SdfMax.Tests.csproj" />
@@ -29,7 +30,6 @@
   <Project Path="Planetary.Tests.csproj" />
   <Project Path="Generated.Runtime.csproj" />
   <Project Path="SystemDrawer.csproj" />
-  <Project Path="Locomotion.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Tests.csproj" />
   <Project Path="Weather.Editor.csproj" />
   <Project Path="Locomotion.Drink.Runtime.csproj" />
@@ -54,6 +54,7 @@
   <Project Path="SystemDrawer.Tests.csproj" />
   <Project Path="Environment.Destructible.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />
+  <Project Path="Locomotion.Editor.Tests.csproj" />
   <Project Path="Locomotion.Drink.Editor.csproj" />
   <Project Path="SystemDrawer.FeatureBudget.Tests.csproj" />
   <Project Path="Generated.Tests.csproj" />

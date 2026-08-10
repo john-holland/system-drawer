@@ -81,7 +81,7 @@ public class TravelAgentMultibodySettings
     public bool enableLinkedSegmentSnake = true;
 
     [Min(0.5f)]
-    [Tooltip("Default coupler spacing when no TrainConsistRuntime is resolved.")]
+    [Tooltip("Default coupler spacing when no TrainVehicleRagdoll is resolved.")]
     public float linkedSegmentSpacingM = 6f;
 
     [Min(2)]

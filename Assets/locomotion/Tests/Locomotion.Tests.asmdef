@@ -11,6 +11,7 @@
     "HierarchicalPathFinding",
     "Planetary",
     "SystemDrawer",
+    "SystemDrawer.FeatureBudget",
     "Weather.Runtime",
     "SdfMax"
   ],

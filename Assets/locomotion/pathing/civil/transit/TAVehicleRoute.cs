@@ -39,6 +39,8 @@ public static class TADispatchKinds
     public const string Fuel = "ta_fuel";
     public const string Schedule = "ta_schedule";
     public const string Route = "ta_route";
+    public const string MaintenanceRequest = "ta_maintenance_request";
+    public const string RoadWorkRequest = "ta_road_work_request";
 
     public const string TransportationAuthority = "transportation_authority";
     public const string MissionControl = "mission_control";

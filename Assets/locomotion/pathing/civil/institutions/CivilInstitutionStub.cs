@@ -37,6 +37,15 @@ public sealed class CivilInstitutionStub : MonoBehaviour
             gameObject.AddComponent<GrainSiloStubRuntime>();
         else if (kind == CivilSystemKind.RailMaintenanceDepot && GetComponent<RailMaintenanceDepotStub>() == null)
             gameObject.AddComponent<RailMaintenanceDepotStub>();
+        else if (kind == CivilSystemKind.GasStation && GetComponent<GasStationBootstrap>() == null)
+            gameObject.AddComponent<GasStationBootstrap>();
+        else if (kind == CivilSystemKind.Park && GetComponent<ParkBootstrap>() == null)
+            gameObject.AddComponent<ParkBootstrap>();
+        else if (kind == CivilSystemKind.SanitationFacility && GetComponent<SanitationBootstrap>() == null)
+            gameObject.AddComponent<SanitationBootstrap>();
+        else if (kind == CivilSystemKind.Factory && GetComponent<FactoryBootstrap>() == null
+                 && GetComponent<SanitationFacilityRuntime>() == null)
+            gameObject.AddComponent<FactoryBootstrap>();
         else if (IsHospitalityOrSecurityKind(kind) && GetComponent<HospitalityInstitutionBootstrap>() == null)
             gameObject.AddComponent<HospitalityInstitutionBootstrap>();
     }

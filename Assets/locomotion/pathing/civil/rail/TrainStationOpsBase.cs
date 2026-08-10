@@ -3,13 +3,13 @@ using UnityEngine;
 /// <summary>Shared train station / silo / depot ops for BT cards.</summary>
 public abstract class TrainStationOpsBase : MonoBehaviour, ITrainStationOps
 {
-    public TrainConsistRuntime activeConsist;
-    public TrainCarVehicleRagdoll activeCar;
+    public TrainVehicleRagdoll activeConsist;
+    public TrainVehicleRagdoll activeCar;
 
-    public TrainConsistRuntime ActiveConsist => activeConsist;
-    public TrainCarVehicleRagdoll ActiveCar => activeCar;
+    public TrainVehicleRagdoll ActiveConsist => activeConsist;
+    public TrainVehicleRagdoll ActiveCar => activeCar;
 
-    public virtual bool CoupleCars(TrainCarVehicleRagdoll front, TrainCarVehicleRagdoll rear)
+    public virtual bool CoupleCars(TrainVehicleRagdoll front, TrainVehicleRagdoll rear)
     {
         if (front?.coupling == null || rear?.coupling == null) return false;
         bool ok = front.coupling.CoupleRearTo(rear.coupling);
@@ -18,7 +18,7 @@ public abstract class TrainStationOpsBase : MonoBehaviour, ITrainStationOps
         return ok;
     }
 
-    public virtual bool DecoupleCar(TrainCarVehicleRagdoll car)
+    public virtual bool DecoupleCar(TrainVehicleRagdoll car)
     {
         if (car?.coupling == null) return false;
         car.coupling.DecoupleFront();
@@ -27,32 +27,32 @@ public abstract class TrainStationOpsBase : MonoBehaviour, ITrainStationOps
         return true;
     }
 
-    public virtual bool SwapCar(int index, TrainCarVehicleRagdoll replacement)
+    public virtual bool SwapCar(int index, TrainVehicleRagdoll replacement)
     {
         if (activeConsist == null) return false;
         return activeConsist.ReplaceCar(index, replacement);
     }
 
-    public virtual bool RemoveCar(TrainCarVehicleRagdoll car)
+    public virtual bool RemoveCar(TrainVehicleRagdoll car)
     {
         if (activeConsist == null) return DecoupleCar(car);
         return activeConsist.RemoveCar(car);
     }
 
-    public virtual bool UnloadBay(TrainCarVehicleRagdoll car, string bayId, VehicleRagdoll vehicle)
+    public virtual bool UnloadBay(TrainVehicleRagdoll car, string bayId, VehicleRagdoll vehicle)
     {
         if (car == null) return false;
         car.SetBayRampUnfolded(bayId, true);
         return car.TryUnloadVehicle(vehicle, bayId);
     }
 
-    public virtual bool UnfoldLimb(TrainCarVehicleRagdoll car, string limbId) =>
+    public virtual bool UnfoldLimb(TrainVehicleRagdoll car, string limbId) =>
         car != null && car.TryUnfoldLimb(limbId);
 
-    public virtual bool RefoldLimb(TrainCarVehicleRagdoll car, string limbId) =>
+    public virtual bool RefoldLimb(TrainVehicleRagdoll car, string limbId) =>
         car != null && car.TryRefoldLimb(limbId);
 
-    public virtual bool TransferBulk(TrainCarVehicleRagdoll car, string bayId, string commodityKey, float deltaQuantity)
+    public virtual bool TransferBulk(TrainVehicleRagdoll car, string bayId, string commodityKey, float deltaQuantity)
     {
         if (car == null) return false;
         var bay = car.FindBay(bayId);
@@ -77,7 +77,7 @@ public abstract class TrainStationOpsBase : MonoBehaviour, ITrainStationOps
         return true;
     }
 
-    public virtual bool ReplaceBayContents(TrainCarVehicleRagdoll car, string bayId, VehicleRagdoll newVehicle)
+    public virtual bool ReplaceBayContents(TrainVehicleRagdoll car, string bayId, VehicleRagdoll newVehicle)
     {
         if (car == null || newVehicle == null) return false;
         var bay = car.FindBay(bayId);
@@ -86,7 +86,7 @@ public abstract class TrainStationOpsBase : MonoBehaviour, ITrainStationOps
         return car.TryParkVehicle(newVehicle, bayId);
     }
 
-    public virtual float InspectLashStable01(TrainCarVehicleRagdoll car)
+    public virtual float InspectLashStable01(TrainVehicleRagdoll car)
     {
         if (car == null) return 1f;
         car.lashRuntime?.TickEvaluate(Vector3.zero);

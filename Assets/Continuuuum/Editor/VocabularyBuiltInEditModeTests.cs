@@ -111,6 +111,19 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_CivilAndLifeSystemLemmas()
+    {
+        string factory = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "factory");
+        string transitHub = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "transit-hub");
+        string gasStation = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "gas-station");
+        string lifeForce = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "life-force");
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(factory));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(transitHub));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(gasStation));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(lifeForce));
+    }
+
+    [Test]
     public void JsonExport_MatchesRegistryCount()
     {
         var path = VocabularyBuiltInJsonExporter.Export();

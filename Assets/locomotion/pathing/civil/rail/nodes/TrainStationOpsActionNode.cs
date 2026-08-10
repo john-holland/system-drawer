@@ -16,8 +16,8 @@ public sealed class TrainStationOpsActionNode : BehaviorTreeNode
 {
     public TrainStationOpsActionKind action = TrainStationOpsActionKind.Couple;
     public TrainStationOpsBase ops;
-    public TrainCarVehicleRagdoll carA;
-    public TrainCarVehicleRagdoll carB;
+    public TrainVehicleRagdoll carA;
+    public TrainVehicleRagdoll carB;
     public VehicleRagdoll nestedVehicle;
     public string bayId = "deck";
     public string limbId = "main_crane";

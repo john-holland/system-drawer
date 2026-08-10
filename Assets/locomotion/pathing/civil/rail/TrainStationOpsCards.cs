@@ -6,8 +6,8 @@ using UnityEngine;
 public class TrainStationOpsCard : TravelAgentCard
 {
     public TrainStationOpsBase ops;
-    public TrainCarVehicleRagdoll car;
-    public TrainConsistRuntime consist;
+    public TrainVehicleRagdoll car;
+    public TrainVehicleRagdoll consist;
 
     protected ITrainStationOps ResolveOps(GameObject host)
     {
@@ -20,7 +20,7 @@ public class TrainStationOpsCard : TravelAgentCard
         return ops;
     }
 
-    protected TrainCarVehicleRagdoll ResolveCar(ITrainStationOps o)
+    protected TrainVehicleRagdoll ResolveCar(ITrainStationOps o)
     {
         if (car != null) return car;
         return o?.ActiveCar;
@@ -30,8 +30,8 @@ public class TrainStationOpsCard : TravelAgentCard
 [Serializable]
 public sealed class TrainStationCoupleCard : TrainStationOpsCard
 {
-    public TrainCarVehicleRagdoll front;
-    public TrainCarVehicleRagdoll rear;
+    public TrainVehicleRagdoll front;
+    public TrainVehicleRagdoll rear;
 
     public TrainStationCoupleCard()
     {
@@ -54,7 +54,7 @@ public sealed class TrainStationCoupleCard : TrainStationOpsCard
 public sealed class TrainStationSwapCarCard : TrainStationOpsCard
 {
     public int carIndex;
-    public TrainCarVehicleRagdoll replacement;
+    public TrainVehicleRagdoll replacement;
 
     public TrainStationSwapCarCard()
     {

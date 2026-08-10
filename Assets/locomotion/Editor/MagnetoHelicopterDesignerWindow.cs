@@ -38,7 +38,6 @@ public sealed class MagnetoHelicopterDesignerWindow : EditorWindow
     PixelLightViewScopeSettings _activeViewScope;
     PixelLightMultiSlotCatalog _catalog;
     Vector2 _placementSlotsScroll;
-    bool _paintOn = true;
     bool _frameScrubLivePreview = true;
     bool _frameScrubPausedRig;
     enum PixelBrushKind
@@ -566,11 +565,9 @@ public sealed class MagnetoHelicopterDesignerWindow : EditorWindow
         switch (brush)
         {
             case PixelBrushKind.PaintOn:
-                _paintOn = true;
                 EditorGUILayout.HelpBox("Click cells on the square grid below to paint ON.", MessageType.None);
                 break;
             case PixelBrushKind.PaintOff:
-                _paintOn = false;
                 EditorGUILayout.HelpBox(
                     "Delete brush: click cells to paint OFF. Clicking a Grid Slot (G) asks to delete that slot.",
                     MessageType.None);

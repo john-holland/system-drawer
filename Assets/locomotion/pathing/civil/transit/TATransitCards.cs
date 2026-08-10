@@ -225,6 +225,7 @@ public class TAVehicleFuelCard : TATransitCard
 {
     public string openCloseTopologyId = "fuel_port";
     [Range(0f, 1f)] public float fill01 = 1f;
+    public TrainVehicleRagdoll train;
 
     public static TAVehicleFuelCard Generate(DispatchRequest request, BusVehicleRagdoll vehicle = null)
     {
@@ -237,10 +238,24 @@ public class TAVehicleFuelCard : TATransitCard
         return c;
     }
 
+    public static TAVehicleFuelCard GenerateForTrain(DispatchRequest request, TrainVehicleRagdoll train = null)
+    {
+        var c = new TAVehicleFuelCard();
+        Fill(c, request, "ta_vehicle_fuel");
+        c.train = train;
+        c.openCloseTopologyId = train != null ? train.fuelPortTopologyId : "fuel01";
+        c.goalTarget = train != null ? train.gameObject : null;
+        if (train != null)
+            c.goalWorld = train.fuelPort != null ? train.fuelPort.position : train.transform.position;
+        return c;
+    }
+
     public void ApplyFuel()
     {
         if (vehicle != null)
             vehicle.fuel01 = Mathf.Clamp01(fill01);
+        if (train != null)
+            train.fuel01 = Mathf.Clamp01(fill01);
     }
 }
 

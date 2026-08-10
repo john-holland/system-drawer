@@ -1,56 +1,31 @@
-# Train Cars, Rail, Stations, Cargo Stability
+# Train Vehicles, Rail Track, Stations, Dispatch
 
-## Composition
+## Composition (replace model)
 
 | Type | Role |
 |------|------|
-| `TrainCarVehicleRagdoll` | Car with limbs, containment bays, lash, coupling |
-| `TrainCarAmbulationLimb` | Crane / dig / loader — OpenClose topology id + fold state |
+| `TrainVehicleRagdoll` | Authoritative craft — nested `cars`, limbs, bays, lash, coupling, cabin, planar aisles |
+| `TrainCarAmbulationLimb` | Crane / dig / loader / plow — OpenClose topology + fold state |
 | `TrainCarContainmentBay` | Nested vehicles or bulk commodity |
-| `TrainConsistRuntime` | Ordered cars + formation group |
-| `TrainCouplingRuntime` | Front/rear couple/decouple |
+| `TrainCouplingRuntime` | Front/rear couple → rebuilds head car list |
+| `RailTrackStructure` | Mesh/SDF track part catalog + `railSegmentId` |
+| `PlanarSplinePathLocomotion` | Aisle / door bridge / porch walk ribbons |
 
 Close semantics: limb → **refold**; contained vehicle → **park** (`TrainCarCloseMode`).
 
-## BT nodes
+## Dispatch / station
 
-- `TrainCarUnfoldPlanNode` — unfold limb / bay ramp
-- `TrainCarClosePlanNode` — RefoldLimb | ParkContainedVehicle | Both
-- `TrainCarFoldFailureBranchNode` — Selector; Failure → default branch + `train_fold_failed`
+- `TrainStationBioRhythm` — public/private parking, checkpoints, TSA attendant + TA cards
+- `TrainDispatchMissionControlBioRhythm` — engineer/dispatch start/stop/speed/plow/justice/follow/turnstile/yard
+- Cards in `TrainDispatchCards.cs` compose `TAVehicle*Card` where applicable
 
-## Resultants (fluent + lemmas)
+## Travel
 
-```csharp
-car.Resultants.Vehicles().Parked().OfKind("truck")
-car.Resultants.Limbs().Unfolded().OfRole(TrainCarLimbRole.Crane)
-car.Resultants.All().Stable()
-```
+- `TravelLegMode.Rail` → `RailTrackFollowPlanNode` samples track then waypoints; snake via `CopySnakeWorldPositions`
+- Seat tickets: Continuuuum `/train-seats` → `TrainSeatTicketConfig.ApplyTo`
 
-Lemma keys: `TrainCarLemmaPropertyKeys` (+ LocalizationPropertySpecCatalog train specs). Binder: `TrainCarLemmaBinder.ApplyToken("impossible_keep_stable")`.
+## Holds
 
-## Cargo lash
+Shared `VehicleGrabHold` (cylinder) + `VehicleStrapHold` (rope) on train and bus.
 
-- `CargoLashProfile` / `CargoLashRuntime` — FixedJoints + optional `RopeSystem`
-- `CargoStabilityEvaluator` + `CargoStabilityBakeAsset` — prebake + live tip risk
-- Modes: `Nominal` | `SoftLash` | `ImpossibleKeepStable` (never tips; infinite pin)
-
-## Rail travel
-
-- `TravelLegMode.Rail` — CompositeMultiModalPathNode uses drive-style waypoint chain
-- `MultiModalSegment.railSegmentId` / `consistId`
-- `TravelAgent.consistId`, `railSegmentId`, `trainConsist`
-- Linked snake: `TravelAgentMultibodySettings.enableLinkedSegmentSnake` → `TravelMultibodyPathAdjuster.ApplyLinkedSegmentSnakeXZ`
-
-Feature Budget: `train_rail`, `cargo_lash`.
-
-## Stations / silos / depots
-
-| StationKind | Runtime | CivilSystemKind |
-|-------------|---------|-----------------|
-| Train | `TrainStationRuntime` | TrainStation |
-| Silo | `GrainSiloStubRuntime` | GrainSilo |
-| RailMaintenance | `RailMaintenanceDepotStub` | RailMaintenanceDepot |
-
-Ops via `ITrainStationOps` / cards: couple, swap car, unload bay, limb work, silo load/unload, depot replace, lash inspect.
-
-`StationHierarchyNode.TryBridge` registers civil venues and ensures stub components.
+Feature Budget: `train_rail`, `rail_track`, `train_dispatch`, `planar_spline_path`, `cargo_lash`.

@@ -75,6 +75,9 @@ public sealed class CutToolComponent : MonoBehaviour
         if (rd != null) evt.target = rd.gameObject;
 
         CombatDamageFamilyRouter.ApplyForCard(null, evt);
+        var plantCut = target.GetComponentInParent<PlantCutTakeRuntime>();
+        if (plantCut != null)
+            plantCut.ApplyCutTake(worldHit, direction, amount01, Time.time);
         emitCount++;
     }
 }

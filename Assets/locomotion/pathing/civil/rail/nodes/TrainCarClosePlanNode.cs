@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Close: refold limb and/or park contained vehicle (topology close semantics).</summary>
 public sealed class TrainCarClosePlanNode : BehaviorTreeNode
 {
-    public TrainCarVehicleRagdoll car;
+    public TrainVehicleRagdoll car;
     public TrainCarCloseMode closeMode = TrainCarCloseMode.Both;
     public string limbId;
     public string bayId;
@@ -19,7 +19,7 @@ public sealed class TrainCarClosePlanNode : BehaviorTreeNode
         _t = 0f;
         _done = false;
         if (car == null && tree != null)
-            car = tree.GetComponentInParent<TrainCarVehicleRagdoll>();
+            car = tree.GetComponentInParent<TrainVehicleRagdoll>();
     }
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)

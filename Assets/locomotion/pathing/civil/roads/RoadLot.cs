@@ -36,6 +36,10 @@ public sealed class RoadLot : MonoBehaviour
     public LotGrassGrowthController grass;
     public bool registerCorridorOnAwake = true;
 
+    [Header("Walk path ribbons")]
+    public List<PlanarSplinePathLocomotion> pathRibbons = new List<PlanarSplinePathLocomotion>();
+    public bool autoBuildOutletRibbons = true;
+
     static readonly List<RoadLot> Registry = new List<RoadLot>();
 
     public static IReadOnlyList<RoadLot> All => Registry;
@@ -49,8 +53,47 @@ public sealed class RoadLot : MonoBehaviour
         if (boundary == null)
             boundary = GetComponent<RoadLotBoundarySpline>() ?? gameObject.AddComponent<RoadLotBoundarySpline>();
         boundary.EnsureClosedLoopDefault();
+        if (pathRibbons.Count == 0)
+            pathRibbons.AddRange(GetComponentsInChildren<PlanarSplinePathLocomotion>(true));
+        if (autoBuildOutletRibbons)
+            EnsureOutletPathRibbons();
         if (!Registry.Contains(this))
             Registry.Add(this);
+    }
+
+    /// <summary>Ensure a planar spline ribbon from arrival pad toward each road outlet.</summary>
+    public void EnsureOutletPathRibbons()
+    {
+        if (roadOutlets == null) return;
+        for (int i = 0; i < roadOutlets.Count; i++)
+        {
+            var outlet = roadOutlets[i];
+            if (outlet == null || string.IsNullOrEmpty(outlet.roadSegmentId)) continue;
+            string ribbonName = "path_ribbon_" + outlet.roadSegmentId;
+            PlanarSplinePathLocomotion ribbon = null;
+            for (int r = 0; r < pathRibbons.Count; r++)
+            {
+                if (pathRibbons[r] != null && pathRibbons[r].name == ribbonName)
+                {
+                    ribbon = pathRibbons[r];
+                    break;
+                }
+            }
+            if (ribbon == null)
+            {
+                var go = new GameObject(ribbonName);
+                go.transform.SetParent(transform, false);
+                ribbon = go.AddComponent<PlanarSplinePathLocomotion>();
+                pathRibbons.Add(ribbon);
+            }
+            Vector3 pad = transform.InverseTransformPoint(ArrivalWorld);
+            Vector3 outLocal = pad + new Vector3(outlet.lateralSide * outlet.curbWidth, 0f, 8f + i * 2f);
+            if (ribbon.controlPoints == null || ribbon.controlPoints.Count < 2)
+            {
+                ribbon.controlPoints = new List<Vector3> { pad, outLocal };
+                ribbon.Rebuild();
+            }
+        }
     }
 
     void OnDestroy() => Registry.Remove(this);

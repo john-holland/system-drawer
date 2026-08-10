@@ -5,12 +5,12 @@ using UnityEngine;
 [AddComponentMenu("Locomotion/Civil/Rail/Train Car Lemma Binder")]
 public sealed class TrainCarLemmaBinder : MonoBehaviour
 {
-    public TrainCarVehicleRagdoll car;
+    public TrainVehicleRagdoll car;
 
     void Awake()
     {
         if (car == null)
-            car = GetComponent<TrainCarVehicleRagdoll>();
+            car = GetComponent<TrainVehicleRagdoll>();
     }
 
     public void ApplyToken(string token)

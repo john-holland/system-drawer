@@ -91,6 +91,11 @@
   });
 
   document.getElementById("ta-refresh-map").onclick = loadMap;
+
+  if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === "function") {
+    ContinuuuumNav.mount({ app: "transit", theme: "light" });
+  }
+
   loadVehicles();
   loadBuildings();
   loadMap();

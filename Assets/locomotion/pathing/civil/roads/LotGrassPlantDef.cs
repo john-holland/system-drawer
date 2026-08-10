@@ -50,6 +50,9 @@ public sealed class LotGrassGrowthController : MonoBehaviour
     public List<int> sectionParent = new List<int>();
     public float nextSectionSpawnChance = 1f;
 
+    public GameObject spawnedPrefabInstance;
+    public PlantCutTakeRuntime cutTake;
+
     void Awake()
     {
         if (lot == null)
@@ -58,12 +61,34 @@ public sealed class LotGrassGrowthController : MonoBehaviour
             meshFilter = GetComponent<MeshFilter>();
         if (plantDef != null)
             growth01 = plantDef.startGrowth01;
+        if (cutTake == null)
+            cutTake = GetComponent<PlantCutTakeRuntime>() ?? gameObject.AddComponent<PlantCutTakeRuntime>();
+        cutTake.grass = this;
+        EnsureSpeedTreeInstance();
+    }
+
+    public void EnsureSpeedTreeInstance()
+    {
+        if (plantDef?.speedTreePrefab == null) return;
+        if (spawnedPrefabInstance != null) return;
+        spawnedPrefabInstance = Instantiate(plantDef.speedTreePrefab, transform);
+        spawnedPrefabInstance.transform.localPosition = Vector3.zero;
+        spawnedPrefabInstance.transform.localRotation = Quaternion.identity;
+        float s = Mathf.Lerp(0.25f, 1f, growth01);
+        spawnedPrefabInstance.transform.localScale = Vector3.one * s;
     }
 
     public void TickGrowth(float dt)
     {
         if (plantDef == null) return;
         growth01 = Mathf.MoveTowards(growth01, plantDef.endGrowth01, dt * 0.05f);
+        if (spawnedPrefabInstance != null)
+        {
+            float s = Mathf.Lerp(0.25f, 1f, growth01);
+            spawnedPrefabInstance.transform.localScale = Vector3.one * s;
+        }
+        else
+            EnsureSpeedTreeInstance();
         TryAdvanceStage();
     }
 

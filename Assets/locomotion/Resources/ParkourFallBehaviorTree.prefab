@@ -1,0 +1,914 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2382174263028718094
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7704174943236549883}
+  - component: {fileID: 267349111857614091}
+  - component: {fileID: 8380573020485721860}
+  m_Layer: 0
+  m_Name: ParkourFallBehaviorTree
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7704174943236549883
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382174263028718094}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2342696648737581851}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &267349111857614091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382174263028718094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7517a035263ce0242827780cbb5f52be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::BehaviorTree
+  rootNode: {fileID: 7823550565399530535}
+  currentNode: {fileID: 0}
+  lastStatus: 0
+  decisionTime: 0
+  lastDecisionTime: -999
+  nextDecisionTime: 0
+  currentGoal:
+    goalName: parkour_fall
+    type: 16
+    target: {fileID: 0}
+    targetPosition: {x: 0, y: -1.1, z: 0.8}
+    targetRotation: {x: 0, y: 0, z: 0, w: 1}
+    pleaseHold: 0
+    hitLimbNames:
+    - LeftHand
+    - RightHand
+    - LeftFoot
+    - RightFoot
+    useToolForHit: 0
+    hitTool: {fileID: 0}
+    requiresCleanup: 0
+    toolsUsed: []
+    priority: 9
+    cleanupUrgency: 1
+    validAfterNarrativeTime: -Infinity
+    validBeforeNarrativeTime: Infinity
+    requireMinCausalDepth: 0
+  resetIfNotRoot: 0
+  availableCards: []
+  sceneObjectRegistry: {fileID: 0}
+--- !u!114 &8380573020485721860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382174263028718094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf5d2a4b884742fba1bfc0be522669c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::ParkourLandAnimationDriver
+  activeAnimationGroupTag: parkour.fall_rolls
+  activeCategory: 29
+  activePrep:
+    landingGoal:
+      goalName: land
+      type: 16
+      target: {fileID: 0}
+      targetPosition: {x: 0, y: 0, z: 0}
+      targetRotation: {x: 0, y: 0, z: 0, w: 1}
+      pleaseHold: 0
+      hitLimbNames: []
+      useToolForHit: 0
+      hitTool: {fileID: 0}
+      requiresCleanup: 0
+      toolsUsed: []
+      priority: 8
+      cleanupUrgency: 1
+      validAfterNarrativeTime: -Infinity
+      validBeforeNarrativeTime: Infinity
+      requireMinCausalDepth: 0
+    impactCurve:
+      envelope:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      keyframes:
+      - frameIndex: 0
+        time01: 0
+        strength01: 0.05
+        isImpact: 0
+      - frameIndex: 12
+        time01: 0.55
+        strength01: 1
+        isImpact: 1
+      - frameIndex: 24
+        time01: 1
+        strength01: 0.2
+        isImpact: 0
+    prepareLeadSeconds: 0.35
+  landingGoalWorld: {x: 0, y: -1.1, z: 0.8}
+  hasLandingGoal: 1
+  showGizmo: 1
+  ikAnimationManager: {fileID: 0}
+--- !u!1 &2439305088089674856
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2342696648737581851}
+  - component: {fileID: 7823550565399530535}
+  m_Layer: 0
+  m_Name: ParkourFallSequence
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2342696648737581851
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2439305088089674856}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2213327849257493814}
+  - {fileID: 8894076333602480362}
+  m_Father: {fileID: 7704174943236549883}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7823550565399530535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2439305088089674856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f863d8737e791de438f78769d8df1f8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::RagdollPlayerSequenceNode
+  nodeType: 3
+  children:
+  - {fileID: 956518140844247323}
+  - {fileID: 4061943926154963008}
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
+  useCardEstimation: 1
+--- !u!1 &2759053423893829895
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5176239679781582576}
+  m_Layer: 0
+  m_Name: RightHand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5176239679781582576
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2759053423893829895}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5512983375162960723}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3357174439098072297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7592329163585317576}
+  m_Layer: 0
+  m_Name: LeftFoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7592329163585317576
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3357174439098072297}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5512983375162960723}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4116828335767714476
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7351496938724908644}
+  m_Layer: 0
+  m_Name: LeftHand
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7351496938724908644
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4116828335767714476}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5512983375162960723}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4765359150613264577
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8894076333602480362}
+  - component: {fileID: 4061943926154963008}
+  m_Layer: 0
+  m_Name: FallLimbPlacement
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8894076333602480362
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4765359150613264577}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5512983375162960723}
+  m_Father: {fileID: 2342696648737581851}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4061943926154963008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4765359150613264577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8230b1e515487e4b9df43e1636e738b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::ParkourFallLimbPlacementNode
+  nodeType: 3
+  children: []
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
+  useCardEstimation: 1
+  fallCurve:
+    fallProgress:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    bodyDropMeters:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.55
+        value: -0.4
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: -1.1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    forwardMeters:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0.8
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.8
+        inSlope: 0.8
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    limbs:
+    - limbId: LeftHand
+      target: {fileID: 7351496938724908644}
+      startLocalOffset: {x: -0.35, y: 0.15, z: 0.2}
+      endLocalOffset: {x: -0.4, y: -0.85, z: 0.45}
+      blendCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightScale: 0.15
+    - limbId: RightHand
+      target: {fileID: 5176239679781582576}
+      startLocalOffset: {x: 0.35, y: 0.15, z: 0.2}
+      endLocalOffset: {x: 0.4, y: -0.85, z: 0.45}
+      blendCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightScale: 0.15
+    - limbId: LeftFoot
+      target: {fileID: 7592329163585317576}
+      startLocalOffset: {x: -0.15, y: -0.95, z: 0.05}
+      endLocalOffset: {x: -0.2, y: -1.05, z: 0.55}
+      blendCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightScale: 0.15
+    - limbId: RightFoot
+      target: {fileID: 6552891767890881764}
+      startLocalOffset: {x: 0.15, y: -0.95, z: 0.05}
+      endLocalOffset: {x: 0.2, y: -1.05, z: 0.55}
+      blendCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      heightScale: 0.15
+  landDriver: {fileID: 8380573020485721860}
+  bodyAnchor: {fileID: 7704174943236549883}
+  durationSec: 1.25
+  animationGroupTag: parkour.fall_rolls
+  setLandGoal: 1
+--- !u!1 &6573695792332151811
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5512983375162960723}
+  m_Layer: 0
+  m_Name: LimbTargets
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5512983375162960723
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6573695792332151811}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7351496938724908644}
+  - {fileID: 5176239679781582576}
+  - {fileID: 7592329163585317576}
+  - {fileID: 6552891767890881764}
+  m_Father: {fileID: 8894076333602480362}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7779050003579229216
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6552891767890881764}
+  m_Layer: 0
+  m_Name: RightFoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6552891767890881764
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7779050003579229216}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5512983375162960723}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8878434242811526185
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2213327849257493814}
+  - component: {fileID: 956518140844247323}
+  m_Layer: 0
+  m_Name: PrepareLandAnimation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2213327849257493814
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8878434242811526185}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2342696648737581851}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &956518140844247323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8878434242811526185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bb67e1c9b294cd296b472e7bc9cf64f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Locomotion.Runtime::PrepareLandAnimationNode
+  nodeType: 3
+  children: []
+  status: 2
+  estimatedDuration: 0
+  actualDuration: 0
+  captureStateBeforeExec: 0
+  associatedObjects: []
+  stateCaptureBehaviours: []
+  useCardEstimation: 1
+  segment:
+    mode: 0
+    waypoints: []
+    card:
+      sectionName: 
+      description: 
+      physicalPathingMedium: 0
+      physicalPathingTag: 
+      driveAnimationPhase: 0
+      driveInstrumentId: 
+      terminalLegMode: 0
+      impulseStack: []
+      requiredState:
+        rootPosition: {x: 0, y: 0, z: 0}
+        rootRotation: {x: 0, y: 0, z: 0, w: 0}
+        rootVelocity: {x: 0, y: 0, z: 0}
+        rootAngularVelocity: {x: 0, y: 0, z: 0}
+      targetState:
+        rootPosition: {x: 0, y: 0, z: 0}
+        rootRotation: {x: 0, y: 0, z: 0, w: 0}
+        rootVelocity: {x: 0, y: 0, z: 0}
+        rootAngularVelocity: {x: 0, y: 0, z: 0}
+      limits:
+        maxDegreesDifference: 180
+        maxTorque: 1000
+        maxForce: 2000
+        maxVelocityChange: 10
+        maxAngularVelocityChange: 10
+        useRadialLimits: 0
+        maxRadialDistance: 0
+        maxRadialRotation: 0
+        radialReferencePosition: {x: 0, y: 0, z: 0}
+        lowerRadialReferenceRotation: {x: 0, y: 0, z: 0}
+        upperRadialReferenceRotation: {x: 0, y: 0, z: 0}
+        fuelCost: 0
+      connectedSectionNames: []
+      behaviorTree: {fileID: 0}
+      enablesTraversability: 0
+      traversabilityMode: 0
+      traversabilityTag: 
+      useValidInVolume: 0
+      validInVolumeCenter: {x: 0, y: 0, z: 0}
+      validInVolumeSize: {x: 1, y: 1, z: 1}
+      validInVolumeTMin: 0
+      validInVolumeTMax: 1
+      requiredToolKey: 
+      requiredTool: {fileID: 0}
+      requiredTools: []
+      maxToolCount: 0
+      maxTargetCount: 1
+      targets: []
+      requireAllTargetsToMakeContact: 0
+      requireAllHeldToolsToMakeContact: 0
+      toolReachDistance: 0
+      isThrowGoalOnly: 0
+      needsToBeThrown: 0
+      thrownObject: {fileID: 0}
+      throwHandMode: 1
+      throwMinRange: 0
+      throwMaxRange: 0
+      isCarry: 0
+      carriedObject: {fileID: 0}
+      pleaseHold: 0
+      skipRelease: 0
+      skipReturn: 0
+      repeatCount: 1
+      carryAttachBoneName: 
+      isIsometric: 0
+      isPlaceGoal: 0
+      placeTargetOffset: {x: 0, y: 0, z: 0}
+      isHitGoal: 0
+      hitLimbBoneName: 
+      hitLimbBoneNames: []
+      useToolForHit: 0
+      hitTool: {fileID: 0}
+      isWeightlift: 0
+      weightliftTool: {fileID: 0}
+      weightliftMuscleGroupName: 
+      isCatchGoal: 0
+      catchLimbBoneName: 
+      catchLimbBoneNames: []
+      isShootGoal: 0
+      shootLaunchedObject: {fileID: 0}
+      shootHandMode: 1
+      shootMinRange: 0
+      shootMaxRange: 0
+      isSitGoal: 0
+      isStandOnSurfaceGoal: 0
+      isChairRotateGoal: 0
+      isChairSchoochGoal: 0
+      isWrestlingGoal: 0
+      isEatGoal: 0
+      isToiletGoal: 0
+      isHygieneGoal: 0
+      hygieneKind: 
+      isLoveMakingGoal: 0
+      isCombatGoal: 0
+      isChefGoal: 0
+      isThreatGoal: 0
+      isJusticeGoal: 0
+      isCivicGoal: 0
+      isCivilGoal: 0
+      isTravelAgentGoal: 0
+      isPlumbingGoal: 0
+    tools: []
+    segmentEnd: {x: 0, y: 0, z: 0}
+    medium: 0
+    estimatedTimeSec: 0
+    roadSegmentId: 
+    railSegmentId: 
+    consistId: 
+    roadLotId: 
+    distanceAlongStart: 0
+    distanceAlongEnd: 0
+    reverseLeg: 0
+    terminalSlotBounds:
+      m_Center: {x: 0, y: 0, z: 0}
+      m_Extent: {x: 0, y: 0, z: 0}
+    terminalCentroidWorld: {x: 0, y: 0, z: 0}
+    terminalUpWorld: {x: 0, y: 1, z: 0}
+    terminalSurfaceNormal: {x: 0, y: 1, z: 0}
+    terminalWaterSurfaceY: NaN
+    terminalPlaningSpeed: 0
+    terminalHoldPolicy: 0
+    terminalSlotIndex: 0
+    terminalScore: 0
+    runningTotals:
+      power: 0
+      spring: 1
+      damage: 0
+      risk: 0
+      radialTurningPotential: 1
+    stuntZoneRef: {fileID: 0}
+    apertureId: 
+    animationGroupTag: 
+  landingGoalOverride: {x: 0, y: 0, z: 0}
+  useLandingGoalOverride: 0
+  landDurationSeconds: 1.25

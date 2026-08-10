@@ -47,8 +47,22 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Pathing | Replan interval + horizon distance ratio |
 | Civil systems | `PersonaDayManager` tick interval via `CivilSystemsFeatureBudgetConsumer` |
 | PixelLight | `FeatureBudgetIds.PixelLight` (`pixel_light`) — PixelLight rigs/optics/grid mounts on heli, airplane, airport; catalog `maxRecommendedSlots` soft cap |
-| Train / Rail | `FeatureBudgetIds.TrainRail` (`train_rail`) — consist / coupling / Rail legs |
+| Train / Rail | `FeatureBudgetIds.TrainRail` (`train_rail`) — `TrainVehicleRagdoll` / coupling / Rail legs |
+| Planar spline | `FeatureBudgetIds.PlanarSplinePath` (`planar_spline_path`) |
+| Rail track | `FeatureBudgetIds.RailTrack` (`rail_track`) — mesh/SDF track structure |
+| Train dispatch | `FeatureBudgetIds.TrainDispatch` (`train_dispatch`) |
+| Elevator | `FeatureBudgetIds.Elevator` (`elevator`) |
+| Inspectors | `FeatureBudgetIds.Inspectors` (`inspectors`) |
+| Pet warden | `FeatureBudgetIds.PetWarden` (`pet_warden`) — OpinionFor |
 | Cargo lash | `FeatureBudgetIds.CargoLash` (`cargo_lash`) — bay/limb lash joints and stability eval |
+| Gas station | `FeatureBudgetIds.GasStation` (`gas_station`) — pumps, store shelves, rail-parallel refill |
+| Park | `FeatureBudgetIds.Park` (`park`) — grounds, lots/paths, grass, plant planner |
+| Sanitation | `FeatureBudgetIds.SanitationFacility` (`sanitation_facility`) |
+| Garbage truck | `FeatureBudgetIds.GarbageTruck` (`garbage_truck`) — TrashWarden / hopper SPH |
+| Sewer graph | `FeatureBudgetIds.SewerGraph` (`sewer_graph`) |
+| Street blocks | `FeatureBudgetIds.StreetBlocks` (`street_blocks`) |
+| Factory | `FeatureBudgetIds.Factory` (`factory`) — gate/line base runtime |
+| Parkour fall | `FeatureBudgetIds.ParkourFall` (`parkour_fall`) — fall/land BT |
 
 ### PixelLight / grid slots budget
 

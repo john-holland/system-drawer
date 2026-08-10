@@ -11,6 +11,9 @@ public sealed class BusVehicleRagdoll : VehicleRagdoll
     public List<Transform> seatAnchors = new List<Transform>();
     public List<Transform> stopButtons = new List<Transform>();
     public List<Transform> grabBars = new List<Transform>();
+    public List<VehicleGrabHold> grabHolds = new List<VehicleGrabHold>();
+    public List<VehicleStrapHold> strapHolds = new List<VehicleStrapHold>();
+    public bool standupSupportBars = true;
     public SeatedPelvisPoseCache pelvisPoseCache;
 
     [Header("Rules")]
@@ -55,8 +58,30 @@ public sealed class BusVehicleRagdoll : VehicleRagdoll
             CollectNamedChildren("stop", stopButtons);
         if (grabBars.Count == 0)
             CollectNamedChildren("bar", grabBars);
+        EnsureSharedHolds();
         if (telecomBridge == null)
             telecomBridge = GetComponent("TelecomUnityBridge");
+    }
+
+    public void EnsureSharedHolds()
+    {
+        if (grabHolds == null) grabHolds = new List<VehicleGrabHold>();
+        if (strapHolds == null) strapHolds = new List<VehicleStrapHold>();
+        grabHolds.Clear();
+        strapHolds.Clear();
+        grabHolds.AddRange(GetComponentsInChildren<VehicleGrabHold>(true));
+        strapHolds.AddRange(GetComponentsInChildren<VehicleStrapHold>(true));
+        if (standupSupportBars && grabHolds.Count == 0 && grabBars.Count > 0)
+        {
+            for (int i = 0; i < grabBars.Count; i++)
+            {
+                if (grabBars[i] == null) continue;
+                var hold = grabBars[i].GetComponent<VehicleGrabHold>()
+                           ?? grabBars[i].gameObject.AddComponent<VehicleGrabHold>();
+                hold.EnsureCollider();
+                grabHolds.Add(hold);
+            }
+        }
     }
 
     void CollectNamedChildren(string token, List<Transform> into)

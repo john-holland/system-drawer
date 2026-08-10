@@ -109,5 +109,43 @@ public class ParkourLandAnimationTests
         Assert.Less(low, high);
         Assert.AreEqual(1f, high, 0.001f);
     }
+
+    [Test]
+    public void ParkourFallTreeFactory_BuildsPrepareAndLimbPlacement()
+    {
+        BehaviorTree bt = ParkourFallTreeFactory.Build();
+        try
+        {
+            Assert.IsNotNull(bt);
+            Assert.IsNotNull(bt.rootNode);
+            Assert.IsInstanceOf<RagdollPlayerSequenceNode>(bt.rootNode);
+            Assert.IsNotNull(bt.GetComponent<ParkourLandAnimationDriver>());
+            Assert.IsNotNull(bt.GetComponentInChildren<PrepareLandAnimationNode>());
+            var place = bt.GetComponentInChildren<ParkourFallLimbPlacementNode>();
+            Assert.IsNotNull(place);
+            place.OnEnter(bt);
+            Assert.AreEqual(4, place.fallCurve.limbs.Count);
+            Assert.IsNotNull(place.fallCurve.limbs[0].target);
+            Assert.AreEqual(ParkourAnimationGroup.FallRolls, place.animationGroupTag);
+        }
+        finally
+        {
+            Object.DestroyImmediate(bt.gameObject);
+        }
+    }
+
+    [Test]
+    public void ParkourFallLimbSlot_SampleLocal_BlendsOffsets()
+    {
+        var slot = new ParkourFallLimbSlot
+        {
+            startLocalOffset = Vector3.zero,
+            endLocalOffset = new Vector3(0f, -1f, 1f),
+            blendCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f)
+        };
+        Vector3 mid = slot.SampleLocal(0.5f);
+        Assert.AreEqual(-0.5f, mid.y, 0.05f);
+        Assert.AreEqual(0.5f, mid.z, 0.05f);
+    }
 }
 #endif

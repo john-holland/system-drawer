@@ -147,4 +147,113 @@ public sealed class RoadLotBoundarySpline : MonoBehaviour
         }
         throw new InvalidOperationException("Split t01=" + t01 + " did not land inside any wall section.");
     }
+
+    [Header("Bake")]
+    public MeshFilter wallMeshFilter;
+    public MeshCollider wallMeshCollider;
+    public float wallThickness = 0.15f;
+    public int bakeSamplesPerSection = 16;
+    public Mesh bakedWallMesh;
+
+    /// <summary>Bake non-gap wall sections into a mesh + collider. Gaps = no wall / gate topology id.</summary>
+    public Mesh BakeWallMesh()
+    {
+        EnsureClosedLoopDefault();
+        ValidateWallSections();
+        if (!wallsEnabled)
+        {
+            ClearBakedWall();
+            return null;
+        }
+
+        var verts = new List<Vector3>();
+        var tris = new List<int>();
+        var uvs = new List<Vector2>();
+        float half = Mathf.Max(0.02f, wallThickness * 0.5f);
+
+        for (int s = 0; s < wallSections.Count; s++)
+        {
+            var sec = wallSections[s];
+            if (sec == null || sec.isGap) continue;
+            int samples = Mathf.Max(2, bakeSamplesPerSection);
+            float len = sec.Length01;
+            for (int i = 0; i < samples; i++)
+            {
+                float u0 = i / (float)samples;
+                float u1 = (i + 1) / (float)samples;
+                float t0 = SampleSectionT(sec, u0);
+                float t1 = SampleSectionT(sec, u1);
+                Vector3 a = SampleLocal(t0);
+                Vector3 b = SampleLocal(t1);
+                Vector3 tangent = (b - a);
+                if (tangent.sqrMagnitude < 1e-8f) continue;
+                tangent.Normalize();
+                Vector3 right = Vector3.Cross(Vector3.up, tangent).normalized;
+                if (right.sqrMagnitude < 1e-6f) right = Vector3.right;
+                float h = Mathf.Max(0.1f, sec.height);
+
+                Vector3 bl = a - right * half;
+                Vector3 br = a + right * half;
+                Vector3 tl = bl + Vector3.up * h;
+                Vector3 tr = br + Vector3.up * h;
+                Vector3 bl2 = b - right * half;
+                Vector3 br2 = b + right * half;
+                Vector3 tl2 = bl2 + Vector3.up * h;
+                Vector3 tr2 = br2 + Vector3.up * h;
+
+                int baseIdx = verts.Count;
+                verts.Add(bl); verts.Add(br); verts.Add(tr); verts.Add(tl);
+                verts.Add(bl2); verts.Add(br2); verts.Add(tr2); verts.Add(tl2);
+                // outer face
+                tris.Add(baseIdx); tris.Add(baseIdx + 3); tris.Add(baseIdx + 7);
+                tris.Add(baseIdx); tris.Add(baseIdx + 7); tris.Add(baseIdx + 4);
+                // inner face
+                tris.Add(baseIdx + 1); tris.Add(baseIdx + 5); tris.Add(baseIdx + 6);
+                tris.Add(baseIdx + 1); tris.Add(baseIdx + 6); tris.Add(baseIdx + 2);
+                // top
+                tris.Add(baseIdx + 3); tris.Add(baseIdx + 2); tris.Add(baseIdx + 6);
+                tris.Add(baseIdx + 3); tris.Add(baseIdx + 6); tris.Add(baseIdx + 7);
+                for (int u = 0; u < 8; u++)
+                    uvs.Add(new Vector2(u0 + (u >= 4 ? len / samples : 0f), u % 2 == 0 ? 0f : 1f));
+            }
+        }
+
+        if (bakedWallMesh == null)
+            bakedWallMesh = new Mesh { name = "RoadLotWallBake" };
+        else
+            bakedWallMesh.Clear();
+        bakedWallMesh.SetVertices(verts);
+        bakedWallMesh.SetTriangles(tris, 0);
+        bakedWallMesh.SetUVs(0, uvs);
+        bakedWallMesh.RecalculateNormals();
+        bakedWallMesh.RecalculateBounds();
+
+        if (wallMeshFilter == null)
+            wallMeshFilter = GetComponent<MeshFilter>() ?? gameObject.AddComponent<MeshFilter>();
+        wallMeshFilter.sharedMesh = bakedWallMesh;
+        if (wallMeshCollider == null)
+            wallMeshCollider = GetComponent<MeshCollider>() ?? gameObject.AddComponent<MeshCollider>();
+        wallMeshCollider.sharedMesh = null;
+        wallMeshCollider.sharedMesh = bakedWallMesh;
+        return bakedWallMesh;
+    }
+
+    public void ClearBakedWall()
+    {
+        if (wallMeshFilter != null) wallMeshFilter.sharedMesh = null;
+        if (wallMeshCollider != null) wallMeshCollider.sharedMesh = null;
+        if (bakedWallMesh != null)
+            bakedWallMesh.Clear();
+    }
+
+    static float SampleSectionT(RoadLotWallSection sec, float u01)
+    {
+        float a = Mathf.Repeat(sec.startT01, 1f);
+        float b = sec.endT01;
+        if (a <= 1e-6f && b >= 1f - 1e-6f)
+            return Mathf.Lerp(0f, 1f, u01);
+        float len = b - a;
+        if (len <= 0f) len += 1f;
+        return Mathf.Repeat(a + len * Mathf.Clamp01(u01), 1f);
+    }
 }

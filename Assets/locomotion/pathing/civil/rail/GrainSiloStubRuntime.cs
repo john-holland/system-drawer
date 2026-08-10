@@ -16,10 +16,10 @@ public sealed class GrainSiloStubRuntime : TrainStationOpsBase
         if (buildingRagdoll == null)
             buildingRagdoll = GetComponent<BuildingRagdoll>();
         if (activeCar == null)
-            activeCar = GetComponentInChildren<TrainCarVehicleRagdoll>();
+            activeCar = GetComponentInChildren<TrainVehicleRagdoll>();
     }
 
-    public bool LoadIntoCar(TrainCarVehicleRagdoll car, string bayId, float amount)
+    public bool LoadIntoCar(TrainVehicleRagdoll car, string bayId, float amount)
     {
         amount = Mathf.Min(amount > 0f ? amount : transferRatePerOp, siloQuantity);
         if (amount <= 0f) return false;
@@ -30,7 +30,7 @@ public sealed class GrainSiloStubRuntime : TrainStationOpsBase
         return true;
     }
 
-    public bool UnloadFromCar(TrainCarVehicleRagdoll car, string bayId, float amount)
+    public bool UnloadFromCar(TrainVehicleRagdoll car, string bayId, float amount)
     {
         amount = amount > 0f ? amount : transferRatePerOp;
         var bay = car?.FindBay(bayId);

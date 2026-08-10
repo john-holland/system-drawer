@@ -367,7 +367,7 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
                 break;
 
             case TravelLegMode.Rail:
-                AppendDriveWaypointChain(legNode, seg, tree);
+                AppendRailTrackSegment(legNode, seg, tree);
                 break;
 
             default:
@@ -537,5 +537,38 @@ public class CompositeMultiModalPathNode : BehaviorTreeNode
             plane = GetComponentInParent<AirplaneVehicleRagdoll>();
         if (plane == null) return;
         AircraftTravelRouteMerger.MergeIntoLeg(legNode, plane, seg);
+    }
+
+    void AppendRailTrackSegment(TravelLegSequenceNode legNode, MultiModalSegment seg, BehaviorTree tree)
+    {
+        if (legNode == null) return;
+        string segmentId = seg != null ? seg.railSegmentId : null;
+        TrainVehicleRagdoll train = null;
+        if (tree != null)
+            train = tree.GetComponentInParent<TrainVehicleRagdoll>();
+        if (train == null)
+            train = GetComponentInParent<TrainVehicleRagdoll>();
+        if (string.IsNullOrEmpty(segmentId) && train != null)
+            segmentId = train.railSegmentId;
+
+        var track = RailTrackStructure.FindBySegmentId(segmentId);
+        if (track != null)
+        {
+            var go = new GameObject("RailTrackFollow");
+            go.transform.SetParent(legNode.transform, false);
+            var node = go.AddComponent<RailTrackFollowPlanNode>();
+            node.track = track;
+            node.railSegmentId = segmentId;
+            node.train = train;
+            node.Sample();
+            legNode.children.Add(node);
+            if (node.sampledPath != null && node.sampledPath.Count >= 2)
+            {
+                AppendWaypointChain(legNode, node.sampledPath, seg);
+                return;
+            }
+        }
+
+        AppendDriveWaypointChain(legNode, seg, tree);
     }
 }

@@ -21,6 +21,12 @@
     { id: 'table-read', label: 'Table Read', path: '/table-read' },
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
     { id: 'credits', label: 'Credits', path: '/credits' },
+    { id: 'garbage-bags', label: 'Garbage Bags', path: '/garbage-bags' },
+    { id: 'airplanes', label: 'Airplanes', path: '/airplanes' },
+    { id: 'transit', label: 'Transit', path: '/transit' },
+    { id: 'train-seats', label: 'Train Seats', path: '/train-seats' },
+    { id: 'staff-hours', label: 'Staff Hours', path: '/staff-hours' },
+    { id: 'mayor-dog-mods', label: 'Mayor Dog Mods', path: '/mayor-dog-mods' },
     { id: 'inventory-loadouts', label: 'Inventory Loadouts', path: '/inventory-loadouts' },
     { id: 'lemma-build', label: 'Lemma Build', path: '/lemma-build' },
     { id: 'lemma-completion', label: 'Lemma Completion', path: '/lemma-completion' },
@@ -140,6 +146,12 @@
       'table-read': lemmaBase + '/table-read',
       'sql-viewer': lemmaBase + '/sql-viewer',
       credits: lemmaBase + '/credits',
+      'garbage-bags': lemmaBase + '/garbage-bags',
+      airplanes: lemmaBase + '/airplanes',
+      transit: lemmaBase + '/transit',
+      'train-seats': lemmaBase + '/train-seats',
+      'staff-hours': lemmaBase + '/staff-hours',
+      'mayor-dog-mods': lemmaBase + '/mayor-dog-mods',
       'inventory-loadouts': lemmaBase + '/inventory-loadouts',
       'lemma-build': lemmaBase + '/lemma-build',
       'lemma-completion': lemmaBase + '/lemma-completion',
@@ -170,6 +182,12 @@
     if (path.indexOf('/table-read') >= 0) return 'table-read';
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';
     if (path.indexOf('/credits') >= 0) return 'credits';
+    if (path.indexOf('/garbage-bags') >= 0) return 'garbage-bags';
+    if (path.indexOf('/airplanes') >= 0) return 'airplanes';
+    if (path.indexOf('/transit') >= 0) return 'transit';
+    if (path.indexOf('/train-seats') >= 0) return 'train-seats';
+    if (path.indexOf('/staff-hours') >= 0) return 'staff-hours';
+    if (path.indexOf('/mayor-dog-mods') >= 0) return 'mayor-dog-mods';
     if (path.indexOf('/inventory-loadouts') >= 0) return 'inventory-loadouts';
     if (path.indexOf('/lemma-build') >= 0) return 'lemma-build';
     if (path.indexOf('/lemma-completion') >= 0) return 'lemma-completion';

@@ -15,6 +15,7 @@ try:
         patch_entry,
         seed_lemma_completion,
         summary,
+        sync_builtin_implementation,
     )
 except ImportError:
     from lemma_completion_db import (
@@ -23,6 +24,7 @@ except ImportError:
         patch_entry,
         seed_lemma_completion,
         summary,
+        sync_builtin_implementation,
     )
 
 GetConn = Callable[[], sqlite3.Connection]
@@ -128,6 +130,19 @@ def register_lemma_completion_routes(app: Any, get_conn: GetConn) -> None:
         conn = get_conn()
         try:
             result = seed_lemma_completion(conn, language_code=lang)
+            stats = summary(conn, scope="all", language_code=lang)
+            return jsonify({"ok": True, **result, "summary": stats})
+        finally:
+            conn.close()
+
+    @app.route("/api/lemma-completion/sync-builtins", methods=["POST"])
+    def lemma_completion_sync_builtins():
+        """Re-apply Unity builtin_vocabulary.json → is_builtin + is_implemented."""
+        lang = (request.get_json(silent=True) or {}).get("language") or request.args.get("language") or "en"
+        conn = get_conn()
+        try:
+            _ensure_seeded(conn, lang)
+            result = sync_builtin_implementation(conn, language_code=lang)
             stats = summary(conn, scope="all", language_code=lang)
             return jsonify({"ok": True, **result, "summary": stats})
         finally:

@@ -13,6 +13,7 @@ STATIC_BUDGET = Path(__file__).resolve().parent / "static" / "budget-dashboard"
 STATIC_SETTINGS = Path(__file__).resolve().parent / "static" / "settings"
 STATIC_CREDITS = Path(__file__).resolve().parent / "static" / "credits"
 STATIC_INVENTORY_LOADOUTS = Path(__file__).resolve().parent / "static" / "inventory-loadouts"
+STATIC_GARBAGE_BAGS = Path(__file__).resolve().parent / "static" / "garbage-bags"
 
 
 def register_agile_ui_routes(app) -> None:
@@ -99,3 +100,15 @@ def register_agile_ui_routes(app) -> None:
     @app.route("/inventory-loadouts/<path:asset>")
     def inventory_loadouts_assets(asset: str):
         return send_from_directory(STATIC_INVENTORY_LOADOUTS, asset)
+
+    @app.route("/garbage-bags")
+    def garbage_bags_redirect():
+        return redirect("/garbage-bags/", code=302)
+
+    @app.route("/garbage-bags/")
+    def garbage_bags_page():
+        return send_from_directory(STATIC_GARBAGE_BAGS, "index.html")
+
+    @app.route("/garbage-bags/<path:asset>")
+    def garbage_bags_assets(asset: str):
+        return send_from_directory(STATIC_GARBAGE_BAGS, asset)

@@ -364,12 +364,24 @@ public sealed class PersonaDayManager : MonoBehaviour
         if (venue.contextOwner != null)
         {
             var shifts = venue.contextOwner.GetComponent<PersonaShiftManager>();
-            if (shifts == null && (venue.kind == CivilSystemKind.Airport || venue.kind == CivilSystemKind.BusDepot))
+            if (shifts == null && (venue.kind == CivilSystemKind.Airport || venue.kind == CivilSystemKind.BusDepot
+                                   || venue.kind == CivilSystemKind.GasStation || venue.kind == CivilSystemKind.Park
+                                   || venue.kind == CivilSystemKind.SanitationFacility
+                                   || venue.kind == CivilSystemKind.Factory))
                 shifts = PersonaShiftManager.FindOrCreate(venue.contextOwner);
             shifts?.Tick(DateTime.UtcNow, venue);
         }
         if (venue.kind == CivilSystemKind.Airport && venue.contextOwner != null)
             venue.contextOwner.GetComponent<AirportRuntime>()?.Tick(DateTime.UtcNow, dt);
+        if (venue.kind == CivilSystemKind.GasStation && venue.contextOwner != null)
+            venue.contextOwner.GetComponent<GasStationBioRhythm>()?.Tick(DateTime.UtcNow, dt);
+        if (venue.kind == CivilSystemKind.Park && venue.contextOwner != null)
+            venue.contextOwner.GetComponent<ParkBioRhythm>()?.Tick(DateTime.UtcNow, dt);
+        if (venue.kind == CivilSystemKind.SanitationFacility && venue.contextOwner != null)
+            venue.contextOwner.GetComponent<SanitationFacilityBioRhythm>()?.Tick(DateTime.UtcNow, dt);
+        if (venue.kind == CivilSystemKind.Factory && venue.contextOwner != null
+            && venue.contextOwner.GetComponent<SanitationFacilityRuntime>() == null)
+            venue.contextOwner.GetComponent<FactoryBioRhythm>()?.Tick(DateTime.UtcNow, dt);
     }
 
     void TickCivilianSchedules(CivilVenueNode venue, DateTime utcNow)

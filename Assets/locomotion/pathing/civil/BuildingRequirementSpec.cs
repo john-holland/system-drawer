@@ -194,6 +194,42 @@ public sealed class BuildingRequirementSpec : ScriptableObject
             list.Add(Slot("trash", "Trash", true));
             list.Add(Slot("maintenance_bay", "Nested repair bay", false));
         }
+        if (id.Contains("gas_station") || id == "gasstation" || id.Contains("fuel_station"))
+        {
+            list.Add(Slot("front_desk", "Front desk", true));
+            list.Add(Slot("store", "Convenience store", true));
+            list.Add(Slot("kitchen", "Kitchen", false));
+            list.Add(Slot("bathroom", "Bathroom", true));
+            list.Add(Slot("pump_island", "Pump island", true));
+            list.Add(Slot("parking", "Parking", true));
+            list.Add(Slot("trash", "Trash", false));
+        }
+        if (id == "park" || id.StartsWith("park_") || id.EndsWith("_park")
+            || id.Contains("city_park") || id.Contains("plaza_park") || id.Contains("greenway"))
+        {
+            list.Add(Slot("grounds", "Park grounds / lots", true));
+            list.Add(Slot("info_center", "Information center", false));
+            list.Add(Slot("maintenance_depot", "Maintenance depot", false));
+            list.Add(Slot("kitchen", "Kitchen", false));
+            list.Add(Slot("shop", "Shop / table sales", false));
+            list.Add(Slot("spa", "Spa", false));
+            list.Add(Slot("bathroom", "Bathroom", true));
+            list.Add(Slot("gas_attach", "Attached gas station", false));
+            list.Add(Slot("parking", "Parking", false));
+        }
+        if (id.Contains("sanitation") || id.Contains("waste_water") || id.Contains("transfer_station")
+            || id.Contains("recycling_plant") || id.Contains("sewage"))
+        {
+            list.Add(Slot("gate", "Gate", true));
+            list.Add(Slot("line", "Processing line", true));
+            list.Add(Slot("loading", "Loading area", true));
+            list.Add(Slot("sorting", "Sorting station", true));
+            list.Add(Slot("poop_quifer", "Poop quifer", true));
+            list.Add(Slot("recycle_bay", "Recycling bay", true));
+            list.Add(Slot("crew_depot", "Road crew depot", false));
+            list.Add(Slot("bathroom", "Bathroom", true));
+            list.Add(Slot("trash", "Trash", true));
+        }
         if (id.Contains("airport") || id.Contains("airport_terminal"))
         {
             list.Add(Slot("runway", "Runway", true));

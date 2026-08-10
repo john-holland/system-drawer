@@ -18,4 +18,18 @@ public static class FeatureBudgetIds
     public const string PixelLight = "pixel_light";
     public const string TrainRail = "train_rail";
     public const string CargoLash = "cargo_lash";
+    public const string PlanarSplinePath = "planar_spline_path";
+    public const string RailTrack = "rail_track";
+    public const string TrainDispatch = "train_dispatch";
+    public const string Elevator = "elevator";
+    public const string Inspectors = "inspectors";
+    public const string PetWarden = "pet_warden";
+    public const string GasStation = "gas_station";
+    public const string Park = "park";
+    public const string SanitationFacility = "sanitation_facility";
+    public const string GarbageTruck = "garbage_truck";
+    public const string SewerGraph = "sewer_graph";
+    public const string StreetBlocks = "street_blocks";
+    public const string Factory = "factory";
+    public const string ParkourFall = "parkour_fall";
 }

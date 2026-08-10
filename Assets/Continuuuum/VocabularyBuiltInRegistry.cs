@@ -27,7 +27,7 @@ public static class VocabularyBuiltInRegistry
 
     private static VocabularyBuiltInDescriptor[] BuildAll()
     {
-        var list = new List<VocabularyBuiltInDescriptor>(320);
+        var list = new List<VocabularyBuiltInDescriptor>(400);
         const string en = "en";
         string[] nsmPrimeTags = { "nsm", "prime" };
 
@@ -131,9 +131,48 @@ public static class VocabularyBuiltInRegistry
         Add("adj", "safe", "adjective", VocabularyBuiltInCategory.DiscourseCausality, safetyTags);
         Add("noun", "runway", "noun", VocabularyBuiltInCategory.SpatialGateway, new[] { "stunt", "spatial", "travel" });
         Add("noun", "terminus", "noun", VocabularyBuiltInCategory.SpatialGateway, new[] { "stunt", "spatial", "travel" });
+        Add("noun", "parkour-fall", "noun", VocabularyBuiltInCategory.Subject, stuntTags);
 
         foreach (var w in new[] { "unlock", "latch", "drawer", "lid", "hinge", "guard" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, new[] { "open-close" });
+
+        // Civil venues / transit / sanitation / fuel (shipped runtimes)
+        string[] civilTags = { "civil", "world" };
+        string[] transitTags = { "civil", "transit", "travel" };
+        string[] sanitationTags = { "civil", "sanitation" };
+        string[] fuelTags = { "civil", "fuel" };
+        foreach (var w in new[]
+                 {
+                     "factory", "park", "airport", "hotel", "kitchen", "school", "church", "library",
+                     "mall", "gym", "spa", "bar", "nightclub", "police", "fire-station",
+                     "elevator", "airplane", "helicopter"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, civilTags);
+        foreach (var w in new[]
+                 {
+                     "transit", "transit-hub", "bus", "bus-depot", "bus-station", "train", "train-station",
+                     "rail"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, transitTags);
+        foreach (var w in new[]
+                 {
+                     "sanitation", "sewer", "sewage", "garbage", "garbage-truck", "recycling",
+                     "street-blocks", "drain"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, sanitationTags);
+        foreach (var w in new[] { "gas", "gas-station", "fuel", "pump" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, fuelTags);
+        foreach (var w in new[] { "refuel", "recycle", "commute" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, civilTags);
+
+        // Life systems channels / organs (lemma property ops)
+        string[] lifeTags = { "life", "body" };
+        foreach (var w in new[]
+                 {
+                     "heart", "mood", "organ", "fatigue", "adrenaline", "depression", "immune",
+                     "homeostasis", "life-force", "bio-rhythm"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, lifeTags);
 
         // Drink / comedy liquid lemmas
         foreach (var w in new[] { "almost" })

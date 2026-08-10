@@ -186,7 +186,7 @@ public class TravelAgent : MonoBehaviour
     [Tooltip("Car index within consist (0 = head).")]
     public int trainCarIndex;
     [Tooltip("Optional consist runtime for coupler snake spacing.")]
-    public TrainConsistRuntime trainConsist;
+    public TrainVehicleRagdoll trainConsist;
 
     [Header("Timeline planner (optional)")]
     public PlannerTimelineOptions plannerTimelineOptions = PlannerTimelineOptions.DefaultLegacy();
@@ -577,6 +577,75 @@ public class TravelAgent : MonoBehaviour
             if (roadTravelBinding.roadNetwork == null)
                 roadTravelBinding.roadNetwork = roadNetwork != null ? roadNetwork : RoadTravelBinding.FindRoadNetworkInstance();
             roadTravelBinding.EnrichPlan(plan);
+        }
+        EnrichPlanWithRoadLots(plan);
+    }
+
+    /// <summary>Walk/commuter enrich — tag RoadLot and optionally sample ribbon waypoints toward an outlet.</summary>
+    public void EnrichWalkSegmentWithRoadLot(MultiModalSegment segment)
+    {
+        if (segment == null || segment.mode != TravelLegMode.Walk) return;
+        if (segment.waypoints == null || segment.waypoints.Count == 0) return;
+        float snap = roadTravelBinding != null ? roadTravelBinding.snapDistance : 8f;
+        Vector3 end = segment.waypoints[segment.waypoints.Count - 1];
+        RoadLot lot = RoadLot.FindNearest(end, snap * 6f);
+        if (lot == null) return;
+        if (!lot.ContainsXZ(end) && (lot.ArrivalWorld - end).sqrMagnitude > (snap * 6f) * (snap * 6f))
+            return;
+        segment.roadLotId = lot.lotId;
+        Vector3 pad = lot.ArrivalWorld;
+        pad.y = lot.SampleHeight(pad);
+        if ((end - pad).sqrMagnitude < (snap * 6f) * (snap * 6f))
+            segment.waypoints[segment.waypoints.Count - 1] = pad;
+
+        if (lot.pathRibbons != null && lot.pathRibbons.Count > 0)
+        {
+            var ribbon = lot.pathRibbons[0];
+            if (ribbon != null && ribbon.controlPoints != null && ribbon.controlPoints.Count >= 2)
+            {
+                Vector3 a = ribbon.transform.TransformPoint(ribbon.controlPoints[0]);
+                Vector3 b = ribbon.transform.TransformPoint(ribbon.controlPoints[ribbon.controlPoints.Count - 1]);
+                a.y = lot.SampleHeight(a);
+                b.y = lot.SampleHeight(b);
+                if (segment.waypoints.Count == 1)
+                {
+                    segment.waypoints.Clear();
+                    segment.waypoints.Add(a);
+                    segment.waypoints.Add(b);
+                }
+            }
+        }
+    }
+
+    /// <summary>Enrich all walk + drive segments that touch RoadLots.</summary>
+    public void EnrichPlanWithRoadLots(GenericMultiModalPathPlan plan)
+    {
+        if (plan?.segments == null) return;
+        if (roadTravelBinding == null)
+            roadTravelBinding = GetComponent<RoadTravelBinding>();
+        for (int i = 0; i < plan.segments.Count; i++)
+        {
+            var seg = plan.segments[i];
+            if (seg == null) continue;
+            if (seg.mode == TravelLegMode.Drive)
+                roadTravelBinding?.EnrichDriveSegmentWithRoadLot(seg);
+            else if (seg.mode == TravelLegMode.Walk)
+                EnrichWalkSegmentWithRoadLot(seg);
+        }
+    }
+
+    /// <summary>Apply road-work suggested-detour legs; skip legs marked ignorable when planner prefers.</summary>
+    public void ApplyRoadWorkDetours(TARoadWorkRequest roadWork, bool honorIgnorable = true)
+    {
+        if (roadWork?.detours == null) return;
+        for (int i = 0; i < roadWork.detours.Count; i++)
+        {
+            var d = roadWork.detours[i];
+            if (d == null) continue;
+            if (honorIgnorable && d.ignorable) continue;
+            previewGoalWorld = d.detourGoalWorld;
+            if (!honorIgnorable || !d.ignorable)
+                TrafficWarden.Instance?.OnSuggestedDetour(d.detourGoalWorld);
         }
     }
 

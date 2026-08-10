@@ -187,6 +187,13 @@
       state.offset = 0;
       await refresh();
     });
+    $("lc-sync-builtins").addEventListener("click", async () => {
+      const res = await fetch("/api/lemma-completion/sync-builtins", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "sync failed");
+      state.offset = 0;
+      await refresh();
+    });
     $("lc-scope").addEventListener("change", () => {
       state.offset = 0;
       refresh().catch(alert);

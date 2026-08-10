@@ -18,7 +18,7 @@ public sealed class TrainStationRuntime : TrainStationOpsBase
         if (company == null)
             company = GetComponent<CompanyRegistration>() ?? gameObject.AddComponent<CompanyRegistration>();
         if (activeConsist == null)
-            activeConsist = GetComponentInChildren<TrainConsistRuntime>();
+            activeConsist = GetComponentInChildren<TrainVehicleRagdoll>();
         if (activeCar == null && activeConsist != null)
             activeCar = activeConsist.Head;
     }

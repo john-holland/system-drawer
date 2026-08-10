@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Garbage Bags — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="garbage-bags.css" />
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="gb-layout">
+    <aside class="gb-sidebar">
+      <div class="gb-sidebar-head">
+        <h1>Garbage Bags</h1>
+        <button type="button" id="gb-new" class="gb-btn">New</button>
+      </div>
+      <ul id="gb-list" class="gb-list"></ul>
+    </aside>
+    <section class="gb-main">
+      <p id="gb-status" class="gb-status"></p>
+      <label>Title <input id="gb-title" type="text" /></label>
+      <label>Default mass (kg) <input id="gb-mass" type="number" step="0.1" /></label>
+      <div id="gb-commodities"></div>
+      <div class="gb-actions">
+        <button type="button" id="gb-save" class="gb-btn primary">Create</button>
+        <button type="button" id="gb-add-commodity" class="gb-btn">Add commodity</button>
+      </div>
+      <hr />
+      <h2>Sanitation facility (gov / company / IP)</h2>
+      <label>Facility id <input id="sf-id" type="text" placeholder="san_1" /></label>
+      <label>Company id <input id="sf-company" type="text" value="public_sanitation_auth" /></label>
+      <label>IPv6 city prefix <input id="sf-ip" type="text" /></label>
+      <button type="button" id="sf-save" class="gb-btn">Save facility config</button>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="garbage-bags.js"></script>
+</body>
+</html>

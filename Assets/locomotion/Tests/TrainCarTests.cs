@@ -8,7 +8,7 @@ public sealed class TrainCarTests
     public void Consist_CoupleAndUncouple_OrdersCars()
     {
         var root = new GameObject("consist");
-        var consist = root.AddComponent<TrainConsistRuntime>();
+        var consist = root.AddComponent<TrainVehicleRagdoll>();
         consist.consistId = "c1";
         var a = NewCar("a");
         var b = NewCar("b");
@@ -166,7 +166,7 @@ public sealed class TrainCarTests
     public void SiloAndDepot_SwapAndBulk_Ops()
     {
         var stationGo = new GameObject("station");
-        var consist = stationGo.AddComponent<TrainConsistRuntime>();
+        var consist = stationGo.AddComponent<TrainVehicleRagdoll>();
         var car = NewCar("hopper");
         car.transform.SetParent(stationGo.transform);
         consist.AddCar(car);
@@ -238,10 +238,10 @@ public sealed class TrainCarTests
         finally { Object.DestroyImmediate(car.gameObject); }
     }
 
-    static TrainCarVehicleRagdoll NewCar(string id)
+    static TrainVehicleRagdoll NewCar(string id)
     {
         var go = new GameObject(id);
-        var car = go.AddComponent<TrainCarVehicleRagdoll>();
+        var car = go.AddComponent<TrainVehicleRagdoll>();
         car.vehicleId = id;
         if (car.limbs.Count == 0)
             car.limbs.Add(new TrainCarAmbulationLimb { limbId = "main_crane", role = TrainCarLimbRole.Crane });

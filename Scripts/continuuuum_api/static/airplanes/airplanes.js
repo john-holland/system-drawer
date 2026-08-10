@@ -46,5 +46,9 @@
     loadSchedules();
   });
 
+  if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === "function") {
+    ContinuuuumNav.mount({ app: "airplanes", theme: "light" });
+  }
+
   loadSchedules();
 })();

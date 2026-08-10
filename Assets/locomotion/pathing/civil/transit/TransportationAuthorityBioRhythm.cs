@@ -141,6 +141,17 @@ public sealed class TransportationAuthorityBioRhythm : DispatchBioRhythm
             case TADispatchKinds.Fuel:
                 cards.Add(TAVehicleFuelCard.Generate(request, FindVehicleFromNotes(request.notes)));
                 break;
+            case TADispatchKinds.MaintenanceRequest:
+                cards.Add(TAMaintenanceRequest.Generate(request));
+                cards.Add(TAMaintenanceCard.GenerateRepair(FindVehicleFromNotes(request.notes)));
+                break;
+            case TADispatchKinds.RoadWorkRequest:
+            {
+                var road = TARoadWorkRequest.Generate(request);
+                cards.Add(road);
+                road.RegisterWithTrafficAvoid(TrafficWarden.Instance);
+                break;
+            }
             case TADispatchKinds.Schedule:
                 cards.Add(TAVehicleSchedulingCard.Generate(request, FindRouteFromNotes(request.notes)));
                 break;

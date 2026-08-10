@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Unfold ambulation limb and/or bay ramp; exposes resultants on the train car.</summary>
 public sealed class TrainCarUnfoldPlanNode : BehaviorTreeNode
 {
-    public TrainCarVehicleRagdoll car;
+    public TrainVehicleRagdoll car;
     public string limbId;
     public string bayId;
     public bool unfoldLimb = true;
@@ -20,7 +20,7 @@ public sealed class TrainCarUnfoldPlanNode : BehaviorTreeNode
         _t = 0f;
         _done = false;
         if (car == null && tree != null)
-            car = tree.GetComponentInParent<TrainCarVehicleRagdoll>();
+            car = tree.GetComponentInParent<TrainVehicleRagdoll>();
     }
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)

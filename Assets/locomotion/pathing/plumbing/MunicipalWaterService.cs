@@ -87,4 +87,13 @@ public sealed class MunicipalWaterService : MonoBehaviour
             s = Mathf.Clamp01(s * lemmaBias.SewerScale);
         return s;
     }
+
+    /// <summary>Publish capacity into SewerGraph tick (does not replace the graph).</summary>
+    public void PublishToSewerGraph(SewerGraph graph, float dt)
+    {
+        if (graph == null) return;
+        graph.municipalWater = this;
+        sewerCapacity01 = EffectiveSewer01();
+        graph.TickFlow(dt);
+    }
 }

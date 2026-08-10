@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Train seat ticket</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <style>
+    body { font-family: Georgia, serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    label { display: block; margin-top: 0.75rem; }
+    input, button { font: inherit; }
+    button { margin-top: 1.25rem; }
+  </style>
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <h1>Train seat ticket</h1>
+  <p>Configure car seating for Continuuuum → Unity <code>TrainSeatTicketConfig</code>.</p>
+  <label>Consist id <input id="consistId" value="consist_1" /></label>
+  <label>Car # <input id="carNumber" type="number" value="1" /></label>
+  <label>Seat total <input id="seatTotal" type="number" value="40" /></label>
+  <label>Left grid width <input id="leftGridWidth" type="number" value="2" /></label>
+  <label>Right grid width <input id="rightGridWidth" type="number" value="2" /></label>
+  <label>Row gaps (comma) <input id="rowGaps" value="0.8,0.8,1.2" /></label>
+  <label>Entrance rows JSON <input id="entranceRows" value='[{"rowIndex":0,"side":"Door"}]' /></label>
+  <label>Seat type prefab-id <input id="seatTypePrefabId" value="train_seat_default" /></label>
+  <label>Seated animation BT prefab-id <input id="seatedAnimationBtPrefabId" value="" /></label>
+  <button id="save">Save ticket</button>
+  <pre id="out"></pre>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script>
+    if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === 'function') {
+      ContinuuuumNav.mount({ app: 'train-seats', theme: 'light' });
+    }
+    document.getElementById('save').onclick = async () => {
+      const gaps = document.getElementById('rowGaps').value.split(',').map(s => parseFloat(s.trim())).filter(n => !Number.isNaN(n));
+      let entranceRows = [];
+      try { entranceRows = JSON.parse(document.getElementById('entranceRows').value); } catch {}
+      const body = {
+        consistId: document.getElementById('consistId').value,
+        carNumber: +document.getElementById('carNumber').value,
+        seatTotal: +document.getElementById('seatTotal').value,
+        leftGridWidth: +document.getElementById('leftGridWidth').value,
+        rightGridWidth: +document.getElementById('rightGridWidth').value,
+        rowGaps: gaps,
+        entranceRows,
+        seatTypePrefabId: document.getElementById('seatTypePrefabId').value,
+        seatedAnimationBtPrefabId: document.getElementById('seatedAnimationBtPrefabId').value
+      };
+      const r = await fetch('/api/train-seats', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      document.getElementById('out').textContent = JSON.stringify(await r.json(), null, 2);
+    };
+  </script>
+</body>
+</html>

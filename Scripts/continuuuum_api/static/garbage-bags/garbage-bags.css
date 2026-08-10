@@ -1,0 +1,14 @@
+.gb-layout { display: flex; min-height: calc(100vh - 48px); font-family: Georgia, "Times New Roman", serif; background: #1a1f1c; color: #e8efe6; }
+.gb-sidebar { width: 260px; border-right: 1px solid #334; padding: 1rem; }
+.gb-sidebar-head { display: flex; justify-content: space-between; align-items: center; }
+.gb-list { list-style: none; padding: 0; margin: 1rem 0; }
+.gb-list li { padding: 0.45rem 0.6rem; cursor: pointer; border-radius: 4px; }
+.gb-list li.active, .gb-list li:hover { background: #2a332c; }
+.gb-main { flex: 1; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.65rem; }
+.gb-main label { display: flex; flex-direction: column; gap: 0.25rem; max-width: 420px; }
+.gb-main input { padding: 0.4rem 0.5rem; border: 1px solid #445; border-radius: 4px; background: #121612; color: #e8efe6; }
+.gb-btn { padding: 0.4rem 0.75rem; border: 1px solid #556; background: #243024; color: #e8efe6; border-radius: 4px; cursor: pointer; }
+.gb-btn.primary { background: #3a5a3a; }
+.gb-status { min-height: 1.2em; color: #9cba9a; }
+.gb-commodity { display: flex; gap: 0.5rem; margin: 0.35rem 0; align-items: center; }
+.gb-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }

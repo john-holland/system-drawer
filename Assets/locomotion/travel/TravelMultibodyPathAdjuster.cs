@@ -119,13 +119,13 @@ public static class TravelMultibodyPathAdjuster
     {
         if (pts == null || pts.Count < 2 || settings == null) return;
         float spacing = Mathf.Max(0.5f, settings.linkedSegmentSpacingM);
-        TrainConsistRuntime consist = null;
+        TrainVehicleRagdoll consist = null;
         if (selfOptional != null)
         {
             consist = selfOptional.trainConsist;
             if (consist == null && !string.IsNullOrEmpty(selfOptional.consistId))
             {
-                foreach (var c in Object.FindObjectsByType<TrainConsistRuntime>(FindObjectsSortMode.None))
+                foreach (var c in Object.FindObjectsByType<TrainVehicleRagdoll>(FindObjectsSortMode.None))
                 {
                     if (c != null && c.consistId == selfOptional.consistId)
                     {

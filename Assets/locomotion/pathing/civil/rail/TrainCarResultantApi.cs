@@ -5,9 +5,9 @@ using UnityEngine;
 /// <summary>Fluent access to vehicles / limbs produced by a train car (unfold, park, refold).</summary>
 public sealed class TrainCarResultantApi
 {
-    readonly TrainCarVehicleRagdoll _car;
+    readonly TrainVehicleRagdoll _car;
 
-    public TrainCarResultantApi(TrainCarVehicleRagdoll car) => _car = car;
+    public TrainCarResultantApi(TrainVehicleRagdoll car) => _car = car;
 
     public VehicleQuery Vehicles() => new VehicleQuery(_car);
     public LimbQuery Limbs() => new LimbQuery(_car);
@@ -15,11 +15,11 @@ public sealed class TrainCarResultantApi
 
     public sealed class VehicleQuery
     {
-        readonly TrainCarVehicleRagdoll _car;
+        readonly TrainVehicleRagdoll _car;
         bool _parkedOnly;
         string _kindFilter;
 
-        public VehicleQuery(TrainCarVehicleRagdoll car) => _car = car;
+        public VehicleQuery(TrainVehicleRagdoll car) => _car = car;
 
         public VehicleQuery Parked()
         {
@@ -65,11 +65,11 @@ public sealed class TrainCarResultantApi
 
     public sealed class LimbQuery
     {
-        readonly TrainCarVehicleRagdoll _car;
+        readonly TrainVehicleRagdoll _car;
         bool _unfoldedOnly;
         TrainCarLimbRole? _role;
 
-        public LimbQuery(TrainCarVehicleRagdoll car) => _car = car;
+        public LimbQuery(TrainVehicleRagdoll car) => _car = car;
 
         public LimbQuery Unfolded()
         {
@@ -101,9 +101,9 @@ public sealed class TrainCarResultantApi
 
     public sealed class CombinedQuery
     {
-        readonly TrainCarVehicleRagdoll _car;
+        readonly TrainVehicleRagdoll _car;
 
-        public CombinedQuery(TrainCarVehicleRagdoll car) => _car = car;
+        public CombinedQuery(TrainVehicleRagdoll car) => _car = car;
 
         public bool Stable()
         {

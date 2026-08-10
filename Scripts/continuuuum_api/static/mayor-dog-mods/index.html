@@ -4,9 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mayor Dog Mods</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
   <link rel="stylesheet" href="mod-portal.css" />
 </head>
 <body>
+  <div id="continuuuum-nav-root"></div>
   <header class="md-header">
     <h1>Mayor Dog Mods</h1>
     <nav>
@@ -18,8 +20,14 @@
     <label>Episode ID <input id="episode-id" type="text" placeholder="optional" /></label>
   </header>
   <main id="app"></main>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
   <script src="mod-portal-skin.js"></script>
   <script src="mod-upload-settings.js"></script>
   <script src="mod-portal.js"></script>
+  <script>
+    if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === 'function') {
+      ContinuuuumNav.mount({ app: 'mayor-dog-mods', theme: 'light' });
+    }
+  </script>
 </body>
 </html>
