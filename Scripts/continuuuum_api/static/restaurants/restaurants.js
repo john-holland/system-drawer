@@ -35,6 +35,25 @@
       .replace(/"/g, "&quot;");
   }
 
+  function cronLabel(expr) {
+    if (!window.CronHumanize || !expr) return "";
+    return CronHumanize.describe(expr);
+  }
+
+  function bindCronFieldsInForm(form) {
+    if (!window.CronHumanize || !form) return;
+    form.querySelectorAll('input[name="cronExpr"], input[name="dutyCron"]').forEach((input) => {
+      let label = input.parentElement && input.parentElement.querySelector(".cron-human");
+      if (!label) {
+        label = document.createElement("p");
+        label.className = "cron-human";
+        label.setAttribute("aria-live", "polite");
+        input.insertAdjacentElement("afterend", label);
+      }
+      CronHumanize.bindInput(input, label);
+    });
+  }
+
   function showMsg(text, isErr) {
     const el = document.getElementById("rest-msg");
     if (!el) return;
@@ -180,7 +199,9 @@
       .map(
         (s, i) =>
           `<tr>
-            <td>${esc(s.commodity_key)}</td><td>${esc(s.cron_expr || "")}</td>
+            <td>${esc(s.commodity_key)}</td><td><code>${esc(s.cron_expr || "")}</code>${
+              cronLabel(s.cron_expr) ? `<span class="cron-human-inline">${esc(cronLabel(s.cron_expr))}</span>` : ""
+            }</td>
             <td>${esc(s.surge_mult)}</td><td>${esc(s.quantity)}</td><td>${esc(s.price)}</td>
             <td><button type="button" data-edit-cmd="${i}">Edit</button></td>
           </tr>`
@@ -209,7 +230,9 @@
         (m, i) =>
           `<tr>
             <td>${esc(m.persona_key)}</td><td>${esc(m.role)}</td><td>${esc(m.pecking_order)}</td>
-            <td>${esc(m.pay_rate)}</td><td>${esc(m.duty_cron || "")}</td><td>${esc(m.waypoint_group || "")}</td>
+            <td>${esc(m.pay_rate)}</td><td><code>${esc(m.duty_cron || "")}</code>${
+              cronLabel(m.duty_cron) ? `<span class="cron-human-inline">${esc(cronLabel(m.duty_cron))}</span>` : ""
+            }</td><td>${esc(m.waypoint_group || "")}</td>
             <td><button type="button" data-edit-ret="${i}">Edit</button></td>
           </tr>`
       )
@@ -238,7 +261,9 @@
     modalCtx = ctx;
     document.getElementById("rest-modal-title").textContent = title;
     document.getElementById("rest-modal-sub").textContent = sub || "";
-    document.getElementById("rest-modal-form").innerHTML = fieldsHtml;
+    const form = document.getElementById("rest-modal-form");
+    form.innerHTML = fieldsHtml;
+    bindCronFieldsInForm(form);
     const backdrop = document.getElementById("rest-modal");
     backdrop.hidden = false;
   }

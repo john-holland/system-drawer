@@ -26,8 +26,11 @@
     async uploadLibraryDocument(api, file) {
       const form = new FormData();
       form.append('file', file);
-      const userId = document.getElementById('user-id')?.value || 'anonymous';
-      const res = await fetch('/api/library/upload', { method: 'POST', headers: { 'X-User-ID': userId }, body: form });
+      const headers =
+        window.ContinuuuumUserSession && ContinuuuumUserSession.getHeaders
+          ? ContinuuuumUserSession.getHeaders()
+          : { 'X-User-ID': 'anonymous' };
+      const res = await fetch('/api/library/upload', { method: 'POST', headers, body: form });
       if (!res.ok) throw new Error('Upload failed');
       return res.json();
     },

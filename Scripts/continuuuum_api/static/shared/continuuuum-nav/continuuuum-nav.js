@@ -9,6 +9,7 @@
     { id: 'story-board', label: 'Stories', path: '/story-board' },
     { id: 'project-calendar', label: 'Calendar', path: '/project-calendar' },
     { id: 'budget-dashboard', label: 'Budget', path: '/budget-dashboard' },
+    { id: 'payroll', label: 'Payroll', path: '/payroll' },
     { id: 'legal-tracker', label: 'Legal', path: '/legal-tracker' },
     { id: 'network', label: 'Network', path: '/network-definitions' },
     { id: 'cities', label: 'Cities', path: '/city-config' },
@@ -134,6 +135,7 @@
       'story-board': lemmaBase + '/story-board',
       'project-calendar': lemmaBase + '/project-calendar',
       'budget-dashboard': lemmaBase + '/budget-dashboard',
+      payroll: lemmaBase + '/payroll',
       'legal-tracker': lemmaBase + '/legal-tracker',
       network: lemmaBase + '/network-definitions',
       cities: lemmaBase + '/city-config',
@@ -194,6 +196,7 @@
     if (path.indexOf('/story-board') >= 0) return 'story-board';
     if (path.indexOf('/project-calendar') >= 0) return 'project-calendar';
     if (path.indexOf('/budget-dashboard') >= 0) return 'budget-dashboard';
+    if (path.indexOf('/payroll') >= 0) return 'payroll';
     if (path.indexOf('/legal-tracker') >= 0) return 'legal-tracker';
     if (path.indexOf('/settings') >= 0) return 'settings';
     if (path.indexOf('/ui') >= 0) return 'hub';
@@ -226,6 +229,10 @@
 
     var wrap = document.createElement('div');
     wrap.className = 'continuuuum-dev-user';
+    var presetHtml =
+      Session.presetButtonsHtml
+        ? Session.presetButtonsHtml('continuuuum-preset-btn')
+        : '';
     wrap.innerHTML =
       '<label class="continuuuum-dev-toggle" title="Developer mode — switch user identity">' +
         '<input type="checkbox" id="continuuuum-dev-mode" /> Dev' +
@@ -238,6 +245,9 @@
         '<label class="continuuuum-admin-toggle" title="Send X-Admin header for admin API routes">' +
           '<input type="checkbox" id="continuuuum-admin-mode" /> Admin' +
         '</label>' +
+        (presetHtml
+          ? '<span class="continuuuum-dev-presets" title="Quick identity">' + presetHtml + '</span>'
+          : '') +
       '</span>';
 
     host.insertBefore(wrap, host.firstChild);
@@ -289,7 +299,9 @@
     }
 
     function applyUser() {
-      Session.setUserId(input.value);
+      var v = (input.value || '').trim();
+      Session.setAdmin(v === 'admin');
+      Session.setUserId(v);
       refreshLabel();
     }
 
@@ -313,6 +325,12 @@
     if (adminCb) {
       adminCb.addEventListener('change', function () {
         Session.setAdmin(adminCb.checked);
+        refreshPanel();
+      });
+    }
+
+    if (Session.wirePresetButtons) {
+      Session.wirePresetButtons(wrap, function () {
         refreshPanel();
       });
     }

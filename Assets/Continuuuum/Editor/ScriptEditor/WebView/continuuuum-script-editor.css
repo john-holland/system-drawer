@@ -26,6 +26,14 @@
   font-size: 13px;
   line-height: 1.4;
 }
+.continuuuum-script-char-range {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #666;
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  user-select: none;
+}
 #review-script-ace .ace_text-layer,
 .continuuuum-script-editor-host .ace_text-layer {
   color: #1a1a1a;

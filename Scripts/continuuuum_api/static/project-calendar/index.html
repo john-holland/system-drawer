@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Project Calendar — Continuuuum</title>
   <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/static/shared/cron/cron-humanize.css" />
   <style>
     body { font-family: system-ui, sans-serif; margin: 0; background: #0f1419; color: #e6edf3; }
     main { padding: 1rem; display: grid; grid-template-columns: 1fr 320px; gap: 1rem; }
@@ -97,6 +98,9 @@
       <select id="sub-provider"><option value="ical">iCal export</option><option value="google">Google</option><option value="outlook">Outlook</option></select>
       <label for="sub-target">Target URL / path</label>
       <input id="sub-target" placeholder="optional" />
+      <label for="sub-cron">Sync cron</label>
+      <input id="sub-cron" value="*/15 * * * *" />
+      <p class="cron-human" id="sub-cron-human" aria-live="polite"></p>
       <button id="btn-add-sub">Add subscription</button>
       <button id="btn-sync-cal">Sync now</button>
       <pre id="subs-list" style="font-size:0.75rem"></pre>
@@ -140,6 +144,7 @@
   <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
   <script src="/static/shared/continuuuum-cave-shell/continuuuum-cave-shell.js"></script>
   <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/cron/cron-humanize.js"></script>
   <script src="/project-calendar/project-calendar.js"></script>
 </body>
 </html>

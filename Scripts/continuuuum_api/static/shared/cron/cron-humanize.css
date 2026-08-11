@@ -1,0 +1,22 @@
+/* Shared plain-English cron label */
+.cron-human {
+  margin: 0.25rem 0 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: rgba(42, 74, 50, 0.08);
+  border-left: 3px solid #2a4a32;
+  font-size: 0.88rem;
+  color: #1a2418;
+  line-height: 1.35;
+}
+
+.cron-human:empty {
+  display: none;
+}
+
+.cron-human-inline {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: #3a4a38;
+  font-style: italic;
+}

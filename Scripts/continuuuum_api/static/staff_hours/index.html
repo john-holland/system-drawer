@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Staff Hours — Continuuuum</title>
   <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/shared/cron/cron-humanize.css">
   <link rel="stylesheet" href="/static/staff_hours/staff-hours.css">
 </head>
 <body>
@@ -19,14 +20,17 @@
       <form id="sh-form" class="sh-form">
         <label>Building id <input name="buildingId" required placeholder="airport-terminal-1" /></label>
         <label>Role <input name="role" required placeholder="tsa_agent" /></label>
-        <label>Open cron <input name="openCron" value="* 5-23 * * *" /></label>
-        <label>Close cron <input name="closeCron" placeholder="optional" /></label>
+        <label>Open cron <input name="openCron" id="sh-open-cron" value="* 5-23 * * *" /></label>
+        <p class="cron-human" id="sh-open-cron-human" aria-live="polite"></p>
+        <label>Close cron <input name="closeCron" id="sh-close-cron" placeholder="optional" /></label>
+        <p class="cron-human" id="sh-close-cron-human" aria-live="polite"></p>
         <button type="submit">Add staff hours</button>
       </form>
       <ul id="sh-list" class="sh-list"></ul>
     </section>
   </main>
   <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/cron/cron-humanize.js"></script>
   <script src="/static/staff_hours/staff-hours.js"></script>
 </body>
 </html>

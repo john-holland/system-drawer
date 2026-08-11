@@ -162,6 +162,12 @@
       editorEl.style.width = '100%';
       el.appendChild(editorEl);
 
+      const charRangeEl = document.createElement('div');
+      charRangeEl.className = 'continuuuum-script-char-range';
+      charRangeEl.setAttribute('aria-live', 'polite');
+      charRangeEl.setAttribute('aria-label', 'Script character range');
+      el.appendChild(charRangeEl);
+
       const clausePanel = document.createElement('div');
       clausePanel.id = 'continuuuum-clause-panel';
       clausePanel.className = 'continuuuum-clause-panel';
@@ -196,7 +202,10 @@
         editor = { _ta: ta, getValue: () => ta.value, setValue: v => { ta.value = v; }, getSession: () => null, selection: { getRange: () => null } };
       }
 
-      const inst = { el, editor, options, aceLoaded, toolbar, attachBtn, modSlotBtn, autoFixLemmaAnchorsBtn, suggestionsEl, clausePanel, readOnly };
+      const inst = {
+        el, editor, options, aceLoaded, toolbar, attachBtn, modSlotBtn,
+        autoFixLemmaAnchorsBtn, suggestionsEl, charRangeEl, clausePanel, readOnly,
+      };
       inst.overlaySnapshotText = options.overlaySnapshotText ?? options.scriptText ?? '';
       inst._suggestionSeq = 0;
       this._instance = inst;
@@ -204,6 +213,7 @@
       this.renderClausePanel(inst);
       this.renderClauseSuggestions(inst);
       this.updateToolbarActions(inst);
+      this.updateCharRange(inst);
 
       const scheduleRefresh = () => {
         if (inst._overlayUpdating) return;
@@ -215,6 +225,7 @@
           ContinuuuumScriptEditor.renderClausePanel(inst);
           ContinuuuumScriptEditor.renderClauseSuggestions(inst);
           ContinuuuumScriptEditor.updateToolbarActions(inst);
+          ContinuuuumScriptEditor.updateCharRange(inst);
         });
       };
 
@@ -813,6 +824,26 @@
       this.renderOverlays(inst, inst.options);
       this.renderClausePanel(inst);
       this.updateToolbarActions(inst);
+      this.updateCharRange(inst);
+    },
+
+    updateCharRange(inst) {
+      inst = inst || this._instance;
+      if (!inst || !inst.charRangeEl) return;
+      const len = (this.getValue(inst) || '').length;
+      let index = 0;
+      if (inst.aceLoaded && inst.editor && inst.editor.selection) {
+        try {
+          const cur = inst.editor.getCursorPosition();
+          index = inst.editor.session.doc.positionToIndex(cur);
+        } catch (_) {
+          index = this.getSelection(inst).charStart;
+        }
+      } else {
+        index = this.getSelection(inst).charStart;
+      }
+      inst.charRangeEl.textContent = `0 – ${len}, ${index}`;
+      inst.charRangeEl.title = `Script length ${len}; cursor at character index ${index}`;
     },
 
     getValue(inst) {

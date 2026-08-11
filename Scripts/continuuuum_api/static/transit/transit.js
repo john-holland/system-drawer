@@ -6,6 +6,11 @@
     msg.style.background = isErr ? "#ffe8e8" : "#eef6ff";
   }
 
+  function cronLabel(expr) {
+    if (!window.CronHumanize || !expr) return "";
+    return CronHumanize.describe(expr);
+  }
+
   async function loadVehicles() {
     const res = await fetch("/api/transit/vehicle-schedules");
     const data = await res.json();
@@ -13,7 +18,10 @@
     ul.innerHTML = "";
     (data.schedules || []).forEach((s) => {
       const li = document.createElement("li");
-      li.innerHTML = `<span><strong>${s.vehicleId}</strong> / ${s.routeId} — <code>${s.cronExpr}</code> (${s.scheduleKind})</span>`;
+      const human = cronLabel(s.cronExpr);
+      li.innerHTML = `<span><strong>${s.vehicleId}</strong> / ${s.routeId} — <code>${s.cronExpr}</code> (${s.scheduleKind})` +
+        (human ? `<span class="cron-human-inline">${human}</span>` : "") +
+        `</span>`;
       const btn = document.createElement("button");
       btn.className = "ta-del";
       btn.textContent = "Delete";
@@ -34,7 +42,10 @@
     ul.innerHTML = "";
     (data.schedules || []).forEach((s) => {
       const li = document.createElement("li");
-      li.innerHTML = `<span><strong>${s.stationId}</strong> — <code>${s.cronExpr}</code> (${s.kind})</span>`;
+      const human = cronLabel(s.cronExpr);
+      li.innerHTML = `<span><strong>${s.stationId}</strong> — <code>${s.cronExpr}</code> (${s.kind})` +
+        (human ? `<span class="cron-human-inline">${human}</span>` : "") +
+        `</span>`;
       const btn = document.createElement("button");
       btn.className = "ta-del";
       btn.textContent = "Delete";
@@ -94,6 +105,17 @@
 
   if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === "function") {
     ContinuuuumNav.mount({ app: "transit", theme: "light" });
+  }
+
+  if (window.CronHumanize) {
+    CronHumanize.bindInput(
+      document.getElementById("ta-vehicle-cron"),
+      document.getElementById("ta-vehicle-cron-human")
+    );
+    CronHumanize.bindInput(
+      document.getElementById("ta-building-cron"),
+      document.getElementById("ta-building-cron-human")
+    );
   }
 
   loadVehicles();

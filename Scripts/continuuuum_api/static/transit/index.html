@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Transit Authority Schedules — Continuuuum</title>
   <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/shared/cron/cron-humanize.css">
   <link rel="stylesheet" href="/static/transit/transit.css">
 </head>
 <body>
@@ -19,7 +20,8 @@
       <form id="ta-vehicle-form" class="ta-form">
         <label>Vehicle id <input name="vehicleId" required placeholder="bus-12" /></label>
         <label>Route id <input name="routeId" required placeholder="route-downtown" /></label>
-        <label>Cron <input name="cronExpr" value="* 6-22 * * 1-5" /></label>
+        <label>Cron <input name="cronExpr" id="ta-vehicle-cron" value="* 6-22 * * 1-5" /></label>
+        <p class="cron-human" id="ta-vehicle-cron-human" aria-live="polite"></p>
         <label>Kind
           <select name="scheduleKind">
             <option value="service">service</option>
@@ -37,7 +39,8 @@
       <form id="ta-building-form" class="ta-form">
         <label>Station id <input name="stationId" required placeholder="bus-depot-1" /></label>
         <label>Building id <input name="buildingId" placeholder="optional" /></label>
-        <label>Cron <input name="cronExpr" value="* 5-23 * * *" /></label>
+        <label>Cron <input name="cronExpr" id="ta-building-cron" value="* 5-23 * * *" /></label>
+        <p class="cron-human" id="ta-building-cron-human" aria-live="polite"></p>
         <label>Kind
           <select name="kind">
             <option value="opening">opening</option>
@@ -57,6 +60,7 @@
     </section>
   </main>
   <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/cron/cron-humanize.js"></script>
   <script src="/static/transit/transit.js"></script>
 </body>
 </html>

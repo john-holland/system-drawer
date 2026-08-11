@@ -6,6 +6,11 @@
     msg.style.background = isErr ? "#ffe8e8" : "#eef6ff";
   }
 
+  function cronLabel(expr) {
+    if (!window.CronHumanize || !expr) return "";
+    return CronHumanize.describe(expr);
+  }
+
   async function loadSchedules() {
     const res = await fetch("/api/airport/airplane-schedules");
     const data = await res.json();
@@ -13,8 +18,10 @@
     ul.innerHTML = "";
     (data.schedules || []).forEach((s) => {
       const li = document.createElement("li");
+      const human = cronLabel(s.cronExpr);
       li.innerHTML =
         `<span><strong>${s.airplaneId}</strong> / ${s.flightId} — <code>${s.cronExpr}</code> (${s.scheduleKind})` +
+        (human ? `<span class="cron-human-inline">${human}</span>` : "") +
         `<span class="ap-meta">crew: ${s.airplaneCrewJson || "—"} | gate: ${s.gateCrewJson || "—"} | ground: ${s.groundCrewJson || "—"}</span></span>`;
       const btn = document.createElement("button");
       btn.className = "ap-del";
@@ -48,6 +55,13 @@
 
   if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === "function") {
     ContinuuuumNav.mount({ app: "airplanes", theme: "light" });
+  }
+
+  if (window.CronHumanize) {
+    CronHumanize.bindInput(
+      document.getElementById("ap-cron"),
+      document.getElementById("ap-cron-human")
+    );
   }
 
   loadSchedules();

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mayor Dog Mods</title>
   <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
-  <link rel="stylesheet" href="mod-portal.css" />
+  <link rel="stylesheet" href="/mayor-dog-mods/mod-portal.css" />
 </head>
 <body>
   <div id="continuuuum-nav-root"></div>
@@ -16,14 +16,25 @@
       <a href="#upload" data-view="upload">Upload</a>
       <a href="#settings" data-view="settings">Upload Settings</a>
     </nav>
-    <label>User ID <input id="user-id" type="text" value="player1" /></label>
-    <label>Episode ID <input id="episode-id" type="text" placeholder="optional" /></label>
+    <label>Signed in as <strong id="user-label">—</strong></label>
+    <label>Episode ID <input id="episode-id" type="text" placeholder="draft episode id (optional)" /></label>
   </header>
   <main id="app"></main>
+  <div id="md-modal" class="md-modal" hidden>
+    <div class="md-modal-panel" role="dialog" aria-modal="true" aria-labelledby="md-modal-title">
+      <h2 id="md-modal-title">Edit mod</h2>
+      <div id="md-modal-body"></div>
+      <div class="md-modal-actions">
+        <button type="button" id="md-modal-cancel">Cancel</button>
+        <button type="button" id="md-modal-save">Save</button>
+      </div>
+    </div>
+  </div>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
   <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
-  <script src="mod-portal-skin.js"></script>
-  <script src="mod-upload-settings.js"></script>
-  <script src="mod-portal.js"></script>
+  <script src="/mayor-dog-mods/mod-portal-skin.js"></script>
+  <script src="/mayor-dog-mods/mod-upload-settings.js"></script>
+  <script src="/mayor-dog-mods/mod-portal.js"></script>
   <script>
     if (window.ContinuuuumNav && typeof ContinuuuumNav.mount === 'function') {
       ContinuuuumNav.mount({ app: 'mayor-dog-mods', theme: 'light' });

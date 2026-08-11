@@ -33,6 +33,25 @@
       .replace(/"/g, "&quot;");
   }
 
+  function cronLabel(expr) {
+    if (!window.CronHumanize || !expr) return "";
+    return CronHumanize.describe(expr);
+  }
+
+  function bindCronFieldsInForm(form) {
+    if (!window.CronHumanize || !form) return;
+    form.querySelectorAll('input[name="cronExpr"]').forEach((input) => {
+      let label = input.parentElement && input.parentElement.querySelector(".cron-human");
+      if (!label) {
+        label = document.createElement("p");
+        label.className = "cron-human";
+        label.setAttribute("aria-live", "polite");
+        input.insertAdjacentElement("afterend", label);
+      }
+      CronHumanize.bindInput(input, label);
+    });
+  }
+
   function cityId() {
     return (cityEl().value || "demo-city").trim() || "demo-city";
   }
@@ -131,7 +150,9 @@
     modalCtx = ctx;
     document.getElementById("stn-modal-title").textContent = title;
     document.getElementById("stn-modal-sub").textContent = sub || "";
-    document.getElementById("stn-modal-form").innerHTML = fieldsHtml;
+    const form = document.getElementById("stn-modal-form");
+    form.innerHTML = fieldsHtml;
+    bindCronFieldsInForm(form);
     document.getElementById("stn-modal").hidden = false;
   }
 
@@ -347,7 +368,11 @@
           `<tr>
             <td>${esc(r.station.name)}</td>
             <td>${esc(r.commodity.commodity_key)}</td>
-            <td>${esc(r.commodity.cron_expr || "")}</td>
+            <td><code>${esc(r.commodity.cron_expr || "")}</code>${
+              cronLabel(r.commodity.cron_expr)
+                ? `<span class="cron-human-inline">${esc(cronLabel(r.commodity.cron_expr))}</span>`
+                : ""
+            }</td>
             <td>${esc(r.commodity.surge_mult)}</td>
             <td>${esc(r.commodity.quantity)}</td>
             <td>${esc(r.commodity.price)}</td>

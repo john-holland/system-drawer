@@ -1,0 +1,280 @@
+.pay-page {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  background: linear-gradient(165deg, #e8f0e6 0%, #f4f7f2 40%, #dfe8dc 100%);
+  color: #1a2418;
+  min-height: 100vh;
+}
+
+.pay-main {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 3rem;
+}
+
+.pay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pay-header h1 {
+  margin: 0;
+  font-size: 1.85rem;
+}
+
+.pay-sub {
+  margin: 0.35rem 0 0;
+  color: #3d4f38;
+  font-size: 0.95rem;
+}
+
+.pay-panel {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(40, 70, 40, 0.12);
+  padding: 1rem 1.15rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.pay-admin-fields.pay-admin-locked label:has(input[name="highWaterMarkUsd"]),
+.pay-admin-fields.pay-admin-locked label:has(input[name="hwmRetainerPct"]) {
+  opacity: 0.55;
+}
+
+.pay-retainer-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+/* display:flex above would otherwise override the HTML hidden attribute */
+.pay-retainer-edit[hidden] {
+  display: none !important;
+}
+
+.pay-retainer-edit input {
+  width: 7rem;
+}
+
+.pay-panel h2,
+.pay-panel h3 {
+  margin: 0 0 0.75rem;
+}
+
+.pay-form {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.pay-form-row {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  align-items: end;
+}
+
+.pay-form label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.pay-check {
+  display: flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.35rem;
+}
+
+.pay-form input,
+.pay-form select,
+.pay-form button,
+#pay-refresh {
+  font: inherit;
+  padding: 0.4rem 0.55rem;
+}
+
+.pay-form button,
+#pay-refresh {
+  cursor: pointer;
+  background: #2a4a32;
+  color: #f4faf4;
+  border: none;
+  width: fit-content;
+}
+
+.pay-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.pay-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid rgba(40, 70, 40, 0.1);
+  font-size: 0.9rem;
+}
+
+.pay-list button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.pay-meta {
+  color: #3d4f38;
+  font-size: 0.9rem;
+}
+
+.pay-gauge-wrap {
+  margin: 1rem 0 1.25rem;
+}
+
+.pay-gauge {
+  height: 1.35rem;
+  background: rgba(40, 70, 40, 0.12);
+  overflow: hidden;
+}
+
+.pay-gauge-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #5a8f62, #2a4a32);
+  transition: width 0.25s ease;
+}
+
+.pay-unity-enterprise {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(120, 70, 20, 0.35);
+  background: rgba(255, 236, 200, 0.65);
+  color: #3a2a12;
+}
+
+.pay-unity-enterprise[hidden] {
+  display: none !important;
+}
+
+.pay-unity-enterprise strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.pay-unity-enterprise p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.pay-note-label {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+
+.pay-note-label input {
+  width: 100%;
+}
+
+.pay-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.pay-events {
+  background: rgba(20, 30, 20, 0.04);
+  padding: 0.75rem;
+  overflow: auto;
+  max-height: 16rem;
+  font-size: 0.8rem;
+}
+
+.pay-events-sm {
+  max-height: 10rem;
+}
+
+.pay-cron-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  grid-column: 1 / -1;
+}
+
+.pay-cron-label input {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+.pay-cron-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.pay-cron-chip {
+  border: 1px solid #2a4a32;
+  background: #f7faf6;
+  color: #1a2418;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.pay-cron-chip:hover,
+.pay-cron-chip:focus-visible {
+  background: #e4efe6;
+}
+
+.pay-cron-lens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.pay-lens-btn {
+  border: 1px solid #8a9a86;
+  background: #fff;
+  color: #1a2418;
+  border-radius: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.pay-lens-btn.is-active {
+  border-color: #2a4a32;
+  background: #2a4a32;
+  color: #f7faf6;
+}
+
+.pay-cron-human {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.7rem;
+  background: rgba(42, 74, 50, 0.08);
+  border-left: 3px solid #2a4a32;
+  font-size: 0.92rem;
+  color: #1a2418;
+}
+
+.pay-cron-primary {
+  margin: 0;
+}
+
+.pay-cron-totals {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #3a4a38;
+  font-variant-numeric: tabular-nums;
+}

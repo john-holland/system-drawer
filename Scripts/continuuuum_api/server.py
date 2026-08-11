@@ -282,6 +282,9 @@ try:
     from continuuuum_api.mod_routes import register_mod_routes
 
 
+    from continuuuum_api.payroll_routes import register_payroll_routes
+
+
 except ImportError:
 
 
@@ -366,6 +369,9 @@ except ImportError:
 
 
     from mod_routes import register_mod_routes
+
+
+    from payroll_routes import register_payroll_routes
 
 
 
@@ -882,6 +888,21 @@ def get_conn():
 
 
         ensure_credits_schema(conn)
+
+
+        try:
+
+
+            from continuuuum_api.payroll_engine import ensure_payroll_schema
+
+
+        except ImportError:
+
+
+            from payroll_engine import ensure_payroll_schema
+
+
+        ensure_payroll_schema(conn)
 
 
         try:
@@ -4190,6 +4211,7 @@ register_change_of_basis_routes(app, get_conn)
 
 
 register_mod_routes(app, get_conn, _get_current_user)
+register_payroll_routes(app, get_conn, _is_admin)
 
 
 
@@ -7738,6 +7760,17 @@ def main():
             from submit_scheduler import process_submitted
 
 
+            try:
+
+
+                from continuuuum_api.payroll_engine import ensure_payroll_schema, tick_retainers
+
+
+            except ImportError:
+
+
+                from payroll_engine import ensure_payroll_schema, tick_retainers
+
 
 
 
@@ -7756,6 +7789,27 @@ def main():
                     process_submitted(conn)
 
 
+                    try:
+
+
+                        ensure_payroll_schema(conn)
+
+
+                        n = tick_retainers(conn)
+
+
+                        if n:
+
+
+                            print(f"[payroll-cron] accrued {n} retainer run(s)", flush=True)
+
+
+                    except Exception as pex:
+
+
+                        print(f"[payroll-cron] {pex}", flush=True)
+
+
                     conn.close()
 
 
@@ -7766,7 +7820,6 @@ def main():
 
 
                 time.sleep(60)
-
 
 
 

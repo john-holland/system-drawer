@@ -1,204 +1,217 @@
-/* Continuuuum cross-app header */
-.continuuuum-nav-root {
-  --cn-bg: #12121f;
-  --cn-border: #3a3a52;
-  --cn-text: #e8e8f0;
-  --cn-muted: #8892b0;
-  --cn-accent: #667eea;
-  --cn-active-bg: rgba(102, 126, 234, 0.18);
-}
-
-.continuuuum-nav-root[data-theme="light"] {
-  --cn-bg: #fff;
-  --cn-border: #ccc;
-  --cn-text: #222;
-  --cn-muted: #666;
-  --cn-accent: #06c;
-  --cn-active-bg: rgba(0, 102, 204, 0.08);
-}
-
-.continuuuum-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--cn-border);
-  background: var(--cn-bg);
-  color: var(--cn-text);
-  font-family: system-ui, sans-serif;
-}
-
-.continuuuum-header-brand {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.continuuuum-header-brand a {
-  color: var(--cn-text);
-  text-decoration: none;
-}
-
-.continuuuum-header-brand a:hover {
-  color: var(--cn-accent);
-}
-
-.continuuuum-header-apps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  align-items: center;
-}
-
-.continuuuum-header-apps a {
-  color: var(--cn-muted);
-  text-decoration: none;
-  font-size: 14px;
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-
-.continuuuum-header-apps a:hover {
-  color: var(--cn-accent);
-}
-
-.continuuuum-header-apps a.active {
-  color: var(--cn-accent);
-  font-weight: 600;
-  background: var(--cn-active-bg);
-}
-
-.continuuuum-header-extra {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 14px;
-}
-
-.continuuuum-subnav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  align-items: center;
-  padding: 8px 20px;
-  border-bottom: 1px solid var(--cn-border);
-  background: var(--cn-bg);
-  font-family: system-ui, sans-serif;
-}
-
-.continuuuum-subnav a {
-  color: var(--cn-muted);
-  text-decoration: none;
-  font-size: 13px;
-  padding: 3px 8px;
-  border-radius: 5px;
-}
-
-.continuuuum-subnav a:hover {
-  color: var(--cn-accent);
-}
-
-.continuuuum-subnav a.active {
-  color: var(--cn-accent);
-  font-weight: 600;
-  background: var(--cn-active-bg);
-}
-
-.continuuuum-nav-root[data-theme="light"] .continuuuum-header-extra label {
-  color: var(--cn-text);
-}
-
-.continuuuum-nav-root[data-theme="light"] .continuuuum-header-extra input {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 4px 8px;
-}
-
-.continuuuum-dev-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.continuuuum-dev-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--cn-muted);
-  cursor: pointer;
-  user-select: none;
-}
-
-.continuuuum-dev-user--active .continuuuum-dev-toggle {
-  color: var(--cn-accent);
-  font-weight: 600;
-}
-
-.continuuuum-user-label {
-  font-size: 13px;
-  color: var(--cn-muted);
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.continuuuum-user-label--dev::before {
-  content: 'DEV · ';
-  color: var(--cn-accent);
-  font-weight: 600;
-}
-
-.continuuuum-dev-panel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.continuuuum-dev-panel input[type="text"] {
-  width: 100px;
-  font-size: 13px;
-  padding: 3px 6px;
-  border: 1px solid var(--cn-border);
-  border-radius: 4px;
-  background: var(--cn-bg);
-  color: var(--cn-text);
-}
-
-.continuuuum-dev-panel select {
-  font-size: 13px;
-  padding: 3px 4px;
-  border: 1px solid var(--cn-border);
-  border-radius: 4px;
-  background: var(--cn-bg);
-  color: var(--cn-text);
-  max-width: 120px;
-}
-
-.continuuuum-dev-panel button {
-  font-size: 12px;
-  padding: 3px 8px;
-  border: 1px solid var(--cn-border);
-  border-radius: 4px;
-  background: var(--cn-active-bg);
-  color: var(--cn-text);
-  cursor: pointer;
-}
-
-.continuuuum-dev-panel button:hover {
-  border-color: var(--cn-accent);
-  color: var(--cn-accent);
-}
-
-.continuuuum-header-app-extra {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+/* Continuuuum cross-app header */
+.continuuuum-nav-root {
+  --cn-bg: #12121f;
+  --cn-border: #3a3a52;
+  --cn-text: #e8e8f0;
+  --cn-muted: #8892b0;
+  --cn-accent: #667eea;
+  --cn-active-bg: rgba(102, 126, 234, 0.18);
+}
+
+.continuuuum-nav-root[data-theme="light"] {
+  --cn-bg: #fff;
+  --cn-border: #ccc;
+  --cn-text: #222;
+  --cn-muted: #666;
+  --cn-accent: #06c;
+  --cn-active-bg: rgba(0, 102, 204, 0.08);
+}
+
+.continuuuum-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--cn-border);
+  background: var(--cn-bg);
+  color: var(--cn-text);
+  font-family: system-ui, sans-serif;
+}
+
+.continuuuum-header-brand {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.continuuuum-header-brand a {
+  color: var(--cn-text);
+  text-decoration: none;
+}
+
+.continuuuum-header-brand a:hover {
+  color: var(--cn-accent);
+}
+
+.continuuuum-header-apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.continuuuum-header-apps a {
+  color: var(--cn-muted);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.continuuuum-header-apps a:hover {
+  color: var(--cn-accent);
+}
+
+.continuuuum-header-apps a.active {
+  color: var(--cn-accent);
+  font-weight: 600;
+  background: var(--cn-active-bg);
+}
+
+.continuuuum-header-extra {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.continuuuum-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--cn-border);
+  background: var(--cn-bg);
+  font-family: system-ui, sans-serif;
+}
+
+.continuuuum-subnav a {
+  color: var(--cn-muted);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.continuuuum-subnav a:hover {
+  color: var(--cn-accent);
+}
+
+.continuuuum-subnav a.active {
+  color: var(--cn-accent);
+  font-weight: 600;
+  background: var(--cn-active-bg);
+}
+
+.continuuuum-nav-root[data-theme="light"] .continuuuum-header-extra label {
+  color: var(--cn-text);
+}
+
+.continuuuum-nav-root[data-theme="light"] .continuuuum-header-extra input {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.continuuuum-dev-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.continuuuum-dev-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--cn-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.continuuuum-dev-user--active .continuuuum-dev-toggle {
+  color: var(--cn-accent);
+  font-weight: 600;
+}
+
+.continuuuum-user-label {
+  font-size: 13px;
+  color: var(--cn-muted);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.continuuuum-user-label--dev::before {
+  content: 'DEV · ';
+  color: var(--cn-accent);
+  font-weight: 600;
+}
+
+.continuuuum-dev-panel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.continuuuum-dev-panel input[type="text"] {
+  width: 100px;
+  font-size: 13px;
+  padding: 3px 6px;
+  border: 1px solid var(--cn-border);
+  border-radius: 4px;
+  background: var(--cn-bg);
+  color: var(--cn-text);
+}
+
+.continuuuum-dev-panel select {
+  font-size: 13px;
+  padding: 3px 4px;
+  border: 1px solid var(--cn-border);
+  border-radius: 4px;
+  background: var(--cn-bg);
+  color: var(--cn-text);
+  max-width: 120px;
+}
+
+.continuuuum-dev-panel button {
+  font-size: 12px;
+  padding: 3px 8px;
+  border: 1px solid var(--cn-border);
+  border-radius: 4px;
+  background: var(--cn-active-bg);
+  color: var(--cn-text);
+  cursor: pointer;
+}
+
+.continuuuum-dev-panel button:hover {
+  border-color: var(--cn-accent);
+  color: var(--cn-accent);
+}
+
+.continuuuum-dev-presets {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 360px;
+}
+
+.continuuuum-preset-btn {
+  font-size: 11px !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+}
+
+.continuuuum-header-app-extra {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
