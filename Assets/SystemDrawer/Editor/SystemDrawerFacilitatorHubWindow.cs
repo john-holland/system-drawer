@@ -73,12 +73,94 @@ public class SystemDrawerFacilitatorHubWindow : EditorWindow
         else
             FacilitatorHubUi.DrawToolbox(null, null, ref _adHocMenuPath);
         EditorGUILayout.EndScrollView();
+
+        FacilitatorHubUi.DrawDimensionFooter();
     }
 }
 
 internal static class FacilitatorHubUi
 {
     private static readonly Dictionary<string, bool> FoldState = new Dictionary<string, bool>();
+    private const string PrefDim = "SystemDrawer.GameDimension.Dim";
+    private const string PrefGame = "SystemDrawer.GameDimension.Game";
+    private const string PrefApi = "SystemDrawer.GameDimension.ApiBase";
+
+    internal static void DrawDimensionFooter()
+    {
+        EditorGUILayout.Space(8);
+        EditorGUILayout.LabelField("Dimensions", EditorStyles.boldLabel);
+        int dim = EditorPrefs.GetInt(PrefDim, 0);
+        string game = EditorPrefs.GetString(PrefGame, "main");
+        string api = EditorPrefs.GetString(PrefApi, "http://127.0.0.1:5050");
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField($"Current: game={game} dim={dim}", GUILayout.ExpandWidth(true));
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUI.BeginChangeCheck();
+        game = EditorGUILayout.TextField("Game", game);
+        api = EditorGUILayout.TextField("API base", api);
+        if (EditorGUI.EndChangeCheck())
+        {
+            EditorPrefs.SetString(PrefGame, game);
+            EditorPrefs.SetString(PrefApi, api);
+        }
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Dim 0", EditorStyles.toolbarButton))
+            SwitchDimEditor(0, game, api);
+        if (GUILayout.Button("Dim 1", EditorStyles.toolbarButton))
+            SwitchDimEditor(1, game, api);
+        if (GUILayout.Button("Prewarm SG2D/3D/4D", EditorStyles.toolbarButton))
+            PrewarmEditor(dim, game, api);
+        EditorGUILayout.EndHorizontal();
+    }
+
+    static void SwitchDimEditor(int dim, string game, string api)
+    {
+        EditorPrefs.SetInt(PrefDim, dim);
+        EditorPrefs.SetString(PrefGame, game);
+        PostGd(api, "/api/gd/dimension-switch", $"{{\"game\":\"{game}\",\"dimension\":{dim}}}");
+        if (Application.isPlaying)
+        {
+            var cache = UnityEngine.Object.FindAnyObjectByType<DimensionSwitchCache>();
+            if (cache != null)
+                cache.StartCoroutine(cache.SwitchToDimension(dim));
+        }
+        Debug.Log($"[FacilitatorHub] Switch dimension → {dim} (game={game})");
+    }
+
+    static void PrewarmEditor(int dim, string game, string api)
+    {
+        PostGd(api, "/api/gd/sg-prewarm", $"{{\"game\":\"{game}\",\"dimension\":{dim}}}");
+        if (Application.isPlaying)
+        {
+            var cache = UnityEngine.Object.FindAnyObjectByType<DimensionSwitchCache>();
+            if (cache != null)
+                cache.StartCoroutine(cache.PrewarmAsync(game, dim));
+        }
+        Debug.Log($"[FacilitatorHub] Prewarm SG for dim {dim}");
+    }
+
+    static void PostGd(string apiBase, string path, string json)
+    {
+        try
+        {
+            var url = (apiBase ?? "http://127.0.0.1:5050").TrimEnd('/') + path;
+            using var req = new UnityEngine.Networking.UnityWebRequest(url, "POST");
+            var raw = System.Text.Encoding.UTF8.GetBytes(json ?? "{}");
+            req.uploadHandler = new UnityEngine.Networking.UploadHandlerRaw(raw);
+            req.downloadHandler = new UnityEngine.Networking.DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("X-User-ID", "admin");
+            req.SetRequestHeader("X-Admin", "1");
+            req.SendWebRequest();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[FacilitatorHub] GD POST failed: {ex.Message}");
+        }
+    }
 
     internal static void DrawToolbox(SystemDrawerFacilitator fac, SerializedObject facilitatorSo,
         ref string adHocMenuPath)

@@ -9,7 +9,8 @@
         "HierarchicalPathFinding",
         "SystemDrawer",
         "Planetary",
-        "Unity.Newtonsoft.Json"
+        "Unity.Newtonsoft.Json",
+        "Continuuuum.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

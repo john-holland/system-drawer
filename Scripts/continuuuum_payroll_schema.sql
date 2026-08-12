@@ -1,36 +1,23 @@
 -- Continuuuum company income payroll (HWM + seats + flexible retainers).
 
+CREATE TABLE IF NOT EXISTS payroll_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS payroll_companies (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   saurce_product_id TEXT,
-  high_water_mark_usd REAL NOT NULL DEFAULT 100000000,
-  hwm_retainer_pct REAL NOT NULL DEFAULT 0.12,
+  high_water_mark_usd REAL NOT NULL DEFAULT 100000,
+  hwm_retainer_pct REAL NOT NULL DEFAULT 0.10,
   lifetime_net_usd REAL NOT NULL DEFAULT 0,
   phase TEXT NOT NULL DEFAULT 'pre_hwm',
   currency TEXT NOT NULL DEFAULT 'USD',
   unity_enterprise_override_usd REAL,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
-);
-
--- Legacy tables (ignored by engine; kept for existing DBs)
-CREATE TABLE IF NOT EXISTS payroll_saving_indexes (
-  id TEXT PRIMARY KEY,
-  company_id TEXT NOT NULL,
-  beneficiary TEXT NOT NULL,
-  rate REAL NOT NULL,
-  UNIQUE (company_id, beneficiary),
-  FOREIGN KEY (company_id) REFERENCES payroll_companies(id)
-);
-
-CREATE TABLE IF NOT EXISTS payroll_post_hwm_shares (
-  id TEXT PRIMARY KEY,
-  company_id TEXT NOT NULL,
-  beneficiary TEXT NOT NULL,
-  rate REAL NOT NULL,
-  UNIQUE (company_id, beneficiary),
-  FOREIGN KEY (company_id) REFERENCES payroll_companies(id)
 );
 
 CREATE TABLE IF NOT EXISTS payroll_beneficiary_balances (

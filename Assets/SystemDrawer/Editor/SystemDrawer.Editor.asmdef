@@ -10,7 +10,8 @@
         "Weather.Runtime",
         "Roads.Runtime",
         "HierarchicalPathFinding",
-        "SystemDrawer.FeatureBudget"
+        "SystemDrawer.FeatureBudget",
+        "BedogaGenerator"
     ],
     "includePlatforms": [
         "Editor"

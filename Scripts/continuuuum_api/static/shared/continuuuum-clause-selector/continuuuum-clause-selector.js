@@ -607,6 +607,11 @@
     if (synsRaw) {
       body.synonyms = synsRaw.split(/[|,;]/).map(s => s.trim()).filter(Boolean);
     }
+    if (global.ContinuuuumUserSession && global.ContinuuuumUserSession.confirmCreateDimensionGate) {
+      const gate = global.ContinuuuumUserSession.confirmCreateDimensionGate();
+      if (gate === 'switched' || gate === 'abort') throw new Error('Create cancelled (dimension gate)');
+      if (gate === 'forceLanding') body.createAtLandingDimension = true;
+    }
     const data = await callApi('POST', '/api/thesaurus/entries', body);
     const entryId = data.entry && data.entry.id;
     if (!entryId) throw new Error(data.error || data.message || 'Failed to create lemma');

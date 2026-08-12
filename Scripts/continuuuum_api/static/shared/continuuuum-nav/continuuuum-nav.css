@@ -69,6 +69,25 @@
   background: var(--cn-active-bg);
 }
 
+.continuuuum-gd-selects {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  font-size: 12px;
+}
+.continuuuum-gd-selects select {
+  max-width: 120px;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+.continuuuum-gd-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  opacity: 0.9;
+}
 .continuuuum-header-extra {
   margin-left: auto;
   display: flex;

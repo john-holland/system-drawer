@@ -7,10 +7,20 @@ import uuid
 from datetime import datetime, timezone
 from typing import Callable
 
-from flask import jsonify, request
+from flask import g, jsonify, request
 
 from thesaurus.clause_ref import BINDING_KINDS
 from thesaurus.script_edit_diff import audit_binding_edit, audit_edit
+
+try:
+    from continuuuum_api.gd_route_annotations import accepts_game_dimension
+except ImportError:
+    try:
+        from gd_route_annotations import accepts_game_dimension  # type: ignore
+    except ImportError:
+
+        def accepts_game_dimension(fn):  # type: ignore
+            return fn
 
 try:
     from continuuuum_api.localization_helpers import (
@@ -230,19 +240,61 @@ def register_localization_routes(
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/thesaurus/entry-properties", methods=["PUT"])
+    @accepts_game_dimension
     def upsert_entry_property():
+        """Query/headers: game, dimension (X-Game, X-Dimension)."""
         body = request.get_json() or {}
         entry_id = body.get("entryId")
         property_key = body.get("propertyKey")
         property_value = body.get("propertyValue", "")
         if not entry_id or not property_key:
             return jsonify({"error": "entryId and propertyKey required"}), 400
+        dim_index = int(getattr(g, "dim_index", 0) or 0)
+        force_landing = bool(
+            body.get("createAtLandingDimension")
+            or body.get("create_at_landing_dimension")
+            or request.args.get("createAtLandingDimension") in ("1", "true", "yes")
+        )
+        if dim_index != 0 and not force_landing:
+            return jsonify(
+                {
+                    "error": "Switch to dimension 0 to create, or pass createAtLandingDimension=true",
+                    "code": "DIMENSION_SWITCH_REQUIRED",
+                    "dimension": dim_index,
+                }
+            ), 409
         try:
             conn = get_conn()
             err = validate_property_value(conn, property_key, property_value)
             if err:
                 conn.close()
                 return jsonify({"error": err}), 400
+            if dim_index != 0 and force_landing:
+                # Stylesheet: dim N may only override keys that already exist on dim 0.
+                base = conn.execute(
+                    """SELECT 1 FROM thesaurus_entry_properties
+                       WHERE entry_id = ? AND property_key = ? LIMIT 1""",
+                    (entry_id, property_key),
+                ).fetchone()
+                if not base:
+                    conn.close()
+                    return jsonify(
+                        {
+                            "error": "Property key must exist on dim 0 before a dimensional override",
+                            "code": "DIM0_BASE_PROPERTY_REQUIRED",
+                            "propertyKey": property_key,
+                            "dimension": dim_index,
+                        }
+                    ), 400
+                try:
+                    from continuuuum_api import game_dimension_dao as gd_dao
+                except ImportError:
+                    import game_dimension_dao as gd_dao  # type: ignore
+                gd_dao.upsert_entry_property_dim(
+                    conn, entry_id, dim_index, property_key, property_value
+                )
+                conn.close()
+                return jsonify({"ok": True, "dimension": dim_index, "override": True}), 200
             conn.execute(
                 """INSERT INTO thesaurus_entry_properties (entry_id, property_key, property_value)
                    VALUES (?, ?, ?)
@@ -251,7 +303,7 @@ def register_localization_routes(
             )
             conn.commit()
             conn.close()
-            return jsonify({"ok": True}), 200
+            return jsonify({"ok": True, "dimension": 0, "existence": True}), 200
         except sqlite3.OperationalError as e:
             return jsonify({"error": str(e)}), 500
 

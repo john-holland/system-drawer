@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Associations — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/game-dimensions/gd.css" />
+</head>
+<body class="gd-page">
+  <div id="continuuuum-nav-root"></div>
+  <main class="gd-main">
+    <header class="gd-header">
+      <div>
+        <h1>Game &amp; Dimension Associations</h1>
+        <p class="gd-sub">View, create, grant visibility, and review association change lists.</p>
+      </div>
+    </header>
+    <nav class="gd-tabs" role="tablist">
+      <button type="button" data-tab="view" class="active">View</button>
+      <button type="button" data-tab="create">Create</button>
+      <button type="button" data-tab="visibility" id="gd-tab-visibility" hidden>Visibility</button>
+      <button type="button" data-tab="reviews">Reviews</button>
+    </nav>
+
+    <section id="gd-panel-view" class="gd-panel">
+      <label>Scope
+        <select id="gd-view-scope">
+          <option value="main">main</option>
+          <option value="mine">my own</option>
+          <option value="submissions">submissions</option>
+          <option value="reviews">reviews</option>
+        </select>
+      </label>
+      <div class="gd-table-wrap">
+        <table class="gd-table">
+          <thead><tr><th>Table</th><th>Id</th><th>Games</th><th>Dimensions</th></tr></thead>
+          <tbody id="gd-view-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="gd-panel-create" class="gd-panel" hidden>
+      <div class="gd-toolbar">
+        <button type="button" id="gd-undo">Undo</button>
+        <button type="button" id="gd-redo">Redo</button>
+        <button type="button" id="gd-save">Save</button>
+        <button type="button" id="gd-revert">Revert</button>
+        <button type="button" id="gd-submit-review">Submit for review</button>
+        <label>Table
+          <select id="gd-create-table">
+            <option value="thesaurus_entries">thesaurus_entries</option>
+            <option value="localization_property_specs">localization_property_specs</option>
+          </select>
+        </label>
+        <button type="button" id="gd-load-associable">Load entities</button>
+      </div>
+      <p id="gd-create-status" class="gd-meta"></p>
+      <div class="gd-table-wrap">
+        <table class="gd-table" id="gd-matrix">
+          <thead id="gd-matrix-head"></thead>
+          <tbody id="gd-matrix-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="gd-panel-visibility" class="gd-panel" hidden>
+      <p class="gd-meta">Games are hidden from non-admins until you grant visibility or mark Public.</p>
+      <div id="gd-visibility-list" class="gd-vis-list"></div>
+    </section>
+
+    <section id="gd-panel-reviews" class="gd-panel" hidden>
+      <div class="gd-toolbar">
+        <button type="button" id="gd-refresh-cls">Refresh</button>
+      </div>
+      <ul id="gd-cl-list" class="gd-list"></ul>
+      <div id="gd-cl-detail" class="gd-cl-detail" hidden>
+        <h2 id="gd-cl-title">—</h2>
+        <p id="gd-cl-status" class="gd-meta"></p>
+        <ul id="gd-cl-items" class="gd-list"></ul>
+        <div class="gd-toolbar">
+          <input id="gd-cl-comment" type="text" placeholder="Comment" />
+          <button type="button" id="gd-cl-comment-btn">Add comment</button>
+          <button type="button" id="gd-cl-approve">Approve</button>
+          <button type="button" id="gd-cl-request">Request changes</button>
+          <button type="button" id="gd-cl-commit">Commit</button>
+        </div>
+        <ul id="gd-cl-comments" class="gd-list"></ul>
+      </div>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/game-dimensions/gd.js"></script>
+</body>
+</html>

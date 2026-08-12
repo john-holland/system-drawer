@@ -580,6 +580,12 @@
     const syns = document.getElementById('f-syns').value;
     if (syns) body.synonyms = syns.split(/[|,;]/).map(s => s.trim()).filter(Boolean);
     try {
+      const Session = window.ContinuuuumUserSession;
+      if (Session && Session.confirmCreateDimensionGate) {
+        const gate = Session.confirmCreateDimensionGate();
+        if (gate === 'switched' || gate === 'abort') return;
+        if (gate === 'forceLanding') body.createAtLandingDimension = true;
+      }
       const data = await api('/api/thesaurus/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

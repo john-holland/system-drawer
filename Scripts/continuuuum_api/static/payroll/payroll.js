@@ -348,8 +348,8 @@
     var fd = new FormData(e.target);
     var body = {
       name: fd.get("name"),
-      highWaterMarkUsd: Number(fd.get("highWaterMarkUsd") || 100000000),
-      hwmRetainerPct: Number(fd.get("hwmRetainerPct") || 0.12),
+      highWaterMarkUsd: Number(fd.get("highWaterMarkUsd") || 100000),
+      hwmRetainerPct: Number(fd.get("hwmRetainerPct") || 0.10),
     };
     var pid = fd.get("saurceProductId");
     if (pid) body.saurceProductId = pid;

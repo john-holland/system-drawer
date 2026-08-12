@@ -8,7 +8,17 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable
 
-from flask import jsonify, request
+from flask import g, jsonify, request
+
+try:
+    from continuuuum_api.gd_route_annotations import accepts_game_dimension
+except ImportError:
+    try:
+        from gd_route_annotations import accepts_game_dimension  # type: ignore
+    except ImportError:
+
+        def accepts_game_dimension(fn):  # type: ignore
+            return fn
 
 try:
     from continuuuum_api.lemma_import import (
@@ -149,7 +159,9 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
         return jsonify({"items": list_pos_tags()}), 200
 
     @app.route("/api/thesaurus/entries", methods=["GET"])
+    @accepts_game_dimension
     def list_thesaurus_entries():
+        """Query/headers: game, dimension (X-Game, X-Dimension)."""
         q = request.args.get("q")
         language = request.args.get("language")
         pos = request.args.get("pos")
@@ -216,8 +228,24 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/thesaurus/entries", methods=["POST"])
+    @accepts_game_dimension
     def create_thesaurus_entry():
+        """Query/headers: game, dimension (X-Game, X-Dimension)."""
         body = request.get_json() or {}
+        dim_index = int(getattr(g, "dim_index", 0) or 0)
+        force_landing = bool(
+            body.get("createAtLandingDimension")
+            or body.get("create_at_landing_dimension")
+            or request.args.get("createAtLandingDimension") in ("1", "true", "yes")
+        )
+        if dim_index != 0 and not force_landing:
+            return jsonify(
+                {
+                    "error": "Switch to dimension 0 to create, or pass createAtLandingDimension=true",
+                    "code": "DIMENSION_SWITCH_REQUIRED",
+                    "dimension": dim_index,
+                }
+            ), 409
         word = (body.get("word") or body.get("term") or "").strip()
         if not word:
             return jsonify({"error": "Word is required.", "code": "word_required", "field": "word"}), 400
@@ -272,6 +300,10 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                 if status == "created"
                 else "A lemma with this word, language, and part of speech already exists; prefab and properties were updated."
             )
+            if dim_index != 0 and force_landing:
+                message = (
+                    (message + " ") if message else ""
+                ) + "Entry existence is always at dim 0; landing dimension may receive property overrides separately."
             code = 201 if status == "created" else 200
             return (
                 jsonify(
@@ -280,6 +312,9 @@ def register_lemma_routes(app, get_conn: GetConn) -> None:
                         "status": status,
                         "message": message,
                         "entry": _entry_json(entry) if entry else None,
+                        "existenceDimension": 0,
+                        "landingDimension": dim_index,
+                        "createAtLandingDimension": bool(force_landing and dim_index != 0),
                     }
                 ),
                 code,

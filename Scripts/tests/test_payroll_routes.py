@@ -57,7 +57,7 @@ def test_create_and_summary_defaults(app_client):
     assert r.status_code == 201
     c = r.get_json()
     assert c["phase"] == "pre_hwm"
-    assert abs(c["hwmRetainerPct"] - 0.12) < 1e-9
+    assert abs(c["hwmRetainerPct"] - 0.10) < 1e-9
     assert "savingIndexes" not in c
     assert "postHwmShares" not in c
 
@@ -69,7 +69,134 @@ def test_create_and_summary_defaults(app_client):
     assert "service_cursor" in kinds
 
 
-def test_pre_hwm_single_pct_skim(app_client):
+def test_free_until_100k_migration_one_shot(tmp_path):
+    """Pre-prod migration rewrites HWM model once and clears old ledger rows."""
+    db = tmp_path / "mig.db"
+    conn = sqlite3.connect(db)
+    conn.row_factory = sqlite3.Row
+    # Bootstrap tables without running migration marker
+    conn.executescript(
+        """
+        CREATE TABLE payroll_companies (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          saurce_product_id TEXT,
+          high_water_mark_usd REAL NOT NULL DEFAULT 100000000,
+          hwm_retainer_pct REAL NOT NULL DEFAULT 0.12,
+          lifetime_net_usd REAL NOT NULL DEFAULT 0,
+          phase TEXT NOT NULL DEFAULT 'pre_hwm',
+          currency TEXT NOT NULL DEFAULT 'USD',
+          unity_enterprise_override_usd REAL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE payroll_beneficiary_balances (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL,
+          beneficiary TEXT NOT NULL,
+          ops_usd REAL NOT NULL DEFAULT 0,
+          retainer_usd REAL NOT NULL DEFAULT 0,
+          distributed_usd REAL NOT NULL DEFAULT 0
+        );
+        CREATE TABLE payroll_income_events (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL,
+          idempotency_key TEXT NOT NULL,
+          source TEXT,
+          gross_usd REAL,
+          net_usd REAL NOT NULL,
+          phase_applied TEXT NOT NULL,
+          pre_hwm_portion_usd REAL NOT NULL DEFAULT 0,
+          post_hwm_portion_usd REAL NOT NULL DEFAULT 0,
+          meta_json TEXT,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE payroll_allocations (
+          id TEXT PRIMARY KEY,
+          event_id TEXT NOT NULL,
+          company_id TEXT NOT NULL,
+          beneficiary TEXT NOT NULL,
+          bucket TEXT NOT NULL,
+          amount_usd REAL NOT NULL,
+          rate REAL NOT NULL,
+          phase TEXT NOT NULL,
+          retainer_id TEXT
+        );
+        CREATE TABLE payroll_saving_indexes (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL,
+          beneficiary TEXT NOT NULL,
+          rate REAL NOT NULL
+        );
+        CREATE TABLE payroll_post_hwm_shares (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL,
+          beneficiary TEXT NOT NULL,
+          rate REAL NOT NULL
+        );
+        """
+    )
+    conn.execute(
+        """INSERT INTO payroll_companies
+           (id, name, high_water_mark_usd, hwm_retainer_pct, lifetime_net_usd, phase, currency, created_at, updated_at)
+           VALUES ('pc_old', 'Legacy Co', 100000000, 0.12, 50000, 'pre_hwm', 'USD', 't', 't')"""
+    )
+    conn.execute(
+        """INSERT INTO payroll_beneficiary_balances
+           (id, company_id, beneficiary, ops_usd, retainer_usd, distributed_usd)
+           VALUES ('b1', 'pc_old', 'company', 44000, 6000, 0)"""
+    )
+    conn.execute(
+        """INSERT INTO payroll_income_events
+           (id, company_id, idempotency_key, net_usd, phase_applied, created_at)
+           VALUES ('e1', 'pc_old', 'k', 50000, 'pre_hwm', 't')"""
+    )
+    conn.execute(
+        """INSERT INTO payroll_allocations
+           (id, event_id, company_id, beneficiary, bucket, amount_usd, rate, phase)
+           VALUES ('a1', 'e1', 'pc_old', 'company', 'retainer', 6000, 0.12, 'pre_hwm')"""
+    )
+    conn.execute(
+        "INSERT INTO payroll_saving_indexes (id, company_id, beneficiary, rate) VALUES ('s1','pc_old','company',0.1)"
+    )
+    conn.commit()
+
+    ensure_payroll_schema(conn)
+    row = conn.execute("SELECT * FROM payroll_companies WHERE id='pc_old'").fetchone()
+    assert abs(row["high_water_mark_usd"] - 100_000) < 1e-6
+    assert abs(row["hwm_retainer_pct"] - 0.10) < 1e-9
+    assert abs(row["lifetime_net_usd"] - 0) < 1e-9
+    assert row["phase"] == "pre_hwm"
+    assert conn.execute("SELECT COUNT(*) AS n FROM payroll_income_events").fetchone()["n"] == 0
+    assert conn.execute("SELECT COUNT(*) AS n FROM payroll_allocations").fetchone()["n"] == 0
+    bal = conn.execute(
+        "SELECT * FROM payroll_beneficiary_balances WHERE company_id='pc_old'"
+    ).fetchone()
+    assert abs(bal["ops_usd"]) < 1e-9 and abs(bal["retainer_usd"]) < 1e-9
+    assert not conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='payroll_saving_indexes'"
+    ).fetchone()
+    assert not conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='payroll_post_hwm_shares'"
+    ).fetchone()
+    meta = conn.execute(
+        "SELECT value FROM payroll_meta WHERE key='hwm_model'"
+    ).fetchone()
+    assert meta["value"] == "free_until_100k_v1"
+
+    # Idempotent: admin override survives a second ensure
+    conn.execute(
+        "UPDATE payroll_companies SET high_water_mark_usd=555, hwm_retainer_pct=0.2 WHERE id='pc_old'"
+    )
+    conn.commit()
+    ensure_payroll_schema(conn)
+    row2 = conn.execute("SELECT * FROM payroll_companies WHERE id='pc_old'").fetchone()
+    assert abs(row2["high_water_mark_usd"] - 555) < 1e-6
+    assert abs(row2["hwm_retainer_pct"] - 0.2) < 1e-9
+    conn.close()
+
+
+def test_pre_hwm_is_free(app_client):
     _, get_conn = app_client
     conn = get_conn()
     company = create_company(conn, name="Co", high_water_mark_usd=1_000_000)
@@ -78,18 +205,18 @@ def test_pre_hwm_single_pct_skim(app_client):
     by_ben = {
         (a["beneficiary"], a["bucket"]): a["amountUsd"] for a in event["allocations"]
     }
-    # 12% of 10000 → company retainer; 88% → ops
-    assert abs(by_ben[("company", "retainer")] - 1200) < 1e-6
-    assert abs(by_ben[("company", "ops")] - 8800) < 1e-6
+    # Free until HWM: 100% → ops, no HWM retainer skim
+    assert ("company", "retainer") not in by_ben
+    assert abs(by_ben[("company", "ops")] - 10_000) < 1e-6
     assert ("cursor", "retainer") not in by_ben
     assert ("unity", "retainer") not in by_ben
     summary = company_summary(conn, company["id"])
-    assert abs(summary["retainerTotalUsd"] - 1200) < 1e-6
+    assert abs(summary["retainerTotalUsd"] - 0) < 1e-6
     assert abs(summary["lifetimeNetUsd"] - 10_000) < 1e-6
     conn.close()
 
 
-def test_post_hwm_to_ops(app_client):
+def test_post_hwm_10pct_retainer(app_client):
     _, get_conn = app_client
     conn = get_conn()
     company = create_company(conn, name="Co", high_water_mark_usd=100)
@@ -99,7 +226,9 @@ def test_post_hwm_to_ops(app_client):
     by_ben = {
         (a["beneficiary"], a["bucket"]): a["amountUsd"] for a in event["allocations"]
     }
-    assert abs(by_ben[("company", "ops")] - 1000) < 1e-6
+    # 10% of 1000 → retainer; 90% → ops
+    assert abs(by_ben[("company", "retainer")] - 100) < 1e-6
+    assert abs(by_ben[("company", "ops")] - 900) < 1e-6
     assert ("company", "distributed") not in by_ben
     conn.close()
 
@@ -113,17 +242,23 @@ def test_hwm_crossing_split(app_client):
     assert event["phaseApplied"] == "crossing"
     assert abs(event["preHwmPortionUsd"] - 200) < 1e-6
     assert abs(event["postHwmPortionUsd"] - 300) < 1e-6
-    # Pre: 12% of 200 = 24 retainer; post: 300 → ops
+    # Pre 200 → free ops; post 300 → 10% = 30 retainer, 270 ops
     retainer = sum(
         a["amountUsd"] for a in event["allocations"] if a["bucket"] == "retainer"
     )
-    assert abs(retainer - 24) < 1e-6
+    assert abs(retainer - 30) < 1e-6
+    ops_pre = next(
+        a["amountUsd"]
+        for a in event["allocations"]
+        if a["bucket"] == "ops" and a.get("phase") == "pre_hwm"
+    )
     ops_post = next(
         a["amountUsd"]
         for a in event["allocations"]
         if a["bucket"] == "ops" and a.get("phase") == "post_hwm"
     )
-    assert abs(ops_post - 300) < 1e-6
+    assert abs(ops_pre - 200) < 1e-6
+    assert abs(ops_post - 270) < 1e-6
     summary = company_summary(conn, company["id"])
     assert summary["phase"] == "post_hwm"
     assert abs(summary["lifetimeNetUsd"] - 1300) < 1e-6
@@ -222,7 +357,8 @@ def test_retainer_cron_accrual(app_client):
 def test_percent_retainer_on_income_with_name_and_post_note(app_client):
     client, get_conn = app_client
     conn = get_conn()
-    company = create_company(conn, name="Springfield", high_water_mark_usd=1e9)
+    # HWM already cleared so income is post-HWM (10% skim) + custom % retainer
+    company = create_company(conn, name="Springfield", high_water_mark_usd=0)
     create_retainer(
         conn,
         company["id"],
@@ -254,15 +390,15 @@ def test_percent_retainer_on_income_with_name_and_post_note(app_client):
     assert "eshielda" in by_name
     assert abs(by_name["eshielda"] - 500_000) < 1e-6  # 5% of 10M
     assert "HWM retainer" in by_name
-    assert abs(by_name["HWM retainer"] - 1_200_000) < 1e-6  # 12% of 10M
+    assert abs(by_name["HWM retainer"] - 1_000_000) < 1e-6  # 10% of 10M
     ops = sum(a["amountUsd"] for a in event["allocations"] if a["bucket"] == "ops")
-    assert abs(ops - 8_300_000) < 1e-6
+    assert abs(ops - 8_500_000) < 1e-6
 
 
 def test_events_include_retainer_names(app_client):
     _, get_conn = app_client
     conn = get_conn()
-    company = create_company(conn, name="Co", high_water_mark_usd=1e9)
+    company = create_company(conn, name="Co", high_water_mark_usd=0)
     create_retainer(
         conn,
         company["id"],
@@ -297,7 +433,8 @@ def test_events_include_retainer_names(app_client):
 def test_retainer_draw(app_client):
     client, get_conn = app_client
     conn = get_conn()
-    company = create_company(conn, name="Co", high_water_mark_usd=1e9)
+    company = create_company(conn, name="Co", high_water_mark_usd=0)
+    # 10% of 10_000 = 1000 retainer; 9000 ops
     post_income(conn, company["id"], 10_000, idempotency_key="inc")
     conn.close()
 
@@ -308,8 +445,8 @@ def test_retainer_draw(app_client):
     assert r.status_code == 201
     body = r.get_json()
     assert abs(body["amountUsd"] - 100) < 1e-6
-    assert abs(body["summary"]["retainerUsd"] - 1100) < 1e-6  # 1200 - 100
-    assert abs(body["summary"]["opsUsd"] - 8900) < 1e-6  # 8800 + 100
+    assert abs(body["summary"]["retainerUsd"] - 900) < 1e-6  # 1000 - 100
+    assert abs(body["summary"]["opsUsd"] - 9100) < 1e-6  # 9000 + 100
 
     events = client.get(f"/api/payroll/companies/{company['id']}/events?limit=20").get_json()
     draws = [e for e in events["items"] if e.get("type") == "retainer_draw"]

@@ -77,6 +77,7 @@ public class Spatial4DInGameUI : MonoBehaviour
     private Text activeGoLabel;
     private Text locationLabel;
     private Text spacetimeLinkLabel;
+    private Text dimStatusLabel;
     private Button saveButton;
 
     [Header("UI scale")]
@@ -232,8 +233,66 @@ public class Spatial4DInGameUI : MonoBehaviour
         saveButton = AddButton(parent, "Save to file", () => { Debug.Log("[Spatial4D UI] Button clicked: Save to file"); OnSave(); });
         AddLabel(parent, "Shortcut: Ctrl+S");
 
+        AddLabel(parent, "Dimensions");
+        AddButton(parent, "Switch to dimension 0", () =>
+        {
+            Debug.Log("[Spatial4D UI] Button clicked: Switch to dimension 0");
+            OnSwitchDimension(0);
+        });
+        AddButton(parent, "Switch to dimension 1", () =>
+        {
+            Debug.Log("[Spatial4D UI] Button clicked: Switch to dimension 1");
+            OnSwitchDimension(1);
+        });
+        AddButton(parent, "Prewarm current dimension (SG2D/3D/4D)", () =>
+        {
+            Debug.Log("[Spatial4D UI] Button clicked: Prewarm current dimension (SG2D/3D/4D)");
+            OnPrewarmCurrent();
+        });
+        AddButton(parent, "Prewarm all SG kinds", () =>
+        {
+            Debug.Log("[Spatial4D UI] Button clicked: Prewarm all SG kinds");
+            OnPrewarmCurrent();
+        });
+        dimStatusLabel = AddLabel(parent, "Dimension: —");
+
         if (orchestrator != null && orchestrator.showQuestMapOverlay)
             BuildQuestOverlay(parent);
+    }
+
+    DimensionSwitchCache ResolveDimCache()
+    {
+        var cache = FindAnyObjectByType<DimensionSwitchCache>();
+        if (cache != null)
+            return cache;
+        var go = new GameObject("DimensionSwitchCache");
+        cache = go.AddComponent<DimensionSwitchCache>();
+        return cache;
+    }
+
+    void OnSwitchDimension(int dim)
+    {
+        var cache = ResolveDimCache();
+        if (dimStatusLabel != null)
+            dimStatusLabel.text = $"Switching to dimension {dim}…";
+        StartCoroutine(cache.SwitchToDimension(dim, ok =>
+        {
+            if (dimStatusLabel != null)
+                dimStatusLabel.text = cache.LastStatus;
+            Debug.Log($"[Spatial4D UI] Dimension switch dim={dim} ok={ok} {cache.LastStatus}");
+        }));
+    }
+
+    void OnPrewarmCurrent()
+    {
+        var cache = ResolveDimCache();
+        int dim = cache.ActiveDimIndex;
+        StartCoroutine(cache.PrewarmAsync(cache.ActiveGameSlug ?? "main", dim, ok =>
+        {
+            if (dimStatusLabel != null)
+                dimStatusLabel.text = cache.LastStatus;
+            Debug.Log($"[Spatial4D UI] Prewarm dim={dim} ok={ok} {cache.LastStatus}");
+        }));
     }
 
     private void BuildQuestOverlay(Transform parent)

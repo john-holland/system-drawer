@@ -6,20 +6,20 @@ Company **income allocation** for Resaurce-linked products — not employee W-2 
 
 | Term | Meaning |
 |------|---------|
-| **Company HWM** | Cumulative net income posted through Continuuuum payroll. Default `$100,000,000`, overridable per company. |
-| **HWM retainer %** | Single company skim (`hwm_retainer_pct`, default `0.12`) applied to the under-HWM portion of each income event. |
+| **Company HWM** | Cumulative net income posted through Continuuuum payroll. Default `$100,000`, overridable per company. |
+| **HWM retainer %** | Company skim (`hwm_retainer_pct`, default `0.10`) applied only to the **over-HWM** portion of each income event. Under HWM is free (100% ops). |
 | **Service budget** | Monthly Unity + Cursor seat cost derived from team tags and lifetime net. |
 | **Production water level** | Resaurce pond metaphor (`water_level_usd` / `capacity_usd`) for story budgets. Unrelated field. |
 
 ## Income phases
 
-**Pre-HWM** (`lifetime_net_usd` &lt; HWM): skim `hwm_retainer_pct` of the event into the **company** retainer bucket; the remainder goes to **company ops**.
+**Pre-HWM** (`lifetime_net_usd` &lt; HWM): **free** — 100% of the event goes to **company ops** (no HWM retainer skim).
 
-**Post-HWM**: **100%** of the event goes to **company ops** (no multi-beneficiary profit-share).
+**Post-HWM**: skim `hwm_retainer_pct` (default **10%**) of the event into the **company** retainer bucket; the remainder goes to **company ops**.
 
-**Crossing:** if one event straddles the mark, under-mark dollars use the HWM retainer skim; over-mark dollars go to ops.
+**Crossing:** if one event straddles the mark, under-mark dollars stay free → ops; over-mark dollars take the HWM retainer skim, rest → ops.
 
-Legacy `payroll_saving_indexes` / `payroll_post_hwm_shares` rows may still exist after migration; the engine ignores them.
+**Migration `free_until_100k_v1`** (pre-prod, one-shot via `payroll_meta`): sets every company to `$100,000` / `10%`, clears income/allocation/draw history booked under the old 12%-pre-HWM model, resets balances and lifetime to zero, and drops legacy `payroll_saving_indexes` / `payroll_post_hwm_shares`. Team members and retainer definitions are kept. After migration, admin may override HWM/% per company as usual.
 
 Retainer draws (`POST .../retainer/draw`) move company retainer → company ops for transition / budget coverage.
 
@@ -50,7 +50,7 @@ Auto-association: gameplay members fill the Unity service retainer user list; te
 |------|------|
 | `service_unity` / `service_cursor` | Auto-maintained monthly `fixed_cron` retainers; amounts sync from service budget |
 | `custom` | `%` of income (applied on each income post, after HWM skim) or `$` on a cron; optional forward company + user list |
-| `hwm_pct` | Informational / system; income skim uses company `hwm_retainer_pct` |
+| `hwm_pct` | Informational / system; income skim uses company `hwm_retainer_pct` on post-HWM dollars only |
 
 `tick_retainers` (wired into the Continuuuum submit-cron loop) accrues due `fixed_cron` retainers into company retainer (or forward company), idempotent per fire window.
 

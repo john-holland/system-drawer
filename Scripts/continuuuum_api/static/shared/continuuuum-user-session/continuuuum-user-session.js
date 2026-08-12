@@ -4,6 +4,8 @@
   var USER_KEY = 'continuuuumUserId';
   var DEV_KEY = 'continuuuumDevMode';
   var ADMIN_KEY = 'continuuuumAdminMode';
+  var GAME_KEY = 'continuuuumGame';
+  var DIMENSION_KEY = 'continuuuumDimension';
   var listeners = [];
   var PRESETS = ['developer', 'admin', 'user1', 'user2', 'user3', 'user4', 'user5', 'user6'];
   var gateEl = null;
@@ -25,13 +27,128 @@
   }
 
   function notify(kind) {
-    var detail = { userId: getUserId(), devMode: isDevMode(), adminMode: isAdmin(), kind: kind || 'change' };
+    var detail = {
+      userId: getUserId(),
+      devMode: isDevMode(),
+      adminMode: isAdmin(),
+      game: getGame(),
+      dimension: getDimension(),
+      kind: kind || 'change',
+    };
     listeners.forEach(function (fn) {
       try { fn(detail); } catch (_) { /* ignore */ }
     });
     try {
       global.dispatchEvent(new CustomEvent('continuuuum-user-changed', { detail: detail }));
     } catch (_) { /* ignore */ }
+  }
+
+  function getGame() {
+    var g = localStorage.getItem(GAME_KEY);
+    return g == null || g === '' ? 'main' : String(g);
+  }
+
+  function getDimension() {
+    var d = localStorage.getItem(DIMENSION_KEY);
+    if (d == null || d === '') return '0';
+    return String(d);
+  }
+
+  function apiBase() {
+    try {
+      return (localStorage.getItem('lemmaApiBase') || location.origin || '').replace(/\/$/, '');
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function patchUserContext(body) {
+    var base = apiBase();
+    if (!base || typeof fetch !== 'function') return Promise.resolve(null);
+    return fetch(base + '/api/gd/user-context', {
+      method: 'PATCH',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, getHeaders()),
+      body: JSON.stringify(body || {}),
+    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  }
+
+  function setGame(slug) {
+    var next = String(slug == null ? '' : slug).trim() || 'main';
+    var prev = getGame();
+    localStorage.setItem(GAME_KEY, next);
+    if (prev !== next) {
+      notify('game');
+      return patchUserContext({ game: next }).then(function () { return next; });
+    }
+    return Promise.resolve(next);
+  }
+
+  function setDimension(dim) {
+    var next = String(dim == null ? '0' : dim).trim() || '0';
+    var prev = getDimension();
+    localStorage.setItem(DIMENSION_KEY, next);
+    if (prev !== next) {
+      notify('dimension');
+      var base = apiBase();
+      if (base && typeof fetch === 'function') {
+        return fetch(base + '/api/gd/dimension-switch', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, getHeaders()),
+          body: JSON.stringify({ game: getGame(), dimension: next }),
+        }).then(function (r) { return r.ok ? r.json() : null; })
+          .then(function () { return next; })
+          .catch(function () { return next; });
+      }
+      return patchUserContext({ dimension: next }).then(function () { return next; });
+    }
+    return Promise.resolve(next);
+  }
+
+  function getQuery(extra) {
+    var q = {};
+    var policy = getGdPolicy();
+    if (policy.game) q.game = getGame();
+    if (policy.dimension) q.dimension = getDimension();
+    if (extra) {
+      Object.keys(extra).forEach(function (k) { q[k] = extra[k]; });
+    }
+    return q;
+  }
+
+  function appendGameDimensionQuery(url) {
+    var policy = getGdPolicy();
+    if (!policy.game && !policy.dimension) return url;
+    var u;
+    try {
+      u = new URL(url, location.origin);
+    } catch (_) {
+      return url;
+    }
+    if (policy.game) u.searchParams.set('game', getGame());
+    if (policy.dimension) u.searchParams.set('dimension', getDimension());
+    return u.pathname + u.search + (u.hash || '');
+  }
+
+  /**
+   * Before creating a lemma/property off dim 0.
+   * Returns: 'abort' | 'switched' | 'forceLanding'
+   */
+  function confirmCreateDimensionGate() {
+    var dim = parseInt(getDimension(), 10) || 0;
+    if (dim === 0) return 'ok';
+    var ans = global.confirm(
+      'Switch to dimension 0 to create?\n\nOK = switch to dim 0 and try again\nCancel = create at current dimension'
+    );
+    if (ans) {
+      setDimension(0);
+      try {
+        global.alert('Dimension switched to 0 — try again.');
+      } catch (_) { /* ignore */ }
+      return 'switched';
+    }
+    // second confirm for cancel-vs-force: browsers only have OK/Cancel once
+    var force = global.confirm('Create at landing dimension ' + dim + ' instead?');
+    return force ? 'forceLanding' : 'abort';
   }
 
   function getUserId() {
@@ -75,11 +192,136 @@
     if (prev !== next) notify('admin');
   }
 
+  /**
+   * Path → nav app id (mirrors ContinuuuumNav.detectApp markers) for when nav is not loaded.
+   */
+  var PATH_APP_MARKERS = [
+    ['/lemma-library', 'lemma'],
+    ['/network-definitions', 'network'],
+    ['/city-config', 'cities'],
+    ['/society-dashboard', 'society'],
+    ['/restaurants', 'restaurants'],
+    ['/stations', 'stations'],
+    ['/keycards', 'keycards'],
+    ['/vehicle-inventory', 'vehicle-inventory'],
+    ['/camera-pathing', 'camera'],
+    ['/camera-scenes', 'camera'],
+    ['/table-read', 'table-read'],
+    ['/sql-viewer', 'sql-viewer'],
+    ['/credits', 'credits'],
+    ['/garbage-bags', 'garbage-bags'],
+    ['/airplanes', 'airplanes'],
+    ['/transit', 'transit'],
+    ['/train-seats', 'train-seats'],
+    ['/staff-hours', 'staff-hours'],
+    ['/mayor-dog-mods', 'mayor-dog-mods'],
+    ['/inventory-loadouts', 'inventory-loadouts'],
+    ['/lemma-build', 'lemma-build'],
+    ['/lemma-completion', 'lemma-completion'],
+    ['/story-board', 'story-board'],
+    ['/project-calendar', 'project-calendar'],
+    ['/budget-dashboard', 'budget-dashboard'],
+    ['/payroll', 'payroll'],
+    ['/game-dimensions', 'game-dimensions'],
+    ['/legal-tracker', 'legal-tracker'],
+    ['/settings', 'settings'],
+    ['/ui', 'hub'],
+    ['/library', 'library'],
+  ];
+
+  function detectAppIdFromPath(pathname) {
+    var path = String(pathname == null ? (typeof location !== 'undefined' ? location.pathname : '') : pathname);
+    var search = '';
+    try {
+      search = typeof location !== 'undefined' ? (location.search || '') : '';
+    } catch (_) { /* ignore */ }
+    var params = new URLSearchParams(search);
+    if (params.get('panel') === 'upload' || params.get('upload') === '1') return 'import';
+    for (var i = 0; i < PATH_APP_MARKERS.length; i++) {
+      if (path.indexOf(PATH_APP_MARKERS[i][0]) >= 0) return PATH_APP_MARKERS[i][1];
+    }
+    if (path === '/' || path === '') return 'library';
+    return null;
+  }
+
+  /**
+   * Per-app Game/Dimension send policy. Prefer ContinuuuumNav matrix when loaded.
+   */
+  function getGdPolicy(pathname) {
+    var Nav = global.ContinuuuumNav;
+    if (Nav && typeof Nav.gdPolicyForApp === 'function') {
+      var appId = null;
+      if (pathname != null && pathname !== '') {
+        appId = detectAppIdFromPath(pathname);
+      } else if (typeof Nav.detectApp === 'function') {
+        appId = Nav.detectApp();
+      } else {
+        appId = detectAppIdFromPath();
+      }
+      return Nav.gdPolicyForApp(appId);
+    }
+    var fallbackId = detectAppIdFromPath(pathname);
+    // Fallback matrix when nav script is absent (same locked table).
+    var FALLBACK = {
+      library: { game: true, dimension: true },
+      import: { game: true, dimension: true },
+      lemma: { game: true, dimension: true },
+      hub: { game: true, dimension: false },
+      'story-board': { game: true, dimension: false },
+      'project-calendar': { game: true, dimension: false },
+      'budget-dashboard': { game: true, dimension: false },
+      payroll: { game: false, dimension: false },
+      'game-dimensions': { game: false, dimension: false },
+      'legal-tracker': { game: false, dimension: false },
+      network: { game: true, dimension: true },
+      cities: { game: true, dimension: true },
+      society: { game: true, dimension: true },
+      restaurants: { game: true, dimension: true },
+      stations: { game: true, dimension: true },
+      keycards: { game: true, dimension: true },
+      'vehicle-inventory': { game: true, dimension: true },
+      camera: { game: true, dimension: true },
+      'table-read': { game: true, dimension: false },
+      'sql-viewer': { game: false, dimension: false },
+      credits: { game: true, dimension: false },
+      'garbage-bags': { game: true, dimension: true },
+      airplanes: { game: true, dimension: true },
+      transit: { game: true, dimension: true },
+      'train-seats': { game: true, dimension: true },
+      'staff-hours': { game: true, dimension: true },
+      'mayor-dog-mods': { game: true, dimension: true },
+      'inventory-loadouts': { game: true, dimension: true },
+      'lemma-build': { game: true, dimension: true },
+      'lemma-completion': { game: true, dimension: true },
+      settings: { game: false, dimension: false },
+    };
+    return FALLBACK[fallbackId] || { game: false, dimension: false };
+  }
+
+  /** @deprecated Prefer getGdPolicy().game / .dimension — kept for callers that only knew finance strip. */
+  function isFinanceProvince(pathname) {
+    var p = getGdPolicy(pathname);
+    return !p.game && !p.dimension;
+  }
+
+  /** True when either Game or Dimension context should be sent. */
+  function usesGameDimensionContext(pathname) {
+    var p = getGdPolicy(pathname);
+    return !!(p.game || p.dimension);
+  }
+
   function getHeaders(extra) {
     var h = { 'X-User-ID': getUserId() };
+    var policy = getGdPolicy();
+    if (policy.game) h['X-Game'] = getGame();
+    if (policy.dimension) h['X-Dimension'] = getDimension();
     if (isAdmin()) h['X-Admin'] = '1';
     if (extra) {
-      Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
+      Object.keys(extra).forEach(function (k) {
+        if (k === 'X-Game' && !policy.game) return;
+        if (k === 'X-Dimension' && !policy.dimension) return;
+        h[k] = extra[k];
+      });
     }
     return h;
   }
@@ -231,6 +473,16 @@
     setDevMode: setDevMode,
     isAdmin: isAdmin,
     setAdmin: setAdmin,
+    getGame: getGame,
+    setGame: setGame,
+    getDimension: getDimension,
+    setDimension: setDimension,
+    getQuery: getQuery,
+    appendGameDimensionQuery: appendGameDimensionQuery,
+    confirmCreateDimensionGate: confirmCreateDimensionGate,
+    getGdPolicy: getGdPolicy,
+    isFinanceProvince: isFinanceProvince,
+    usesGameDimensionContext: usesGameDimensionContext,
     getHeaders: getHeaders,
     onChange: onChange,
     isPresent: isPresent,

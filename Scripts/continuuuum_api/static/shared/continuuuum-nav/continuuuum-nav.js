@@ -10,6 +10,7 @@
     { id: 'project-calendar', label: 'Calendar', path: '/project-calendar' },
     { id: 'budget-dashboard', label: 'Budget', path: '/budget-dashboard' },
     { id: 'payroll', label: 'Payroll', path: '/payroll' },
+    { id: 'game-dimensions', label: 'Associations', path: '/game-dimensions' },
     { id: 'legal-tracker', label: 'Legal', path: '/legal-tracker' },
     { id: 'network', label: 'Network', path: '/network-definitions' },
     { id: 'cities', label: 'Cities', path: '/city-config' },
@@ -136,6 +137,7 @@
       'project-calendar': lemmaBase + '/project-calendar',
       'budget-dashboard': lemmaBase + '/budget-dashboard',
       payroll: lemmaBase + '/payroll',
+      'game-dimensions': lemmaBase + '/game-dimensions',
       'legal-tracker': lemmaBase + '/legal-tracker',
       network: lemmaBase + '/network-definitions',
       cities: lemmaBase + '/city-config',
@@ -197,6 +199,7 @@
     if (path.indexOf('/project-calendar') >= 0) return 'project-calendar';
     if (path.indexOf('/budget-dashboard') >= 0) return 'budget-dashboard';
     if (path.indexOf('/payroll') >= 0) return 'payroll';
+    if (path.indexOf('/game-dimensions') >= 0) return 'game-dimensions';
     if (path.indexOf('/legal-tracker') >= 0) return 'legal-tracker';
     if (path.indexOf('/settings') >= 0) return 'settings';
     if (path.indexOf('/ui') >= 0) return 'hub';
@@ -338,6 +341,152 @@
     Session.onChange(refreshPanel);
     refreshPanel();
     if (Session.isDevMode()) loadUsers();
+  }
+
+  /** Per-app Game / Dimension banner selectors (locked matrix). */
+  var APP_GD_SELECTORS = {
+    library: { game: true, dimension: true },
+    import: { game: true, dimension: true },
+    lemma: { game: true, dimension: true },
+    hub: { game: true, dimension: false },
+    'story-board': { game: true, dimension: false },
+    'project-calendar': { game: true, dimension: false },
+    'budget-dashboard': { game: true, dimension: false },
+    payroll: { game: false, dimension: false },
+    'game-dimensions': { game: false, dimension: false },
+    'legal-tracker': { game: false, dimension: false },
+    network: { game: true, dimension: true },
+    cities: { game: true, dimension: true },
+    society: { game: true, dimension: true },
+    restaurants: { game: true, dimension: true },
+    stations: { game: true, dimension: true },
+    keycards: { game: true, dimension: true },
+    'vehicle-inventory': { game: true, dimension: true },
+    camera: { game: true, dimension: true },
+    'table-read': { game: true, dimension: false },
+    'sql-viewer': { game: false, dimension: false },
+    credits: { game: true, dimension: false },
+    'garbage-bags': { game: true, dimension: true },
+    airplanes: { game: true, dimension: true },
+    transit: { game: true, dimension: true },
+    'train-seats': { game: true, dimension: true },
+    'staff-hours': { game: true, dimension: true },
+    'mayor-dog-mods': { game: true, dimension: true },
+    'inventory-loadouts': { game: true, dimension: true },
+    'lemma-build': { game: true, dimension: true },
+    'lemma-completion': { game: true, dimension: true },
+    settings: { game: false, dimension: false },
+  };
+
+  function gdPolicyForApp(appId) {
+    return APP_GD_SELECTORS[appId] || { game: false, dimension: false };
+  }
+
+  function mountGameDimensionSelectors(host, appId) {
+    if (!host || !global.ContinuuuumUserSession) return;
+    var Session = global.ContinuuuumUserSession;
+    var policy = gdPolicyForApp(appId);
+    if (!policy.game && !policy.dimension) return;
+    if (host.querySelector('.continuuuum-gd-selects')) return;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'continuuuum-gd-selects';
+    var html = '';
+    if (policy.game) {
+      html +=
+        '<label class="continuuuum-gd-label">Game ' +
+          '<select id="continuuuum-game-select" title="Game context">' +
+            '<option value="">No games visible</option>' +
+          '</select>' +
+        '</label>';
+    }
+    if (policy.dimension) {
+      html +=
+        '<label class="continuuuum-gd-label">Dim ' +
+          '<select id="continuuuum-dim-select" title="Dimension context"></select>' +
+        '</label>';
+    }
+    wrap.innerHTML = html;
+    host.appendChild(wrap);
+
+    var gameSel = wrap.querySelector('#continuuuum-game-select');
+    var dimSel = wrap.querySelector('#continuuuum-dim-select');
+
+    function loadCatalogs() {
+      var base = apiBase();
+      var hdrs = Session.getHeaders();
+      var fetches = [];
+      if (policy.game) {
+        fetches.push(
+          fetch(base + '/api/gd/games', { headers: hdrs }).then(function (r) {
+            return r.ok ? r.json() : [];
+          }).catch(function () { return []; })
+        );
+      } else {
+        fetches.push(Promise.resolve(null));
+      }
+      if (policy.dimension) {
+        fetches.push(
+          fetch(base + '/api/gd/dimensions', { headers: hdrs }).then(function (r) {
+            return r.ok ? r.json() : [];
+          }).catch(function () { return []; })
+        );
+      } else {
+        fetches.push(Promise.resolve(null));
+      }
+      Promise.all(fetches).then(function (pair) {
+        var games = pair[0];
+        var dims = pair[1];
+        if (gameSel && games) {
+          if (!games.length) {
+            gameSel.innerHTML = '<option value="">No games visible</option>';
+            gameSel.disabled = true;
+          } else {
+            gameSel.disabled = false;
+            gameSel.innerHTML = games.map(function (g) {
+              return '<option value="' + esc(g.slug) + '">' + esc(g.displayName || g.slug) + '</option>';
+            }).join('');
+            var curG = Session.getGame();
+            if (games.some(function (g) { return g.slug === curG; })) gameSel.value = curG;
+            else {
+              gameSel.value = games[0].slug;
+              Session.setGame(games[0].slug);
+            }
+          }
+        }
+        if (dimSel && dims) {
+          dimSel.innerHTML = dims.map(function (d) {
+            return '<option value="' + esc(String(d.dimIndex)) + '">' +
+              esc(d.displayName || ('Dim ' + d.dimIndex)) + '</option>';
+          }).join('');
+          var curD = Session.getDimension();
+          if (dims.some(function (d) { return String(d.dimIndex) === String(curD); })) {
+            dimSel.value = String(curD);
+          } else if (dims.length) {
+            dimSel.value = String(dims[0].dimIndex);
+            Session.setDimension(dims[0].dimIndex);
+          }
+        }
+      });
+    }
+
+    if (gameSel) {
+      gameSel.addEventListener('change', function () {
+        if (!gameSel.value) return;
+        Session.setGame(gameSel.value);
+      });
+    }
+    if (dimSel) {
+      dimSel.addEventListener('change', function () {
+        Session.setDimension(dimSel.value);
+      });
+    }
+    Session.onChange(function (detail) {
+      if (detail && (detail.kind === 'user' || detail.kind === 'admin' || detail.kind === 'dev')) {
+        loadCatalogs();
+      }
+    });
+    loadCatalogs();
   }
 
   function renderChatContent(text) {
@@ -615,6 +764,7 @@
 
     var extraHost = root.querySelector('.continuuuum-header-extra');
     mountDevUserSwitcher(extraHost, opts);
+    mountGameDimensionSelectors(extraHost, app);
     mountChatToggle(extraHost);
 
     if (opts.extraEl) {
@@ -658,5 +808,7 @@
     detectApp: detectApp,
     normalizeLibraryBase: normalizeLibraryBase,
     sameOriginLibraryBase: sameOriginLibraryBase,
+    APP_GD_SELECTORS: APP_GD_SELECTORS,
+    gdPolicyForApp: gdPolicyForApp,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

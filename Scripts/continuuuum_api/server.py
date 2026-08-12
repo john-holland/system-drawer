@@ -284,6 +284,10 @@ try:
 
     from continuuuum_api.payroll_routes import register_payroll_routes
 
+    from continuuuum_api.gd_association_routes import register_gd_association_routes
+
+    from continuuuum_api.gd_route_annotations import configure_gd_annotations
+
 
 except ImportError:
 
@@ -373,6 +377,10 @@ except ImportError:
 
     from payroll_routes import register_payroll_routes
 
+    from gd_association_routes import register_gd_association_routes
+
+    from gd_route_annotations import configure_gd_annotations
+
 
 
 
@@ -461,7 +469,7 @@ def _apply_cors_headers(response):
         response.headers["Access-Control-Allow-Origin"] = origin
 
 
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-User-ID, X-Admin"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-User-ID, X-Admin, X-Game, X-Dimension"
 
 
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
@@ -903,6 +911,36 @@ def get_conn():
 
 
         ensure_payroll_schema(conn)
+
+
+        try:
+
+
+            from continuuuum_api.game_dimension_db import ensure_game_dimension_schema
+
+
+        except ImportError:
+
+
+            from game_dimension_db import ensure_game_dimension_schema
+
+
+        ensure_game_dimension_schema(conn)
+
+
+        try:
+
+
+            from continuuuum_api.garbage_bag_db import ensure_garbage_bag_schema
+
+
+        except ImportError:
+
+
+            from garbage_bag_db import ensure_garbage_bag_schema
+
+
+        ensure_garbage_bag_schema(conn)
 
 
         try:
@@ -4162,7 +4200,7 @@ register_agile_ui_routes(app)
 register_credits_routes(app, get_conn)
 
 
-register_garbage_bag_routes(app)
+register_garbage_bag_routes(app, get_conn)
 
 
 register_lemma_build_routes(app, get_conn, _is_admin)
@@ -4212,6 +4250,8 @@ register_change_of_basis_routes(app, get_conn)
 
 register_mod_routes(app, get_conn, _get_current_user)
 register_payroll_routes(app, get_conn, _is_admin)
+configure_gd_annotations(get_conn)
+register_gd_association_routes(app, get_conn, _is_admin)
 
 
 

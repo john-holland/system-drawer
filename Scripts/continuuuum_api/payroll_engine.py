@@ -11,8 +11,8 @@ from typing import Any
 
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "continuuuum_payroll_schema.sql"
 
-DEFAULT_HWM_USD = 100_000_000.0
-DEFAULT_HWM_RETAINER_PCT = 0.12
+DEFAULT_HWM_USD = 100_000.0
+DEFAULT_HWM_RETAINER_PCT = 0.10
 DEFAULT_CURSOR_MONTHLY = 40.0
 MONTHLY_CRON = "0 0 1 * *"
 UNITY_ENTERPRISE_THRESHOLD_USD = 25_000_000.0
@@ -56,7 +56,7 @@ def ensure_payroll_schema(conn: sqlite3.Connection) -> None:
         cols = _cols(conn, "payroll_companies")
         if "hwm_retainer_pct" not in cols:
             conn.execute(
-                "ALTER TABLE payroll_companies ADD COLUMN hwm_retainer_pct REAL NOT NULL DEFAULT 0.12"
+                "ALTER TABLE payroll_companies ADD COLUMN hwm_retainer_pct REAL NOT NULL DEFAULT 0.10"
             )
         if "unity_enterprise_override_usd" not in cols:
             conn.execute(
@@ -89,7 +89,78 @@ def ensure_payroll_schema(conn: sqlite3.Connection) -> None:
                     _now(),
                 ),
             )
+    _migrate_free_until_100k_v1(conn)
     conn.commit()
+
+
+def ensure_payroll_schema_force(conn: sqlite3.Connection) -> None:
+    """Re-run schema + one-shot migrations (tests / pre-prod)."""
+    ensure_payroll_schema(conn)
+
+
+HWM_MODEL_MIGRATION_KEY = "hwm_model"
+HWM_MODEL_MIGRATION_VALUE = "free_until_100k_v1"
+
+
+def _migrate_free_until_100k_v1(conn: sqlite3.Connection) -> None:
+    """
+    Pre-prod one-shot: free until $100k HWM then 10% retainer.
+    Resets income/allocation history booked under the old pre-HWM skim model.
+    Keeps companies, team members, and retainer definitions.
+    """
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS payroll_meta (
+             key TEXT PRIMARY KEY,
+             value TEXT NOT NULL,
+             updated_at TEXT NOT NULL
+           )"""
+    )
+    done = conn.execute(
+        "SELECT value FROM payroll_meta WHERE key = ?",
+        (HWM_MODEL_MIGRATION_KEY,),
+    ).fetchone()
+    if done and str(done["value"] if isinstance(done, sqlite3.Row) else done[0]) == HWM_MODEL_MIGRATION_VALUE:
+        # Still drop legacy tables if a partial run left them.
+        conn.execute("DROP TABLE IF EXISTS payroll_saving_indexes")
+        conn.execute("DROP TABLE IF EXISTS payroll_post_hwm_shares")
+        return
+
+    now = _now()
+    if _table_exists(conn, "payroll_companies"):
+        conn.execute(
+            """UPDATE payroll_companies
+               SET high_water_mark_usd = ?,
+                   hwm_retainer_pct = ?,
+                   lifetime_net_usd = 0,
+                   phase = 'pre_hwm',
+                   updated_at = ?""",
+            (DEFAULT_HWM_USD, DEFAULT_HWM_RETAINER_PCT, now),
+        )
+
+    # Wipe ledger rows computed under the inverted (12% pre-HWM) model.
+    for table in (
+        "payroll_allocations",
+        "payroll_income_events",
+        "payroll_retainer_draws",
+        "payroll_retainer_runs",
+    ):
+        if _table_exists(conn, table):
+            conn.execute(f"DELETE FROM {table}")
+
+    if _table_exists(conn, "payroll_beneficiary_balances"):
+        conn.execute(
+            """UPDATE payroll_beneficiary_balances
+               SET ops_usd = 0, retainer_usd = 0, distributed_usd = 0"""
+        )
+
+    conn.execute("DROP TABLE IF EXISTS payroll_saving_indexes")
+    conn.execute("DROP TABLE IF EXISTS payroll_post_hwm_shares")
+
+    conn.execute(
+        """INSERT INTO payroll_meta (key, value, updated_at) VALUES (?, ?, ?)
+           ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at""",
+        (HWM_MODEL_MIGRATION_KEY, HWM_MODEL_MIGRATION_VALUE, now),
+    )
 
 
 def _ensure_company_balance(conn: sqlite3.Connection, company_id: str) -> None:
@@ -385,7 +456,8 @@ def post_income(
 
     allocations: list[dict[str, Any]] = []
     hwm_name = _hwm_retainer_name(conn, company_id)
-    skim = pre_portion * pct if pre_portion > 0 else 0.0
+    # Free until HWM: skim only the over-HWM (post) portion.
+    skim = post_portion * pct if post_portion > 0 else 0.0
 
     # Percent-of-income retainers (e.g. eshielda 5%) take from remaining after HWM skim.
     ops_pool = net - skim
@@ -416,7 +488,7 @@ def post_income(
             bucket="retainer",
             amount=skim,
             rate=pct,
-            phase="pre_hwm",
+            phase="post_hwm",
             allocations=allocations,
             retainer_name=hwm_name,
         )
@@ -440,9 +512,9 @@ def post_income(
         _ensure_company_balance(conn, target)
         _bump_company(conn, target, retainer=cut)
 
-    # Remaining ops: attribute to post-HWM first, then pre-HWM.
-    ops_post = min(post_portion, ops_pool) if post_portion > 0 else 0.0
-    ops_pre = max(0.0, ops_pool - ops_post)
+    # Remaining ops: fill free (pre-HWM) band first, then post-HWM remainder.
+    ops_pre = min(pre_portion, ops_pool) if pre_portion > 0 else 0.0
+    ops_post = max(0.0, ops_pool - ops_pre)
     if ops_pre > 0:
         _add_allocation(
             conn,
@@ -464,7 +536,7 @@ def post_income(
             beneficiary="company",
             bucket="ops",
             amount=ops_post,
-            rate=1.0 if abs(ops_post - post_portion) < 1e-9 else (ops_post / post_portion),
+            rate=(ops_post / post_portion) if post_portion > 0 else 0.0,
             phase="post_hwm",
             allocations=allocations,
         )

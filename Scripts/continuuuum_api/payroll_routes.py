@@ -108,17 +108,29 @@ def register_payroll_routes(
                 if not name:
                     return jsonify({"error": "name required"}), 400
                 try:
+                    from continuuuum_api.payroll_engine import (
+                        DEFAULT_HWM_RETAINER_PCT,
+                        DEFAULT_HWM_USD,
+                    )
+                except ImportError:
+                    from payroll_engine import (  # type: ignore
+                        DEFAULT_HWM_RETAINER_PCT,
+                        DEFAULT_HWM_USD,
+                    )
+                try:
                     company = create_company(
                         conn,
                         name=name,
                         saurce_product_id=body.get("saurceProductId"),
                         high_water_mark_usd=float(
-                            body.get("highWaterMarkUsd") or 100_000_000
+                            body.get("highWaterMarkUsd")
+                            if body.get("highWaterMarkUsd") is not None
+                            else DEFAULT_HWM_USD
                         ),
                         hwm_retainer_pct=float(
                             body.get("hwmRetainerPct")
                             if body.get("hwmRetainerPct") is not None
-                            else 0.12
+                            else DEFAULT_HWM_RETAINER_PCT
                         ),
                     )
                 except ValueError as e:
