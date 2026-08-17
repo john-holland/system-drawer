@@ -314,7 +314,8 @@ namespace Weather
                 RegisterPortalForRain(portal);
             }
 
-            Debug.Log($"Precipitation: Auto-detected and registered {portals.Length} portals for rain effects");
+            if (portals.Length == 0)
+                Debug.LogWarning("Precipitation: Auto-detect found no portals for rain effects");
         }
 
         /// <summary>

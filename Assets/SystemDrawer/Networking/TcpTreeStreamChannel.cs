@@ -67,6 +67,14 @@ public sealed class TcpTreeStreamChannel : IDisposable
                 _stream = client.GetStream();
                 ReadLoop();
             }
+            catch (ThreadAbortException)
+            {
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
             catch (SocketException)
             {
                 break;
@@ -147,6 +155,10 @@ public sealed class TcpTreeStreamChannel : IDisposable
         try { _listener?.Stop(); } catch { }
         _listener = null;
         StopClientOnly();
+        var accept = _acceptThread;
+        _acceptThread = null;
+        if (accept != null && accept.IsAlive && accept != Thread.CurrentThread)
+            accept.Join(250);
     }
 
     public void Dispose() => Stop();

@@ -58,6 +58,14 @@ public sealed class LobbyServerHost : IDisposable
                 var client = _listener.AcceptTcpClient();
                 ThreadPool.QueueUserWorkItem(HandleClient, client);
             }
+            catch (ThreadAbortException)
+            {
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
             catch (SocketException)
             {
                 break;
@@ -171,6 +179,10 @@ public sealed class LobbyServerHost : IDisposable
             _pendingPlayers.Clear();
             _pendingSpectators.Clear();
         }
+        var worker = _thread;
+        _thread = null;
+        if (worker != null && worker.IsAlive && worker != Thread.CurrentThread)
+            worker.Join(250);
     }
 
     public void Dispose() => Stop();

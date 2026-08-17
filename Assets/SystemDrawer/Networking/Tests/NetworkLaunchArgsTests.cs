@@ -12,7 +12,15 @@ public class NetworkLaunchArgsTests
 
     [SetUp]
 
-    public void SetUp() => NetworkLaunchArgs.ResetForTests();
+    public void SetUp()
+
+    {
+
+        NetworkTestPorts.DestroyNetworkObjects();
+
+        NetworkLaunchArgs.ResetForTests();
+
+    }
 
 
 
@@ -22,9 +30,7 @@ public class NetworkLaunchArgsTests
 
     {
 
-        foreach (var server in Object.FindObjectsByType<ServerOrchestrator>(FindObjectsSortMode.None))
-
-            Object.DestroyImmediate(server.gameObject);
+        NetworkTestPorts.DestroyNetworkObjects();
 
         NetworkLaunchArgs.ResetForTests();
 
@@ -68,7 +74,9 @@ public class NetworkLaunchArgsTests
 
     {
 
-        NetworkLaunchArgs.Parse(new[] { "game.exe", "-ds", "--host-lobby", "-p", "47778", "--lobby-port", "47780" });
+        int gamePort = NetworkTestPorts.Allocate(1);
+        int lobbyPort = NetworkTestPorts.Allocate();
+        NetworkLaunchArgs.Parse(new[] { "game.exe", "-ds", "--host-lobby", "-p", gamePort.ToString(), "--lobby-port", lobbyPort.ToString() });
 
         var serverGo = new GameObject("server");
 
@@ -88,7 +96,8 @@ public class NetworkLaunchArgsTests
 
     {
 
-        NetworkLaunchArgs.Parse(new[] { "game.exe", "-ds", "--host-lobby", "--no-lobby", "-p", "47779" });
+        int gamePort = NetworkTestPorts.Allocate(1);
+        NetworkLaunchArgs.Parse(new[] { "game.exe", "-ds", "--host-lobby", "--no-lobby", "-p", gamePort.ToString() });
 
         var serverGo = new GameObject("server");
 

@@ -24,8 +24,9 @@ public static class SystemDrawerSceneServices
             {
                 if (!expectedType.IsInstanceOfType(registered))
                 {
-                    Debug.LogWarning(
-                        $"[SystemDrawerSceneServices] Key '{key}' registered type {registered.GetType().Name} does not match requested {expectedType.Name}.");
+                    if (Application.isPlaying)
+                        Debug.LogWarning(
+                            $"[SystemDrawerSceneServices] Key '{key}' registered type {registered.GetType().Name} does not match requested {expectedType.Name}.");
                     return false;
                 }
 

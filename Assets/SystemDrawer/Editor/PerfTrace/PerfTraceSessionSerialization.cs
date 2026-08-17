@@ -1,8 +1,9 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>JsonUtility-safe session persistence (Unity max depth is 10).</summary>
+/// <summary>JsonUtility-safe session persistence. Nodes are flattened so nested Children never hit Unity's depth-10 limit.</summary>
 public static class PerfTraceSessionSerialization
 {
     const int MaxNodeDepth = 8;
@@ -21,7 +22,8 @@ public static class PerfTraceSessionSerialization
         public string ScriptingBackend = "";
         public string Platform = "";
         public string MemoryCounters = "";
-        public NodeDto Root;
+        public int RootIndex;
+        public NodeDto[] Nodes = Array.Empty<NodeDto>();
     }
 
     [Serializable]
@@ -39,7 +41,7 @@ public static class PerfTraceSessionSerialization
         public int SourceLine;
         public string AssemblyName = "";
         public long GcAllocBytes;
-        public NodeDto[] Children = Array.Empty<NodeDto>();
+        public int[] ChildIndices = Array.Empty<int>();
     }
 
     public static string ToJson(PerfTraceSession session, bool prettyPrint)
@@ -67,6 +69,8 @@ public static class PerfTraceSessionSerialization
 
     static SessionDto ToDto(PerfTraceSession session)
     {
+        var nodes = new List<NodeDto>();
+        int rootIndex = Flatten(session.Root, nodes, 0);
         return new SessionDto
         {
             RunId = session.RunId ?? "",
@@ -80,7 +84,8 @@ public static class PerfTraceSessionSerialization
             ScriptingBackend = session.ScriptingBackend ?? "",
             Platform = session.Platform ?? "",
             MemoryCounters = session.MemoryCounters ?? "",
-            Root = ToNodeDto(session.Root, 0)
+            RootIndex = rootIndex,
+            Nodes = nodes.ToArray()
         };
     }
 
@@ -99,16 +104,32 @@ public static class PerfTraceSessionSerialization
             ScriptingBackend = dto.ScriptingBackend,
             Platform = dto.Platform,
             MemoryCounters = dto.MemoryCounters,
-            Root = FromNodeDto(dto.Root)
+            Root = FromFlat(dto.Nodes, dto.RootIndex)
         };
     }
 
-    static NodeDto ToNodeDto(PerfTraceNode node, int depth)
+    static int Flatten(PerfTraceNode node, List<NodeDto> nodes, int depth)
     {
         if (node == null)
-            return null;
+            return -1;
 
-        var dto = new NodeDto
+        var dto = CopyNode(node);
+        int index = nodes.Count;
+        nodes.Add(dto);
+
+        if (node.Children == null || node.Children.Length == 0 || depth >= MaxNodeDepth)
+            return index;
+
+        var childIndices = new int[node.Children.Length];
+        for (int i = 0; i < node.Children.Length; i++)
+            childIndices[i] = Flatten(node.Children[i], nodes, depth + 1);
+        dto.ChildIndices = childIndices;
+        return index;
+    }
+
+    static NodeDto CopyNode(PerfTraceNode node)
+    {
+        return new NodeDto
         {
             Id = node.Id ?? "",
             Label = node.Label ?? "",
@@ -123,24 +144,14 @@ public static class PerfTraceSessionSerialization
             AssemblyName = node.AssemblyName ?? "",
             GcAllocBytes = node.GcAllocBytes
         };
-
-        if (node.Children == null || node.Children.Length == 0)
-            return dto;
-
-        if (depth >= MaxNodeDepth)
-        {
-            dto.Children = Array.Empty<NodeDto>();
-            return dto;
-        }
-
-        dto.Children = new NodeDto[node.Children.Length];
-        for (int i = 0; i < node.Children.Length; i++)
-            dto.Children[i] = ToNodeDto(node.Children[i], depth + 1);
-        return dto;
     }
 
-    static PerfTraceNode FromNodeDto(NodeDto dto)
+    static PerfTraceNode FromFlat(NodeDto[] nodes, int index)
     {
+        if (nodes == null || index < 0 || index >= nodes.Length)
+            return null;
+
+        var dto = nodes[index];
         if (dto == null)
             return null;
 
@@ -160,15 +171,15 @@ public static class PerfTraceSessionSerialization
             GcAllocBytes = dto.GcAllocBytes
         };
 
-        if (dto.Children == null || dto.Children.Length == 0)
+        if (dto.ChildIndices == null || dto.ChildIndices.Length == 0)
         {
             node.Children = Array.Empty<PerfTraceNode>();
             return node;
         }
 
-        node.Children = new PerfTraceNode[dto.Children.Length];
-        for (int i = 0; i < dto.Children.Length; i++)
-            node.Children[i] = FromNodeDto(dto.Children[i]);
+        node.Children = new PerfTraceNode[dto.ChildIndices.Length];
+        for (int i = 0; i < dto.ChildIndices.Length; i++)
+            node.Children[i] = FromFlat(nodes, dto.ChildIndices[i]);
         return node;
     }
 }

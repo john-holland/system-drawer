@@ -183,7 +183,8 @@ public sealed class ServerOrchestrator : MonoBehaviour
         EnsureReady();
         if (lobbyLockedByLaunchArgs)
         {
-            Debug.LogWarning("[ServerOrchestrator] Lobby disabled by --no-lobby");
+            if (Application.isPlaying)
+                Debug.LogWarning("[ServerOrchestrator] Lobby disabled by --no-lobby");
             return;
         }
         ApplyHostOptions(options);

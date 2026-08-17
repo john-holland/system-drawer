@@ -12,7 +12,15 @@ public class MenuRagdollEventTests
 
     [SetUp]
 
-    public void SetUp() => NetworkLaunchArgs.ResetForTests();
+    public void SetUp()
+
+    {
+
+        NetworkTestPorts.DestroyNetworkObjects();
+
+        NetworkLaunchArgs.ResetForTests();
+
+    }
 
 
 
@@ -22,17 +30,7 @@ public class MenuRagdollEventTests
 
     {
 
-        foreach (var client in Object.FindObjectsByType<ClientOrchestrator>(FindObjectsSortMode.None))
-
-            Object.DestroyImmediate(client.gameObject);
-
-        foreach (var server in Object.FindObjectsByType<ServerOrchestrator>(FindObjectsSortMode.None))
-
-            Object.DestroyImmediate(server.gameObject);
-
-        foreach (var menu in Object.FindObjectsByType<MenuRagdoll>(FindObjectsSortMode.None))
-
-            Object.DestroyImmediate(menu.gameObject);
+        NetworkTestPorts.DestroyNetworkObjects();
 
         NetworkLaunchArgs.ResetForTests();
 
@@ -92,6 +90,8 @@ public class MenuRagdollEventTests
 
         var root = rootGo.AddComponent<MenuRagdoll>();
 
+        root.defaultLobbyPort = NetworkTestPorts.Allocate();
+
 
 
         root.HandleBubble(new MenuRagdollEvent("lobby.host.start", null));
@@ -147,6 +147,8 @@ public class MenuRagdollEventTests
         var server = serverGo.AddComponent<ServerOrchestrator>();
 
         server.EnsureReady();
+
+        server.StartListening(NetworkTestPorts.Allocate(1));
 
         server.StartSinglePlayerLoopback();
 

@@ -103,6 +103,10 @@ public sealed class UdpDecisionChannel : IDisposable
                         SendAck(seq);
                 }
             }
+            catch (ThreadAbortException)
+            {
+                break;
+            }
             catch (SocketException)
             {
                 break;
@@ -133,6 +137,10 @@ public sealed class UdpDecisionChannel : IDisposable
         try { _client?.Close(); } catch { }
         _client = null;
         _remote = null;
+        var recv = _recvThread;
+        _recvThread = null;
+        if (recv != null && recv.IsAlive && recv != Thread.CurrentThread)
+            recv.Join(250);
     }
 
     public void Dispose() => Stop();

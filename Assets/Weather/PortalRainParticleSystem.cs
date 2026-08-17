@@ -211,7 +211,8 @@ namespace Weather
                 }
             }
 
-            Debug.Log($"PortalRainParticleSystem: Detected {dripLineVertices.Count} drip line vertices and {cutoffPoints.Count} cutoff points");
+            if (dripLineVertices.Count == 0 && cutoffPoints.Count == 0)
+                Debug.LogWarning("PortalRainParticleSystem: Detected no drip line vertices or cutoff points");
         }
 
         /// <summary>

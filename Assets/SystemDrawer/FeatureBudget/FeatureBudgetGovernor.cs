@@ -89,6 +89,8 @@ public sealed class FeatureBudgetGovernor
 
     void MaybeLogWarn(float rollingCpuMs, float target)
     {
+        if (!Application.isPlaying)
+            return;
         if (Time.time - _lastWarnLogTime < 5f)
             return;
         _lastWarnLogTime = Time.time;

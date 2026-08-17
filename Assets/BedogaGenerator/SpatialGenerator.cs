@@ -530,7 +530,8 @@ public class SpatialGenerator : SpatialGeneratorBase
         
         if (!node.CanPlace())
         {
-            Debug.Log($"[SpatialGenerator] TraverseBehaviorTree - skipped '{node.name}' (CanPlace=false, placement limit reached or node disabled)");
+            if (verbosePlacementLogging)
+                Debug.Log($"[SpatialGenerator] TraverseBehaviorTree - skipped '{node.name}' (CanPlace=false, placement limit reached or node disabled)");
             return;
         }
         
@@ -680,17 +681,19 @@ public class SpatialGenerator : SpatialGeneratorBase
                 nextRootPlacementIndex++;
         }
         
-        // Debug: log what the solver returned
-        if (result.HasValue)
+        if (verbosePlacementLogging)
         {
-            Debug.Log($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name}\n" +
-                      $"  Solver returned (local space): center={result.Value.center}, size={result.Value.size}\n" +
-                      $"  Node requirements: min={node.minSpace}, max={node.maxSpace}, optimal={node.optimalSpace}\n" +
-                      $"  Alignment from fit: {node.GetAlignmentFromFit()}, Place flush: {node.placeFlush}");
-        }
-        else
-        {
-            Debug.LogWarning($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name} - No space found");
+            if (result.HasValue)
+            {
+                Debug.Log($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name}\n" +
+                          $"  Solver returned (local space): center={result.Value.center}, size={result.Value.size}\n" +
+                          $"  Node requirements: min={node.minSpace}, max={node.maxSpace}, optimal={node.optimalSpace}\n" +
+                          $"  Alignment from fit: {node.GetAlignmentFromFit()}, Place flush: {node.placeFlush}");
+            }
+            else
+            {
+                Debug.LogWarning($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name} - No space found");
+            }
         }
         
         return result;
@@ -806,7 +809,8 @@ public class SpatialGenerator : SpatialGeneratorBase
             {
                 return testBounds;
             }
-            Debug.Log($"[SpatialGenerator] FindSpaceInParentBounds - '{node.name}' optimal size overlaps {overlapping.Count} object(s); trying min size");
+            if (verbosePlacementLogging)
+                Debug.Log($"[SpatialGenerator] FindSpaceInParentBounds - '{node.name}' optimal size overlaps {overlapping.Count} object(s); trying min size");
         }
         else
         {

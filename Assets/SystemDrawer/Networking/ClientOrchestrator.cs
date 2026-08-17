@@ -122,7 +122,8 @@ public sealed class ClientOrchestrator : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogWarning("[ClientOrchestrator] Connect failed: " + ex.Message);
+            if (Application.isPlaying)
+                Debug.LogWarning("[ClientOrchestrator] Connect failed: " + ex.Message);
             _state = NetworkConnectionState.Disconnected;
         }
     }
