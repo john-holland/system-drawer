@@ -77,4 +77,4 @@ Unity `DeepLinkHandler` opens the Lemma Build tab and applies `form` via `OpenOn
 
 ## NSM semantic primes
 
-The 65 English NSM primes are Continuuuum composition atoms. Canonical list + glosses live under `Scripts/continuuuum_api/data/` — see [`nsm_semantic_primes_README.md`](../../../../Scripts/continuuuum_api/data/nsm_semantic_primes_README.md). Completion tracking: `/lemma-completion` (scope **Primes**). Seed via `POST /api/lemma-completion/seed`.
+The 65 English NSM primes are Continuuuum composition atoms. Canonical list + glosses live under `Scripts/continuuuum_api/data/` — see [`nsm_semantic_primes_README.md`](../../../../Scripts/continuuuum_api/data/nsm_semantic_primes_README.md). Built-in export/sync and hyphen parse notes: [`builtin_vocabulary_README.md`](../../../../Scripts/continuuuum_api/data/builtin_vocabulary_README.md). Completion tracking: `/lemma-completion` (scope **Primes**). Seed via `POST /api/lemma-completion/seed`; re-apply Unity builtins via `POST /api/lemma-completion/sync-builtins`.

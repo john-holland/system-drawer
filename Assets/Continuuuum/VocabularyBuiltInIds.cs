@@ -14,4 +14,7 @@ public static class VocabularyBuiltInIds
     public static readonly string EnPause = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "pause");
     public static readonly string EnVector3 = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "literal", "vector3");
     public static readonly string EnBoolean = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "literal", "boolean");
+    public static readonly string EnChat = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "chat");
+    public static readonly string EnOpenChat = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "open-chat");
+    public static readonly string EnCloseChat = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "close-chat");
 }

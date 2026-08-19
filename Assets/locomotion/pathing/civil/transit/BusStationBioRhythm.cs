@@ -7,7 +7,7 @@ using UnityEngine;
 [AddComponentMenu("Locomotion/Civil/Transit/Bus Station Bio Rhythm")]
 public sealed class BusStationBioRhythm : MonoBehaviour
 {
-    public string hoursCron = "* 5-23 * * *";
+    [CronExpr] public string hoursCron = "* 5-23 * * *";
     public CivilVenueBioRhythmService venueBio;
     public TransportationAuthorityBioRhythm authority;
     [Range(0f, 1f)] public float passengerDensity01;

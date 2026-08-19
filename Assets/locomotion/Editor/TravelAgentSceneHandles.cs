@@ -65,6 +65,40 @@ public static class TravelAgentSceneHandles
                 Handles.SphereHandleCap(0, agent.multibody.finalTargetWorld, Quaternion.identity, 0.4f, EventType.Repaint);
             }
         }
+
+        var justice = agent as JusticeRehabilitationTravelAgent;
+        if (justice != null)
+            DrawJusticeStepPreview(justice);
+        var education = agent as EducationalTravelAgent;
+        if (education != null)
+            DrawEducationStepPreview(education);
+    }
+
+    static void DrawJusticeStepPreview(JusticeRehabilitationTravelAgent justice)
+    {
+        Vector3 predicted = justice.PredictedPlacement();
+        Vector3 inpaint = justice.InpaintPlacement();
+        bool over = justice.SelectedOverLimit();
+        if (over)
+        {
+            Handles.color = new Color(1f, 0.15f, 0.1f, 0.85f);
+            Handles.SphereHandleCap(0, predicted, Quaternion.identity, 0.55f, EventType.Repaint);
+        }
+        Handles.color = new Color(0.25f, 0.45f, 1f, 0.95f);
+        Handles.SphereHandleCap(0, inpaint, Quaternion.identity, 0.35f, EventType.Repaint);
+        Handles.color = Color.white;
+        Handles.DrawDottedLine(predicted, inpaint.sqrMagnitude > 1e-6f ? inpaint : predicted + Vector3.forward, 4f);
+    }
+
+    static void DrawEducationStepPreview(EducationalTravelAgent education)
+    {
+        Vector3 predicted = education.PredictedPlacement();
+        Vector3 inpaint = education.InpaintPlacement();
+        Handles.color = new Color(0.25f, 0.45f, 1f, 0.95f);
+        Handles.SphereHandleCap(0, inpaint, Quaternion.identity, 0.35f, EventType.Repaint);
+        Handles.color = Color.white;
+        Handles.SphereHandleCap(0, predicted, Quaternion.identity, 0.28f, EventType.Repaint);
+        Handles.DrawDottedLine(predicted, inpaint.sqrMagnitude > 1e-6f ? inpaint : predicted + Vector3.forward, 4f);
     }
 
     static void DrawKinematicsOverlay(TravelAgent agent)

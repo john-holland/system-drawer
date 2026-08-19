@@ -69,6 +69,64 @@
   background: var(--cn-active-bg);
 }
 
+.continuuuum-admin-apps {
+  position: relative;
+  display: inline-block;
+}
+
+.continuuuum-admin-apps[hidden] {
+  display: none;
+}
+
+.continuuuum-admin-apps summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--cn-muted);
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.continuuuum-admin-apps summary::-webkit-details-marker {
+  display: none;
+}
+
+.continuuuum-admin-apps summary::after {
+  content: ' ▾';
+  font-size: 11px;
+}
+
+.continuuuum-admin-apps[open] summary,
+.continuuuum-admin-apps:hover summary {
+  color: var(--cn-accent);
+  background: var(--cn-active-bg);
+}
+
+.continuuuum-admin-apps-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 160px;
+  padding: 6px;
+  border: 1px solid var(--cn-border);
+  border-radius: 8px;
+  background: var(--cn-bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.continuuuum-admin-apps[open] .continuuuum-admin-apps-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.continuuuum-admin-apps-menu a {
+  white-space: nowrap;
+}
+
 .continuuuum-gd-selects {
   display: flex;
   align-items: center;

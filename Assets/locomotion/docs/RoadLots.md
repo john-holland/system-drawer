@@ -27,4 +27,4 @@
 
 ## Editor
 
-Travel Pathing Editor → **Road Lots** / **Pilot GPS bake**. Park plants → **Locomotion → Park Plant Planner**.
+Travel Pathing Editor → **Road Lots** / **Pilot GPS bake**. Park plants → **Locomotion → Park Plant Planner**. House driveway/garage pads are RoadLots with 4-adjacent outlets (driveway → street/sidewalk; garage → driveway/street/sidewalk) — see [HouseConstruction.md](HouseConstruction.md).

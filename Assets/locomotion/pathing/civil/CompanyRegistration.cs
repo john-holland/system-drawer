@@ -28,6 +28,52 @@ public sealed class CompanyRegistration : MonoBehaviour, ICompanyHost
 
     public CompanyRegistration Company => this;
 
+    public RetinuePeckingEntry FindStaff(string personaKey)
+    {
+        if (staff == null || string.IsNullOrEmpty(personaKey)) return null;
+        for (int i = 0; i < staff.Count; i++)
+        {
+            var s = staff[i];
+            if (s != null && string.Equals(s.personaKey, personaKey, StringComparison.OrdinalIgnoreCase))
+                return s;
+        }
+        return null;
+    }
+
+    public bool TryHire(string personaKey, string role, int peckingOrder = 20)
+    {
+        if (string.IsNullOrEmpty(personaKey)) return false;
+        if (staff == null) staff = new List<RetinuePeckingEntry>();
+        var existing = FindStaff(personaKey);
+        if (existing != null)
+        {
+            existing.role = role ?? existing.role;
+            existing.peckingOrder = peckingOrder;
+            return true;
+        }
+        staff.Add(new RetinuePeckingEntry
+        {
+            personaKey = personaKey,
+            role = role ?? "",
+            peckingOrder = peckingOrder
+        });
+        return true;
+    }
+
+    public bool TryFire(string personaKey)
+    {
+        if (staff == null || string.IsNullOrEmpty(personaKey)) return false;
+        for (int i = staff.Count - 1; i >= 0; i--)
+        {
+            var s = staff[i];
+            if (s == null || !string.Equals(s.personaKey, personaKey, StringComparison.OrdinalIgnoreCase))
+                continue;
+            staff.RemoveAt(i);
+            return true;
+        }
+        return false;
+    }
+
     void Awake()
     {
         if (string.IsNullOrEmpty(companyId))

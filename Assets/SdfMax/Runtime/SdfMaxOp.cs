@@ -24,6 +24,9 @@ namespace SdfMax
         MandelbrotDisplacement = 6,
         DisplacedSphere = 7,
         PlanarStamp = 8,
-        LatLonShell = 9
+        LatLonShell = 9,
+        Torus = 10,
+        SplineExtrusion = 11,
+        DisplacedTorus = 12
     }
 }

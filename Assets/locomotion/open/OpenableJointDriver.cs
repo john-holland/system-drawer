@@ -17,11 +17,16 @@ namespace Locomotion.Open
         [Range(0f, 1f)] public float animationNormalizedTime;
         public Animator animator;
         public string animatorOpenParam = "Open01";
+        public OpenCloseJointKind jointKind = OpenCloseJointKind.Hinge;
+        public float targetSlideMeters = 0.8f;
+        public float slideSpeedMps = 0.6f;
+        public Vector3 slideAxisLocal = Vector3.right;
 
         HingeJoint _hinge;
         ConfigurableJoint _configurable;
         float _currentAngle;
         float _closedAngle;
+        Vector3 _closedLocalPos;
         OpenableLatch _latch;
         float _open01;
 
@@ -51,6 +56,7 @@ namespace Locomotion.Open
             if (animator == null)
                 animator = GetComponent<Animator>();
             _closedAngle = transform.localEulerAngles.y;
+            _closedLocalPos = transform.localPosition;
             if (_hinge != null)
                 _closedAngle = _hinge.angle;
             _currentAngle = _closedAngle;
@@ -181,6 +187,19 @@ namespace Locomotion.Open
 
         void TickPhysicsTowardTarget()
         {
+            if (jointKind == OpenCloseJointKind.Slide)
+            {
+                float target01 = state == OpenableJointState.Opening ? 1f : 0f;
+                float step = Mathf.Max(0.01f, slideSpeedMps) * Time.fixedDeltaTime
+                             / Mathf.Max(0.05f, targetSlideMeters);
+                ApplySlideFromOpen01(Mathf.MoveTowards(_open01, target01, step));
+                if (state == OpenableJointState.Opening && _open01 >= 0.99f)
+                    state = OpenableJointState.Open;
+                if (state == OpenableJointState.Closing && _open01 <= 0.01f)
+                    state = OpenableJointState.Closed;
+                return;
+            }
+
             float target = state == OpenableJointState.Opening
                 ? _closedAngle + targetOpenAngle
                 : _closedAngle;
@@ -210,10 +229,22 @@ namespace Locomotion.Open
 
         void ApplyAngleFromOpen01(float open01)
         {
+            if (jointKind == OpenCloseJointKind.Slide)
+            {
+                ApplySlideFromOpen01(open01);
+                return;
+            }
             _open01 = Mathf.Clamp01(open01);
             _currentAngle = _closedAngle + targetOpenAngle * _open01;
             if (_hinge == null || !usePhysicsMotor || driveMode == OpenCloseDriveMode.Animation)
                 transform.localRotation = Quaternion.Euler(0f, _currentAngle, 0f);
+        }
+
+        void ApplySlideFromOpen01(float open01)
+        {
+            _open01 = Mathf.Clamp01(open01);
+            Vector3 axis = slideAxisLocal.sqrMagnitude > 1e-6f ? slideAxisLocal.normalized : Vector3.right;
+            transform.localPosition = _closedLocalPos + axis * (targetSlideMeters * _open01);
         }
 
         void RefreshOpen01()

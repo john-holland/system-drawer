@@ -9,7 +9,7 @@ using UnityEngine;
 public sealed class RestaurantOpenCloseTopologyAsset : ScriptableObject
 {
     public string restaurantId;
-    public string hoursCron = "0 11-22 * * *";
+    [CronExpr] public string hoursCron = "0 11-22 * * *";
     public bool continuousDeliveryStations = true;
     public List<string> waypointGroupIds = new List<string> { "kitchen-line", "kitchen-pass", "foh" };
     public List<string> sinkScanTags = new List<string> { "sink", "handwash" };

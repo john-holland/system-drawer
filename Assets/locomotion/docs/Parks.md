@@ -16,7 +16,7 @@ Staff pecking on `CompanyRegistration` (manager, groundskeeper, justice_patrol, 
 ## Lots / walls / paths
 
 - `RoadLotBoundarySpline.BakeWallMesh()` — mesh + collider; gaps = no wall / gate topology.
-- `TravelAgent.EnrichWalkSegmentWithRoadLot` / `EnrichPlanWithRoadLots` — walk + drive lot tags; outlet path ribbons via `PlanarSplinePathLocomotion`.
+- `TravelAgent.EnrichWalkSegmentWithRoadLot` / `EnrichPlanWithRoadLots` — walk + drive lot tags; outlet path ribbons via `PlanarSplinePathLocomotion`. House front walks / patio pads reuse the same lot + ribbon path; see [HouseConstruction.md](HouseConstruction.md).
 
 ## Grass / cut / horticulture
 

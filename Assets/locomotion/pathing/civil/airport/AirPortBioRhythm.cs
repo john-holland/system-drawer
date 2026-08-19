@@ -7,7 +7,7 @@ using UnityEngine;
 [AddComponentMenu("Locomotion/Civil/Airport/Airport Bio Rhythm")]
 public sealed class AirPortBioRhythm : DispatchBioRhythm
 {
-    public string maintenanceCron = "0 2 * * 0";
+    [CronExpr] public string maintenanceCron = "0 2 * * 0";
     [Range(0f, 1f)] public float terrorLevel01 = 0.2f;
     [Range(0f, 1f)] public float passengerDensity01;
     public AirTrafficControlBioRhythm atc;

@@ -126,7 +126,9 @@ public enum GoalType
     /// <summary>TravelAgentCard composing JusticeCard + pathing.</summary>
     TravelAgent,
     /// <summary>Plumbing: clog / plunge / snake (plumbing cards).</summary>
-    Plumbing
+    Plumbing,
+    /// <summary>RTS / house construction (ConstructionPhaseCard + HouseConstructionTravelAgent).</summary>
+    Construction
 }
 
 /// <summary>

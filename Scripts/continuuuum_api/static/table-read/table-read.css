@@ -81,7 +81,51 @@
 .tr-danger { background: #a33; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
 
 .tr-rec-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.tr-rec-buttons button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #3a3a52;
+  background: #1a1a2e;
+  color: #e8e8f0;
+  cursor: pointer;
+}
+.tr-rec-buttons button:disabled { opacity: 0.45; cursor: default; }
 .tr-rec-list { font-size: 13px; color: #8892b0; padding-left: 18px; }
+
+.tr-rec-live { margin: 0 0 10px; }
+.tr-rec-preview-well {
+  background: #0a0a12;
+  border: 1px solid #3a3a52;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 0 0 8px;
+}
+.tr-rec-preview-well video {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  background: #000;
+  border-radius: 4px;
+}
+.tr-rec-timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #e8e8f0;
+}
+.tr-rec-live-dot {
+  color: #f44;
+  animation: tr-rec-pulse 1s ease-in-out infinite;
+}
+@keyframes tr-rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
 
 body.tr-page { margin: 0; background: #0d0d14; }
 
@@ -169,4 +213,30 @@ body.tr-page { margin: 0; background: #0d0d14; }
   color: #e8e8f0;
 }
 
-#tr-editor-host { min-height: 320px; }
+.tr-proc-link { color: #8ab4ff; font-size: 13px; }
+.tr-seg-box {
+  border: 1px solid #5c6bc0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tr-seg-box audio { width: 100%; }
+.tr-char-row { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tr-quote-span input { width: 5rem; }
+.tr-add-char { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.tr-proc-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.tr-assets { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+.tr-assets th, .tr-assets td { border: 1px solid #5c6bc0; padding: 6px 8px; text-align: left; }
+.tr-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 40;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.tr-modal {
+  background: #1c1c28; color: #e8e8f0; border: 1px solid #5c6bc0; border-radius: 8px;
+  padding: 16px; max-width: 32rem; width: 100%; max-height: 90vh; overflow: auto;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.tr-modal label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }

@@ -6,6 +6,7 @@
         "SystemDrawer",
         "BedogaGenerator",
         "Weather.Runtime",
+        "Continuuuum.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -157,9 +157,28 @@ def register_saurce_routes(app, get_conn: GetConn, get_current_user: GetUser) ->
             game_profile = body.get("gameProfile")
             if ptype == "game" and not game_profile:
                 game_profile = {
+                    "contentRating": "unrated",
                     "playModes": {"singlePlayer": True, "multiplayer": False},
                     "singlePlayerConfig": {"offlineCapable": True},
+                    "multiplayerConfig": {
+                        "hostAgentRequired": False,
+                        "clientAgentRequired": False,
+                        "structuredChat": "off",
+                        "structuredChatFeeUsd": 1.0,
+                        "voiceChat": "disabled",
+                        "composeMode": "preview",
+                        "lexicon": {"words": []},
+                    },
                 }
+            elif isinstance(game_profile, dict):
+                game_profile.setdefault("contentRating", "unrated")
+                mc = game_profile.setdefault("multiplayerConfig", {})
+                if isinstance(mc, dict):
+                    mc.setdefault("structuredChat", "off")
+                    mc.setdefault("voiceChat", "disabled")
+                    mc.setdefault("structuredChatFeeUsd", 1.0)
+                    mc.setdefault("composeMode", "preview")
+                    mc.setdefault("lexicon", {"words": []})
             conn.execute(
                 """INSERT INTO saurce_products
                    (id, slug, name, type, description, continuuuum_asset_id, lemma_package_id,
@@ -250,12 +269,23 @@ def register_saurce_routes(app, get_conn: GetConn, get_current_user: GetUser) ->
         gp = _jload(row["game_profile_json"]) if row else None
         cases = conn.execute(
             """SELECT * FROM legal_cases WHERE saurce_product_id = ? AND status IN ('open', 'investigating')
-               AND severity IN ('high', 'critical')""",
+               AND severity IN ('high', 'critical')
+               AND COALESCE(case_kind, 'internal_agile') != 'external_litigation'""",
             (product_id,),
         ).fetchall()
         blocked = len(cases) > 0
         conn.close()
-        return jsonify({"productId": product_id, "blocked": blocked, "openLegalCases": len(cases), "gameProfile": gp}), 200
+        return jsonify(
+            {
+                "productId": product_id,
+                "blocked": blocked,
+                "openLegalCases": len(cases),
+                "gameProfile": gp,
+                "contentRating": (gp or {}).get("contentRating") or "unrated",
+                "chatRequired": False,
+                "everyoneRatingRequired": False,
+            }
+        ), 200
 
     @app.route("/api/saurce/products/<product_id>/preorder", methods=["PATCH"])
     def saurce_preorder_config(product_id: str):

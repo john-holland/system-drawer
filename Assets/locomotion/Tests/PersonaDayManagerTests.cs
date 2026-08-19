@@ -112,5 +112,6 @@ public sealed class PersonaDayManagerTests
         Assert.AreEqual(CivilSystemKind.School, CivilSystemLattice.KindFromBuildingType("school"));
         Assert.AreEqual(CivilSystemKind.Church, CivilSystemLattice.KindFromBuildingType("church_small"));
         Assert.AreEqual(CivilSystemKind.Mall, CivilSystemLattice.KindFromBuildingType("shopping_mall"));
+        Assert.AreEqual(CivilSystemKind.Prison, CivilSystemLattice.KindFromBuildingType("prison"));
     }
 }

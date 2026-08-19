@@ -24,6 +24,8 @@ public sealed class ElevatorButtonPanel : MonoBehaviour
         return ok;
     }
 
+    public static string FormatFloorLabel(int floorIndex) => HouseFloorIndex.Format(floorIndex);
+
     public void EnsureMount()
     {
         if (mount == null)

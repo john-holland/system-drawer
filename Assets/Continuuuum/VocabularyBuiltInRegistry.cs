@@ -136,6 +136,14 @@ public static class VocabularyBuiltInRegistry
         foreach (var w in new[] { "unlock", "latch", "drawer", "lid", "hinge", "guard" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, new[] { "open-close" });
 
+        // Structural multiplayer chat (open/close the SG2D chat ragdoll; not Continuuuum editor/web chat)
+        string[] chatTags = { "structural-chat", "open-close" };
+        foreach (var w in new[] { "chat", "chat-session", "word-bank", "compose-box", "chat-history" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, chatTags);
+        foreach (var w in new[] { "open-chat", "close-chat", "dismiss" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, chatTags);
+        Add("verb", "send", "verb", VocabularyBuiltInCategory.Action, new[] { "structural-chat" });
+
         // Civil venues / transit / sanitation / fuel (shipped runtimes)
         string[] civilTags = { "civil", "world" };
         string[] transitTags = { "civil", "transit", "travel" };

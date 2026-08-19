@@ -7,6 +7,7 @@ using Locomotion.EditorTools;
 using Locomotion.Rig;
 using Locomotion.Musculature;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Locomotion.EditorTools
@@ -34,6 +35,13 @@ namespace Locomotion.EditorTools
 
         private Vector2 scroll;
         private Vector2 bodyPartsScroll;
+        private WebcamAnimRecordingAsset importRecording;
+        private TextAsset importPoseTrackJson;
+        private string importBvhPath = "";
+        private PoseTrack importTrack;
+        private SkeletonFitResult importFit;
+        private float importPlayheadMs;
+        private string importStatus = "";
         private ValidationReport validation = new ValidationReport();
         private RagdollAutoWire.Report lastReport;
 
@@ -137,6 +145,9 @@ namespace Locomotion.EditorTools
             DrawActorSection();
             EditorGUILayout.Space(8);
 
+            DrawImportMotionSection();
+            EditorGUILayout.Space(8);
+
             DrawBodyPartsSection();
             EditorGUILayout.Space(8);
 
@@ -202,6 +213,124 @@ namespace Locomotion.EditorTools
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawImportMotionSection()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Import motion", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Load a MediaPipe PoseTrack JSON, MoCapAnything BVH, or WebcamAnim recording, fit onto the Human BoneMap, preview, then bake a RagdollAnimationSet.",
+                MessageType.None);
+
+            importRecording = (WebcamAnimRecordingAsset)EditorGUILayout.ObjectField(
+                "Recording asset", importRecording, typeof(WebcamAnimRecordingAsset), false);
+            importPoseTrackJson = (TextAsset)EditorGUILayout.ObjectField(
+                "PoseTrack JSON", importPoseTrackJson, typeof(TextAsset), false);
+            EditorGUILayout.BeginHorizontal();
+            importBvhPath = EditorGUILayout.TextField("BVH path", importBvhPath);
+            if (GUILayout.Button("Browse", GUILayout.Width(70)))
+            {
+                string p = EditorUtility.OpenFilePanel("BVH", "", "bvh");
+                if (!string.IsNullOrEmpty(p))
+                    importBvhPath = p;
+            }
+            EditorGUILayout.EndHorizontal();
+
+            using (new EditorGUI.DisabledScope(actorRoot == null))
+            {
+                if (GUILayout.Button("Load + fit"))
+                {
+                    importTrack = LoadImportTrack();
+                    var map = boneMap != null ? boneMap : actorRoot != null ? actorRoot.GetComponent<BoneMap>() : null;
+                    var ids = new List<string>();
+                    var parents = new List<int>();
+                    if (importTrack != null)
+                        importTrack.CollectTraitIds(ids);
+                    for (int i = 0; i < ids.Count; i++)
+                        parents.Add(-1);
+                    if (!string.IsNullOrEmpty(importBvhPath) && File.Exists(importBvhPath))
+                    {
+                        ids.Clear();
+                        parents.Clear();
+                        var joints = new List<BvhPoseTrackImporter.Joint>();
+                        BvhPoseTrackImporter.CollectJoints(File.ReadAllText(importBvhPath), joints);
+                        for (int j = 0; j < joints.Count; j++)
+                        {
+                            ids.Add(joints[j].name);
+                            parents.Add(joints[j].parent);
+                        }
+                    }
+                    importFit = ArbitrarySkeletonFitter.FitToBoneMap(ids, parents, map, "Human");
+                    importStatus = importTrack != null
+                        ? $"Loaded {importTrack.Count} samples, {importFit.pairs.Count} pairs"
+                        : "No track loaded";
+                }
+
+                if (importFit != null && importFit.pairs.Count > 0)
+                {
+                    EditorGUILayout.LabelField($"Pairs: {importFit.pairs.Count}  unmatched src: {importFit.unmatchedSource.Count}");
+                    int show = Mathf.Min(8, importFit.pairs.Count);
+                    for (int i = 0; i < show; i++)
+                    {
+                        var p = importFit.pairs[i];
+                        EditorGUILayout.LabelField($"{p.sourceId} → {p.targetTraitId}  ({p.confidence:0.00}{(p.inferred ? ", inferred" : "")})");
+                    }
+                }
+
+                importPlayheadMs = EditorGUILayout.Slider("Playhead ms", importPlayheadMs, 0f, 4000f);
+                if (GUILayout.Button("Preview at playhead"))
+                {
+                    var map = boneMap != null ? boneMap : actorRoot.GetComponent<BoneMap>();
+                    var remapped = importTrack != null && importFit != null
+                        ? importTrack.RemapTraitIds(importFit.ToRemap())
+                        : importTrack;
+                    int n = PoseTrackPlayer.Apply(remapped, map, importPlayheadMs);
+                    importStatus = $"Applied {n} bones";
+                }
+
+                if (GUILayout.Button("Create animation set"))
+                {
+                    var map = boneMap != null ? boneMap : actorRoot.GetComponent<BoneMap>();
+                    var ik = actorRoot.GetComponent<RagdollIKAnimationManager>() ??
+                             actorRoot.GetComponentInChildren<RagdollIKAnimationManager>();
+                    if (ik == null)
+                    {
+                        RagdollAutoWire.EnsureAnimationRoots(actorRoot);
+                        ik = actorRoot.GetComponent<RagdollIKAnimationManager>();
+                    }
+                    var remapped = importTrack != null && importFit != null
+                        ? importTrack.RemapTraitIds(importFit.ToRemap())
+                        : importTrack;
+                    string name = importRecording != null ? importRecording.displayName : "ImportedMotion";
+                    int idx = PoseTrackClipBaker.BakeAndAddSet(ik, remapped, map, actorRoot.transform, name);
+                    importStatus = idx >= 0 ? $"Added animation set [{idx}] {name}" : "Bake failed";
+                }
+            }
+
+            if (!string.IsNullOrEmpty(importStatus))
+                EditorGUILayout.HelpBox(importStatus, MessageType.Info);
+            EditorGUILayout.EndVertical();
+        }
+
+        private PoseTrack LoadImportTrack()
+        {
+            if (importRecording != null)
+            {
+                if (importRecording.lastTrack != null && importRecording.lastTrack.Count > 0)
+                    return importRecording.lastTrack;
+                if (!string.IsNullOrEmpty(importRecording.poseTrackPath))
+                {
+                    var loaded = ContinuuuumRemotePoseAnimationDetector.TryLoadJson(importRecording.poseTrackPath);
+                    if (loaded != null)
+                        return loaded;
+                }
+            }
+            if (importPoseTrackJson != null && !string.IsNullOrEmpty(importPoseTrackJson.text))
+                return PoseTrack.FromJson(importPoseTrackJson.text);
+            if (!string.IsNullOrEmpty(importBvhPath) && File.Exists(importBvhPath))
+                return BvhPoseTrackImporter.FromFile(importBvhPath, "mocapanything@v2");
+            return null;
         }
 
         private void DrawBodyPartsSection()

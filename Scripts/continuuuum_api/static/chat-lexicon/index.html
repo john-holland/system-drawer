@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat lexicon — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1419; color: #e6edf3; }
+    main { padding: 1rem; max-width: 860px; margin: 0 auto; }
+    label { display: block; margin: 0.4rem 0; font-size: 0.9rem; }
+    input, select { width: 100%; box-sizing: border-box; background: #21262d; color: #e6edf3;
+      border: 1px solid #30363d; border-radius: 4px; padding: 0.35rem 0.5rem; }
+    button { margin-top: 0.5rem; background: #238636; color: #fff; border: none; border-radius: 4px;
+      padding: 0.4rem 0.75rem; cursor: pointer; }
+    .hint { color: #8b949e; font-size: 0.85rem; }
+    .err { color: #f85149; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem; }
+    th, td { border: 1px solid #30363d; padding: 0.3rem 0.4rem; text-align: left; }
+    th { background: #161b22; }
+    .row { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .row > * { flex: 1; }
+  </style>
+</head>
+<body>
+  <header id="continuuuum-nav-root"></header>
+  <main>
+    <h1>Structural chat lexicon</h1>
+    <p class="hint">Per-game whitelist for unity-mp-text. Continuuuum editor/web chat is not this product.</p>
+    <label>Product id <input id="product-id" /></label>
+    <button type="button" id="btn-load">Load</button>
+    <label>Compose mode
+      <select id="compose-mode">
+        <option value="preview">preview (stream BT while assembling)</option>
+        <option value="sendButton">sendButton (commit on Send)</option>
+      </select>
+    </label>
+    <div class="row">
+      <label>Add word <input id="new-word" /></label>
+      <button type="button" id="btn-add">Add</button>
+    </div>
+    <table>
+      <thead><tr><th>Id</th><th>Text</th><th></th></tr></thead>
+      <tbody id="words"></tbody>
+    </table>
+    <h2>Server history retention</h2>
+    <p class="hint">Local Unity history is always indefinite with a 50MB cap. Server hot default 50MB; warehouse default 500MB and keep after hot truncate.</p>
+    <label>Hot max bytes <input id="hot-bytes" type="number" value="52428800" /></label>
+    <label>Hot max messages (blank = off) <input id="hot-count" type="number" /></label>
+    <label>Hot max age days (blank = off) <input id="hot-age" type="number" /></label>
+    <label>Warehouse max bytes (blank = keep) <input id="wh-bytes" type="number" value="524288000" /></label>
+    <label>Warehouse max messages <input id="wh-count" type="number" /></label>
+    <label>Warehouse max age days <input id="wh-age" type="number" /></label>
+    <label><input id="wh-keep" type="checkbox" checked /> Keep warehouse rows after hot truncate</label>
+    <button type="button" id="btn-save">Save lexicon</button>
+    <p id="status" class="hint"></p>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/chat-lexicon/chat-lexicon.js"></script>
+</body>
+</html>

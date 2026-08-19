@@ -104,8 +104,15 @@ def resolve_effective_properties(
     char_start: Optional[int] = None,
     char_end: Optional[int] = None,
     prompt_value: Optional[str] = None,
+    dimension: Optional[int] = None,
+    dimension_entry_properties: Optional[dict] = None,
 ) -> Optional[str]:
-    """Resolution: prompt inline → clause property binding → entry property → spec default."""
+    """Resolution: prompt inline → clause property binding → entry property → spec default.
+
+    When ``dimension`` is set and ``dimension_entry_properties`` is provided (dim-0 bag
+    already overlaid with active-dim overrides), that bag is used instead of
+    ``entry_properties``. Callers typically build it via game_dimension_dao.resolve_entry_properties.
+    """
     if prompt_value is not None:
         return prompt_value
 
@@ -121,8 +128,11 @@ def resolve_effective_properties(
                 continue
         return b.get("property_value") or b.get("propertyValue")
 
-    if property_key in entry_properties:
-        return entry_properties[property_key]
+    bag = entry_properties
+    if dimension is not None and dimension_entry_properties is not None:
+        bag = dimension_entry_properties
+    if property_key in bag:
+        return bag[property_key]
 
     if property_key in spec_defaults:
         return spec_defaults[property_key]

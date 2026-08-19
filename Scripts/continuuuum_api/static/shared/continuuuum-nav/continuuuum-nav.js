@@ -11,7 +11,11 @@
     { id: 'budget-dashboard', label: 'Budget', path: '/budget-dashboard' },
     { id: 'payroll', label: 'Payroll', path: '/payroll' },
     { id: 'game-dimensions', label: 'Associations', path: '/game-dimensions' },
+    { id: 'webcam-animations', label: 'Webcam Anim', path: '/webcam-animations' },
     { id: 'legal-tracker', label: 'Legal', path: '/legal-tracker' },
+    { id: 'docket-watch', label: 'Docket', path: '/docket-watch' },
+    { id: 'chat-entitlements', label: 'Chat TOS', path: '/chat-entitlements', adminOnly: true },
+    { id: 'chat-lexicon', label: 'Chat Lexicon', path: '/chat-lexicon', adminOnly: true },
     { id: 'network', label: 'Network', path: '/network-definitions' },
     { id: 'cities', label: 'Cities', path: '/city-config' },
     { id: 'society', label: 'Society', path: '/society-dashboard' },
@@ -138,7 +142,11 @@
       'budget-dashboard': lemmaBase + '/budget-dashboard',
       payroll: lemmaBase + '/payroll',
       'game-dimensions': lemmaBase + '/game-dimensions',
+      'webcam-animations': lemmaBase + '/webcam-animations',
       'legal-tracker': lemmaBase + '/legal-tracker',
+      'docket-watch': lemmaBase + '/docket-watch',
+      'chat-entitlements': lemmaBase + '/chat-entitlements',
+      'chat-lexicon': lemmaBase + '/chat-lexicon',
       network: lemmaBase + '/network-definitions',
       cities: lemmaBase + '/city-config',
       society: lemmaBase + '/society-dashboard',
@@ -200,7 +208,12 @@
     if (path.indexOf('/budget-dashboard') >= 0) return 'budget-dashboard';
     if (path.indexOf('/payroll') >= 0) return 'payroll';
     if (path.indexOf('/game-dimensions') >= 0) return 'game-dimensions';
+    if (path.indexOf('/webcam-animations') >= 0) return 'webcam-animations';
     if (path.indexOf('/legal-tracker') >= 0) return 'legal-tracker';
+    if (path.indexOf('/docket-watch') >= 0) return 'docket-watch';
+    if (path.indexOf('/chat-entitlements') >= 0) return 'chat-entitlements';
+    if (path.indexOf('/chat-lexicon') >= 0) return 'chat-lexicon';
+    if (path.indexOf('/chat-tos') >= 0) return 'chat-entitlements';
     if (path.indexOf('/settings') >= 0) return 'settings';
     if (path.indexOf('/ui') >= 0) return 'hub';
     if (path.indexOf('/library') >= 0 || path === '/') return 'library';
@@ -354,7 +367,11 @@
     'budget-dashboard': { game: true, dimension: false },
     payroll: { game: false, dimension: false },
     'game-dimensions': { game: false, dimension: false },
+    'webcam-animations': { game: true, dimension: true },
     'legal-tracker': { game: false, dimension: false },
+    'docket-watch': { game: false, dimension: false },
+    'chat-entitlements': { game: false, dimension: false },
+    'chat-lexicon': { game: false, dimension: false },
     network: { game: true, dimension: true },
     cities: { game: true, dimension: true },
     society: { game: true, dimension: true },
@@ -734,11 +751,39 @@
     root.className = 'continuuuum-nav-root';
     root.dataset.theme = theme;
 
-    var appsHtml = APPS.map(function (item) {
-      var href = item.path ? (urls.lemmaApiBase + item.path) : urls[item.id];
+    function isAdminSession() {
+      var Session = global.ContinuuuumUserSession;
+      return !!(Session && Session.isAdmin && Session.isAdmin());
+    }
+
+    function appHref(item) {
+      return item.path ? (urls.lemmaApiBase + item.path) : urls[item.id];
+    }
+
+    function appLinkHtml(item) {
       var active = item.id === app ? ' class="active" aria-current="page"' : '';
-      return '<a href="' + esc(href) + '" data-continuuuum-app="' + esc(item.id) + '"' + active + '>' + esc(item.label) + '</a>';
-    }).join('');
+      return '<a href="' + esc(appHref(item)) + '" data-continuuuum-app="' + esc(item.id) + '"' + active + '>' +
+        esc(item.label) + '</a>';
+    }
+
+    function renderAppsHtml() {
+      var admin = isAdminSession();
+      var main = APPS.filter(function (item) { return !item.adminOnly; })
+        .map(appLinkHtml)
+        .join('');
+      var adminItems = APPS.filter(function (item) { return item.adminOnly; });
+      if (!adminItems.length) return main;
+      var onAdminPage = adminItems.some(function (item) { return item.id === app; });
+      var adminLinks = adminItems.map(appLinkHtml).join('');
+      return main +
+        '<details class="continuuuum-admin-apps"' + (admin || onAdminPage ? '' : ' hidden') +
+        (onAdminPage ? ' open' : '') + '>' +
+        '<summary>Admin</summary>' +
+        '<div class="continuuuum-admin-apps-menu">' + adminLinks + '</div>' +
+        '</details>';
+    }
+
+    var appsHtml = renderAppsHtml();
 
     var subnavHtml = '';
     if (opts.subnav && opts.subnav.length) {
@@ -779,12 +824,27 @@
       extraHost.appendChild(appExtra);
     }
 
-    root.querySelectorAll('[data-continuuuum-app]').forEach(function (link) {
-      link.addEventListener('click', function () {
-        localStorage.setItem('lemmaApiBase', urls.lemmaApiBase);
-        localStorage.setItem('continuuuumLibraryBase', urls.library);
+    function bindAppClicks(scope) {
+      (scope || root).querySelectorAll('[data-continuuuum-app]').forEach(function (link) {
+        link.addEventListener('click', function () {
+          localStorage.setItem('lemmaApiBase', urls.lemmaApiBase);
+          localStorage.setItem('continuuuumLibraryBase', urls.library);
+        });
       });
-    });
+    }
+
+    bindAppClicks(root);
+
+    var Session = global.ContinuuuumUserSession;
+    if (Session && Session.onChange) {
+      Session.onChange(function (detail) {
+        if (!detail || (detail.kind !== 'admin' && detail.kind !== 'dev' && detail.kind !== 'user')) return;
+        var nav = root.querySelector('.continuuuum-header-apps');
+        if (!nav) return;
+        nav.innerHTML = renderAppsHtml();
+        bindAppClicks(nav);
+      });
+    }
 
     mountPreorderBanner(root);
     mountChatPanel(document.body);

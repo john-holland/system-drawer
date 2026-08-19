@@ -113,6 +113,16 @@ public sealed class CityPixelGridDesignerWindow : EditorWindow
             });
             _grid.EnsureLayersAndFrames();
         }
+        if (GUILayout.Button("Add Prison Cell Layers"))
+        {
+            _grid.EnsurePrisonLayers();
+            EditorUtility.SetDirty(_grid);
+        }
+        if (GUILayout.Button("Add House Street / Yard / Side Layers"))
+        {
+            _grid.EnsureHouseLayers();
+            EditorUtility.SetDirty(_grid);
+        }
     }
 
     void DrawModeAndBrush()
@@ -273,6 +283,11 @@ public sealed class CityPixelGridDesignerWindow : EditorWindow
             int n = CityPixelGridRuntime.ExportNarrativeEvents(_grid, _exportCalendar);
             EditorUtility.SetDirty(_exportCalendar);
             Debug.Log($"[CityPixel] Exported/updated {n} narrative events");
+        }
+        if (GUILayout.Button("Export Prison Cell/Door/Wall Bounds4"))
+        {
+            var vols = _grid.ExportPrisonClustersToBounds4(_paintFrame);
+            Debug.Log($"[CityPixel] Prison Bounds4 clusters: {vols.Count}");
         }
 
         EditorGUILayout.BeginHorizontal();

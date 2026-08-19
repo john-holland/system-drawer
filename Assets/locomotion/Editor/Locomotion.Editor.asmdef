@@ -3,6 +3,7 @@
   "rootNamespace": "",
   "references": [
     "Locomotion.Runtime",
+    "Continuuuum.Runtime",
     "Locomotion.Audio",
     "Locomotion.Narrative.Runtime",
     "HierarchicalPathFinding",
@@ -12,7 +13,8 @@
     "Planetary",
     "Weather.Runtime",
     "SdfMax",
-    "SdfMax.Editor"
+    "SdfMax.Editor",
+    "Locomotion.Open.Runtime"
   ],
   "includePlatforms": [
     "Editor"

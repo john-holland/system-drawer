@@ -156,6 +156,11 @@
   color: #4527a0;
   font-weight: 600;
 }
+.continuuuum-clause-suggestion-voice-actor {
+  border-color: #ec407a;
+  background: #fce4ec;
+  color: #880e4f;
+}
 .continuuuum-clause-overlay label.clause-field-error input,
 .continuuuum-clause-overlay label.clause-field-error select,
 .continuuuum-clause-overlay label.clause-field-error textarea {

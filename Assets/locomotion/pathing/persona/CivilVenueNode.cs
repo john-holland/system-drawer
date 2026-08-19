@@ -10,7 +10,7 @@ public sealed class CivilVenueNode
     public CivilSystemKind kind = CivilSystemKind.Generic;
     public string buildingTypeId;
     public GameObject contextOwner;
-    public string hoursCron = "* 8-20 * * *";
+    [CronExpr] public string hoursCron = "* 8-20 * * *";
     public string troupeId;
     public int developerPriority = 100;
     public float minCausalDepth;

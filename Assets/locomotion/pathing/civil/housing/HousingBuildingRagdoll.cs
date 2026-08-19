@@ -13,6 +13,10 @@ public sealed class HouseReferenceSlots
     public Transform egressMain;
     public Transform egressFire;
     public Transform windowsRoot;
+    public Transform windowSill;
+    public Transform windowTrim;
+    public Transform windowShutters;
+    public Transform windowShade;
     public Transform shed;
     public Transform guestHouse;
     public Transform playhouse;
@@ -27,6 +31,23 @@ public sealed class HouseReferenceSlots
     public Transform cableDemarc;
     public Transform fiberOnt;
     public Transform electricalConnection;
+    public Transform digSite;
+    public Transform foundation;
+    public Transform studsRoot;
+    public Transform insulationRoot;
+    public Transform hvacRoot;
+    public Transform awning;
+    public Transform frontSteps;
+    public Transform frontWalk;
+    public Transform patio;
+    public Transform grass;
+    public Transform yardFeatures;
+    public Transform railings;
+    public Transform deck;
+    public Transform fence;
+    public Transform garageDoor;
+    public RoadLot drivewayLot;
+    public RoadLot garageLot;
 }
 
 /// <summary>House specialization of BuildingRagdoll — domestic bio, family, slots, plumbing group.</summary>
@@ -43,6 +64,8 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
         size = HousingArchitectureSize.GoodSize
     };
     public List<DestructibleLayerRef> overflowLayers = new List<DestructibleLayerRef>();
+    public HousePowerBus powerBus = new HousePowerBus();
+    public HouseEaveWaterCache eaveWater;
     public HouseInventoryBinder inventoryBinder;
 
     void Reset()
@@ -62,6 +85,11 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
             plumbingGroup = GetComponent<BuildingPlumbingGroup>() ?? gameObject.AddComponent<BuildingPlumbingGroup>();
         if (inventoryBinder == null)
             inventoryBinder = GetComponent<HouseInventoryBinder>() ?? gameObject.AddComponent<HouseInventoryBinder>();
+        if (eaveWater == null)
+            eaveWater = GetComponent<HouseEaveWaterCache>() ?? gameObject.AddComponent<HouseEaveWaterCache>();
+        eaveWater.house = this;
+        if (powerBus.systems == null || powerBus.systems.Count == 0)
+            HousePowerBus.FillDefault(powerBus.systems);
         ApplyArchitectureScale();
     }
 
@@ -69,6 +97,7 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
     {
         base.Tick(dt);
         houseBio?.Tick(dt);
+        powerBus?.Tick();
     }
 
     public void ApplyArchitectureLemma(string sizeToken)

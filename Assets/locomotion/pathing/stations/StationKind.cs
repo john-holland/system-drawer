@@ -7,5 +7,10 @@ public enum StationKind
     Bus = 3,
     Computer = 4,
     Silo = 5,
-    RailMaintenance = 6
+    RailMaintenance = 6,
+    Desk = 7,
+    Class = 8,
+    Library = 9,
+    Phone = 10,
+    Conversation = 11
 }

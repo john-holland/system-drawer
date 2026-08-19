@@ -615,6 +615,79 @@ def register_society_routes(app, get_conn: GetConn) -> None:
         finally:
             conn.close()
 
+    @app.route("/api/society/cities/<city_id>/prisons/<stable_id>/retinue", methods=["POST"])
+    def society_prison_retinue(city_id: str, stable_id: str):
+        conn = get_conn()
+        try:
+            _ensure(conn)
+            conn.execute(
+                """CREATE TABLE IF NOT EXISTS prison_retinue (
+                    city_id TEXT NOT NULL,
+                    stable_id TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    payload_json TEXT NOT NULL DEFAULT '{}',
+                    gov_agency_id TEXT,
+                    contractor_id TEXT,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (city_id, stable_id)
+                )"""
+            )
+            body = request.get_json(force=True) or {}
+            action = (body.get("action") or "sync").lower()
+            if action not in ("request", "sync", "merge"):
+                return jsonify({"error": "unknown action"}), 400
+            now = _now()
+            payload = {
+                "action": action,
+                "prompt": body.get("prompt") or "",
+                "local": body.get("local"),
+                "remote": body.get("remote"),
+                "confidence": body.get("confidence", 0.8),
+                "govAgencyId": body.get("govAgencyId") or "corrections",
+                "contractorId": body.get("contractorId") or "",
+            }
+            if action == "merge":
+                payload["merged"] = merge_building_stats(
+                    float(body.get("local", 0) or 0),
+                    float(body.get("remote", 0) or 0),
+                    float(body.get("confidence", 0.8) or 0.8),
+                )
+            conn.execute(
+                """INSERT INTO prison_retinue
+                   (city_id, stable_id, action, payload_json, gov_agency_id, contractor_id, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(city_id, stable_id) DO UPDATE SET
+                     action=excluded.action,
+                     payload_json=excluded.payload_json,
+                     gov_agency_id=excluded.gov_agency_id,
+                     contractor_id=excluded.contractor_id,
+                     updated_at=excluded.updated_at""",
+                (
+                    city_id,
+                    stable_id,
+                    action,
+                    json.dumps(payload),
+                    payload["govAgencyId"],
+                    payload["contractorId"],
+                    now,
+                ),
+            )
+            conn.commit()
+            return jsonify(
+                {
+                    "ok": True,
+                    "action": action,
+                    "cityId": city_id,
+                    "stableId": stable_id,
+                    "govAgencyId": payload["govAgencyId"],
+                    "contractorId": payload["contractorId"],
+                    "payload": payload,
+                    "civilKind": "Prison",
+                }
+            )
+        finally:
+            conn.close()
+
     @app.route("/api/society/scenarios/<preset_id>/apply", methods=["POST"])
     def society_scenario(preset_id: str):
         conn = get_conn()

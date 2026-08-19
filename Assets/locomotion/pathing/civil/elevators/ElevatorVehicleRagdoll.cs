@@ -9,6 +9,7 @@ public sealed class ElevatorVehicleRagdoll : VehicleRagdoll
     [Header("Cab")]
     public string craftName = "Elevator";
     public int currentFloor;
+    [Tooltip("House convention: first=1, basement=0, sub-basement=-1 (HouseFloorIndex).")]
     public int minFloor;
     public int maxFloor = 10;
     public string doorOpenCloseTopologyId = "elevator_door";

@@ -17,6 +17,7 @@ public static class SystemDrawerServiceKeys
     public const string NetworkServerMode = "network.serverMode";
     public const string NetworkLobbyServer = "network.lobbyServer";
     public const string MenuRagdoll = "menu.ragdoll";
+    public const string StructuredChatRagdoll = "chat.ragdoll";
     public const string NarrativeNodeExecStateStore = "narrative.nodeExecStateStore";
     public const string LifeSystems = "life.systems";
 

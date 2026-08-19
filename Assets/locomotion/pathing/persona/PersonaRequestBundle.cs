@@ -11,12 +11,14 @@ public sealed class PersonaRequestBundle
     public string cityId;
     public string venueStableId;
     public CivilSystemKind civilKind = CivilSystemKind.Generic;
-    public string dutyCron;
+    [CronExpr] public string dutyCron;
     public int peckingOrder = 100;
     public float biorhythmAmplitudeSeed = 0.5f;
     public float biorhythmPhase01;
     public Dictionary<string, float> societyFeatures = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, float> needSatisfied01 = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+    public string govAgencyId;
+    public string contractorId;
 
     public static PersonaRequestBundle CreateDefault(string personaKey, CivilSystemKind kind)
     {

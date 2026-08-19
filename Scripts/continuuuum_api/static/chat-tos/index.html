@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign structured chat terms</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1419; color: #e6edf3; }
+    main { padding: 1rem; max-width: 720px; margin: 0 auto; }
+    pre { white-space: pre-wrap; background: #161b22; padding: 1rem; border-radius: 8px; font-size: 0.85rem; }
+    label { display: block; margin: 0.45rem 0; }
+    button { margin-top: 0.75rem; background: #238636; color: #fff; border: none; border-radius: 4px;
+      padding: 0.5rem 0.9rem; cursor: pointer; }
+    .hint { color: #8b949e; }
+    .err { color: #f85149; }
+  </style>
+</head>
+<body>
+  <header id="continuuuum-nav-root"></header>
+  <main>
+    <h1>Structured communication terms</h1>
+    <p class="hint" id="invite-meta"></p>
+    <pre id="tos-body">Loading…</pre>
+    <form id="sign-form" hidden>
+      <label><input id="sole-user" type="checkbox" required /> I am the sole user of this software for communication.</label>
+      <label><input id="legal-age" type="checkbox" required /> I am of legal age to communicate safely online.</label>
+      <label><input id="paying-software" type="checkbox" required /> By paying this convenience fee I am paying for this software.</label>
+      <p class="hint" id="pay-note"></p>
+      <label>User id <input id="user-id" type="text" required /></label>
+      <button type="submit">Sign and enable chat</button>
+    </form>
+    <p id="result"></p>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/chat-tos/chat-tos.js"></script>
+</body>
+</html>

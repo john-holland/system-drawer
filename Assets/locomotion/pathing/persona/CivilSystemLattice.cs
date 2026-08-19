@@ -15,6 +15,7 @@ public sealed class CivilSystemLattice
         CivilSystemKind.SoupKitchen,
         CivilSystemKind.School,
         CivilSystemKind.PoliceStation,
+        CivilSystemKind.Prison,
         CivilSystemKind.Church,
         CivilSystemKind.Library,
         CivilSystemKind.Mall,
@@ -117,12 +118,18 @@ public sealed class CivilSystemLattice
         if (id.Contains("legislative") || id.Contains("capitol") || id.Contains("parliament")) return CivilSystemKind.GovLegislative;
         if (id.Contains("monarch") || id.Contains("palace") || id.Contains("royal")) return CivilSystemKind.Monarchic;
         if (id == "spa" || id.StartsWith("spa_") || id.EndsWith("_spa") || id.Contains("bathhouse")) return CivilSystemKind.Spa;
+        // Unemployment before `_office` — "unemployment_office" would otherwise map as PrivateIndustry.
+        if (id.Contains("unemployment") || id.Contains("job_center") || id == "dol"
+            || id.Contains("employment_office"))
+            return CivilSystemKind.UnemploymentOffice;
         if (id.Contains("private_industry") || id.Contains("office_building") || id.EndsWith("_office") || id.Contains("home_business")) return CivilSystemKind.PrivateIndustry;
         // Bar after barber/hotel to avoid false positives on substrings.
         if (id == "bar" || id.EndsWith("_bar") || id.Contains("tavern") || id.Contains("pub")) return CivilSystemKind.Bar;
         if (id.Contains("restaurant") || id.Contains("kitchen")) return CivilSystemKind.Kitchen;
         if (id.Contains("school")) return CivilSystemKind.School;
         if (id.Contains("police")) return CivilSystemKind.PoliceStation;
+        if (id.Contains("prison") || id.Contains("jail") || id.Contains("corrections"))
+            return CivilSystemKind.Prison;
         // Church before mall — "church_small" contains substring "mall".
         if (id.Contains("church")) return CivilSystemKind.Church;
         if (id.Contains("library")) return CivilSystemKind.Library;

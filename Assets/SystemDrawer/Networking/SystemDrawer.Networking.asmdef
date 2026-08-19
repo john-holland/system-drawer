@@ -5,7 +5,8 @@
         "SystemDrawer",
         "BedogaGenerator",
         "Locomotion.Narrative.Runtime",
-        "Weather.Runtime"
+        "Weather.Runtime",
+        "Continuuuum.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

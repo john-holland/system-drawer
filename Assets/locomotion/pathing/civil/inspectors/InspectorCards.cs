@@ -25,7 +25,7 @@ public class InspectorCard : TravelAgentCard
 {
     public DispatchRequest request;
     public InspectableCraftKind craftKind = InspectableCraftKind.Elevator;
-    public string hoursCron = "0 9 1 * *"; // month/year capable cron (day-of-month 1)
+    [CronExpr] public string hoursCron = "0 9 1 * *"; // month/year capable cron (day-of-month 1)
     public string openCloseTopologyId = "inspect_panel";
     public List<string> dialogSuggestions = new List<string>();
 
@@ -97,6 +97,6 @@ public class InspectorPersonaSchedule
     public string personaKey = "inspector";
     public InspectableCraftKind craftKind = InspectableCraftKind.Elevator;
     [Tooltip("Cron with month/year fields supported by CronDue.")]
-    public string hoursCron = "0 9 1 * *";
+    [CronExpr] public string hoursCron = "0 9 1 * *";
     public bool enabled = true;
 }

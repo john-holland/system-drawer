@@ -7,8 +7,8 @@ public sealed class PersonaShiftSlot
 {
     public string role;
     public string personaKey;
-    public string openCron = "* 8-18 * * 1-5";
-    public string closeCron = "";
+    [CronExpr] public string openCron = "* 8-18 * * 1-5";
+    [CronExpr] public string closeCron = "";
     public int peckingOrder = 20;
     public BuildingRagdoll building;
     [NonSerialized] public bool isOnShift;

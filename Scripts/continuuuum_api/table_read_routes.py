@@ -811,7 +811,7 @@ def _session_snapshot(conn: sqlite3.Connection, session_id: str, viewer_user_id:
     )
 
 
-    recordings = [_recording_row(r) for r in cur.fetchall()]
+    recordings = [_recording_row(r) for r in cur.fetchall() if r["status"] != "discarded"]
 
 
     return {
@@ -2398,6 +2398,87 @@ def register_table_read_routes(
 
 
 
+    @app.route("/api/table-read/sessions/<session_id>/recordings/<rec_id>/discard", methods=["POST"])
+
+
+    def discard_recording(session_id: str, rec_id: str):
+
+
+        user_id = get_user()
+
+
+        conn = get_conn()
+
+
+        try:
+
+
+            _ensure(conn)
+
+
+            cur = conn.execute(
+
+
+                "SELECT * FROM table_read_recordings WHERE id = ? AND session_id = ?",
+
+
+                (rec_id, session_id),
+
+
+            )
+
+
+            rec = cur.fetchone()
+
+
+            if not rec:
+
+
+                return jsonify({"error": "not found"}), 404
+
+
+            if rec["user_id"] != user_id:
+
+
+                return jsonify({"error": "forbidden"}), 403
+
+
+            conn.execute(
+
+
+                "UPDATE table_read_recordings SET status = 'discarded', finalized_at = ? WHERE id = ?",
+
+
+                (_now(), rec_id),
+
+
+            )
+
+
+            conn.commit()
+
+
+            row = conn.execute("SELECT * FROM table_read_recordings WHERE id = ?", (rec_id,)).fetchone()
+
+
+            out = _recording_row(row)
+
+
+            _broadcast(session_id, "recording_status", out)
+
+
+            return jsonify(out)
+
+
+        finally:
+
+
+            conn.close()
+
+
+
+
+
     @app.route("/api/table-read/usc-upload", methods=["POST"])
 
 
@@ -2651,5 +2732,28 @@ def register_table_read_routes(
 
 
             pass
+
+
+
+
+    try:
+
+
+        from continuuuum_api.table_read_processing import register_table_read_processing_routes
+
+
+    except ImportError:
+
+
+        from table_read_processing import register_table_read_processing_routes
+
+
+    register_table_read_processing_routes(
+
+
+        app, get_conn, get_user, _broadcast, _broadcast_state, lib_base, socketio
+
+
+    )
 
 

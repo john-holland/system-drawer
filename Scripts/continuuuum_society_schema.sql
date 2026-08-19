@@ -146,3 +146,15 @@ CREATE INDEX IF NOT EXISTS idx_society_cities_planet ON society_cities(planet_id
 CREATE INDEX IF NOT EXISTS idx_building_registry_city ON building_registry(city_id);
 CREATE INDEX IF NOT EXISTS idx_society_snapshots_city ON society_snapshots(city_id, tick_index);
 CREATE INDEX IF NOT EXISTS idx_prebaked_timelines_city ON prebaked_timelines(city_id, frame_index);
+
+CREATE TABLE IF NOT EXISTS prison_retinue (
+    city_id TEXT NOT NULL,
+    stable_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    gov_agency_id TEXT,
+    contractor_id TEXT,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (city_id, stable_id)
+);
+

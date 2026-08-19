@@ -64,6 +64,14 @@ public class CivilCard : GoodSection
                 return new List<string> { "assess", "flee", "shelter" };
             case CivilianDutyKind.WorkShift:
                 return new List<string> { "clock_in", "duty", "clock_out" };
+            case CivilianDutyKind.JobSearch:
+                return new List<string> { "intake", "browse_board", "apply" };
+            case CivilianDutyKind.BenefitsClaim:
+                return new List<string> { "window", "claim", "receipt" };
+            case CivilianDutyKind.CareerInterview:
+                return new List<string> { "arrive", "interview", "depart" };
+            case CivilianDutyKind.JobTraining:
+                return new List<string> { "station", "practice", "credential" };
             default:
                 return new List<string> { duty.ToString().ToLowerInvariant() };
         }

@@ -64,6 +64,7 @@ def to_society_snapshot(city_id: str, tick_index: int, glove: dict[str, Any], zo
         "healthcareCoverage": fv.get("healthcareCoverage", 0.85),
         "elderlyCareCoverage": fv.get("elderlyCareCoverage", 0.85),
         "welfareBenefits": fv.get("welfareBenefits", 0.7),
+        "unemploymentRate": fv.get("unemploymentRate", fv.get("unemployment_rate", max(0.0, 1.0 - float(fv.get("welfareBenefits", 0.7))))),
         "lobbyistActivity": fv.get("lobbyistActivity", 0.3),
         "congressStability": fv.get("congressStability", 0.85),
         "stateBudgetDelta": fv.get("stateBudgetDelta", 0),

@@ -7,7 +7,7 @@ using UnityEngine;
 [AddComponentMenu("Locomotion/Civil/Firehouse Bio Rhythm")]
 public sealed class FirehouseBioRhythm : DispatchBioRhythm
 {
-    public string shiftCron = "* 7-19 * * 1-5";
+    [CronExpr] public string shiftCron = "* 7-19 * * 1-5";
     [Range(0f, 1f)] public float truckReadiness01 = 1f;
     [Range(0f, 5000f)] public float waterReserveLiters = 2000f;
     public bool stationSirenOn;

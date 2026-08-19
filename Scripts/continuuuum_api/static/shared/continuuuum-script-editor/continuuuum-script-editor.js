@@ -356,7 +356,8 @@
       if (!inst || !inst.suggestionsEl) return;
 
       const el = inst.suggestionsEl;
-      if (inst.readOnly || !hasNonEmptySelection(inst)) {
+      const hasQuoteBtns = !!(inst.options.tableReadCharacters && inst.options.tableReadCharacters.length && inst.options.onTableReadQuote);
+      if ((inst.readOnly && !hasQuoteBtns) || !hasNonEmptySelection(inst)) {
         el.hidden = true;
         el.innerHTML = '';
         return;
@@ -389,12 +390,14 @@
         const items = await ContinuuuumScriptEditor.fetchClauseSuggestions(selectionText, inst);
         if (seq !== inst._suggestionSeq) return;
         const el = inst.suggestionsEl;
-        if (!el || inst.readOnly || !hasNonEmptySelection(inst)) return;
+        if (!el || !hasNonEmptySelection(inst)) return;
+        if (inst.readOnly && !(inst.options.tableReadCharacters && inst.options.onTableReadQuote)) return;
 
         el.innerHTML = '';
         if (!items.length) {
-          el.innerHTML = '<span class="continuuuum-clause-suggestions-hint">No matching configs</span>';
-          return;
+          el.innerHTML = inst.options.tableReadCharacters && inst.options.tableReadCharacters.length
+            ? ''
+            : '<span class="continuuuum-clause-suggestions-hint">No matching configs</span>';
         }
 
         const CS = global.ContinuuuumClauseSelector;
@@ -429,10 +432,37 @@
           };
           el.appendChild(btn);
         });
+        ContinuuuumScriptEditor._appendTableReadQuoteButtons(inst, el);
       } catch (_) {
         if (seq !== inst._suggestionSeq) return;
         inst.suggestionsEl.innerHTML = '<span class="continuuuum-clause-suggestions-hint">Could not load suggestions</span>';
+        ContinuuuumScriptEditor._appendTableReadQuoteButtons(inst, inst.suggestionsEl);
       }
+    },
+
+    _appendTableReadQuoteButtons(inst, el) {
+      if (!inst || !el) return;
+      const chars = inst.options.tableReadCharacters || [];
+      const onQuote = inst.options.onTableReadQuote;
+      if (!chars.length || typeof onQuote !== 'function') return;
+      chars.forEach((c) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'continuuuum-clause-suggestion-btn continuuuum-clause-suggestion-voice-actor';
+        btn.textContent = c.characterName || c.name || 'Character';
+        btn.title = 'Assign selection to ' + (c.characterName || '') + ' (voice_actor_line)';
+        btn.onclick = () => {
+          const sel = ContinuuuumScriptEditor.getSelection(inst);
+          onQuote({
+            characterName: c.characterName || c.name,
+            dialogActorId: c.dialogActorId || '',
+            charStart: sel.charStart,
+            charEnd: sel.charEnd,
+            text: sel.text,
+          });
+        };
+        el.appendChild(btn);
+      });
     },
 
     getCursorRange(inst) {

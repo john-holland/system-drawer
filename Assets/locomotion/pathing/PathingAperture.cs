@@ -35,6 +35,8 @@ public sealed class PathingAperture : MonoBehaviour
     [Tooltip("Optional authoring tag filter (e.g. stair_rail, garage_door, window).")]
     public List<string> tags = new List<string>();
     public int octreeLeafIndex = -1;
+    [Range(0f, 1f)] public float smellPassThrough01 = 1f;
+    [Range(0f, 1f)] public float hearingLeak01 = 1f;
 
     public Vector3 ApproachPointWorld => transform.TransformPoint(approachOffset);
     public Vector3 OpeningNormal => transform.forward;

@@ -25,7 +25,7 @@ public sealed class StationConfig
 public sealed class StationCommodityEntry
 {
     public string commodityKey = "labor";
-    public string cronExpr;
+    [CronExpr] public string cronExpr;
     public float surgeMult = 1f;
     public float quantity = 1f;
     public float price;

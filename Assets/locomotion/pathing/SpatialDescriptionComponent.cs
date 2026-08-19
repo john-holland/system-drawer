@@ -33,14 +33,19 @@ public sealed class SpatialDescriptionComponent : MonoBehaviour
     public void PaintFromModifiers(IEnumerable<string> adjectivesOrDescriptions)
     {
         if (adjectivesOrDescriptions == null) return;
+        // During dimensional cross-fade, record keys but let DimensionMaterialCrossFader drive materials.
+        bool deferShader = DimensionMaterialCrossFader.Instance != null && DimensionMaterialCrossFader.Instance.IsFading;
         foreach (var term in adjectivesOrDescriptions)
         {
             if (string.IsNullOrWhiteSpace(term)) continue;
             string t = term.Trim();
             paintedAdjectives.Add(t);
             paintedKeys.Add(t);
-            ApplyShaderPaint(t);
-            ApplySkinKey(t);
+            if (!deferShader)
+            {
+                ApplyShaderPaint(t);
+                ApplySkinKey(t);
+            }
         }
         descriptionFilter = new SpatialDescriptionFilter(paintedKeys);
     }

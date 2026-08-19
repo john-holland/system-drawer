@@ -116,6 +116,59 @@ FROM credits_warehouse_history
 ORDER BY created_at DESC
 LIMIT 200;
 
+-- @recipe id=asset_owner_history label="Asset owner history" description="Admin reassignment of USC / Continuuuum asset owners"
+SELECT id, asset_kind, asset_id, from_owner, to_owner, admin_user_id, reason, created_at
+FROM asset_owner_history
+ORDER BY created_at DESC
+LIMIT 200;
+
+-- @recipe id=asset_owner_warehouse label="Asset owner warehouse events" description="Warehouse rows for asset_owner_reassigned"
+SELECT id, tenant_id, list_id, event_kind, source, actor_user_id, payload_json, created_at
+FROM credits_warehouse_history
+WHERE event_kind = 'asset_owner_reassigned'
+ORDER BY created_at DESC
+LIMIT 200;
+
+-- @recipe id=legal_docket_watch label="Legal docket watch" description="External litigation cases and living docket entries"
+SELECT c.id, c.slug, c.title, c.case_kind, c.status, c.category, d.title AS docket_title, d.filed_at, d.entry_kind
+FROM legal_cases c
+LEFT JOIN legal_docket_entries d ON d.case_id = c.id
+WHERE COALESCE(c.case_kind, 'internal_agile') = 'external_litigation'
+ORDER BY c.opened_at DESC, d.filed_at DESC
+LIMIT 200;
+
+-- @recipe id=legal_watchlist label="Legal watchlist" description="AG and investigation watch items"
+SELECT id, slug, title, jurisdiction, agency, status, related_case_id, notes, updated_at
+FROM legal_watchlist_items
+ORDER BY updated_at DESC
+LIMIT 100;
+
+-- @recipe id=chat_tos_warehouse label="Chat TOS warehouse" description="Invite, signature, fee, profit, and entitlement warehouse events"
+SELECT id, tenant_id, list_id, event_kind, source, actor_user_id, payload_json, created_at
+FROM credits_warehouse_history
+WHERE list_id = 'chat-tos' OR event_kind LIKE 'chat_%' OR event_kind IN ('email_queued', 'email_sent')
+ORDER BY created_at DESC
+LIMIT 200;
+
+-- @recipe id=chat_entitlements label="Chat entitlements" description="Signed TOS + convenience fee entitlements"
+SELECT id, user_id, product_id, tos_version_id, payer_kind, payer_user_id, payer_legal_entity, fee_usd, status, signed_at
+FROM chat_entitlements
+ORDER BY signed_at DESC
+LIMIT 200;
+
+-- @recipe id=chat_session_messages label="Chat session messages" description="Hot structured-chat transcript rows"
+SELECT id, session_id, product_id, user_id, text, byte_len, created_at
+FROM chat_session_messages
+ORDER BY created_at DESC
+LIMIT 200;
+
+-- @recipe id=chat_history_warehouse label="Chat history warehouse" description="Committed chat messages and history truncation events"
+SELECT id, tenant_id, list_id, event_kind, source, actor_user_id, payload_json, created_at
+FROM credits_warehouse_history
+WHERE list_id = 'chat-history'
+ORDER BY created_at DESC
+LIMIT 200;
+
 -- @recipe id=credits_hidden_entries label="Credits hidden entries" description="Entries with both show flags off"
 SELECT e.id, e.list_id, e.full_name, e.nick_name, e.show_full_name, e.show_nickname, e.source_user_id, e.updated_at
 FROM credits_entries e

@@ -199,6 +199,21 @@ except ImportError:
 try:
 
 
+    from continuuuum_api.asset_owner_routes import register_asset_owner_routes
+
+
+except ImportError:
+
+
+    from asset_owner_routes import register_asset_owner_routes
+
+
+
+
+
+try:
+
+
     from continuuuum_api.cave_routes import register_cave_routes
 
 
@@ -221,6 +236,9 @@ try:
 
 
     from continuuuum_api.chat_routes import register_chat_routes
+
+
+    from continuuuum_api.chat_safety_routes import register_chat_safety_routes
 
 
     from continuuuum_api.production_proxy_routes import register_production_proxy_routes
@@ -284,6 +302,8 @@ try:
 
     from continuuuum_api.payroll_routes import register_payroll_routes
 
+    from continuuuum_api.webcam_anim_routes import register_webcam_anim_routes
+
     from continuuuum_api.gd_association_routes import register_gd_association_routes
 
     from continuuuum_api.gd_route_annotations import configure_gd_annotations
@@ -314,6 +334,9 @@ except ImportError:
 
 
     from chat_routes import register_chat_routes
+
+
+    from chat_safety_routes import register_chat_safety_routes
 
 
     from production_proxy_routes import register_production_proxy_routes
@@ -376,6 +399,8 @@ except ImportError:
 
 
     from payroll_routes import register_payroll_routes
+
+    from webcam_anim_routes import register_webcam_anim_routes
 
     from gd_association_routes import register_gd_association_routes
 
@@ -4164,6 +4189,9 @@ socketio = SocketIO(app, cors_allowed_origins=_socketio_cors) if SocketIO else N
 register_table_read_routes(app, get_conn, _get_current_user, socketio, LIBRARY_APP_BASE)
 
 
+register_asset_owner_routes(app, get_conn, _get_current_user, _is_admin, LIBRARY_APP_BASE)
+
+
 register_cave_routes(app, get_conn, _get_current_user)
 
 
@@ -4186,6 +4214,9 @@ register_story_routes(app, get_conn)
 
 
 register_chat_routes(app, get_conn)
+
+
+register_chat_safety_routes(app, get_conn, _get_current_user, _is_admin)
 
 
 register_production_proxy_routes(app, get_conn)
@@ -4250,6 +4281,7 @@ register_change_of_basis_routes(app, get_conn)
 
 register_mod_routes(app, get_conn, _get_current_user)
 register_payroll_routes(app, get_conn, _is_admin)
+register_webcam_anim_routes(app, get_conn)
 configure_gd_annotations(get_conn)
 register_gd_association_routes(app, get_conn, _is_admin)
 

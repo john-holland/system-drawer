@@ -19,7 +19,17 @@ public static class BuiltInSynonyms
             { "over here", "over-here" },
             { "along the road", "along-the-road" },
             { "here here", "here-here" },
-            { "there there", "there-there" }
+            { "there there", "there-there" },
+            { "open chat", "open-chat" },
+            { "open the chat", "open-chat" },
+            { "close chat", "close-chat" },
+            { "close the chat", "close-chat" },
+            { "dismiss chat", "close-chat" },
+            { "chat window", "chat" },
+            { "chat box", "chat" },
+            { "word bank", "word-bank" },
+            { "compose box", "compose-box" },
+            { "chat history", "chat-history" }
         };
 
     public static void RegisterAlias(string alias, string canonical)

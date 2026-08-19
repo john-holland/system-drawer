@@ -1,0 +1,6052 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80d379e6406096b43ad60970ffc23b84, type: 3}
+  m_Name: ParkPlantPlan
+  m_EditorClassIdentifier: Locomotion.Runtime::ParkPlantPlanAsset
+  width: 32
+  height: 32
+  cellWorldSize: 0.5
+  worldOrigin: {x: 0, y: 0, z: 0}
+  plantMinSizeM: 0.5
+  plantSpeciesIds:
+  - lot_grass
+  - oak
+  - flower_bed
+  timeLayers:
+  - layerId: t0
+    timeSec: 0
+    cells:
+    - x: 11
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 10
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 5
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 9
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 5
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 8
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 16
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 15
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 6
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 7
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 5
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 6
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 15
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 16
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 17
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 6
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 17
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 16
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 15
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 5
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 15
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 16
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 17
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 4
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 18
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 17
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 16
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 3
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 18
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 19
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 2
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 20
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 19
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 1
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 20
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 21
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 22
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 0
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 11
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 9
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 5
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 5
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 16
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 11
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 4
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 3
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 15
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 4
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 11
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 14
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 11
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 13
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 4
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 11
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 12
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 11
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 17
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 11
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 10
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 9
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 8
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 6
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 9
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 11
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 19
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 18
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 9
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 8
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 20
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 5
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 6
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 9
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 21
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 9
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 6
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 5
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 22
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 4
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 5
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 6
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 7
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 10
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 13
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 27
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 11
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 26
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 2
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 3
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 12
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 25
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 4
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 3
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 24
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 14
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 23
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 15
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 28
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 12
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 14
+      plantSpeciesId: oak
+      color: {r: 0.5450981, g: 0.2705882, b: 0.07450981, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 15
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 30
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 17
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 16
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 15
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 29
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 31
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 30
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 29
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 28
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 27
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 26
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 25
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 24
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 23
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 22
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 21
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 20
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 19
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 18
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 17
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 16
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 15
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 14
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 13
+      plantSpeciesId: flower_bed
+      color: {r: 0.54509807, g: 0.07450979, b: 0.35581097, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 12
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 11
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 10
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 9
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 8
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 7
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 6
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 5
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 4
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 3
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 2
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 1
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    - x: 31
+      y: 0
+      plantSpeciesId: lot_grass
+      color: {r: 0.25, g: 0.7, b: 0.3, a: 1}
+      stage01: 0.5
+    placementSquares:
+    - squareId: sq_0
+      originCell: {x: 6, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_1
+      originCell: {x: 22, y: 6}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11, y: 0, z: 3}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_2
+      originCell: {x: 13, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 6.5, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_3
+      originCell: {x: 25, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12.5, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_4
+      originCell: {x: 5, y: 15}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2.5, y: 0, z: 7.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_5
+      originCell: {x: 15, y: 3}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7.5, y: 0, z: 1.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_6
+      originCell: {x: 30, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_7
+      originCell: {x: 18, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: oak
+      snapped: 1
+    - squareId: sq_8
+      originCell: {x: 12, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 6, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_9
+      originCell: {x: 13, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 6.5, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_10
+      originCell: {x: 12, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 6, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_11
+      originCell: {x: 12, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 6, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_12
+      originCell: {x: 13, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 6.5, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_13
+      originCell: {x: 14, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_14
+      originCell: {x: 15, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7.5, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_15
+      originCell: {x: 15, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7.5, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_16
+      originCell: {x: 14, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_17
+      originCell: {x: 14, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_18
+      originCell: {x: 17, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 8.5, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_19
+      originCell: {x: 16, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 8, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_20
+      originCell: {x: 17, y: 9}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 8.5, y: 0, z: 4.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_21
+      originCell: {x: 18, y: 9}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9, y: 0, z: 4.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_22
+      originCell: {x: 18, y: 8}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9, y: 0, z: 4}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_23
+      originCell: {x: 19, y: 9}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9.5, y: 0, z: 4.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_24
+      originCell: {x: 19, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9.5, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_25
+      originCell: {x: 19, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9.5, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_26
+      originCell: {x: 18, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_27
+      originCell: {x: 17, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 8.5, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_28
+      originCell: {x: 20, y: 9}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 10, y: 0, z: 4.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_29
+      originCell: {x: 20, y: 8}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 10, y: 0, z: 4}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_30
+      originCell: {x: 20, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 10, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_31
+      originCell: {x: 21, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 10.5, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_32
+      originCell: {x: 22, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_33
+      originCell: {x: 23, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11.5, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_34
+      originCell: {x: 23, y: 6}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11.5, y: 0, z: 3}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_35
+      originCell: {x: 23, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11.5, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_36
+      originCell: {x: 23, y: 4}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11.5, y: 0, z: 2}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_37
+      originCell: {x: 22, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_38
+      originCell: {x: 21, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 10.5, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_39
+      originCell: {x: 21, y: 6}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 10.5, y: 0, z: 3}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_40
+      originCell: {x: 24, y: 4}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12, y: 0, z: 2}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_41
+      originCell: {x: 24, y: 3}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12, y: 0, z: 1.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_42
+      originCell: {x: 25, y: 2}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12.5, y: 0, z: 1}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_43
+      originCell: {x: 25, y: 3}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12.5, y: 0, z: 1.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_44
+      originCell: {x: 11, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 5.5, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_45
+      originCell: {x: 10, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 5, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_46
+      originCell: {x: 10, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 5, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_47
+      originCell: {x: 9, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 4.5, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_48
+      originCell: {x: 8, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 4, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_49
+      originCell: {x: 8, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 4, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_50
+      originCell: {x: 7, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3.5, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_51
+      originCell: {x: 6, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_52
+      originCell: {x: 6, y: 15}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3, y: 0, z: 7.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_53
+      originCell: {x: 6, y: 16}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3, y: 0, z: 8}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_54
+      originCell: {x: 4, y: 16}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2, y: 0, z: 8}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_55
+      originCell: {x: 4, y: 15}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2, y: 0, z: 7.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_56
+      originCell: {x: 4, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_57
+      originCell: {x: 5, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2.5, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_58
+      originCell: {x: 5, y: 16}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2.5, y: 0, z: 8}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_59
+      originCell: {x: 3, y: 17}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 1.5, y: 0, z: 8.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_60
+      originCell: {x: 3, y: 18}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 1.5, y: 0, z: 9}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_61
+      originCell: {x: 2, y: 18}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 1, y: 0, z: 9}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_62
+      originCell: {x: 2, y: 19}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 1, y: 0, z: 9.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_63
+      originCell: {x: 1, y: 19}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 0.5, y: 0, z: 9.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_64
+      originCell: {x: 1, y: 20}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 0.5, y: 0, z: 10}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_65
+      originCell: {x: 0, y: 20}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 0, y: 0, z: 10}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_66
+      originCell: {x: 0, y: 21}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 0, y: 0, z: 10.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_67
+      originCell: {x: 0, y: 22}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 0, y: 0, z: 11}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_68
+      originCell: {x: 4, y: 17}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2, y: 0, z: 8.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_69
+      originCell: {x: 3, y: 16}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 1.5, y: 0, z: 8}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_70
+      originCell: {x: 6, y: 17}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3, y: 0, z: 8.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_71
+      originCell: {x: 5, y: 17}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2.5, y: 0, z: 8.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_72
+      originCell: {x: 7, y: 15}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3.5, y: 0, z: 7.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_73
+      originCell: {x: 7, y: 16}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3.5, y: 0, z: 8}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_74
+      originCell: {x: 21, y: 9}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 10.5, y: 0, z: 4.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_75
+      originCell: {x: 22, y: 9}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11, y: 0, z: 4.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_76
+      originCell: {x: 23, y: 10}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 11.5, y: 0, z: 5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_77
+      originCell: {x: 24, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_78
+      originCell: {x: 24, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_79
+      originCell: {x: 25, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 12.5, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_80
+      originCell: {x: 26, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 13, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_81
+      originCell: {x: 26, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 13, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_82
+      originCell: {x: 26, y: 11}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 13, y: 0, z: 5.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_83
+      originCell: {x: 27, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 13.5, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_84
+      originCell: {x: 28, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 14, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_85
+      originCell: {x: 28, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 14, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_86
+      originCell: {x: 29, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 14.5, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_87
+      originCell: {x: 29, y: 15}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 14.5, y: 0, z: 7.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_88
+      originCell: {x: 30, y: 15}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15, y: 0, z: 7.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_89
+      originCell: {x: 31, y: 15}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15.5, y: 0, z: 7.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_90
+      originCell: {x: 31, y: 14}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15.5, y: 0, z: 7}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_91
+      originCell: {x: 31, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15.5, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_92
+      originCell: {x: 30, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_93
+      originCell: {x: 30, y: 12}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15, y: 0, z: 6}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_94
+      originCell: {x: 29, y: 13}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 14.5, y: 0, z: 6.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_95
+      originCell: {x: 31, y: 16}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15.5, y: 0, z: 8}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_96
+      originCell: {x: 31, y: 17}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 15.5, y: 0, z: 8.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_97
+      originCell: {x: 19, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9.5, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_98
+      originCell: {x: 18, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_99
+      originCell: {x: 18, y: 6}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 9, y: 0, z: 3}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_100
+      originCell: {x: 17, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 8.5, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_101
+      originCell: {x: 16, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 8, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_102
+      originCell: {x: 15, y: 4}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7.5, y: 0, z: 2}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_103
+      originCell: {x: 14, y: 4}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 7, y: 0, z: 2}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_104
+      originCell: {x: 12, y: 4}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 6, y: 0, z: 2}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_105
+      originCell: {x: 9, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 4.5, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_106
+      originCell: {x: 8, y: 5}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 4, y: 0, z: 2.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_107
+      originCell: {x: 7, y: 6}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3.5, y: 0, z: 3}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_108
+      originCell: {x: 6, y: 6}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3, y: 0, z: 3}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_109
+      originCell: {x: 6, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 3, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_110
+      originCell: {x: 4, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 2, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_111
+      originCell: {x: 3, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 1.5, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1
+    - squareId: sq_112
+      originCell: {x: 1, y: 7}
+      sizeCells: {x: 1, y: 1}
+      worldPosition: {x: 0.5, y: 0, z: 3.5}
+      worldRotation: {x: 0, y: 0, z: 0, w: 1}
+      worldScale: {x: 1, y: 1, z: 1}
+      plantSpeciesId: flower_bed
+      snapped: 1

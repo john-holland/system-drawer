@@ -9,6 +9,7 @@
         "HierarchicalPathFinding",
         "SystemDrawer",
         "Planetary",
+        "SdfMax",
         "Unity.Newtonsoft.Json",
         "Continuuuum.Runtime"
     ],

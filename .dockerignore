@@ -1,0 +1,22 @@
+# Unity WebGL editor (6000.3.2f1). Do not commit licenses.
+Library/
+Temp/
+Logs/
+Obj/
+.git/
+.vs/
+.idea/
+Builds/
+webgl-out/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.unityproj
+*.booproj
+*.svd
+MemoryCaptures/
+Recordings/
+UserSettings/
+**/*.apk
+**/*.aab

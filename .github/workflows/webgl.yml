@@ -1,0 +1,60 @@
+name: webgl
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Assets/Editor/BuildContinuuuumWebGL.cs"
+      - "Assets/Scenes/ContinuuuumLibraryWeb.unity"
+      - "Assets/Continuuuum/**"
+      - "docker/webgl/**"
+      - ".github/workflows/webgl.yml"
+
+jobs:
+  webgl:
+    name: Continuuuum WebGL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard Unity license
+        id: guard
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          if [ -z "$UNITY_LICENSE" ]; then
+            echo "UNITY_LICENSE secret not set; skipping WebGL build."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout continuuuum (sibling output)
+        if: steps.guard.outputs.skip != 'true'
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.CONTINUUUUM_REPO || 'john-holland/continuuuum' }}
+          path: _continuuuum
+
+      - name: Build WebGL
+        if: steps.guard.outputs.skip != 'true'
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: WebGL
+          unityVersion: 6000.3.2f1
+          buildMethod: BuildContinuuuumWebGL.BuildFromCli
+          customParameters: -continuuuumWebGlOut ${{ github.workspace }}/webgl-out
+
+      - name: Upload WebGL artifact
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: continuuuum_editor_webgl
+          path: webgl-out
+          if-no-files-found: warn

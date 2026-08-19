@@ -262,7 +262,7 @@ public class TAVehicleFuelCard : TATransitCard
 [Serializable]
 public class TAVehicleSchedulingCard : TATransitCard
 {
-    public string cronExpr = "* 6-22 * * 1-5";
+    [CronExpr] public string cronExpr = "* 6-22 * * 1-5";
     public string narrativeActionId = "ta_vehicle_schedule";
 
     public static TAVehicleSchedulingCard Generate(DispatchRequest request, TAVehicleRoute route = null)

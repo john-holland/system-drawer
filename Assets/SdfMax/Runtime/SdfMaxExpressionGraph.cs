@@ -67,8 +67,17 @@ namespace SdfMax
                     case SdfPrimitiveType.FractalNoise:
                     case SdfPrimitiveType.MandelbrotDisplacement:
                     case SdfPrimitiveType.LatLonShell:
-                        he = Vector3.one * Mathf.Max(node.radius, node.sphereRadius, 1f);
+                    case SdfPrimitiveType.Torus:
+                    case SdfPrimitiveType.DisplacedTorus:
+                        he = Vector3.one * Mathf.Max(node.radius, node.sphereRadius, node.torusMajorRadius + node.torusMinorRadius, 1f);
                         break;
+                    case SdfPrimitiveType.SplineExtrusion:
+                    {
+                        float er = Mathf.Max(0.05f, node.extrusionRadius);
+                        Vector3 end = node.extrusionEnd;
+                        he = new Vector3(Mathf.Max(Mathf.Abs(end.x), er), Mathf.Max(Mathf.Abs(end.y), er), Mathf.Max(Mathf.Abs(end.z), er));
+                        break;
+                    }
                 }
                 return new Bounds(node.localPosition, he * 2f);
             }
@@ -199,6 +208,12 @@ namespace SdfMax
                     return EvalPlanarStamp(node, world);
                 case SdfPrimitiveType.LatLonShell:
                     return EvalLatLonShell(node, world, t);
+                case SdfPrimitiveType.Torus:
+                    return EvalTorus(lp, node.torusMajorRadius, node.torusMinorRadius);
+                case SdfPrimitiveType.SplineExtrusion:
+                    return EvalSplineExtrusion(lp, node);
+                case SdfPrimitiveType.DisplacedTorus:
+                    return EvalDisplacedTorus(lp, world, node);
                 default:
                     return 1000f;
             }
@@ -237,6 +252,58 @@ namespace SdfMax
                 shell = SmoothMax(shell, EvalChild(node.childIndexA, local, world, t), node.smoothRadius);
             }
             return shell;
+        }
+
+        static float EvalTorus(Vector3 p, float major, float minor)
+        {
+            float R = Mathf.Max(0.01f, major);
+            float r = Mathf.Max(0.01f, minor);
+            float q = Mathf.Sqrt(p.x * p.x + p.z * p.z) - R;
+            return Mathf.Sqrt(q * q + p.y * p.y) - r;
+        }
+
+        static float EvalSplineExtrusion(Vector3 p, SdfMaxNode node)
+        {
+            float rad = Mathf.Max(0.01f, node.extrusionRadius);
+            Vector3 a = Vector3.zero;
+            Vector3 b = node.extrusionEnd.sqrMagnitude > 1e-8f ? node.extrusionEnd : new Vector3(1f, 0f, 0f);
+            if (node.extrusionPath != null && node.extrusionPath.Count >= 2)
+            {
+                float best = float.MaxValue;
+                for (int i = 0; i < node.extrusionPath.Count - 1; i++)
+                {
+                    float d = DistanceToSegment(p, node.extrusionPath[i], node.extrusionPath[i + 1]) - rad;
+                    if (d < best) best = d;
+                }
+                return best;
+            }
+            return DistanceToSegment(p, a, b) - rad;
+        }
+
+        static float DistanceToSegment(Vector3 p, Vector3 a, Vector3 b)
+        {
+            Vector3 ab = b - a;
+            float len2 = ab.sqrMagnitude;
+            float t = len2 > 1e-8f ? Mathf.Clamp01(Vector3.Dot(p - a, ab) / len2) : 0f;
+            return (p - (a + ab * t)).magnitude;
+        }
+
+        float EvalDisplacedTorus(Vector3 lp, Vector3 world, SdfMaxNode node)
+        {
+            float baseSdf = EvalTorus(lp, node.torusMajorRadius, node.torusMinorRadius);
+            float u = Mathf.Atan2(lp.z, lp.x);
+            float q = Mathf.Sqrt(lp.x * lp.x + lp.z * lp.z) - node.torusMajorRadius;
+            float v = Mathf.Atan2(lp.y, q);
+            Vector2 uv = new Vector2(
+                (u / (Mathf.PI * 2f)) + 0.5f,
+                (v / (Mathf.PI * 2f)) + 0.5f);
+            float h = 0f;
+            if (_planar != null)
+                h = _planar.SampleStampHeight(Mathf.Max(0, node.planarFeatureIndex), uv);
+            baseSdf -= h * node.weight;
+            if (node.childIndexA >= 0)
+                baseSdf = SmoothMax(baseSdf, EvalChild(node.childIndexA, lp, world, 0f), node.smoothRadius);
+            return baseSdf;
         }
 
         static float SmoothMin(float a, float b, float k)

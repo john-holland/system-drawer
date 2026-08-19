@@ -56,6 +56,13 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("there there", "there-there");
             BuiltInSynonyms.RegisterAlias("crash through", "crash-through");
             BuiltInSynonyms.RegisterAlias("wall run", "wall-run");
+            BuiltInSynonyms.RegisterAlias("open chat", "open-chat");
+            BuiltInSynonyms.RegisterAlias("open the chat", "open-chat");
+            BuiltInSynonyms.RegisterAlias("close chat", "close-chat");
+            BuiltInSynonyms.RegisterAlias("close the chat", "close-chat");
+            BuiltInSynonyms.RegisterAlias("dismiss chat", "close-chat");
+            BuiltInSynonyms.RegisterAlias("chat window", "chat");
+            BuiltInSynonyms.RegisterAlias("word bank", "word-bank");
         }
 
         public static string CanonicalizeDeictic(string token)

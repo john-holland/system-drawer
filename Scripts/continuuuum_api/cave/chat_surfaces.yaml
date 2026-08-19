@@ -1,0 +1,37 @@
+# Inventory of Continuuuum / game chat surfaces.
+# Continuuuum web/editor chat is unrated production tooling — not a TOS-fee product.
+# Structural multiplayer chat is a built-in game option only.
+
+surfaces:
+  - id: story-board
+    kind: text
+    class: unrated_tool
+    notes: Continuuuum collab story board; no TOS fee
+  - id: table-read
+    kind: text
+    class: unrated_tool
+    notes: Continuuuum table-read collab; no TOS fee
+  - id: nav-global
+    kind: text
+    class: unrated_tool
+    notes: Continuuuum nav panel chat; no TOS fee
+  - id: lemma-build
+    kind: llm
+    class: unrated_tool
+    notes: Lemma-build LLM session; not user-to-user
+  - id: table-read-recorder
+    kind: av_capture
+    class: unrated_tool
+    notes: Performance capture; not player chat
+  - id: unity-dialogue
+    kind: narrative
+    class: unrated_tool
+    notes: Scripted in-game dialogue; not player-to-player
+  - id: unity-mp-text
+    kind: text
+    class: structural_product
+    notes: Built-in game multiplayer option; TOS + convenience fee
+  - id: unity-mp-voice
+    kind: voice
+    class: structural_product
+    notes: Policy slot only; disable by jurisdiction; no VoIP shipping

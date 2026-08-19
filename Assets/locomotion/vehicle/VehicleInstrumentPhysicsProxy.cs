@@ -38,6 +38,18 @@ public sealed class VehicleInstrumentPhysicsProxy : MonoBehaviour
                 return true;
             }
         }
+
+        var pulley = GetComponentInChildren<PulleySurfaceRagdoll>(true)
+                     ?? GetComponentInParent<PulleySurfaceRagdoll>();
+        if (pulley != null && pulley.MatchesPullString(localSurfaceId))
+        {
+            surface = pulley.PullSurface;
+            if (surface != null)
+            {
+                _resolved[localSurfaceId] = surface;
+                return true;
+            }
+        }
         return false;
     }
 

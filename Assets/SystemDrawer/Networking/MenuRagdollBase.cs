@@ -1,12 +1,12 @@
 using UnityEngine;
 
-/// <summary>Abstract main-menu host: event routing + optional Tomba-style 2D hanging physics.</summary>
+/// <summary>Abstract main-menu host: event routing + optional rope-ladder-style 2D hanging physics.</summary>
 [AddComponentMenu("System Drawer/Networking/Menu Ragdoll Base")]
 public abstract class MenuRagdollBase : MonoBehaviour
 {
     public const string ServiceKey = SystemDrawerServiceKeys.MenuRagdoll;
 
-    [Header("Optional 2D hanging menu physics (Tomba-style)")]
+    [Header("Optional 2D hanging menu physics (rope ladder style)")]
     public bool enableHangingPhysics;
     public Transform ropeAnchor;
     public float ropeLength = 1.2f;

@@ -55,6 +55,23 @@ public static class LifeSystemsGovGloveBias
             float cur = sheet.Get01(def.id);
             sheet.Set01(def.id, Mathf.Lerp(cur, target, 0.5f));
         }
+
+        if (TryFeature(societyFeatures, "unemploymentRate", out float unemployment) ||
+            TryFeature(societyFeatures, "unemployment_rate", out unemployment))
+        {
+            float u = Mathf.Clamp01(unemployment);
+            Nudge(sheet, LifeSystemsChannelCatalog.Morale, -u * 0.08f);
+            Nudge(sheet, LifeSystemsChannelCatalog.Socialism, u * 0.06f);
+        }
+    }
+
+    static void Nudge(LifeSystemsSheet sheet, string channelId, float delta)
+    {
+        if (sheet == null || string.IsNullOrEmpty(channelId)) return;
+        float v = Mathf.Clamp01(sheet.Get01(channelId) + delta);
+        if (LifeSystemsChannelCatalog.TryGet(channelId, out var def))
+            v = Mathf.Clamp(v, def.softBandMin01, def.softBandMax01);
+        sheet.Set01(channelId, v);
     }
 
     static bool TryFeature(IReadOnlyDictionary<string, float> map, string key, out float value)

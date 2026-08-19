@@ -98,6 +98,30 @@ public static class CityPixelBrushEditors
                     "Separator stamps cut same-type adjacency (wall cells). Incomplete cuts warn and keep one chunk.",
                     MessageType.Info);
                 break;
+
+            case CityPixelBrushKind.Cell:
+                stamp.buildingKind = CivilSystemKind.Prison;
+                stamp.buildingTypeId = EditorGUILayout.TextField("Building Type Id", stamp.buildingTypeId ?? "prison");
+                stamp.diggable = EditorGUILayout.Toggle("Diggable Wall", stamp.diggable);
+                stamp.wallDestructible = EditorGUILayout.Toggle("Destructible", stamp.wallDestructible);
+                stamp.tunnelStress01 = EditorGUILayout.Slider("Tunnel Stress", stamp.tunnelStress01, 0f, 1f);
+                stamp.buildingConfig = (BuildingRequirementSpec)EditorGUILayout.ObjectField(
+                    "Building Config", stamp.buildingConfig, typeof(BuildingRequirementSpec), false);
+                DrawPlaceableStampFields(ref stamp);
+                break;
+
+            case CityPixelBrushKind.DrivewayLot:
+            case CityPixelBrushKind.GarageLot:
+                stamp.typeKey = EditorGUILayout.TextField("Lot Type Key", stamp.typeKey ?? (kind == CityPixelBrushKind.GarageLot ? "garage" : "driveway"));
+                stamp.signPrefab = (GameObject)EditorGUILayout.ObjectField(
+                    "Lot Prefab", stamp.signPrefab, typeof(GameObject), false);
+                EditorGUILayout.HelpBox(
+                    kind == CityPixelBrushKind.GarageLot
+                        ? "Garage lot must 4-touch driveway, street, or sidewalk."
+                        : "Driveway lot must 4-touch street or sidewalk.",
+                    MessageType.Info);
+                DrawPlaceableStampFields(ref stamp);
+                break;
         }
     }
 
@@ -129,6 +153,7 @@ public static class CityPixelBrushEditors
             case CivilSystemKind.PoliceStation:
             case CivilSystemKind.FireStation:
             case CivilSystemKind.CarRepair:
+            case CivilSystemKind.Prison:
                 Debug.Log($"[CityPixel] Open Available Editors for {kind}: PixelLight, LadderLogic, CityPixel (+ assign CivilInstitutionStub in scene).");
                 break;
             default:
@@ -173,6 +198,9 @@ public static class CityPixelBrushEditors
             s.floorIndex = src.floorIndex;
             s.zoneId = src.zoneId;
             s.floorPlanIndexMap = src.floorPlanIndexMap;
+            s.tunnelStress01 = src.tunnelStress01;
+            s.wallDestructible = src.wallDestructible;
+            s.diggable = src.diggable;
         }
         s.frameIndex = frame;
         s.cellX = x;

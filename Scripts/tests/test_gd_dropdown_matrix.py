@@ -31,6 +31,7 @@ EXPECTED = {
     "credits": (True, False),
     "payroll": (False, False),
     "game-dimensions": (False, False),
+    "webcam-animations": (True, True),
     "legal-tracker": (False, False),
     "sql-viewer": (False, False),
     "settings": (False, False),
@@ -64,6 +65,14 @@ def test_nav_exports_gd_policy():
     src = NAV.read_text(encoding="utf-8")
     assert "gdPolicyForApp:" in src
     assert "APP_GD_SELECTORS:" in src
+
+
+def test_nav_admin_menu_includes_chat_tos():
+    src = NAV.read_text(encoding="utf-8")
+    assert "adminOnly: true" in src
+    assert "label: 'Chat TOS'" in src
+    assert "continuuuum-admin-apps" in src
+    assert "Chat Lexicon" in src
 
 
 def test_session_uses_getGdPolicy():

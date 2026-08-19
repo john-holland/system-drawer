@@ -21,7 +21,7 @@ The locomotion stack is built for **humanoid ragdolls + physics cards + travel a
 
 ### Implemented: menu pendulum (2D)
 
-`MenuRagdollBase.EnsureHangingPhysics()` — Tomba-style main-menu hang:
+`MenuRagdollBase.EnsureHangingPhysics()` — rope-ladder-style main-menu hang:
 
 | Piece | Mechanism |
 |-------|-----------|

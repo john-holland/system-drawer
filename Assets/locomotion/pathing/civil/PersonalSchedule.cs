@@ -9,7 +9,7 @@ public sealed class PersonalScheduleSlot
     public CivilianDutyKind duty = CivilianDutyKind.Leisure;
     public string venueStableId;
     public GameObject venueTarget;
-    public string hoursCron = "* 9-17 * * 1-5";
+    [CronExpr] public string hoursCron = "* 9-17 * * 1-5";
     public int priority = 50;
 }
 

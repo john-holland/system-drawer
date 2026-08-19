@@ -11,7 +11,22 @@ public enum CityPixelLayerKind
     Protest = 3,
     Construction = 4,
     TrafficBlock = 5,
-    Custom = 6
+    Custom = 6,
+    Cells = 7,
+    Walls = 8,
+    Doors = 9,
+    Yard = 10,
+    Support = 11,
+    TunnelStress = 12,
+    SurfaceMaterial = 13,
+    Sidewalk = 14,
+    Street = 15,
+    Driveway = 16,
+    Garage = 17,
+    HouseFront = 18,
+    HouseLeft = 19,
+    HouseRight = 20,
+    HouseBack = 21
 }
 
 public enum CityPixelBrushKind
@@ -27,7 +42,10 @@ public enum CityPixelBrushKind
     Sign = 8,
     BuildingTypeSeparator = 9,
     IntersectionTypeSeparator = 10,
-    PlaceableTypeSeparator = 11
+    PlaceableTypeSeparator = 11,
+    Cell = 12,
+    DrivewayLot = 13,
+    GarageLot = 14
 }
 
 [Serializable]
@@ -101,7 +119,7 @@ public sealed class CityPixelBrushStamp
     [Tooltip("Detour / roadside decor prefabs facing out from the street.")]
     public GameObject[] detourPrefabs;
     public float stopRadius = 8f;
-    public string scheduleCron = "0 7-9 * * 1-5";
+    [CronExpr] public string scheduleCron = "0 7-9 * * 1-5";
     public float avoidCostMultiplier = 3f;
     public float slowRadius = 12f;
     [Tooltip("Story height in cells for this stamp (chunk height = max).")]
@@ -116,6 +134,9 @@ public sealed class CityPixelBrushStamp
     public string zoneId;
     [Tooltip("Optional floor-plan map override for this stamp/chunk.")]
     public FloorPlanIndexMap floorPlanIndexMap;
+    [Range(0f, 1f)] public float tunnelStress01;
+    public bool wallDestructible = true;
+    public bool diggable = true;
 }
 
 [Serializable]
@@ -308,7 +329,97 @@ public sealed class CityPixelGrid : ScriptableObject
             case CityPixelBrushKind.BuildingTypeSeparator: return new Color(0.35f, 0.15f, 0.1f, 0.85f);
             case CityPixelBrushKind.IntersectionTypeSeparator: return new Color(0.55f, 0.55f, 0.1f, 0.85f);
             case CityPixelBrushKind.PlaceableTypeSeparator: return new Color(0.4f, 0.2f, 0.45f, 0.85f);
+            case CityPixelBrushKind.Cell: return new Color(0.45f, 0.35f, 0.2f);
+            case CityPixelBrushKind.DrivewayLot: return new Color(0.45f, 0.45f, 0.48f);
+            case CityPixelBrushKind.GarageLot: return new Color(0.4f, 0.38f, 0.35f);
             default: return Color.gray;
         }
+    }
+
+    public void EnsurePrisonLayers()
+    {
+        EnsureLayersAndFrames();
+        AddLayerIfMissing("cells", CityPixelLayerKind.Cells, new Color(0.45f, 0.35f, 0.2f));
+        AddLayerIfMissing("walls", CityPixelLayerKind.Walls, new Color(0.35f, 0.35f, 0.38f));
+        AddLayerIfMissing("doors", CityPixelLayerKind.Doors, new Color(0.7f, 0.45f, 0.2f));
+        AddLayerIfMissing("yard", CityPixelLayerKind.Yard, new Color(0.25f, 0.55f, 0.25f));
+        AddLayerIfMissing("support", CityPixelLayerKind.Support, new Color(0.55f, 0.55f, 0.6f));
+        AddLayerIfMissing("tunnel_stress", CityPixelLayerKind.TunnelStress, new Color(0.85f, 0.2f, 0.15f));
+        AddLayerIfMissing("surface_material", CityPixelLayerKind.SurfaceMaterial, new Color(0.5f, 0.4f, 0.3f));
+        EnsureLayersAndFrames();
+    }
+
+    public void EnsureHouseLayers()
+    {
+        EnsureLayersAndFrames();
+        AddLayerIfMissing("street", CityPixelLayerKind.Street, new Color(0.32f, 0.32f, 0.36f));
+        AddLayerIfMissing("sidewalk", CityPixelLayerKind.Sidewalk, new Color(0.72f, 0.72f, 0.7f));
+        AddLayerIfMissing("yard", CityPixelLayerKind.Yard, new Color(0.25f, 0.55f, 0.25f));
+        AddLayerIfMissing("driveway", CityPixelLayerKind.Driveway, new Color(0.45f, 0.45f, 0.48f));
+        AddLayerIfMissing("garage", CityPixelLayerKind.Garage, new Color(0.4f, 0.38f, 0.35f));
+        AddLayerIfMissing("house_front", CityPixelLayerKind.HouseFront, new Color(0.75f, 0.55f, 0.4f));
+        AddLayerIfMissing("house_left", CityPixelLayerKind.HouseLeft, new Color(0.7f, 0.5f, 0.38f));
+        AddLayerIfMissing("house_right", CityPixelLayerKind.HouseRight, new Color(0.68f, 0.48f, 0.36f));
+        AddLayerIfMissing("house_back", CityPixelLayerKind.HouseBack, new Color(0.62f, 0.44f, 0.34f));
+        EnsureLayersAndFrames();
+    }
+
+    void AddLayerIfMissing(string id, CityPixelLayerKind kind, Color color)
+    {
+        for (int i = 0; i < layers.Count; i++)
+            if (layers[i] != null && layers[i].layerId == id) return;
+        layers.Add(new CityPixelLayer { layerId = id, kind = kind, color = color });
+    }
+
+    /// <summary>Export painted cell/door/wall clusters as Bounds4 payloads (PrisonCellVolume / DigContactCentroid).</summary>
+    public List<Bounds4> ExportPrisonClustersToBounds4(int frameIndex)
+    {
+        var volumes = new List<Bounds4>();
+        EnsureLayersAndFrames();
+        frameIndex = Mathf.Clamp(frameIndex, 0, Mathf.Max(0, frameCount - 1));
+        ExportKindClusters(CityPixelLayerKind.Cells, frameIndex, volumes);
+        ExportKindClusters(CityPixelLayerKind.Doors, frameIndex, volumes);
+        ExportKindClusters(CityPixelLayerKind.Walls, frameIndex, volumes);
+        return volumes;
+    }
+
+    void ExportKindClusters(CityPixelLayerKind kind, int frameIndex, List<Bounds4> into)
+    {
+        CityPixelLayer layer = null;
+        for (int i = 0; i < layers.Count; i++)
+            if (layers[i] != null && layers[i].kind == kind) { layer = layers[i]; break; }
+        if (layer == null || layer.frames == null || frameIndex >= layer.frames.Count) return;
+        var frame = layer.frames[frameIndex];
+        bool[] seen = new bool[width * height];
+        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+        {
+            int i = x + y * width;
+            if (seen[i] || frame.Get(x, y, width) == 0) continue;
+            int minX = x, maxX = x, minY = y, maxY = y;
+            var q = new Queue<Vector2Int>();
+            q.Enqueue(new Vector2Int(x, y));
+            seen[i] = true;
+            while (q.Count > 0)
+            {
+                var p = q.Dequeue();
+                minX = Mathf.Min(minX, p.x); maxX = Mathf.Max(maxX, p.x);
+                minY = Mathf.Min(minY, p.y); maxY = Mathf.Max(maxY, p.y);
+                TryFlood(frame, seen, q, p.x + 1, p.y);
+                TryFlood(frame, seen, q, p.x - 1, p.y);
+                TryFlood(frame, seen, q, p.x, p.y + 1);
+                TryFlood(frame, seen, q, p.x, p.y - 1);
+            }
+            into.Add(CellClusterToBounds4(minX, minY, maxX, maxY, frameIndex));
+        }
+    }
+
+    void TryFlood(CityPixelFrame frame, bool[] seen, Queue<Vector2Int> q, int x, int y)
+    {
+        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        int i = x + y * width;
+        if (seen[i] || frame.Get(x, y, width) == 0) return;
+        seen[i] = true;
+        q.Enqueue(new Vector2Int(x, y));
     }
 }

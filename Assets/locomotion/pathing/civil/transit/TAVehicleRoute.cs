@@ -9,8 +9,8 @@ public sealed class TAVehicleRoute
     public string routeId;
     public string vehicleId;
     public string label;
-    public string serviceCron = "* 6-22 * * 1-5";
-    public string maintenanceCron = "0 2 * * 0";
+    [CronExpr] public string serviceCron = "* 6-22 * * 1-5";
+    [CronExpr] public string maintenanceCron = "0 2 * * 0";
     public List<string> stopIds = new List<string>();
     public List<Vector3> stopWorld = new List<Vector3>();
     public bool enabled = true;

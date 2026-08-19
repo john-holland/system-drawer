@@ -23,6 +23,7 @@ public sealed class FloorPlanDirectoryEntry
 [Serializable]
 public sealed class FloorPlanFloor
 {
+    [Tooltip("House convention: first=1, basement=0, sub-basement=-1 (HouseFloorIndex).")]
     public int floorIndex;
     public string label = "Floor";
     public List<FloorPlanZoneCell> cells = new List<FloorPlanZoneCell>();

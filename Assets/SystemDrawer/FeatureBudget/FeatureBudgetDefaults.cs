@@ -77,6 +77,8 @@ public static class FeatureBudgetDefaults
                 new[] { "Factory", "FactoryLine", "FactoryBio" }, null, false),
             Entry(FeatureBudgetIds.ParkourFall, "Parkour Fall BT", 30,
                 new[] { "ParkourFall", "ParkourLand" }, null, true),
+            Entry(FeatureBudgetIds.Digging, "Digging / Tunnel SPH", 31,
+                new[] { "Digging", "TopologicalDig", "TunnelSupport", "DigScoop" }, null, true),
         };
     }
 

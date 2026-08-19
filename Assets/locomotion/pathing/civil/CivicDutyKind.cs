@@ -25,7 +25,21 @@ public enum CivilianDutyKind
     PrivateLeisure = 10,
     GatherHomeless = 11,
     GatherKids = 12,
-    FakeLibraryCard = 13
+    FakeLibraryCard = 13,
+    PrisonCustody = 14,
+    PrisonYard = 15,
+    PrisonCafeteria = 16,
+    PrisonClinic = 17,
+    PrisonParole = 18,
+    PrisonRehabOuting = 19,
+    PrisonLibrary = 20,
+    PrisonFarm = 21,
+    PrisonWeights = 22,
+    PrisonNursery = 23,
+    JobSearch = 24,
+    BenefitsClaim = 25,
+    CareerInterview = 26,
+    JobTraining = 27
 }
 
 /// <summary>Physics material class for impulse memory tau selection.</summary>

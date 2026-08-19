@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Webcam Animations — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/webcam-animations/webcam-anim.css" />
+</head>
+<body class="wa-page">
+  <div id="continuuuum-nav-root"></div>
+  <main class="wa-main">
+    <header class="wa-header">
+      <div>
+        <h1>Webcam / video IK takes</h1>
+        <p class="wa-sub">Capture a clip, pick a catalog model_spec, enqueue, then View in the library WebGL editor.</p>
+      </div>
+      <button type="button" id="wa-refresh">Refresh</button>
+    </header>
+
+    <section class="wa-panel">
+      <h2>New recording</h2>
+      <div class="wa-preview-well">
+        <video id="wa-live" autoplay playsinline muted></video>
+      </div>
+      <p class="wa-meta">
+        <button type="button" id="wa-webcam-start">Start webcam</button>
+        <button type="button" id="wa-webcam-stop">Stop</button>
+      </p>
+      <form id="wa-form" class="wa-form">
+        <label>Kind
+          <select name="webcamAnimKind">
+            <option value="ambulatory">Ambulatory</option>
+            <option value="vehicle">Vehicle</option>
+            <option value="dance">Dance</option>
+            <option value="misc">Misc</option>
+          </select>
+        </label>
+        <label>Detector profile
+          <select name="detectorProfileId" id="wa-detector-profile"></select>
+        </label>
+        <label>Pinned model spec
+          <input id="wa-pinned-spec" readonly placeholder="from profile" />
+        </label>
+        <label>Model spec
+          <select name="model_spec" id="wa-model-spec">
+            <option value="__custom__">Custom…</option>
+          </select>
+        </label>
+        <label>Custom model spec
+          <input name="model_spec_custom" id="wa-model-spec-custom" placeholder="family@variant" />
+        </label>
+        <label>Subsection <input name="subsection" placeholder="takeoff_roll_0" /></label>
+        <label>Animation list index <input name="animationListIndex" type="number" value="0" /></label>
+        <label>Start ms <input name="timelineStartMs" type="number" value="0" /></label>
+        <label>End ms <input name="timelineEndMs" type="number" value="1000" /></label>
+        <label>Granularity
+          <select name="granularity">
+            <option value="decimillisecond">decimillisecond</option>
+            <option value="millisecond" selected>millisecond</option>
+            <option value="centisecond">centisecond</option>
+            <option value="decisecond">decisecond</option>
+            <option value="second">second</option>
+            <option value="decasecond">decasecond</option>
+            <option value="minute">minute</option>
+          </select>
+        </label>
+        <label>Target hint <input name="targetHint" value="ragdoll" placeholder="magneto_bt|toaster|ragdoll" /></label>
+        <label>Species (MoCapAnything) <input name="species" placeholder="Lion" /></label>
+        <label>Library doc id <input name="libraryDocId" placeholder="optional USC id" /></label>
+        <label>Video file <input id="wa-file" name="file" type="file" accept="video/*" /></label>
+        <button type="submit">Save (enqueue)</button>
+      </form>
+      <div class="wa-preview-well">
+        <video id="wa-file-preview" controls playsinline></video>
+      </div>
+      <p id="wa-status" class="wa-meta"></p>
+    </section>
+
+    <section class="wa-panel">
+      <h2>Recordings</h2>
+      <p class="wa-meta">Queued and running jobs show In progress until a View link to the WebGL editor is ready.</p>
+      <ul id="wa-list" class="wa-list"></ul>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/webcam-animations/webcam-anim.js"></script>
+</body>
+</html>

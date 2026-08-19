@@ -171,8 +171,18 @@ def test_seed_marks_builtin_vocabulary_implemented(app_client):
     s = summary(conn, scope="all")
     assert s["implemented"] >= 200
     assert s["builtin"] >= 200
-    # Civil / life systems from registry export
-    for term in ("factory", "gas-station", "transit-hub", "sanitation", "heart"):
+    # Civil / life systems / structural chat from registry export
+    for term in (
+        "factory",
+        "gas-station",
+        "transit-hub",
+        "sanitation",
+        "heart",
+        "open-chat",
+        "close-chat",
+        "word-bank",
+        "chat-session",
+    ):
         row = conn.execute(
             "SELECT is_builtin, is_implemented FROM lemma_completion WHERE lower(term) = ?",
             (term,),

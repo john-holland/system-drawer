@@ -22,6 +22,10 @@ namespace Locomotion.Narrative
         public string speakerKey;
         public string visMode = "auto";
         public string audioRef;
+        public string dialogActorId;
+        public int charStart;
+        public int charEnd;
+        public float seconds;
         public List<string> options = new List<string>();
         public List<DialogueNodeDto> children = new List<DialogueNodeDto>();
     }

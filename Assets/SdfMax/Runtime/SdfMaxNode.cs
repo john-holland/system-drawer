@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SdfMax
@@ -34,5 +35,12 @@ namespace SdfMax
         public int planarFeatureIndex = -1;
         public float sphereRadius = 1f;
         public float stampFootprintMeters = 100f;
+
+        [Header("Torus / extrusion")]
+        public float torusMajorRadius = 1f;
+        public float torusMinorRadius = 0.2f;
+        public float extrusionRadius = 0.08f;
+        public Vector3 extrusionEnd = new Vector3(1f, 0f, 0f);
+        public List<Vector3> extrusionPath = new List<Vector3>();
     }
 }

@@ -124,6 +124,31 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_StructuralChatOpenCloseLemmas()
+    {
+        Assert.AreEqual(VocabularyBuiltInIds.EnChat, VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "chat"));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(VocabularyBuiltInIds.EnChat));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(VocabularyBuiltInIds.EnOpenChat));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(VocabularyBuiltInIds.EnCloseChat));
+        string wordBank = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "word-bank");
+        string send = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "send");
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(wordBank));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(send));
+        var chat = VocabularyBuiltInRegistry.TryGetById(VocabularyBuiltInIds.EnChat).Value;
+        Assert.IsTrue(System.Linq.Enumerable.Contains(chat.Tags, "structural-chat"));
+        Assert.IsTrue(System.Linq.Enumerable.Contains(chat.Tags, "open-close"));
+    }
+
+    [Test]
+    public void BuiltInSynonyms_OpenCloseChatPhrases_MapToCanonicalLemma()
+    {
+        Assert.AreEqual("open-chat", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "open", "chat" }));
+        Assert.AreEqual("close-chat", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "close", "the", "chat" }));
+        Assert.AreEqual("chat", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "chat", "window" }));
+        Assert.AreEqual("word-bank", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "word", "bank" }));
+    }
+
+    [Test]
     public void JsonExport_MatchesRegistryCount()
     {
         var path = VocabularyBuiltInJsonExporter.Export();

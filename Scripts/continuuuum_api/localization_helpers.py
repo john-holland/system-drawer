@@ -468,6 +468,7 @@ def effective_properties_for_span(
     draft_episode_id: str,
     char_start: int,
     char_end: int,
+    dimension: int | None = None,
 ) -> dict:
     from thesaurus.clause_audit import resolve_effective_properties
 
@@ -484,10 +485,23 @@ def effective_properties_for_span(
         specs[r["key"]] = r["default_value"]
 
     entry_props: Dict[str, str] = {}
+    dim_index = int(dimension) if dimension is not None else 0
     for b in bindings:
         eid = b.get("entry_id")
         if not eid:
             continue
+        if dim_index != 0:
+            try:
+                from continuuuum_api import game_dimension_dao as gd_dao
+            except ImportError:
+                try:
+                    import game_dimension_dao as gd_dao  # type: ignore
+                except ImportError:
+                    gd_dao = None  # type: ignore
+            if gd_dao is not None:
+                for k, v in gd_dao.resolve_entry_properties(conn, eid, dim_index).items():
+                    entry_props[k] = v
+                continue
         for r in conn.execute(
             "SELECT property_key, property_value FROM thesaurus_entry_properties WHERE entry_id = ?",
             (eid,),
@@ -497,7 +511,15 @@ def effective_properties_for_span(
     effective = {}
     for key in specs:
         val = resolve_effective_properties(
-            key, bindings, entry_props, specs, char_start, char_end, None
+            key,
+            bindings,
+            entry_props,
+            specs,
+            char_start,
+            char_end,
+            None,
+            dimension=dim_index if dimension is not None else None,
+            dimension_entry_properties=entry_props if dimension is not None else None,
         )
         if val is not None:
             effective[key] = val

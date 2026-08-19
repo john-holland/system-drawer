@@ -26,6 +26,24 @@ test('movePrioritySlot reorders adjacent slots', () => {
   assert.equal(moved[1], base[0]);
 });
 
+test('GROUPS includes enabled models-config', () => {
+  const group = CS.GROUPS.find((g) => g.id === 'models-config');
+  assert.ok(group);
+  assert.equal(group.enabled, true);
+  assert.equal(group.label, 'Models / Configuration');
+  assert.equal(CS.DEFAULT_MODELS_CONFIG.detectorProfileId, 'human-mediapipe-v1');
+});
+
+test('GROUPS includes admin-only asset-owners and leaves table-read disabled', () => {
+  const owners = CS.GROUPS.find((g) => g.id === 'asset-owners');
+  assert.ok(owners);
+  assert.equal(owners.enabled, true);
+  assert.equal(owners.adminOnly, true);
+  const tr = CS.GROUPS.find((g) => g.id === 'table-read');
+  assert.ok(tr);
+  assert.equal(tr.enabled, false);
+});
+
 test('save and load round-trip scriptOutput settings', () => {
   const prev = global.localStorage;
   const store = new Map();

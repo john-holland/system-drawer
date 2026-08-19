@@ -124,9 +124,22 @@ def _get_mod_detail(conn: sqlite3.Connection, mod_id: str) -> dict[str, Any] | N
     }
 
 
+try:
+    from continuuuum_api.gd_route_annotations import accepts_game_dimension
+except ImportError:
+    try:
+        from gd_route_annotations import accepts_game_dimension  # type: ignore
+    except ImportError:
+
+        def accepts_game_dimension(fn):  # type: ignore
+            return fn
+
+
 def register_mod_routes(app, get_conn: GetConn, get_user: GetUser) -> None:
     @app.route("/api/mods/registry", methods=["GET"])
+    @accepts_game_dimension
     def mods_registry():
+        """Query/headers: game, dimension (X-Game, X-Dimension)."""
         conn = get_conn()
         ensure_mayor_dog_mods_schema(conn)
         rows = conn.execute(
@@ -153,7 +166,9 @@ def register_mod_routes(app, get_conn: GetConn, get_user: GetUser) -> None:
         return jsonify({"items": items}), 200
 
     @app.route("/api/mods/moddable-targets", methods=["GET"])
+    @accepts_game_dimension
     def get_moddable_targets():
+        """Query/headers: game, dimension (X-Game, X-Dimension)."""
         entry_id = request.args.get("entryId") or request.args.get("entry_id")
         draft_id = request.args.get("draftEpisodeId") or request.args.get("draft_episode_id")
         kind = request.args.get("targetKind") or request.args.get("target_kind")

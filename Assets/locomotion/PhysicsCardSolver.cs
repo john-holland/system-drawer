@@ -53,6 +53,9 @@ public class PhysicsCardSolver : MonoBehaviour
         set => onlyAllowAmbulationExtentsForWalkingField = value;
     }
 
+    [Tooltip("When true, skip ambulation-extent walking filter (digging while walking).")]
+    public bool skipAmbulationWalkingFilter;
+
     [System.Obsolete("Use onlyAllowAmbulationExtentsForWalking.")]
     public bool onlyAllowLegsForWalking
     {
@@ -319,6 +322,8 @@ public class PhysicsCardSolver : MonoBehaviour
             return new List<PhysicsCard> { TravelAgentCard.GenerateDefault(goal.target) };
         if (goal.type == GoalType.Plumbing)
             return new List<PhysicsCard> { ConsiderPlumbingCards.MakeDefaultCard() };
+        if (goal.type == GoalType.Construction)
+            return new List<PhysicsCard> { ConstructionPhaseCard.GenerateDefault(goal.targetPosition) };
 
         return new List<PhysicsCard>();
     }
@@ -651,6 +656,16 @@ public class PhysicsCardSolver : MonoBehaviour
             }
         }
 
+        if (goal.type == GoalType.Construction)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                if (card is ConstructionPhaseCard)
+                    return card;
+            }
+        }
+
         // Eat
         if (goal.type == GoalType.Eat)
         {
@@ -851,7 +866,7 @@ public class PhysicsCardSolver : MonoBehaviour
         if (cards == null)
             return new List<PhysicsCard>();
 
-        if (!onlyAllowAmbulationExtentsForWalkingField)
+        if (!onlyAllowAmbulationExtentsForWalkingField || skipAmbulationWalkingFilter)
             return new List<PhysicsCard>(cards);
 
         List<PhysicsCard> filtered = new List<PhysicsCard>();

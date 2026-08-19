@@ -11,6 +11,7 @@ Canonical Continuuuum inventory of the **65** Natural Semantic Metalanguage Engl
 | `nsm_prime_associations_en.json` | Pairwise causality / temporal / fuzzy_hedge edges |
 | `nsm_fuzzy_hedges_en.json` | Phrase hedges + adjustable membership curves |
 | `builtin_vocabulary.json` | Exported Unity builtins (must tag every prime with `nsm` + `prime`) |
+| [builtin_vocabulary_README.md](builtin_vocabulary_README.md) | Export → completion sync, hyphen/space parse notes |
 
 Unity: `VocabularyBuiltInRegistry.cs` (`TagOrAddPrime`), gameplay via `{P:nsm|term=…}` → `NsmPrimeLemmaResolver`.
 

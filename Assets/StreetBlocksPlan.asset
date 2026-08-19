@@ -1,0 +1,1439 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5367a733c04f74c41a293ba2ed2b28f6, type: 3}
+  m_Name: StreetBlocksPlan
+  m_EditorClassIdentifier: Locomotion.Runtime::StreetBlocksPlanAsset
+  width: 32
+  height: 32
+  cellWorldSize: 4
+  worldOrigin: {x: 0, y: 0, z: 0}
+  layers:
+  - layerId: deep
+    kind: 0
+    depthMinM: -50
+    depthMaxM: -10
+    visible: 1
+    cells:
+    - x: 15
+      y: 4
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 5
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 6
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 7
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 8
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 9
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 10
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 11
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 12
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 13
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 14
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 15
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 16
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 17
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 18
+      brush: 1
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 17
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 21
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 22
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 23
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 8
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 0
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 9
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 10
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 11
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 11
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 12
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 13
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 13
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 14
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 15
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 15
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 16
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 17
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 18
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 20
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 19
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 25
+      y: 18
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 24
+      y: 9
+      brush: 3
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 18
+      brush: 4
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 14
+      brush: 4
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 10
+      brush: 4
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+  - layerId: utility
+    kind: 1
+    depthMinM: -5
+    depthMaxM: 0
+    visible: 1
+    cells: []
+  - layerId: street
+    kind: 2
+    depthMinM: 0
+    depthMaxM: 0
+    visible: 1
+    cells:
+    - x: 17
+      y: 4
+      brush: 4
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 11
+      brush: 4
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 17
+      y: 11
+      brush: 4
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 17
+      brush: 4
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 7
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 8
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 9
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 10
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 11
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 12
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 13
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 14
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 15
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 17
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 12
+      y: 16
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 7
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 8
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 14
+      y: 8
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 14
+      y: 9
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 14
+      y: 10
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 14
+      y: 11
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 12
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 13
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 14
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 15
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 16
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 14
+      y: 17
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 14
+      y: 18
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 7
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 8
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 9
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 10
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 11
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 12
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 13
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 14
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 15
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 16
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 17
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 13
+      y: 18
+      brush: 2
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 12
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 8
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 13
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 18
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 18
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 18
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 17
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 16
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 16
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 16
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 17
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 17
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 13
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 13
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 12
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 11
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 11
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 11
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 12
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 12
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 8
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 8
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 7
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 7
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 7
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 9
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 9
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 9
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 10
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 10
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 10
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 23
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 23
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 23
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 24
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 25
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 26
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 27
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 27
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 27
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 26
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 25
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 24
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 24
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 25
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 26
+      brush: 6
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 40
+      phonePoleConfig: {fileID: 0}
+      show: 1
+  - layerId: podium
+    kind: 3
+    depthMinM: 15
+    depthMaxM: 20
+    visible: 1
+    cells: []
+  - layerId: midrise
+    kind: 4
+    depthMinM: 20
+    depthMaxM: 150
+    visible: 1
+    cells: []
+  - layerId: sky
+    kind: 5
+    depthMinM: 150
+    depthMaxM: 300
+    visible: 1
+    cells: []
+  - layerId: air
+    kind: 6
+    depthMinM: 300
+    depthMaxM: 1000
+    visible: 1
+    cells:
+    - x: 15
+      y: 8
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 9
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 17
+      y: 9
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 9
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 8
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 8
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 8
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 21
+      y: 8
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 15
+      y: 12
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 16
+      y: 12
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 17
+      y: 12
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 18
+      y: 13
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 19
+      y: 13
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 13
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+    - x: 20
+      y: 12
+      brush: 9
+      laneCount: 3
+      oneWayYawDegrees: 90.4
+      buildingTypeId: 
+      structureSizeM: 6
+      phonePoleConfig: {fileID: 0}
+      show: 1
+  streetLinks:
+  - a: {x: 12, y: 7}
+    b: {x: 12, y: 8}
+  - a: {x: 14, y: 8}
+    b: {x: 14, y: 9}
+  - a: {x: 15, y: 8}
+    b: {x: 14, y: 8}
+  - a: {x: 15, y: 7}
+    b: {x: 15, y: 8}
+  - a: {x: 12, y: 16}
+    b: {x: 13, y: 16}
+  - a: {x: 12, y: 17}
+    b: {x: 13, y: 17}
+  - a: {x: 12, y: 17}
+    b: {x: 12, y: 16}
+  - a: {x: 12, y: 15}
+    b: {x: 13, y: 15}
+  - a: {x: 12, y: 15}
+    b: {x: 12, y: 16}
+  - a: {x: 12, y: 14}
+    b: {x: 13, y: 14}
+  - a: {x: 12, y: 14}
+    b: {x: 12, y: 15}
+  - a: {x: 12, y: 13}
+    b: {x: 13, y: 13}
+  - a: {x: 12, y: 13}
+    b: {x: 12, y: 14}
+  - a: {x: 12, y: 12}
+    b: {x: 13, y: 12}
+  - a: {x: 12, y: 12}
+    b: {x: 12, y: 13}
+  - a: {x: 12, y: 11}
+    b: {x: 13, y: 11}
+  - a: {x: 12, y: 11}
+    b: {x: 12, y: 12}
+  - a: {x: 12, y: 10}
+    b: {x: 13, y: 10}
+  - a: {x: 12, y: 10}
+    b: {x: 12, y: 11}
+  - a: {x: 12, y: 9}
+    b: {x: 13, y: 9}
+  - a: {x: 14, y: 8}
+    b: {x: 13, y: 8}
+  - a: {x: 12, y: 9}
+    b: {x: 12, y: 10}
+  - a: {x: 14, y: 9}
+    b: {x: 14, y: 10}
+  - a: {x: 14, y: 10}
+    b: {x: 14, y: 11}
+  - a: {x: 13, y: 8}
+    b: {x: 13, y: 9}
+  - a: {x: 13, y: 7}
+    b: {x: 13, y: 8}
+  - a: {x: 14, y: 18}
+    b: {x: 13, y: 18}
+  - a: {x: 14, y: 17}
+    b: {x: 13, y: 17}
+  - a: {x: 14, y: 17}
+    b: {x: 14, y: 18}
+  - a: {x: 15, y: 15}
+    b: {x: 15, y: 16}
+  - a: {x: 15, y: 14}
+    b: {x: 15, y: 15}
+  - a: {x: 15, y: 13}
+    b: {x: 15, y: 14}
+  - a: {x: 15, y: 12}
+    b: {x: 15, y: 13}
+  - a: {x: 12, y: 8}
+    b: {x: 13, y: 8}
+  - a: {x: 15, y: 12}
+    b: {x: 13, y: 12}
+  trashMinZoom: 0.6
+  phonePoleMinZoom: 0.5

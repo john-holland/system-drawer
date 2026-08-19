@@ -144,3 +144,96 @@ body.continuuuum-settings {
 #cs-status.is-error {
   color: #c62828;
 }
+
+.cs-section {
+  margin: 0 0 28px;
+}
+
+.cs-section h2 {
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
+
+.cs-catalog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.cs-catalog-table th,
+.cs-catalog-table td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.cs-catalog-table input[type="text"],
+.cs-catalog-table select {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  font: inherit;
+}
+
+.cs-catalog-table input[type="checkbox"] {
+  width: auto;
+}
+
+.cs-webcam-preview {
+  background: #1a1a1a;
+  border-radius: 6px;
+  padding: 8px;
+  margin: 8px 0 12px;
+  max-width: 480px;
+}
+
+.cs-webcam-preview video {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  background: #000;
+}
+
+.cs-capture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.cs-capture-grid label {
+  margin: 0;
+}
+
+.cs-recordings {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.cs-recordings li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.cs-in-progress {
+  color: #1565c0;
+  font-weight: 600;
+}
+
+.cs-failed {
+  color: #c62828;
+}
+
+.cs-recordings a {
+  color: #1a56db;
+}

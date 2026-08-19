@@ -47,6 +47,23 @@ public sealed class BuildingRequirementSpec : ScriptableObject
         {
             list.Add(Slot("reception", "Morning reception", true));
             list.Add(Slot("classroom", "Classroom", true));
+            list.Add(Slot("desk", "Learning desk", false));
+            list.Add(Slot("computer", "Computer station", false));
+            list.Add(Slot("phone", "Phone station", false));
+        }
+        if (id.Contains("library"))
+        {
+            list.Add(Slot("desk", "Reading desk", false));
+            list.Add(Slot("computer", "Catalog computer", false));
+            list.Add(Slot("phone", "Reference phone", false));
+        }
+        if (id.Contains("unemployment") || id.Contains("job_center") || id == "dol"
+            || id.Contains("employment_office"))
+        {
+            list.Add(Slot("intake_desk", "Intake desk", true));
+            list.Add(Slot("interview_room", "Interview room", true));
+            list.Add(Slot("job_board", "Job board", true));
+            list.Add(Slot("benefits_window", "Benefits window", false));
         }
         if (id.Contains("church"))
         {
@@ -57,6 +74,27 @@ public sealed class BuildingRequirementSpec : ScriptableObject
         {
             list.Add(Slot("holding", "Holding / booking", true));
             list.Add(Slot("garage", "Car repair / garage", false));
+        }
+        if (id.Contains("prison") || id.Contains("jail") || id.Contains("corrections"))
+        {
+            list.Add(Slot("cells", "Cells", true));
+            list.Add(Slot("armory", "Keys / armory", true));
+            list.Add(Slot("guard_post", "Guard post", true));
+            list.Add(Slot("yard", "Yard", true));
+            list.Add(Slot("weights", "Weight lifting", false));
+            list.Add(Slot("nursery", "Nursery", false));
+            list.Add(Slot("farm", "Farm", false));
+            list.Add(Slot("rehab_gate", "Rehab / outing gate", false));
+            list.Add(Slot("library", "Library", false));
+            list.Add(Slot("nurse", "Nurse station", true));
+            list.Add(Slot("er", "ER", false));
+            list.Add(Slot("or", "OR", false));
+            list.Add(Slot("meeting_chamber", "Meeting chamber", true));
+            list.Add(Slot("group_chamber", "Group meeting chamber", false));
+            list.Add(Slot("interrogation", "Interrogation", true));
+            list.Add(Slot("cafeteria", "Cafeteria stations + commodities", true));
+            list.Add(Slot("parole_board", "Parole board", true));
+            list.Add(Slot("warden_office", "Warden office", true));
         }
         if (id.Contains("gym"))
         {
@@ -81,6 +119,10 @@ public sealed class BuildingRequirementSpec : ScriptableObject
             list.Add(Slot("eaves", "Eaves", false));
             list.Add(Slot("gutters", "Gutters", false));
             list.Add(Slot("windows", "Windows", false));
+            list.Add(Slot("window_sill", "Window sill", false));
+            list.Add(Slot("window_trim", "Window trim", false));
+            list.Add(Slot("window_shutters", "Window shutters", false));
+            list.Add(Slot("window_shade", "Window shade", false));
             list.Add(Slot("shed", "Shed", false));
             list.Add(Slot("guest_house", "Guest house", false));
             list.Add(Slot("playhouse", "Playhouse", false));
@@ -95,6 +137,21 @@ public sealed class BuildingRequirementSpec : ScriptableObject
             list.Add(Slot("cable", "Cable demarc", false));
             list.Add(Slot("fiber", "Fiber ONT", false));
             list.Add(Slot("electrical", "Electrical connection", true));
+            list.Add(Slot("dig_site", "Dig site", false));
+            list.Add(Slot("foundation", "Foundation", false));
+            list.Add(Slot("studs", "Studs", false));
+            list.Add(Slot("insulation", "Insulation", false));
+            list.Add(Slot("hvac", "HVAC", false));
+            list.Add(Slot("awning", "Awning", false));
+            list.Add(Slot("front_steps", "Front steps", false));
+            list.Add(Slot("front_walk", "Front walk", false));
+            list.Add(Slot("patio", "Patio", false));
+            list.Add(Slot("grass", "Grass", false));
+            list.Add(Slot("yard_features", "Yard features", false));
+            list.Add(Slot("railings", "Railings", false));
+            list.Add(Slot("deck", "Deck", false));
+            list.Add(Slot("fence", "Fence", false));
+            list.Add(Slot("garage_door", "Garage door", false));
         }
         if (id.Contains("nightclub") || id.Contains("night_club") || id.Contains("disco"))
         {

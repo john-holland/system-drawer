@@ -7,7 +7,7 @@ Floor/zone index for city placeable buildings (especially shared skyscraper shel
 | Field | Role |
 |-------|------|
 | `mapId` / `buildingStableId` | Stable identity for UI + narrative |
-| `floors[]` | Per-floor label, zone cells, directory entries, `attendantDialogTreeId` |
+| `floors[]` | Per-floor label, zone cells, directory entries, `attendantDialogTreeId`. House work uses [`HouseFloorIndex`](HouseConstruction.md): first=`1`, basement=`0`, sub-basement=`-1` |
 | `sharedSpaces[]` | Corridors / elevators (`tenantTypeKey` often `shared`) |
 
 ## Runtime host

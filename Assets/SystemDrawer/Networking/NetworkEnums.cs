@@ -14,6 +14,7 @@ public enum NetworkClientRole
 
 public enum TreeDimension
 {
+    Spatial2D,
     Spatial3D,
     Spatial4D
 }

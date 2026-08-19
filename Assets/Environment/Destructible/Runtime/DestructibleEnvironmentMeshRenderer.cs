@@ -163,6 +163,34 @@ namespace DestructibleEnvironment
 
         void DiscoverSources()
         {
+            var groups = RigidbodyPhysicsWalk.Collect(transform, true);
+            if (groups.Count > 0)
+            {
+                var filters = new List<MeshFilter>();
+                var rends = new List<Renderer>();
+                var cols = new List<Collider>();
+                for (int g = 0; g < groups.Count; g++)
+                {
+                    var group = groups[g];
+                    for (int i = 0; i < group.meshFilters.Count; i++)
+                        if (group.meshFilters[i] != null)
+                            filters.Add(group.meshFilters[i]);
+                    for (int i = 0; i < group.renderers.Count; i++)
+                        if (group.renderers[i] != null)
+                            rends.Add(group.renderers[i]);
+                    for (int i = 0; i < group.meshColliders.Count; i++)
+                        if (group.meshColliders[i] != null)
+                            cols.Add(group.meshColliders[i]);
+                }
+                if (sourceMeshFilters == null || sourceMeshFilters.Length == 0)
+                    sourceMeshFilters = filters.ToArray();
+                if (sourceRenderers == null || sourceRenderers.Length == 0)
+                    sourceRenderers = rends.ToArray();
+                if (sourceColliders == null || sourceColliders.Length == 0)
+                    sourceColliders = cols.ToArray();
+                return;
+            }
+
             if (sourceMeshFilters == null || sourceMeshFilters.Length == 0)
                 sourceMeshFilters = GetComponentsInChildren<MeshFilter>(true);
             if (sourceRenderers == null || sourceRenderers.Length == 0)

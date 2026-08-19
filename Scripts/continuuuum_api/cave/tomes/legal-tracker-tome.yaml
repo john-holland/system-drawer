@@ -13,6 +13,12 @@ machines:
   gateMachine:
     events:
       GET: legal_preordering_gate
+  docketMachine:
+    events:
+      DOCKET: legal_docket_entries
+      DOCKET_ADD: legal_docket_entries_create
+      WATCHLIST: legal_watchlist_list
+      WATCHLIST_ADD: legal_watchlist_create
 robotCopy:
   flows:
     list_cases:

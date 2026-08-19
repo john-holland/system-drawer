@@ -367,7 +367,8 @@ public sealed class PersonaDayManager : MonoBehaviour
             if (shifts == null && (venue.kind == CivilSystemKind.Airport || venue.kind == CivilSystemKind.BusDepot
                                    || venue.kind == CivilSystemKind.GasStation || venue.kind == CivilSystemKind.Park
                                    || venue.kind == CivilSystemKind.SanitationFacility
-                                   || venue.kind == CivilSystemKind.Factory))
+                                   || venue.kind == CivilSystemKind.Factory
+                                   || venue.kind == CivilSystemKind.Prison))
                 shifts = PersonaShiftManager.FindOrCreate(venue.contextOwner);
             shifts?.Tick(DateTime.UtcNow, venue);
         }

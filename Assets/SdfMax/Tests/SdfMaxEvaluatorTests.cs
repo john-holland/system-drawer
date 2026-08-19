@@ -53,5 +53,40 @@ namespace SdfMax.Tests
             Assert.Greater(eval.Sample(Vector3.zero, 0f), 0f);
             Object.DestroyImmediate(comp);
         }
+
+        [Test]
+        public void Torus_OnRing_IsInsideTube()
+        {
+            var comp = ScriptableObject.CreateInstance<SdfMaxCompositionAsset>();
+            comp.nodes.Add(new SdfMaxNode
+            {
+                op = SdfMaxOp.PrimitiveLeaf,
+                primitiveType = SdfPrimitiveType.Torus,
+                torusMajorRadius = 1f,
+                torusMinorRadius = 0.25f
+            });
+            comp.rootNodeIndex = 0;
+            var graph = new SdfMaxExpressionGraph(comp, null, Matrix4x4.identity);
+            Assert.Less(graph.SampleWorld(new Vector3(1f, 0f, 0f), 0f), 0f);
+            Assert.Greater(graph.SampleWorld(Vector3.zero, 0f), 0f);
+            Object.DestroyImmediate(comp);
+        }
+
+        [Test]
+        public void SplineExtrusion_AlongX_ContainsMidpoint()
+        {
+            var comp = ScriptableObject.CreateInstance<SdfMaxCompositionAsset>();
+            comp.nodes.Add(new SdfMaxNode
+            {
+                op = SdfMaxOp.PrimitiveLeaf,
+                primitiveType = SdfPrimitiveType.SplineExtrusion,
+                extrusionEnd = new Vector3(2f, 0f, 0f),
+                extrusionRadius = 0.2f
+            });
+            comp.rootNodeIndex = 0;
+            var graph = new SdfMaxExpressionGraph(comp, null, Matrix4x4.identity);
+            Assert.Less(graph.SampleWorld(new Vector3(1f, 0f, 0f), 0f), 0f);
+            Object.DestroyImmediate(comp);
+        }
     }
 }

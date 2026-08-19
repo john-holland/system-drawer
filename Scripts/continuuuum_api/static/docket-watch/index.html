@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Docket Watch — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1419; color: #e6edf3; }
+    main { padding: 1rem; max-width: 1100px; margin: 0 auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { border: 1px solid #30363d; padding: 0.4rem 0.5rem; text-align: left; }
+    th { background: #161b22; }
+    .hint { color: #8b949e; font-size: 0.85rem; }
+    button { background: #238636; color: #fff; border: none; border-radius: 4px; padding: 0.4rem 0.75rem; cursor: pointer; }
+    .meta { font-size: 0.8rem; color: #8b949e; }
+  </style>
+</head>
+<body>
+  <header id="continuuuum-nav-root"></header>
+  <main>
+    <h1>Living docket</h1>
+    <p class="hint">External litigation watch (Roblox MDL 3166 and AG actions). Continuuuum stays unrated; this docket does not gate editor/web chat.</p>
+    <button id="btn-refresh">Refresh</button>
+    <h2>External cases</h2>
+    <table>
+      <thead><tr><th>Title</th><th>Status</th><th>Court</th><th>MDL / AG</th></tr></thead>
+      <tbody id="cases"></tbody>
+    </table>
+    <h2>Watchlist</h2>
+    <table>
+      <thead><tr><th>Title</th><th>Jurisdiction</th><th>Agency</th><th>Status</th></tr></thead>
+      <tbody id="watch"></tbody>
+    </table>
+    <h2>Docket entries</h2>
+    <p class="hint">Select a case to load manual filings.</p>
+    <table>
+      <thead><tr><th>Case</th><th>Filed</th><th>Title</th><th>Kind</th></tr></thead>
+      <tbody id="docket"></tbody>
+    </table>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/docket-watch/docket-watch.js"></script>
+</body>
+</html>

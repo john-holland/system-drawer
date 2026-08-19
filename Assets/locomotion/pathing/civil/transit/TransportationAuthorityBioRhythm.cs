@@ -13,8 +13,8 @@ public sealed class TransportationAuthorityBioRhythm : DispatchBioRhythm
     [Header("Fleet / routes")]
     public List<TAVehicleRoute> vehicleRoutes = new List<TAVehicleRoute>();
     public List<BusVehicleRagdoll> fleet = new List<BusVehicleRagdoll>();
-    public string buildingHoursCron = "* 5-23 * * *";
-    public string buildingMaintenanceCron = "0 3 * * 0";
+    [CronExpr] public string buildingHoursCron = "* 5-23 * * *";
+    [CronExpr] public string buildingMaintenanceCron = "0 3 * * 0";
     [Range(0f, 1f)] public float fleetReadiness01 = 1f;
 
     [Header("Peers")]

@@ -21,7 +21,9 @@
   const GROUPS = [
     { id: 'script-output', label: 'Script Output', enabled: true },
     { id: 'lemma-library', label: 'Lemma Library', enabled: true },
+    { id: 'models-config', label: 'Models / Configuration', enabled: true },
     { id: 'civil-lod', label: 'Civil LOD', enabled: true },
+    { id: 'asset-owners', label: 'Asset owners', enabled: true, adminOnly: true },
     { id: 'table-read', label: 'Table Read', enabled: false },
   ];
 
@@ -46,6 +48,13 @@
     defaultEngine: 'unity',
   };
 
+  const DEFAULT_MODELS_CONFIG = {
+    modelSpec: 'mediapipe_holistic@v1',
+    kind: 'ambulatory',
+    totalConcurrency: 1,
+    detectorProfileId: 'human-mediapipe-v1',
+  };
+
   function deepClone(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
@@ -54,6 +63,7 @@
     return {
       scriptOutput: deepClone(DEFAULT_SCRIPT_OUTPUT),
       lemmaLibrary: deepClone(DEFAULT_LEMMA_LIBRARY),
+      modelsConfig: deepClone(DEFAULT_MODELS_CONFIG),
       civilLod: deepClone(DEFAULT_CIVIL_LOD),
     };
   }
@@ -111,6 +121,10 @@
           ...DEFAULT_LEMMA_LIBRARY,
           ...(parsed.lemmaLibrary || {}),
         },
+        modelsConfig: {
+          ...DEFAULT_MODELS_CONFIG,
+          ...(parsed.modelsConfig || {}),
+        },
         civilLod: {
           ...DEFAULT_CIVIL_LOD,
           ...(parsed.civilLod || {}),
@@ -134,6 +148,10 @@
       lemmaLibrary: {
         ...DEFAULT_LEMMA_LIBRARY,
         ...(settings.lemmaLibrary || {}),
+      },
+      modelsConfig: {
+        ...DEFAULT_MODELS_CONFIG,
+        ...(settings.modelsConfig || {}),
       },
       civilLod: {
         ...DEFAULT_CIVIL_LOD,
@@ -187,6 +205,7 @@
     CIVIL_KINDS,
     GROUPS,
     DEFAULT_LEMMA_LIBRARY,
+    DEFAULT_MODELS_CONFIG,
     DEFAULT_CIVIL_LOD,
     defaultSettings,
     normalizePriority,
@@ -226,6 +245,17 @@
         ...lemmaLibrary,
       };
       return saveRaw(all).lemmaLibrary;
+    },
+    getModelsConfig() {
+      return loadRaw().modelsConfig;
+    },
+    saveModelsConfig(modelsConfig) {
+      const all = loadRaw();
+      all.modelsConfig = {
+        ...DEFAULT_MODELS_CONFIG,
+        ...modelsConfig,
+      };
+      return saveRaw(all).modelsConfig;
     },
     getCivilLod() {
       return loadRaw().civilLod;

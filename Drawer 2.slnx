@@ -1,10 +1,10 @@
 ﻿<Solution>
   <Project Path="Locomotion.Runtime.csproj" />
   <Project Path="Continuuuum.Runtime.csproj" />
+  <Project Path="Locomotion.Editor.csproj" />
   <Project Path="Weather.Runtime.csproj" />
   <Project Path="SystemDrawer.Editor.csproj" />
   <Project Path="Planetary.csproj" />
-  <Project Path="Locomotion.Editor.csproj" />
   <Project Path="Locomotion.Tests.csproj" />
   <Project Path="Environment.Destructible.Runtime.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
@@ -34,13 +34,14 @@
   <Project Path="Weather.Editor.csproj" />
   <Project Path="Locomotion.Drink.Runtime.csproj" />
   <Project Path="SystemDrawer.Networking.Editor.csproj" />
+  <Project Path="SystemDrawer.Networking.csproj" />
   <Project Path="Locomotion.Narrative.Editor.csproj" />
   <Project Path="Locomotion.Open.Tests.csproj" />
   <Project Path="Continuuuum.Library.Runtime.csproj" />
+  <Project Path="Locomotion.Editor.Tests.csproj" />
   <Project Path="Locomotion.Liquid.Runtime.csproj" />
   <Project Path="Continuuuum.Society.csproj" />
   <Project Path="SdfMax.Editor.csproj" />
-  <Project Path="SystemDrawer.Networking.csproj" />
   <Project Path="SystemDrawer.Lemmas.Editor.csproj" />
   <Project Path="Environment.Destructible.Editor.csproj" />
   <Project Path="SystemDrawer.PerfTrace.csproj" />
@@ -48,13 +49,12 @@
   <Project Path="Locomotion.Drink.Tests.csproj" />
   <Project Path="Continuuuum.Tests.csproj" />
   <Project Path="Planetary.Editor.csproj" />
-  <Project Path="SystemDrawer.MemorySwizzle.Editor.csproj" />
   <Project Path="BedogaGenerator.Tests.csproj" />
+  <Project Path="SystemDrawer.MemorySwizzle.Editor.csproj" />
   <Project Path="Roads.Tests.csproj" />
   <Project Path="SystemDrawer.Tests.csproj" />
   <Project Path="Environment.Destructible.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Serialization.csproj" />
-  <Project Path="Locomotion.Editor.Tests.csproj" />
   <Project Path="Locomotion.Drink.Editor.csproj" />
   <Project Path="SystemDrawer.FeatureBudget.Tests.csproj" />
   <Project Path="Generated.Tests.csproj" />

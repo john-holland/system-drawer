@@ -12,6 +12,7 @@ Society snapshot features and DreamCycle need aspects **bias baselines only**. T
 | `taxRate` / `tax_rate` | liberalism |
 | `congressStability` / `congress_stability` | conservatism |
 | `welfareBenefits` / `welfare_benefits` | socialism, communism |
+| `unemploymentRate` / `unemployment_rate` | morale (down), socialism (up); baselines only. Fallback `1 - welfareBenefits` when the snapshot omits the key |
 
 ## Need aspect → channels
 

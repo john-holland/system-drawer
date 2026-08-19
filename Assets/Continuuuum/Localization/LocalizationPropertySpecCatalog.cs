@@ -68,6 +68,7 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildWrestlingPropertyRecords());
         list.AddRange(BuildKissPropertyRecords());
         list.AddRange(BuildActionInputPropertyRecords());
+        list.AddRange(BuildChatPropertyRecords());
         list.AddRange(BuildSpatialDescriptionPropertyRecords());
         list.AddRange(BuildChefPropertyRecords());
         list.AddRange(BuildHousingPropertyRecords());
@@ -143,6 +144,24 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
             "Additional OR-bound control token (alias: also)"),
         Spec(ActionInputLemmaPropertyKeys.Clear, "Bool", "false",
             "Clear existing bindings for this action before apply"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildChatPropertyRecords() => new[]
+    {
+        Spec(ChatLemmaPropertyKeys.Op, "String", "open",
+            "{P:chat|op=open} open|close|toggle (aliases: op, action). Placeholders open-chat/close-chat/dismiss infer op."),
+        Spec(ChatLemmaPropertyKeys.ProductId, "String", "",
+            "Saurce product id for lexicon/history (alias: product)"),
+        Spec(ChatLemmaPropertyKeys.SessionId, "String", "",
+            "Chat session id (alias: session)"),
+        Spec(ChatLemmaPropertyKeys.ComposeMode, "String", "preview",
+            "preview|sendButton"),
+        Spec(ChatLemmaPropertyKeys.Surface, "String", "unity-mp-text",
+            "Structural chat surface id; Continuuuum tools stay unrated (alias: surface)"),
+        Spec(ChatLemmaPropertyKeys.AutoCloseOnExit, "Bool", "false",
+            "Close chat when leaving the bound stop / scene"),
+        Spec(ChatLemmaPropertyKeys.RequireEntitlement, "Bool", "true",
+            "Block open unless chat entitlement is granted"),
     };
 
     public static LocalizationPropertySpecRecord[] BuildKissPropertyRecords() => new[]

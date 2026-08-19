@@ -6,6 +6,7 @@ using UnityEngine;
 public sealed class StairwellFloorLanding
 {
     public string landingId;
+    [Tooltip("House convention: first=1, basement=0, sub-basement=-1 (HouseFloorIndex).")]
     public int floorIndex;
     public Vector3 worldPosition;
     public List<string> railingIds = new List<string>();

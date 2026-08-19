@@ -20,7 +20,7 @@ public class StoreBase : MonoBehaviour
 {
     public string storeStableId;
     public string storeType = "generic";
-    public string hoursCron = "* 10-21 * * *";
+    [CronExpr] public string hoursCron = "* 10-21 * * *";
     public bool isOpen;
     public List<StoreShelfSlot> shelves = new List<StoreShelfSlot>();
     public List<RetinuePeckingEntry> staff = new List<RetinuePeckingEntry>();

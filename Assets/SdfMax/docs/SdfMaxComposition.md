@@ -35,6 +35,10 @@ SDF Max provides composed signed-distance volumes (union via `max`, subtract, sm
 
 When enabled (default), transform motion and property edits invalidate/rebuild caches (mesh) or evaluate with live `localToWorldMatrix` (SDF). When disabled, run **Auto Calculate** or **Rebuild Cache** manually.
 
+## House construction primitives
+
+`Torus`, `SplineExtrusion`, and `DisplacedTorus` evaluate on `SdfMaxExpressionGraph`. Soft PixelLight/height layers freeze through `SdfMaxSoftToHardBaker` (composite Max/Or/Add, then a hard graph). House walls stay box/extrusion SDF; the torus is the **authoring canvas** whose displacement stamps onto faces. See [HouseConstruction.md](../../locomotion/docs/HouseConstruction.md).
+
 ## Surface mesh (1A / 1B)
 
 See [SdfMaxSurfaceMesh.md](SdfMaxSurfaceMesh.md).

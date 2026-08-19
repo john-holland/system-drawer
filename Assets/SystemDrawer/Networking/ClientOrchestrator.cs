@@ -199,7 +199,27 @@ public sealed class ClientOrchestrator : MonoBehaviour
             case "weatherEggBootstrap":
                 ApplyWeatherEggBootstrap(env.PayloadJson);
                 break;
+            case "chat.composeDelta":
+            case "chat.text":
+                ApplyStructuredChat(env);
+                break;
         }
+    }
+
+    void ApplyStructuredChat(NetworkMessageEnvelope env)
+    {
+        var ragdoll = FindAnyObjectByType<StructuredChatRagdoll>();
+        if (ragdoll == null || string.IsNullOrEmpty(env.PayloadJson))
+            return;
+        if (env.Type == "chat.composeDelta")
+        {
+            var delta = JsonUtility.FromJson<ChatComposeDeltaPayload>(env.PayloadJson);
+            if (delta != null && delta.committed)
+                ragdoll.OnRemoteCommitted(delta.text, delta.tokens, clientId);
+            ragdoll.LastStreamed = delta;
+            return;
+        }
+        ragdoll.OnRemoteCommitted(env.PayloadJson, null, clientId);
     }
 
     public void SendWeatherEggPush(string json)

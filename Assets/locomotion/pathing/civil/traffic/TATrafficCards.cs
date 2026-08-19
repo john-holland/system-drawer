@@ -151,7 +151,7 @@ public struct TrafficLightLadderTiming
 public class TASchoolBusStopCard : TravelAgentCard
 {
     public float stopRadius = 8f;
-    public string scheduleCron = "0 7-9 * * 1-5";
+    [CronExpr] public string scheduleCron = "0 7-9 * * 1-5";
     public GameObject busPrefab;
     public Bounds stopZone;
 

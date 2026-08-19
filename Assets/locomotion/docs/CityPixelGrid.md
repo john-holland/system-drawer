@@ -8,7 +8,7 @@ Authoring + bake layer on top of [TrafficWarden.md](TrafficWarden.md): pixel-pai
 |-------|------|
 | `worldOrigin`, `cellWorldSize`, `width`, `height` | World XZ placement; cell size from smallest `actorsForSizing` footprint |
 | `frameGranularitySec`, `frameCount` | Narrative seconds per frame; Prev/Next in designer |
-| `layers[]` | Roads / PowerLinesDown / Flood / Protest / Construction / TrafficBlock |
+| `layers[]` | Roads / PowerLinesDown / Flood / Protest / Construction / TrafficBlock / **Cells, Walls, Doors, Yard, Support, TunnelStress, SurfaceMaterial** |
 | `trafficEvents[]` | Planned city events → calendar export |
 | `brushStamps[]` | Card/action placements per cell/frame |
 | `catalog` | `CityPlaceableCatalog` — scalable shells (buildings, intersections, bus stops) |
@@ -38,6 +38,9 @@ Scalable brushes (`Building`, `Intersection`, `SchoolBusStop`) materialize **one
 **Locomotion → City Pixel Grid Designer**
 
 - Layer paint or **Brush Mode** (cards)
+- **Add Prison Cell Layers** + **Cell** brush (diggable / destructible / tunnel stress)
+- **Add House Street / Yard / Side Layers** (`EnsureHouseLayers`) + `DrivewayLot` / `GarageLot` brushes — see [HouseConstruction.md](HouseConstruction.md)
+- **Export Prison Cell/Door/Wall Bounds4** for SG4D `PrisonCellVolume` / `DigContactCentroid`
 - Prev / Next / Add Frame, granularity, **Resize Cell From Actors**
 - Bake MST (this frame / all), Export Narrative Events
 - Open Pixel Light / LadderLogic editors

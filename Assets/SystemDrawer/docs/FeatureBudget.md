@@ -63,6 +63,7 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Street blocks | `FeatureBudgetIds.StreetBlocks` (`street_blocks`) |
 | Factory | `FeatureBudgetIds.Factory` (`factory`) — gate/line base runtime |
 | Parkour fall | `FeatureBudgetIds.ParkourFall` (`parkour_fall`) — fall/land BT |
+| Digging | `FeatureBudgetIds.Digging` (`digging`) — scoop SPH, tunnel support/collapse |
 
 ### PixelLight / grid slots budget
 

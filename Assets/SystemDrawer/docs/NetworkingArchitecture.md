@@ -8,6 +8,7 @@ Implementation companion for the dual-transport networking model on top of Syste
 |---------|-----------|---------|
 | `TreeStreamChannel` | TCP (reliable, ordered) | LOD pre-warm, 4D/3D tree snapshots, audit/reconcile, save/load, scene load |
 | `DecisionChannel` | UDP + ack handshake | Branch polls, ownership transfers, lockstep player decisions |
+| `StructuredChatChannel` | TCP TreeStream (gated) | Opt-in game multiplayer text; lobby join / send require chat entitlement and per-product lexicon words. Voice is a jurisdiction disable slot only. Continuuuum editor/web chat is not this channel. |
 
 Assemblies:
 
@@ -70,7 +71,7 @@ Named events (`MenuRagdollEvent.Name`) bubble to `MenuRagdollBase.HandleBubble`:
 - `lobby.connect`, `lobby.join`, `lobby.spectate.join`, `lobby.host.start`, `lobby.host.stop`, `lobby.game.start`, `lobby.game.end`
 - `lobby.host.options`, `lobby.host.password`, `lobby.join.password`
 
-Optional Tomba-style 2D hanging physics: `enableHangingPhysics` on `MenuRagdollBase` → anchor + plank `Rigidbody2D` + `DistanceJoint2D`.
+Optional rope-ladder-style 2D hanging physics: `enableHangingPhysics` on `MenuRagdollBase` → anchor + plank `Rigidbody2D` + `DistanceJoint2D`.
 
 Lobby join container uses event `lobby.join.group` (grouping only); leaf **Join Game** uses `lobby.join`.
 
@@ -148,6 +149,17 @@ All peers (including spectators) apply checkpoints locally via `NarrativeTimeTra
 ## Impersonation
 
 Headed server: `ServerOrchestrator.ImpersonateClient(clientId)` → `ImpersonationSession` loopback on `127.0.0.1:<port>`.
+
+## Structured chat (SG2D)
+
+Game multiplayer text only (not Continuuuum editor/web chat). Per-product lexicon is the source of truth (`GET`/`PUT /api/chat/lexicon?productId=`).
+
+- [`StructuredChatRagdoll`](Networking/StructuredChatRagdoll.cs) hosts the SG2D tree from [`StructuredChatNetworkRequirements`](Networking/StructuredChatNetworkRequirements.cs): word bank, compose box, history, preview, send, `chat.sentFlash`.
+- Word clicks append whitelist tokens. `composeMode=preview` streams `chat.composeDelta` on each append; `sendButton` streams only on Send. Committed sentences use `Channel=structured-chat`, `Type=chat.text`.
+- Compose BT `chat.compose.{clientId}` is registered `TreeDimension.Spatial2D` + `PeerTransferable`. `ClientOrchestrator` applies inbound `chat.composeDelta` / `chat.text`.
+- Local history is JSONL under `persistentDataPath/structured-chat/{productId}/`, kept indefinitely and truncated oldest-first after 50MB per product. Server hot rows live in `chat_session_messages`; warehouse list `chat-history` can keep after hot truncate.
+- Built-in lemmas: `chat`, `open-chat`, `close-chat`, `word-bank`, `compose-box`, `chat-history`, `send`, `dismiss`. Phrases such as “open chat” / “close the chat” canonicalize onto those lemmas. Prompt spans `{P:open-chat}`, `{P:close-chat}`, `{P:chat|op=toggle}` drive [`ChatLemmaResolver`](Networking/ChatLemmaResolver.cs) (`SetOpen` on the ragdoll). Continuuuum editor/web chat is not this surface.
+- Editor: **Window → System Drawer → Networking → Structured Chat Lexicon** and **Create Structured Chat Ragdoll**.
 
 ## Tests
 

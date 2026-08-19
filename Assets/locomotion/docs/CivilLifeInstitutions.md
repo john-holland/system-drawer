@@ -16,5 +16,8 @@ Infrastructure hooks exist (`CivilSystemKind`, `StoreBase`, `CivicCard`, `CivilC
 | CarRepair | CivicCard topology reuse | Vehicle-specific repair |
 | Gym | GymIkTrainingCatalog SO | Front desk check-in/out BT |
 | House / Gas / TownHall | Requirements defaults | Home schedule anchors, civic duties |
+| UnemploymentOffice | Kind + bootstrap + CareerWarden + EducationalTravelAgent | Full interview BT / benefits window UX |
+
+See [`CareerEducation.md`](CareerEducation.md) for paper dolls, career trees, and educational lanes.
 
 **BuildingBeast** fiction stays stubbed — see `BuildingRagdoll.md`.

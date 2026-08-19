@@ -14,6 +14,10 @@ STATIC_SETTINGS = Path(__file__).resolve().parent / "static" / "settings"
 STATIC_CREDITS = Path(__file__).resolve().parent / "static" / "credits"
 STATIC_INVENTORY_LOADOUTS = Path(__file__).resolve().parent / "static" / "inventory-loadouts"
 STATIC_GARBAGE_BAGS = Path(__file__).resolve().parent / "static" / "garbage-bags"
+STATIC_DOCKET = Path(__file__).resolve().parent / "static" / "docket-watch"
+STATIC_CHAT_ENTITLEMENTS = Path(__file__).resolve().parent / "static" / "chat-entitlements"
+STATIC_CHAT_TOS = Path(__file__).resolve().parent / "static" / "chat-tos"
+STATIC_CHAT_LEXICON = Path(__file__).resolve().parent / "static" / "chat-lexicon"
 
 
 def register_agile_ui_routes(app) -> None:
@@ -112,3 +116,47 @@ def register_agile_ui_routes(app) -> None:
     @app.route("/garbage-bags/<path:asset>")
     def garbage_bags_assets(asset: str):
         return send_from_directory(STATIC_GARBAGE_BAGS, asset)
+
+    @app.route("/docket-watch")
+    def docket_watch_redirect():
+        return redirect("/docket-watch/", code=302)
+
+    @app.route("/docket-watch/")
+    def docket_watch_page():
+        return send_from_directory(STATIC_DOCKET, "index.html")
+
+    @app.route("/docket-watch/<path:asset>")
+    def docket_watch_assets(asset: str):
+        return send_from_directory(STATIC_DOCKET, asset)
+
+    @app.route("/chat-entitlements")
+    def chat_entitlements_redirect():
+        return redirect("/chat-entitlements/", code=302)
+
+    @app.route("/chat-entitlements/")
+    def chat_entitlements_page():
+        return send_from_directory(STATIC_CHAT_ENTITLEMENTS, "index.html")
+
+    @app.route("/chat-entitlements/<path:asset>")
+    def chat_entitlements_assets(asset: str):
+        return send_from_directory(STATIC_CHAT_ENTITLEMENTS, asset)
+
+    @app.route("/chat-tos/accept")
+    def chat_tos_accept_page():
+        return send_from_directory(STATIC_CHAT_TOS, "index.html")
+
+    @app.route("/chat-tos/<path:asset>")
+    def chat_tos_assets(asset: str):
+        return send_from_directory(STATIC_CHAT_TOS, asset)
+
+    @app.route("/chat-lexicon")
+    def chat_lexicon_redirect():
+        return redirect("/chat-lexicon/", code=302)
+
+    @app.route("/chat-lexicon/")
+    def chat_lexicon_page():
+        return send_from_directory(STATIC_CHAT_LEXICON, "index.html")
+
+    @app.route("/chat-lexicon/<path:asset>")
+    def chat_lexicon_assets(asset: str):
+        return send_from_directory(STATIC_CHAT_LEXICON, asset)
