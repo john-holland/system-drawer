@@ -100,6 +100,13 @@ public class TAIntersectionCard : TravelAgentCard
     public PixelLightColorPackage pixelLightColors;
     public TrafficDetailLadderAsset ladderAsset;
     public TrafficLightLadderTiming lightTiming = TrafficLightLadderTiming.Default();
+    public float approachYaw;
+    public float[] legHeadings;
+    [Range(0f, 1f)] public float yield01;
+    public float stopHoldSec;
+    public bool preferWalkAcross;
+    public string signalApproachId = "main";
+    public IntersectionLot hostLot;
 
     public TAIntersectionCard()
     {
@@ -115,6 +122,39 @@ public class TAIntersectionCard : TravelAgentCard
             goalWorld = world,
             sectionName = "ta_intersection"
         };
+    }
+
+    public void BindLot(IntersectionLot lot)
+    {
+        hostLot = lot;
+        if (lot?.legs == null) return;
+        legHeadings = new float[lot.legs.Count];
+        for (int i = 0; i < lot.legs.Count; i++)
+            legHeadings[i] = lot.legs[i] != null ? lot.legs[i].headingYaw : 0f;
+        if (lot.legs.Count > 0)
+            approachYaw = lot.legs[0].headingYaw;
+    }
+
+    public void WritePlannerHints(ref GenericTraversibilityPlannerSolver.PlannerHints hints)
+    {
+        hints.approachYaw = approachYaw;
+        hints.legHeadings = legHeadings;
+        hints.yield01 = yield01;
+        hints.stopHoldSec = stopHoldSec;
+        hints.preferWalkAcross = preferWalkAcross;
+        hints.signalApproachId = signalApproachId;
+    }
+
+    public override void ApplyToActor(GameObject actor, float threat01, SocialSkills social = null)
+    {
+        var ta = actor != null ? actor.GetComponent<TravelAgent>() : null;
+        if (ta != null)
+        {
+            ApplyLanePolicy(ta);
+            ta.intersectionYield01 = yield01;
+            ta.preferWalkAcross = preferWalkAcross;
+        }
+        base.ApplyToActor(actor, threat01, social);
     }
 }
 
@@ -211,6 +251,7 @@ public class TASignCard : TravelAgentCard
     public float slowRadius = 12f;
     public string hintText;
     public GameObject signPrefab;
+    public SignStopPotential stopPotential;
 
     public TASignCard()
     {
@@ -235,8 +276,12 @@ public class TASignCard : TravelAgentCard
     public void ApplyHintsTo(TravelAgent agent)
     {
         if (agent == null || agent.ignoreTrafficAvoidance) return;
-        agent.avoidRadius = Mathf.Max(agent.avoidRadius, slowRadius);
-        agent.avoidCostMultiplier = Mathf.Max(agent.avoidCostMultiplier, avoidCostMultiplier);
+        float pot = stopPotential != null ? stopPotential.stopPotential01 : SignStopPotential.DefaultForKind(signKind);
+        if (pot <= 1e-4f)
+            return;
+        float sat = Mathf.Clamp01(pot);
+        agent.avoidRadius = Mathf.Max(agent.avoidRadius, slowRadius * Mathf.Max(0.05f, sat));
+        agent.avoidCostMultiplier = Mathf.Max(agent.avoidCostMultiplier, avoidCostMultiplier * Mathf.Max(0.05f, sat));
         if (goalTarget != null && !agent.avoidActors.Contains(goalTarget.transform))
             agent.avoidActors.Add(goalTarget.transform);
     }

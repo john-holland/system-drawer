@@ -283,6 +283,9 @@ try:
     from continuuuum_api.vehicle_inventory_routes import register_vehicle_inventory_routes
 
 
+    from continuuuum_api.phone_wire_routes import register_phone_wire_routes
+
+
     from continuuuum_api.transit_routes import register_transit_routes
 
     from continuuuum_api.train_seat_routes import register_train_seat_routes
@@ -379,6 +382,9 @@ except ImportError:
 
 
     from vehicle_inventory_routes import register_vehicle_inventory_routes
+
+
+    from phone_wire_routes import register_phone_wire_routes
 
 
     from transit_routes import register_transit_routes
@@ -4259,6 +4265,9 @@ register_hospitality_security_routes(app, get_conn)
 
 
 register_vehicle_inventory_routes(app, get_conn)
+
+
+register_phone_wire_routes(app, get_conn)
 
 
 register_transit_routes(app, get_conn)

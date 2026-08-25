@@ -32,6 +32,12 @@ public class RagdollPlayerControllerOptions
     [Min(0.05f)] public float groundProbeDistance = 1.2f;
     public LayerMask groundLayers = ~0;
     [Min(0.01f)] public float jumpImpulseStrength = 4f;
+    [Tooltip("Dedicated brake — not Vertical reverse.")]
+    public KeyCode brakeKey = KeyCode.LeftControl;
+    public bool selfDrivingEnabled;
+    public KeyCode selfDrivingToggleKey = KeyCode.K;
+    [Tooltip("When true, player-driven vehicles skip TravelAgent speed/hold unless braking or self-driving.")]
+    public bool overrideTravelAgentSlow = true;
 }
 
 /// <summary>Per-frame input sampled by <see cref="ReadRagdollPlayerMovementInputNode"/> for locomotion / animation nodes.</summary>
@@ -42,4 +48,6 @@ public struct RagdollPlayerInputState
     public bool sprint;
     public bool jumpPressedThisFrame;
     public bool uiMode;
+    [Range(0f, 1f)] public float brake01;
+    public bool selfDriving;
 }

@@ -641,13 +641,9 @@ public class Consider : MonoBehaviour
 
     public void ProcessSensoryInput(SensoryData sensoryData)
     {
-        // Process sensory input from nervous system
-        // This would trigger card regeneration or updates
-        if (mode == GenerationMode.RealTime && sensoryData != null)
-        {
-            // Regenerate cards on significant sensory input
-            GenerateCardsForTarget(sensoryData.contactObject);
-        }
+        if (sensoryData == null || sensoryData.contactObject == null)
+            return;
+        GenerateCardsForTarget(sensoryData.contactObject);
     }
 
     private RagdollState GetCurrentState()

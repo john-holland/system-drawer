@@ -33,4 +33,5 @@ public static class FeatureBudgetIds
     public const string Factory = "factory";
     public const string ParkourFall = "parkour_fall";
     public const string Digging = "digging";
+    public const string VehicleDetect = "vehicle_detect";
 }

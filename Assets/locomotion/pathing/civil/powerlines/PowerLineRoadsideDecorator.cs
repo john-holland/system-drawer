@@ -195,6 +195,10 @@ public sealed class PowerLineRoadsideDecorator : MonoBehaviour
         to.SetParent(b.transform, false);
         to.position = b.TopAttachmentWorld;
         span.Configure(from, to);
+        span.fromPoleId = a.poleId;
+        span.toPoleId = b.poleId;
+        span.wireId = "wire_" + (a.poleId ?? a.name) + "_" + (b.poleId ?? b.name);
+        span.EnsureRope();
         span.tensionLemma = a.tensionLemma;
         return span;
     }

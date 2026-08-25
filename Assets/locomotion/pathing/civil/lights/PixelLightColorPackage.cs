@@ -24,4 +24,27 @@ public sealed class PixelLightColorPackage : ScriptableObject
         p.emissionIntensity = 3f;
         return p;
     }
+
+    public static PixelLightColorPackage CreateEmergencyBlue()
+    {
+        var p = CreateInstance<PixelLightColorPackage>();
+        p.onColor = new Color(0.15f, 0.35f, 1f);
+        p.emissionColor = new Color(0.2f, 0.4f, 1f);
+        p.emissionIntensity = 3f;
+        return p;
+    }
+
+    public static PixelLightColorPackage CreateAmberCaution()
+    {
+        var p = CreateInstance<PixelLightColorPackage>();
+        p.onColor = new Color(1f, 0.65f, 0.1f);
+        p.emissionColor = new Color(1f, 0.7f, 0.15f);
+        p.emissionIntensity = 2.5f;
+        return p;
+    }
+
+    public static PixelLightColorPackage CreateSplit(PixelLightColorPackage left, PixelLightColorPackage right)
+    {
+        return left != null ? left : right;
+    }
 }

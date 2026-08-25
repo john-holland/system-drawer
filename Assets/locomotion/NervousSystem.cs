@@ -409,6 +409,11 @@ public class NervousSystem : MonoBehaviour
     /// <summary>
     /// Process all impulse channels (call this in Update).
     /// </summary>
+    public void PumpImpulsesForEditor() => ProcessImpulseChannels();
+
+    /// <summary>
+    /// Process all impulse channels (call this in Update).
+    /// </summary>
     private void ProcessImpulseChannels()
     {
         if (impulseChannels == null)

@@ -167,6 +167,17 @@ public class TravelAgent : MonoBehaviour
     public float TotalPathLengthMeters => totalPathLengthMeters;
     public float ReverseBudgetMeters => reverseBudgetMeters;
 
+    [Header("Lane grid")]
+    public TravelLanePolicy lanePolicy = TravelLanePolicy.StayInLanes;
+    [Range(0f, 1f)] public float stayInLanes01 = 1f;
+    [Min(0.1f)] public float followTimeSec = 3f;
+    [Min(0f)] public float gridCarLengths = 1f;
+    [Range(0f, 1f)] public float travelSpeedScale = 1f;
+    public float holdUntilUnscaledTime;
+    [Range(0f, 1f)] public float intersectionYield01;
+    public bool preferWalkAcross;
+    public RoadLaneOccupancy laneOccupancy;
+
     [Header("Multibody travel")]
     [Tooltip("Convoy spacing, peer avoidance, and formation offsets applied after the base planner path.")]
     public TravelAgentMultibodySettings multibody = new TravelAgentMultibodySettings();
@@ -226,6 +237,15 @@ public class TravelAgent : MonoBehaviour
 
     /// <summary>Last rebuilt multi-modal plan (preview / runtime); multibody-adjusted when multibody is enabled.</summary>
     public GenericMultiModalPathPlan CachedPlan => cachedPlan;
+
+    /// <summary>Replace the cached plan (video steering projector / tests). Enriches drive legs when a RoadNetwork is present.</summary>
+    public void ReplaceCachedPlan(GenericMultiModalPathPlan plan)
+    {
+        cachedPlan = plan ?? new GenericMultiModalPathPlan();
+        cachedPlanBeforeMultibody = null;
+        EnrichPlanWithRoads(cachedPlan);
+        UpdatePathLengthMetrics();
+    }
 
     /// <summary>Plan from the traversibility solver before multibody post-process (null when multibody was off for last rebuild).</summary>
     public GenericMultiModalPathPlan CachedPlanBeforeMultibody => cachedPlanBeforeMultibody;
@@ -588,6 +608,13 @@ public class TravelAgent : MonoBehaviour
         if (segment.waypoints == null || segment.waypoints.Count == 0) return;
         float snap = roadTravelBinding != null ? roadTravelBinding.snapDistance : 8f;
         Vector3 end = segment.waypoints[segment.waypoints.Count - 1];
+        var sidewalk = SidewalkRibbon.FindNearest(end, snap * 6f);
+        if (sidewalk != null && sidewalk.TrySampleWalk(end, out Vector3 walkPt))
+        {
+            segment.waypoints[segment.waypoints.Count - 1] = walkPt;
+            if (!string.IsNullOrEmpty(sidewalk.roadLotId))
+                segment.roadLotId = sidewalk.roadLotId;
+        }
         RoadLot lot = RoadLot.FindNearest(end, snap * 6f);
         if (lot == null) return;
         if (!lot.ContainsXZ(end) && (lot.ArrivalWorld - end).sqrMagnitude > (snap * 6f) * (snap * 6f))
@@ -770,7 +797,8 @@ public class RoadTravelBinding : MonoBehaviour
             return;
 
         var networkType = roadNetwork.GetType();
-        MethodInfo snap = networkType.GetMethod("SnapWaypointsToRoad", BindingFlags.Instance | BindingFlags.Public);
+        MethodInfo snap = networkType.GetMethod("SnapWaypointsToRoad", BindingFlags.Instance | BindingFlags.Public, null, new[] { typeof(IList<Vector3>), typeof(float) }, null)
+                          ?? networkType.GetMethod("SnapWaypointsToRoad", BindingFlags.Instance | BindingFlags.Public);
         if (snap != null && segment.waypoints != null)
             segment.waypoints = snap.Invoke(roadNetwork, new object[] { segment.waypoints, snapDistance }) as List<Vector3>;
 
@@ -795,7 +823,82 @@ public class RoadTravelBinding : MonoBehaviour
         if ((bool)nearest.Invoke(roadNetwork, argsEnd))
             segment.distanceAlongEnd = (float)argsEnd[2];
 
+        ApplyLanePolicySnap(segment, nearest, segObj as Component);
         EnrichDriveSegmentWithRoadLot(segment);
+    }
+
+    void ApplyLanePolicySnap(MultiModalSegment segment, MethodInfo nearest, Component splineMb)
+    {
+        if (travelAgent == null)
+            travelAgent = GetComponent<TravelAgent>();
+        if (travelAgent == null || segment?.waypoints == null || nearest == null)
+            return;
+
+        var binding = splineMb != null ? splineMb.GetComponent<RoadLaneSplineBinding>() : null;
+        var layout = binding != null ? binding.ResolveLayout() : new RoadLaneLayout();
+        var grid = binding != null ? binding.ResolveGrid() : new RoadLaneGridSettings();
+        grid.followTimeSec = travelAgent.followTimeSec > 0.01f ? travelAgent.followTimeSec : grid.followTimeSec;
+        grid.gridCarLengths = travelAgent.gridCarLengths;
+        float speed = 10f;
+        if (travelAgent.CachedPlan != null)
+            speed = Mathf.Max(1f, travelAgent.TotalPathLengthMeters * 0.1f);
+        float cell = grid.CellLengthM(speed, travelAgent.multibody != null ? travelAgent.multibody.aggressiveness01 : 0.5f);
+        if (!PlayerVehicleTravelSlowOverride.ShouldApplyTravelSlow(travelAgent))
+            cell = Mathf.Max(0.5f, grid.carLengthM);
+
+        var getSample = splineMb != null
+            ? splineMb.GetType().GetMethod("GetSampleAtDistance", BindingFlags.Instance | BindingFlags.Public)
+            : null;
+        RoadLaneSnap.SampleAt sampleAt = (float d, out Vector3 pos, out Vector3 bin) =>
+        {
+            pos = Vector3.zero;
+            bin = Vector3.right;
+            if (getSample == null) return;
+            object sample = getSample.Invoke(splineMb, new object[] { d });
+            if (sample == null) return;
+            var t = sample.GetType();
+            var p = t.GetField("position");
+            var b = t.GetField("binormal");
+            if (p != null) pos = (Vector3)p.GetValue(sample);
+            if (b != null) bin = (Vector3)b.GetValue(sample);
+        };
+
+        var distances = new List<float>();
+        var laterals = new List<float>();
+        for (int i = 0; i < segment.waypoints.Count; i++)
+        {
+            object[] args = { segment.waypoints[i], null, 0f, 0f };
+            if ((bool)nearest.Invoke(roadNetwork, args))
+            {
+                distances.Add((float)args[2]);
+                laterals.Add((float)args[3]);
+            }
+            else
+            {
+                distances.Add(0f);
+                laterals.Add(0f);
+            }
+        }
+
+        segment.waypoints = RoadLaneSnap.SnapList(
+            segment.waypoints,
+            distances,
+            laterals,
+            travelAgent.lanePolicy,
+            travelAgent.stayInLanes01,
+            layout,
+            cell,
+            sampleAt);
+
+        if (travelAgent.laneOccupancy == null)
+            travelAgent.laneOccupancy = new RoadLaneOccupancy();
+        if (segment.waypoints.Count > 0 && layout.LaneEnabled(layout.LaneFromLateral(laterals[laterals.Count - 1])))
+        {
+            int lane = layout.LaneFromLateral(laterals[laterals.Count - 1]);
+            int cellIndex = Mathf.RoundToInt(distances[distances.Count - 1] / Mathf.Max(0.5f, cell));
+            string key = RoadLaneOccupancy.SlotKey(segment.roadSegmentId, lane, cellIndex);
+            travelAgent.laneOccupancy.TryOccupy(key, travelAgent);
+        }
     }
 
     /// <summary>If the drive end is near a RoadLot connected to this segment (or any nearest lot), tag roadLotId and leave pad unsnapped.</summary>
@@ -803,6 +906,13 @@ public class RoadTravelBinding : MonoBehaviour
     {
         if (segment?.waypoints == null || segment.waypoints.Count == 0) return;
         Vector3 end = segment.waypoints[segment.waypoints.Count - 1];
+        var ix = IntersectionLot.FindNearest(end, snapDistance * 4f);
+        if (ix != null && ix.ContainsWaypoint(end) && ix.TrySnapDriveOutlet(segment.roadSegmentId, end, out Vector3 outlet))
+        {
+            segment.roadLotId = ix.lotId;
+            segment.waypoints[segment.waypoints.Count - 1] = outlet;
+            return;
+        }
         RoadLot lot = null;
         if (!string.IsNullOrEmpty(segment.roadSegmentId))
             lot = RoadLot.FindConnectedToRoad(segment.roadSegmentId, end);

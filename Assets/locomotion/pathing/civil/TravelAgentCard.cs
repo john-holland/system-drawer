@@ -11,6 +11,11 @@ public class TravelAgentCard : GoodSection
     public string waypointGroup;
     public bool preferFlee;
     public bool useSocialDeescalate;
+    [Header("Lane policy")]
+    public TravelLanePolicy lanePolicy = TravelLanePolicy.StayInLanes;
+    [Range(0f, 1f)] public float stayInLanes01 = 1f;
+    [Min(0.1f)] public float followTimeSec = 3f;
+    [Min(0f)] public float gridCarLengths = 1f;
 
     public TravelAgentCard()
     {
@@ -49,7 +54,7 @@ public class TravelAgentCard : GoodSection
     }
 
     /// <summary>Apply to actor: flee or justice path via TravelAgent.</summary>
-    public void ApplyToActor(GameObject actor, float threat01, SocialSkills social = null)
+    public virtual void ApplyToActor(GameObject actor, float threat01, SocialSkills social = null)
     {
         if (actor == null) return;
         var ta = actor.GetComponent<TravelAgent>();
@@ -63,6 +68,7 @@ public class TravelAgentCard : GoodSection
             Vector3 away = actor.transform.position + (actor.transform.position - goal).normalized * 8f;
             if (ta != null)
             {
+                ApplyLanePolicy(ta);
                 ta.previewGoalWorld = away;
                 ta.RebuildCachedPlan();
             }
@@ -79,8 +85,18 @@ public class TravelAgentCard : GoodSection
 
         if (ta != null)
         {
+            ApplyLanePolicy(ta);
             ta.previewGoalWorld = goal;
             ta.RebuildCachedPlan();
         }
+    }
+
+    public void ApplyLanePolicy(TravelAgent ta)
+    {
+        if (ta == null) return;
+        ta.lanePolicy = lanePolicy;
+        ta.stayInLanes01 = lanePolicy == TravelLanePolicy.StayInLanes ? stayInLanes01 : 0f;
+        ta.followTimeSec = followTimeSec;
+        ta.gridCarLengths = gridCarLengths;
     }
 }

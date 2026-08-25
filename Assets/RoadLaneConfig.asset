@@ -1,0 +1,293 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03ce0c17de034064ea69141f8decba98, type: 3}
+  m_Name: RoadLaneConfig
+  m_EditorClassIdentifier: Locomotion.Runtime::RoadLaneConfigAsset
+  layout:
+    laneCount: 8
+    laneWidthM: 3.5
+    directionSign: 01000000ffffffff
+  grid:
+    followTimeSec: 3
+    gridCarLengths: 1
+    occupancy01: 0.85
+    carLengthM: 4.5
+  recipe:
+  - layerKind: 11
+    brushKind: 17
+    prefab: {fileID: 0}
+    diggable: 1
+    raiseLayerOnOverlap: 1
+  - layerKind: 23
+    brushKind: 16
+    prefab: {fileID: 0}
+    diggable: 0
+    raiseLayerOnOverlap: 1
+  debris:
+  - prefab: {fileID: 0}
+    minSpace: {x: 4.3065495, y: 3.4428778, z: 4.309101}
+    optimalSpace: {x: 8.613099, y: 6.8857555, z: 8.618202}
+    maxSpace: {x: 17.226198, y: 13.771511, z: 17.236404}
+  - prefab: {fileID: 0}
+    minSpace: {x: 1.9009502, y: 0.14801025, z: 1.90095}
+    optimalSpace: {x: 3.8019004, y: 0.2960205, z: 3.8019}
+    maxSpace: {x: 7.603801, y: 0.592041, z: 7.6038}
+  - prefab: {fileID: 0}
+    minSpace: {x: 12.734634, y: 7.7346363, z: 0.899663}
+    optimalSpace: {x: 25.469269, y: 15.469273, z: 1.799326}
+    maxSpace: {x: 50.938538, y: 30.938545, z: 3.598652}
+  - prefab: {fileID: 0}
+    minSpace: {x: 12.734636, y: 12.734636, z: 0.899663}
+    optimalSpace: {x: 25.469273, y: 25.469273, z: 1.799326}
+    maxSpace: {x: 50.938545, y: 50.938545, z: 3.598652}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.5, z: 0.020372868}
+    optimalSpace: {x: 1, y: 1, z: 0.040745735}
+    maxSpace: {x: 2, y: 2, z: 0.08149147}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.5, z: 0.020372868}
+    optimalSpace: {x: 1, y: 1, z: 0.040745735}
+    maxSpace: {x: 2, y: 2, z: 0.08149147}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.5, z: 0.020372868}
+    optimalSpace: {x: 1, y: 1, z: 0.040745735}
+    maxSpace: {x: 2, y: 2, z: 0.08149147}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.06005001, y: 1, z: 0.06005001}
+    optimalSpace: {x: 0.12010002, y: 2, z: 0.12010002}
+    maxSpace: {x: 0.24020004, y: 4, z: 0.24020004}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.039113045, y: 0.030862808, z: 0.020840645}
+    optimalSpace: {x: 0.07822609, y: 0.061725616, z: 0.04168129}
+    maxSpace: {x: 0.15645218, y: 0.12345123, z: 0.08336258}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.039113045, y: 0.030862808, z: 0.020840645}
+    optimalSpace: {x: 0.07822609, y: 0.061725616, z: 0.04168129}
+    maxSpace: {x: 0.15645218, y: 0.12345123, z: 0.08336258}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.06005001, y: 1, z: 0.052255154}
+    optimalSpace: {x: 0.12010002, y: 2, z: 0.10451031}
+    maxSpace: {x: 0.24020004, y: 4, z: 0.20902061}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.014549255}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.02909851}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.05819702}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.014549255}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.02909851}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.05819702}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.014549255}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.02909851}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.05819702}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.014549255}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.02909851}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.05819702}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.021398544, z: 0.5}
+    optimalSpace: {x: 1, y: 0.04279709, z: 1}
+    maxSpace: {x: 2, y: 0.08559418, z: 2}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.021398544, z: 0.5}
+    optimalSpace: {x: 1, y: 0.04279709, z: 1}
+    maxSpace: {x: 2, y: 0.08559418, z: 2}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.021398544, z: 0.5}
+    optimalSpace: {x: 1, y: 0.04279709, z: 1}
+    maxSpace: {x: 2, y: 0.08559418, z: 2}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.042204857, y: 0.07279301, z: 0.07541084}
+    optimalSpace: {x: 0.084409714, y: 0.14558601, z: 0.15082169}
+    maxSpace: {x: 0.16881943, y: 0.29117203, z: 0.30164337}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.080440044, y: 0.087958336, z: 0.08068895}
+    optimalSpace: {x: 0.16088009, y: 0.17591667, z: 0.1613779}
+    maxSpace: {x: 0.32176018, y: 0.35183334, z: 0.3227558}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.05499649, y: 0.085923195, z: 0.04058504}
+    optimalSpace: {x: 0.10999298, y: 0.17184639, z: 0.08117008}
+    maxSpace: {x: 0.21998596, y: 0.34369278, z: 0.16234016}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.068397045, y: 0.13118935, z: 0.115412235}
+    optimalSpace: {x: 0.13679409, y: 0.2623787, z: 0.23082447}
+    maxSpace: {x: 0.27358818, y: 0.5247574, z: 0.46164894}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.051621437, y: 0.11298275, z: 0.057519436}
+    optimalSpace: {x: 0.103242874, y: 0.2259655, z: 0.11503887}
+    maxSpace: {x: 0.20648575, y: 0.451931, z: 0.23007774}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.04440832, y: 0.052786827, z: 0.056252956}
+    optimalSpace: {x: 0.08881664, y: 0.105573654, z: 0.11250591}
+    maxSpace: {x: 0.17763329, y: 0.21114731, z: 0.22501183}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.044264793, y: 0.057253838, z: 0.051371574}
+    optimalSpace: {x: 0.08852959, y: 0.114507675, z: 0.10274315}
+    maxSpace: {x: 0.17705917, y: 0.22901535, z: 0.2054863}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.051665783, y: 0.09132767, z: 0.09807825}
+    optimalSpace: {x: 0.103331566, y: 0.18265533, z: 0.1961565}
+    maxSpace: {x: 0.20666313, y: 0.36531067, z: 0.392313}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.08008289, y: 0.08799076, z: 0.08037281}
+    optimalSpace: {x: 0.16016579, y: 0.17598152, z: 0.16074562}
+    maxSpace: {x: 0.32033157, y: 0.35196304, z: 0.32149124}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.031600952, y: 0.035297394, z: 0.0383296}
+    optimalSpace: {x: 0.063201904, y: 0.07059479, z: 0.0766592}
+    maxSpace: {x: 0.12640381, y: 0.14118958, z: 0.1533184}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.20000029, y: 0.6999998, z: 0.19999981}
+    optimalSpace: {x: 0.40000057, y: 1.3999996, z: 0.39999962}
+    maxSpace: {x: 0.80000114, y: 2.7999992, z: 0.79999924}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.06742716, y: 0.14297295, z: 0.094071865}
+    optimalSpace: {x: 0.13485432, y: 0.2859459, z: 0.18814373}
+    maxSpace: {x: 0.26970863, y: 0.5718918, z: 0.37628746}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.035562515, y: 0.038309097, z: 0.03014803}
+    optimalSpace: {x: 0.07112503, y: 0.076618195, z: 0.06029606}
+    maxSpace: {x: 0.14225006, y: 0.15323639, z: 0.12059212}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.039113045, y: 0.030862808, z: 0.020840406}
+    optimalSpace: {x: 0.07822609, y: 0.061725616, z: 0.041680813}
+    maxSpace: {x: 0.15645218, y: 0.12345123, z: 0.083361626}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.036114216, y: 0.035019875, z: 0.020840406}
+    optimalSpace: {x: 0.07222843, y: 0.07003975, z: 0.041680813}
+    maxSpace: {x: 0.14445686, y: 0.1400795, z: 0.083361626}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.021398544, z: 0.5}
+    optimalSpace: {x: 1, y: 0.04279709, z: 1}
+    maxSpace: {x: 2, y: 0.08559418, z: 2}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.021398544, z: 0.5}
+    optimalSpace: {x: 1, y: 0.04279709, z: 1}
+    maxSpace: {x: 2, y: 0.08559418, z: 2}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.021398544, z: 0.5}
+    optimalSpace: {x: 1, y: 0.04279709, z: 1}
+    maxSpace: {x: 2, y: 0.08559418, z: 2}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.021030426, y: 0.5, z: 0.0145487785}
+    optimalSpace: {x: 0.042060852, y: 1, z: 0.029097557}
+    maxSpace: {x: 0.084121704, y: 2, z: 0.058195114}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.036114216, y: 0.035019875, z: 0.020840406}
+    optimalSpace: {x: 0.07222843, y: 0.07003975, z: 0.041680813}
+    maxSpace: {x: 0.14445686, y: 0.1400795, z: 0.083361626}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.06005001, y: 1, z: 0.06005001}
+    optimalSpace: {x: 0.12010002, y: 2, z: 0.12010002}
+    maxSpace: {x: 0.24020004, y: 4, z: 0.24020004}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.5, z: 0.020373106}
+    optimalSpace: {x: 1, y: 1, z: 0.040746212}
+    maxSpace: {x: 2, y: 2, z: 0.081492424}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.5, y: 0.5, z: 0.020373106}
+    optimalSpace: {x: 1, y: 1, z: 0.040746212}
+    maxSpace: {x: 2, y: 2, z: 0.081492424}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.039113045, y: 0.030862808, z: 0.020840406}
+    optimalSpace: {x: 0.07822609, y: 0.061725616, z: 0.041680813}
+    maxSpace: {x: 0.15645218, y: 0.12345123, z: 0.083361626}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.06005001, y: 1, z: 0.052254915}
+    optimalSpace: {x: 0.12010002, y: 2, z: 0.10450983}
+    maxSpace: {x: 0.24020004, y: 4, z: 0.20901966}
+  - prefab: {fileID: 0}
+    minSpace: {x: 0.06005001, y: 1, z: 0.06005001}
+    optimalSpace: {x: 0.12010002, y: 2, z: 0.12010002}
+    maxSpace: {x: 0.24020004, y: 4, z: 0.24020004}
+  - prefab: {fileID: 0}
+    minSpace: {x: 2.1558008, y: 2.1558008, z: 2.155806}
+    optimalSpace: {x: 4.3116016, y: 4.3116016, z: 4.311612}
+    maxSpace: {x: 8.623203, y: 8.623203, z: 8.623224}
+  - prefab: {fileID: 0}
+    minSpace: {x: 1.1874499, y: 2.5203629, z: 1.1874502}
+    optimalSpace: {x: 2.3748999, y: 5.0407257, z: 2.3749003}
+    maxSpace: {x: 4.7497997, y: 10.081451, z: 4.7498007}
+  - prefab: {fileID: 0}
+    minSpace: {x: 12.734644, y: 2.5921712, z: 12.734645}
+    optimalSpace: {x: 25.469288, y: 5.1843424, z: 25.46929}
+    maxSpace: {x: 50.938576, y: 10.368685, z: 50.93858}
+  controlPoints: []
+  sidewalkWidthM: 1.8
+  sidewalkPaddingM: 0.2
+  mattingWidth01: 0
+  curbHeightM: 0.15
+  curbWidthM: 0.2
+  dappleBevel01: 0
+  grassStripWidthM: 0.8
+  supportPrefab: {fileID: 0}
+  wallPrefab: {fileID: 0}
+  diggableVolumePrefab: {fileID: 0}
+  jerseyBarrierPrefab: {fileID: 0}
+  guardRailPrefab: {fileID: 0}
+  streetLightPrefab: {fileID: 0}
+  trafficSignalPrefab: {fileID: 0}
+  phonePolePrefab: {fileID: 0}
+  pedCallButtonPrefab: {fileID: 0}
+  signPrefab: {fileID: 0}
+  crosswalkMaterialOwner: {fileID: 0}
+  streetLightKind: 0
+  shoulderSign: 1
+  spacingAlongM: 28
+  approachId: main
+  pixelLightPattern: {fileID: 0}
+  pixelLightColors: {fileID: 0}
+  stopPotential01: 1

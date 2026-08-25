@@ -19,6 +19,14 @@ public sealed class RoadLotOutlet
     public float curbWidth = 2f;
 }
 
+public enum RoadLotKind
+{
+    Pad = 0,
+    Driveway = 1,
+    Garage = 2,
+    Intersection = 3
+}
+
 /// <summary>Large flat/graded pad for TravelAgent — heightmap + 0..N road outlets.</summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Locomotion/Civil/Roads/Road Lot")]
@@ -26,6 +34,7 @@ public sealed class RoadLot : MonoBehaviour
 {
     public string lotId;
     public string displayName;
+    public RoadLotKind lotKind = RoadLotKind.Pad;
     public RoadLotGradeMode gradeMode = RoadLotGradeMode.Flat;
     public Vector3 padSize = new Vector3(40f, 2f, 40f);
     public Texture2D heightMap;

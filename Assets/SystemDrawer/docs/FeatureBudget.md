@@ -64,6 +64,7 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Factory | `FeatureBudgetIds.Factory` (`factory`) — gate/line base runtime |
 | Parkour fall | `FeatureBudgetIds.ParkourFall` (`parkour_fall`) — fall/land BT |
 | Digging | `FeatureBudgetIds.Digging` (`digging`) — scoop SPH, tunnel support/collapse |
+| Vehicle detect | `FeatureBudgetIds.VehicleDetect` (`vehicle_detect`) — Intel YOLO26 vehicle hop for video steering |
 
 ### PixelLight / grid slots budget
 

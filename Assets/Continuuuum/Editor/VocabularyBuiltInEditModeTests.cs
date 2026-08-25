@@ -124,6 +124,23 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_RoadLaneAndPhoneWireLemmas()
+    {
+        string[] terms =
+        {
+            "road-lane", "sidewalk", "phone-pole", "street-wire", "hanging-shoes",
+            "jersey-barrier", "emergency-bar", "street-light", "traffic-signal"
+        };
+        foreach (var term in terms)
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", term);
+            Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(id), term);
+        }
+        Assert.AreEqual("phone-pole", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "phone", "pole" }));
+        Assert.AreEqual("hanging-shoes", BuiltInSynonyms.CanonicalizeToken("hanging_shoes"));
+    }
+
+    [Test]
     public void VocabularyBuiltInRegistry_Includes_StructuralChatOpenCloseLemmas()
     {
         Assert.AreEqual(VocabularyBuiltInIds.EnChat, VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "chat"));

@@ -48,6 +48,11 @@ public sealed class PoliceCarVehicleRagdoll : VehicleRagdoll
             lightMounts[i].SetEnabledEmission(on);
         }
         SendMessage(on ? "OnPoliceLightsOn" : "OnPoliceLightsOff", this, SendMessageOptions.DontRequireReceiver);
+        var bar = GetComponentInChildren<EmergencyWarningBar>();
+        if (bar == null && on)
+            bar = EmergencyWarningBar.EnsureOnVehicle(this);
+        bar?.SetKind(EmergencyWarningBarKind.Police);
+        bar?.SetOn(on);
     }
 
     /// <summary>
@@ -142,9 +147,12 @@ public sealed class PoliceCarVehicleRagdoll : VehicleRagdoll
     public void EnsureDefaultLights()
     {
         if (lightMounts.Count > 0) return;
-        var go = PixelLightPrefabFactory.CreateDefaultRuntime(transform);
-        go.name = "PoliceLightBar";
-        go.transform.localPosition = new Vector3(0f, 1.6f, 0.1f);
-        lightMounts.Add(go.GetComponent<PixelLightRig>());
+        var bar = EmergencyWarningBar.EnsureOnVehicle(this);
+        if (bar != null)
+        {
+            bar.SetKind(EmergencyWarningBarKind.Police);
+            if (bar.leftBank != null) lightMounts.Add(bar.leftBank);
+            if (bar.rightBank != null) lightMounts.Add(bar.rightBank);
+        }
     }
 }

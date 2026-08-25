@@ -361,6 +361,18 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
     [Tooltip("When true, attach sherpa-carry load during rope inchworm training.")]
     public bool attachSherpaCarry;
 
+    [Header("Measurement scene (editor)")]
+    [Tooltip("Scene path opened additively for start/measure. Do not replace the user's open scene.")]
+    public string measurementScenePath = "";
+    [Tooltip("When true, OpenScene additive. When false, objects must already be in the open scene.")]
+    public bool loadMeasurementSceneAdditive = true;
+    [Tooltip("SetActive(true) listed measurement objects in the editor without Play Mode.")]
+    public bool activateTrainingObjectsInEditor = true;
+
+    [Header("Measurement weights")]
+    public List<IkTrainingObjectWeight> measurementObjectWeights = new List<IkTrainingObjectWeight>();
+    public List<IkTrainingLimbWeight> actorLimbWeights = new List<IkTrainingLimbWeight>();
+
     [Header("Trained Sets")]
     [Tooltip("List of coefficient sets with metrics (overwrite replaces this; append adds to it)")]
     public PhysicsIKTrainedSet[] trainedSets = Array.Empty<PhysicsIKTrainedSet>();
@@ -384,6 +396,89 @@ public class PhysicsIKTrainingRunAsset : ScriptableObject
             Array.Copy(trainedSets, combined, oldLen);
         Array.Copy(sets, 0, combined, oldLen, sets.Length);
         trainedSets = combined;
+    }
+
+    public List<GameObject> CollectListedObjects()
+    {
+        var list = new List<GameObject>();
+        AddUnique(list, hitTarget);
+        AddUnique(list, hitTool);
+        AddUnique(list, carriedObject);
+        AddUnique(list, placeObject);
+        AddUnique(list, catchObject);
+        AddUnique(list, throwGoalTarget);
+        AddUnique(list, weightliftTool);
+        AddUnique(list, toolSlot);
+        AddUnique(list, shootTarget);
+        if (loveTrainAgainstActors != null)
+        {
+            for (int i = 0; i < loveTrainAgainstActors.Count; i++)
+                AddUnique(list, loveTrainAgainstActors[i]);
+        }
+        return list;
+    }
+
+    public List<GameObject> ResolveMeasurementObjects()
+    {
+        var list = CollectListedObjects();
+        if (measurementObjectWeights == null)
+            return list;
+        for (int i = 0; i < measurementObjectWeights.Count; i++)
+        {
+            string path = measurementObjectWeights[i].hierarchyPath;
+            if (string.IsNullOrEmpty(path))
+                continue;
+            var found = FindByHierarchyPath(path);
+            AddUnique(list, found);
+        }
+        return list;
+    }
+
+    public static GameObject FindByHierarchyPath(string hierarchyPath)
+    {
+        if (string.IsNullOrEmpty(hierarchyPath))
+            return null;
+        var scenes = UnityEngine.SceneManagement.SceneManager.sceneCount;
+        for (int s = 0; s < scenes; s++)
+        {
+            var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(s);
+            if (!scene.IsValid() || !scene.isLoaded)
+                continue;
+            var roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
+            {
+                if (roots[r] == null)
+                    continue;
+                if (roots[r].name == hierarchyPath)
+                    return roots[r];
+                var t = roots[r].transform.Find(hierarchyPath);
+                if (t != null)
+                    return t.gameObject;
+                var nested = FindChildByPath(roots[r].transform, hierarchyPath);
+                if (nested != null)
+                    return nested;
+            }
+        }
+        return GameObject.Find(hierarchyPath);
+    }
+
+    static GameObject FindChildByPath(Transform root, string path)
+    {
+        if (root == null || string.IsNullOrEmpty(path))
+            return null;
+        var all = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            if (all[i] != null && all[i].name == path)
+                return all[i].gameObject;
+        }
+        return null;
+    }
+
+    static void AddUnique(List<GameObject> list, GameObject go)
+    {
+        if (go != null && !list.Contains(go))
+            list.Add(go);
     }
 
     private void OnValidate()

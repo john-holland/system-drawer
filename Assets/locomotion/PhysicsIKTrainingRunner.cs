@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Locomotion.Rig;
 
 /// <summary>
 /// Runs training sweep over power and solver weights; executes scenario (simulated or live)
@@ -69,6 +70,8 @@ public static class PhysicsIKTrainingRunner
         float r() => (float)rng.NextDouble();
 
         float power = Mathf.Max(0.01f, set.powerScale);
+        if (!TryFillWeightedMeasurement(ref set, solver, ragdollRb, runAsset))
+        {
         if (category == PhysicsIKTrainingCategory.ToolUse)
         {
             // Tool use: pathfinding->grab->return->obstacle; frozen axis can help completion for some forms.
@@ -275,6 +278,7 @@ public static class PhysicsIKTrainingRunner
                 set.powerUsed = power * (0.9f + r() * 0.2f);
             }
         }
+        } // !TryFillWeightedMeasurement
 
         if (ragdollRb != null && isToolCategory && set.rigidbodyConstraints != 0)
             ragdollRb.constraints = savedConstraints;
@@ -287,6 +291,35 @@ public static class PhysicsIKTrainingRunner
     {
         return category >= PhysicsIKTrainingCategory.ParkourLopingStrides
                && category <= PhysicsIKTrainingCategory.RopeIdling;
+    }
+
+    static bool TryFillWeightedMeasurement(
+        ref PhysicsIKTrainedSet set,
+        PhysicsCardSolver solver,
+        Rigidbody ragdollRb,
+        PhysicsIKTrainingRunAsset runAsset)
+    {
+        BoneMap map = null;
+        if (solver != null)
+        {
+            map = solver.GetComponent<BoneMap>();
+            if (map == null)
+                map = solver.GetComponentInChildren<BoneMap>();
+            if (map == null)
+                map = solver.GetComponentInParent<BoneMap>();
+        }
+        if (map == null && ragdollRb != null)
+        {
+            map = ragdollRb.GetComponentInParent<BoneMap>();
+            if (map == null)
+                map = ragdollRb.GetComponentInChildren<BoneMap>();
+        }
+        if (!IkTrainingLiveScore.TryScore(runAsset, map, out float acc))
+            return false;
+        set.accuracyScore = acc;
+        set.completionTime = 0.02f;
+        set.powerUsed = Mathf.Max(0.01f, set.powerScale);
+        return true;
     }
 
     static bool TryScoreLocomotionLive(

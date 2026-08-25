@@ -6,6 +6,8 @@ using UnityEngine;
 public sealed class ApplyDrivePhaseNode : TravelContextBehaviorTreeNode, ITravelExecutionContextConsumer
 {
     public DrivingPartialAnimationDriveBridge driveBridge;
+    public bool forcePhase;
+    public DriveAnimationPhase phaseOverride = DriveAnimationPhase.Enter;
 
     TravelExecutionContext _injected;
 
@@ -18,13 +20,21 @@ public sealed class ApplyDrivePhaseNode : TravelContextBehaviorTreeNode, ITravel
 
     public override BehaviorTreeStatus Execute(BehaviorTree tree)
     {
+        DrivingPartialAnimationDriveBridge bridge = driveBridge;
+        if (bridge == null && tree != null)
+            bridge = tree.GetComponentInChildren<DrivingPartialAnimationDriveBridge>();
+
+        if (forcePhase)
+        {
+            if (bridge != null)
+                bridge.ApplyPhaseToSolver(phaseOverride);
+            return BehaviorTreeStatus.Success;
+        }
+
         TravelExecutionContext ctx = Ctx ?? _injected;
         if (ctx == null || !ctx.isModeTransition)
             return BehaviorTreeStatus.Success;
 
-        DrivingPartialAnimationDriveBridge bridge = driveBridge;
-        if (bridge == null && tree != null)
-            bridge = tree.GetComponentInChildren<DrivingPartialAnimationDriveBridge>();
         if (bridge == null)
             return BehaviorTreeStatus.Success;
 

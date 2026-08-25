@@ -58,6 +58,11 @@ public sealed class FireTruckVehicleRagdoll : VehicleRagdoll
     {
         sirenOn = on;
         SendMessage(on ? "OnFireTruckSirenOn" : "OnFireTruckSirenOff", this, SendMessageOptions.DontRequireReceiver);
+        var bar = GetComponentInChildren<EmergencyWarningBar>();
+        if (bar == null && on)
+            bar = EmergencyWarningBar.EnsureOnVehicle(this);
+        bar?.SetKind(EmergencyWarningBarKind.Fire);
+        bar?.SetOn(on);
     }
 
     public void WindHose(float dt, bool outWard)
@@ -71,9 +76,12 @@ public sealed class FireTruckVehicleRagdoll : VehicleRagdoll
     public void EnsureDefaultLights()
     {
         if (lightMounts.Count > 0) return;
-        var go = PixelLightPrefabFactory.CreateDefaultRuntime(transform);
-        go.name = "EmergencyBar";
-        go.transform.localPosition = new Vector3(0f, 2.2f, 0.2f);
-        lightMounts.Add(go.GetComponent<PixelLightRig>());
+        var bar = EmergencyWarningBar.EnsureOnVehicle(this);
+        if (bar != null)
+        {
+            bar.SetKind(EmergencyWarningBarKind.Fire);
+            if (bar.leftBank != null) lightMounts.Add(bar.leftBank);
+            if (bar.rightBank != null) lightMounts.Add(bar.rightBank);
+        }
     }
 }

@@ -1,0 +1,7 @@
+.pw-main { max-width: 960px; margin: 1.5rem auto; padding: 0 1rem; font-family: sans-serif; }
+.pw-lead { color: #555; }
+.pw-panel { margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 6px; }
+.pw-panel label { display: block; margin: 0.4rem 0; }
+.pw-msg { padding: 0.5rem; background: #ffe9e9; }
+#pw-table { width: 100%; border-collapse: collapse; }
+#pw-table th, #pw-table td { border-bottom: 1px solid #eee; text-align: left; padding: 0.35rem; }

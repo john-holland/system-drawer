@@ -125,6 +125,16 @@ public class RopeSystem : MonoBehaviour
             _winding.SetRate(signedRateMps);
     }
 
+    public void BindAnchors(Transform head, Transform tail, float? totalLengthM = null)
+    {
+        headAnchor = head;
+        tailAnchor = tail;
+        if (totalLengthM.HasValue)
+            config.totalLengthM = Mathf.Max(0.1f, totalLengthM.Value);
+        if (_initialized)
+            _ring?.RebuildActiveMapping(headAnchor, tailAnchor, unwindDirection);
+    }
+
     public void RegisterSegmentPairContact(RopeSegmentBody a, RopeSegmentBody b, ContactPoint contact)
     {
         _overlap?.RegisterCollision(a, b, contact, _arc);

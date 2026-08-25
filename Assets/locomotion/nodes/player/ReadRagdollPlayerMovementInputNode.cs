@@ -32,6 +32,10 @@ public class ReadRagdollPlayerMovementInputNode : BehaviorTreeNode
         float v = blockMove ? 0f : Input.GetAxis("Vertical");
         bool sprint = !blockMove && Input.GetKey(KeyCode.LeftShift);
         bool jump = !blockMove && Input.GetButtonDown("Jump");
+        float brake01 = blockMove ? 0f : (Input.GetKey(o.brakeKey) ? 1f : 0f);
+        bool selfDriving = buffer.State.selfDriving;
+        if (o.selfDrivingEnabled && !blockMove && Input.GetKeyDown(o.selfDrivingToggleKey))
+            selfDriving = !selfDriving;
 
         buffer.WriteState(new RagdollPlayerInputState
         {
@@ -39,7 +43,9 @@ public class ReadRagdollPlayerMovementInputNode : BehaviorTreeNode
             vertical = v,
             sprint = sprint,
             jumpPressedThisFrame = jump,
-            uiMode = uiMode
+            uiMode = uiMode,
+            brake01 = brake01,
+            selfDriving = selfDriving
         });
 
         return BehaviorTreeStatus.Success;

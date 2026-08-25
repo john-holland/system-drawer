@@ -261,6 +261,7 @@ def register_persona_day_routes(app: Flask, get_conn: GetConn) -> None:
                     "fire-station",
                     "traffic-light",
                     "vehicle-inventory",
+                    "phone-wire",
                     "pixel-light",
                     "police-station",
                     "vehicle-repair",

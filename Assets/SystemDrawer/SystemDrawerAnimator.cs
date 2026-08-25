@@ -286,6 +286,8 @@ public class SystemDrawerAnimator : MonoBehaviour,
         _reportSequence++;
     }
 
+    public void TickLayersFromEditor() => TickLayers();
+
     private void TickLayers()
     {
         _snapshots.Clear();

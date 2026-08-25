@@ -63,6 +63,20 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("dismiss chat", "close-chat");
             BuiltInSynonyms.RegisterAlias("chat window", "chat");
             BuiltInSynonyms.RegisterAlias("word bank", "word-bank");
+            BuiltInSynonyms.RegisterAlias("road lane", "road-lane");
+            BuiltInSynonyms.RegisterAlias("phone pole", "phone-pole");
+            BuiltInSynonyms.RegisterAlias("street wire", "street-wire");
+            BuiltInSynonyms.RegisterAlias("wire end", "wire-end");
+            BuiltInSynonyms.RegisterAlias("hanging shoes", "hanging-shoes");
+            BuiltInSynonyms.RegisterAlias("walk button", "walk-button");
+            BuiltInSynonyms.RegisterAlias("grass strip", "grass-strip");
+            BuiltInSynonyms.RegisterAlias("road sign", "road-sign");
+            BuiltInSynonyms.RegisterAlias("jersey barrier", "jersey-barrier");
+            BuiltInSynonyms.RegisterAlias("guard rail", "guard-rail");
+            BuiltInSynonyms.RegisterAlias("emergency bar", "emergency-bar");
+            BuiltInSynonyms.RegisterAlias("street luminaire", "street-luminaire");
+            BuiltInSynonyms.RegisterAlias("street light", "street-light");
+            BuiltInSynonyms.RegisterAlias("traffic signal", "traffic-signal");
         }
 
         public static string CanonicalizeDeictic(string token)

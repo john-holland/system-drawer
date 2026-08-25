@@ -18,6 +18,11 @@ public sealed class WebcamAnimTypeMetadata
     public string targetHint = "ragdoll";
     public string species = "";
     public string poseTrackPath = "";
+    public string vehicleTrackPath = "";
+    public string polarVelocityPath = "";
+    public float facingYawDegrees;
+    public bool cabinCamera;
+    public bool inferShoulderShifts;
 
     public static WebcamAnimTypeMetadata FromRecording(WebcamAnimRecordingAsset asset)
     {
@@ -35,7 +40,12 @@ public sealed class WebcamAnimTypeMetadata
             granularity = WebcamAnimTimelineGranularityUtil.JsonName(asset.granularity),
             targetHint = asset.targetHint ?? "ragdoll",
             species = asset.species ?? "",
-            poseTrackPath = asset.poseTrackPath ?? ""
+            poseTrackPath = asset.poseTrackPath ?? "",
+            vehicleTrackPath = asset.vehicleTrackPath ?? "",
+            polarVelocityPath = asset.polarVelocityPath ?? "",
+            facingYawDegrees = asset.facingYawDegrees,
+            cabinCamera = asset.cabinCamera,
+            inferShoulderShifts = asset.inferShoulderShifts
         };
     }
 

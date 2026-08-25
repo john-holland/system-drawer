@@ -152,4 +152,13 @@ public sealed class CityPixelGridTests
         Object.DestroyImmediate(wardenGo);
         Object.DestroyImmediate(grid);
     }
+
+    [Test]
+    public void BrushColor_Select_IsWhite()
+    {
+        Color c = CityPixelGrid.BrushColor(CityPixelBrushKind.Select);
+        Assert.Greater(c.r, 0.95f);
+        Assert.Greater(c.g, 0.95f);
+        Assert.Greater(c.b, 0.95f);
+    }
 }

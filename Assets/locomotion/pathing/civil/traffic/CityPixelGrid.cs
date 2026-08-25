@@ -26,7 +26,13 @@ public enum CityPixelLayerKind
     HouseFront = 18,
     HouseLeft = 19,
     HouseRight = 20,
-    HouseBack = 21
+    HouseBack = 21,
+    Highway = 22,
+    Overpass = 23,
+    Underpass = 24,
+    Debris = 25,
+    StreetLight = 26,
+    GrassStrip = 27
 }
 
 public enum CityPixelBrushKind
@@ -45,7 +51,23 @@ public enum CityPixelBrushKind
     PlaceableTypeSeparator = 11,
     Cell = 12,
     DrivewayLot = 13,
-    GarageLot = 14
+    GarageLot = 14,
+    RoadLanes = 15,
+    Overpass = 16,
+    Bridge = 17,
+    BridgeAndUnderpass = 18,
+    Debris = 19,
+    StreetLight = 20,
+    TrafficSignal = 21,
+    PhonePole = 22,
+    PedCallButton = 23,
+    Crosswalk = 24,
+    Sidewalk = 25,
+    GrassStrip = 26,
+    WireEnd = 27,
+    JerseyBarrier = 28,
+    GuardRail = 29,
+    Select = 30
 }
 
 [Serializable]
@@ -137,6 +159,21 @@ public sealed class CityPixelBrushStamp
     [Range(0f, 1f)] public float tunnelStress01;
     public bool wallDestructible = true;
     public bool diggable = true;
+    public RoadLaneConfigAsset laneConfig;
+    public StreetLightKind streetLightKind = StreetLightKind.Luminaire;
+    public int shoulderSign = 1;
+    public float spacingAlongM = 28f;
+    public string approachId = "main";
+    [Range(0f, 2f)] public float stopPotential01 = 1f;
+    public bool bendWithRoad = true;
+    public string poleId;
+    public string wireId;
+    public float wireT01 = 0.5f;
+    public StreetWireEndKind wireEndKind = StreetWireEndKind.TrafficSignal;
+    public int barCount = 6;
+    public float barWidthM = 0.4f;
+    public bool acrossLanes = true;
+    public float stripWidthM = 0.8f;
 }
 
 [Serializable]
@@ -299,6 +336,22 @@ public sealed class CityPixelGrid : ScriptableObject
         brushStamps.Add(stamp);
     }
 
+    public void SetBrushStampStacked(CityPixelBrushStamp stamp)
+    {
+        if (stamp == null) return;
+        if (brushStamps == null) brushStamps = new List<CityPixelBrushStamp>();
+        int maxFloor = -1;
+        for (int i = 0; i < brushStamps.Count; i++)
+        {
+            var s = brushStamps[i];
+            if (s != null && s.frameIndex == stamp.frameIndex && s.cellX == stamp.cellX && s.cellY == stamp.cellY)
+                maxFloor = Mathf.Max(maxFloor, s.floorIndex);
+        }
+        if (maxFloor >= 0)
+            stamp.floorIndex = maxFloor + 1;
+        brushStamps.Add(stamp);
+    }
+
     public bool ClearBrushStamp(int frameIndex, int cellX, int cellY)
     {
         if (brushStamps == null) return false;
@@ -332,6 +385,22 @@ public sealed class CityPixelGrid : ScriptableObject
             case CityPixelBrushKind.Cell: return new Color(0.45f, 0.35f, 0.2f);
             case CityPixelBrushKind.DrivewayLot: return new Color(0.45f, 0.45f, 0.48f);
             case CityPixelBrushKind.GarageLot: return new Color(0.4f, 0.38f, 0.35f);
+            case CityPixelBrushKind.RoadLanes: return new Color(0.25f, 0.25f, 0.28f);
+            case CityPixelBrushKind.Overpass: return new Color(0.45f, 0.45f, 0.5f);
+            case CityPixelBrushKind.Bridge: return new Color(0.4f, 0.42f, 0.48f);
+            case CityPixelBrushKind.BridgeAndUnderpass: return new Color(0.35f, 0.3f, 0.25f);
+            case CityPixelBrushKind.Debris: return new Color(0.55f, 0.4f, 0.2f);
+            case CityPixelBrushKind.StreetLight: return new Color(0.95f, 0.9f, 0.4f);
+            case CityPixelBrushKind.TrafficSignal: return new Color(0.2f, 0.85f, 0.35f);
+            case CityPixelBrushKind.PhonePole: return new Color(0.55f, 0.4f, 0.2f);
+            case CityPixelBrushKind.PedCallButton: return new Color(0.3f, 0.6f, 0.9f);
+            case CityPixelBrushKind.Crosswalk: return new Color(0.95f, 0.95f, 0.9f);
+            case CityPixelBrushKind.Sidewalk: return new Color(0.72f, 0.72f, 0.7f);
+            case CityPixelBrushKind.GrassStrip: return new Color(0.25f, 0.6f, 0.25f);
+            case CityPixelBrushKind.WireEnd: return new Color(0.15f, 0.15f, 0.18f);
+            case CityPixelBrushKind.JerseyBarrier: return new Color(0.75f, 0.72f, 0.65f);
+            case CityPixelBrushKind.GuardRail: return new Color(0.55f, 0.58f, 0.5f);
+            case CityPixelBrushKind.Select: return new Color(1f, 1f, 1f);
             default: return Color.gray;
         }
     }
@@ -364,11 +433,38 @@ public sealed class CityPixelGrid : ScriptableObject
         EnsureLayersAndFrames();
     }
 
+    public void EnsureHighwayLayers()
+    {
+        EnsureLayersAndFrames();
+        AddLayerIfMissing("highway", CityPixelLayerKind.Highway, new Color(0.28f, 0.28f, 0.32f));
+        AddLayerIfMissing("overpass", CityPixelLayerKind.Overpass, new Color(0.45f, 0.45f, 0.5f));
+        AddLayerIfMissing("underpass", CityPixelLayerKind.Underpass, new Color(0.22f, 0.2f, 0.18f));
+        AddLayerIfMissing("debris", CityPixelLayerKind.Debris, new Color(0.55f, 0.4f, 0.2f));
+        AddLayerIfMissing("street_light", CityPixelLayerKind.StreetLight, new Color(0.95f, 0.9f, 0.4f));
+        AddLayerIfMissing("grass_strip", CityPixelLayerKind.GrassStrip, new Color(0.25f, 0.6f, 0.25f));
+        AddLayerIfMissing("support", CityPixelLayerKind.Support, new Color(0.55f, 0.55f, 0.6f));
+        EnsureHouseLayers();
+        EnsureLayersAndFrames();
+    }
+
     void AddLayerIfMissing(string id, CityPixelLayerKind kind, Color color)
     {
         for (int i = 0; i < layers.Count; i++)
             if (layers[i] != null && layers[i].layerId == id) return;
         layers.Add(new CityPixelLayer { layerId = id, kind = kind, color = color });
+    }
+
+    public void PaintLayerCell(CityPixelLayerKind kind, int frameIndex, int x, int y, byte value = 1)
+    {
+        EnsureLayersAndFrames();
+        for (int i = 0; i < layers.Count; i++)
+        {
+            var layer = layers[i];
+            if (layer == null || layer.kind != kind) continue;
+            if (frameIndex < 0 || frameIndex >= layer.frames.Count) return;
+            layer.frames[frameIndex].Set(x, y, width, value);
+            return;
+        }
     }
 
     /// <summary>Export painted cell/door/wall clusters as Bounds4 payloads (PrisonCellVolume / DigContactCentroid).</summary>

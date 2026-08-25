@@ -29,6 +29,12 @@ public static class GenericTraversibilityPlannerSolver
         public float avoidRadius;
         public float avoidCostMultiplier;
         public bool ignoreAvoidance;
+        public float[] legHeadings;
+        public float approachYaw;
+        public float yield01;
+        public float stopHoldSec;
+        public bool preferWalkAcross;
+        public string signalApproachId;
     }
 
     /// <summary>

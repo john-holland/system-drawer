@@ -70,5 +70,55 @@ namespace Roads
             }
             return result;
         }
+
+        /// <summary>Keep distanceAlong and reconstruct with original lateral offset (AlignGridIgnoreLanes).</summary>
+        public List<Vector3> SnapWaypointsToRoadKeepingLateral(IList<Vector3> waypoints, float maxSnapDistance = 8f)
+        {
+            var result = new List<Vector3>();
+            if (waypoints == null)
+                return result;
+            foreach (var wp in waypoints)
+            {
+                if (TryFindNearestSegment(wp, out var seg, out float d, out float lat) && Mathf.Abs(lat) < maxSnapDistance)
+                {
+                    var sample = seg.GetSampleAtDistance(d);
+                    result.Add(sample.position + sample.binormal * lat);
+                }
+                else
+                    result.Add(wp);
+            }
+            return result;
+        }
+
+        /// <summary>Keep distanceAlong, offset by nearest lane center blended with stayInLanes01. Primitive params — no Locomotion types.</summary>
+        public List<Vector3> SnapWaypointsToRoadLaneCenter(
+            IList<Vector3> waypoints,
+            float maxSnapDistance,
+            int laneCount,
+            float laneWidthM,
+            float stayInLanes01)
+        {
+            var result = new List<Vector3>();
+            if (waypoints == null)
+                return result;
+            int n = Mathf.Max(1, laneCount);
+            float width = Mathf.Max(0.1f, laneWidthM);
+            float half = (n - 1) * 0.5f;
+            float blend = Mathf.Clamp01(stayInLanes01);
+            foreach (var wp in waypoints)
+            {
+                if (TryFindNearestSegment(wp, out var seg, out float d, out float lat) && Mathf.Abs(lat) < maxSnapDistance)
+                {
+                    var sample = seg.GetSampleAtDistance(d);
+                    int i = Mathf.Clamp(Mathf.RoundToInt(lat / width + half), 0, n - 1);
+                    float laneCenter = (i - half) * width;
+                    float blended = Mathf.Lerp(lat, laneCenter, blend);
+                    result.Add(sample.position + sample.binormal * blended);
+                }
+                else
+                    result.Add(wp);
+            }
+            return result;
+        }
     }
 }

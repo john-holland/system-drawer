@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bd62033858dad54d861342c5bc93ba0, type: 3}
+  m_Name: CivilianPaperDoll
+  m_EditorClassIdentifier: Locomotion.Runtime::CivilianPaperDoll
+  personaKey: civilian
+  ageBand: 1
+  education: 0
+  employment: 0
+  currentRoleId: 
+  employerCompanyId: 
+  isGovernmentJob: 0
+  expected01:
+  - 0.55
+  - 0.55
+  - 0.55
+  - 0.4
+  fireLimit01:
+  - 0.9
+  - 0.9
+  - 0.9
+  - 0.85
+  educationalPlan: {fileID: 0}
+  selectedStepIndex: 0
+  certificationIds: []
+  degreeIds: []

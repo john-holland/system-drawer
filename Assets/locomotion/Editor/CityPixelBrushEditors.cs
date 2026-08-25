@@ -7,6 +7,14 @@ public static class CityPixelBrushEditors
 {
     public static void DrawBrushOptions(CityPixelBrushKind kind, ref CityPixelBrushStamp stamp)
     {
+        if (kind == CityPixelBrushKind.Select)
+        {
+            EditorGUILayout.HelpBox(
+                "Click a cell or drag a rectangle. Shift adds. Ctrl/Cmd toggles. Esc clears. Paint/Erase Selected applies the current tool to the selection.",
+                MessageType.None);
+            return;
+        }
+
         if (stamp == null) stamp = new CityPixelBrushStamp { kind = kind };
         stamp.kind = kind;
         stamp.yawDegrees = EditorGUILayout.FloatField("Yaw Degrees", stamp.yawDegrees);
@@ -40,6 +48,7 @@ public static class CityPixelBrushEditors
                 stamp.signPrefab = (GameObject)EditorGUILayout.ObjectField(
                     "Stop Sign Prefab", stamp.signPrefab, typeof(GameObject), false);
                 stamp.yawDegrees = EditorGUILayout.FloatField("Approach Heading", stamp.yawDegrees);
+                stamp.stopPotential01 = EditorGUILayout.Slider("Stop Potential", stamp.stopPotential01, 0f, 2f);
                 break;
 
             case CityPixelBrushKind.Intersection:
@@ -87,6 +96,7 @@ public static class CityPixelBrushEditors
                 stamp.signKind = (TASignKind)EditorGUILayout.EnumPopup("Sign Kind", stamp.signKind);
                 stamp.avoidCostMultiplier = EditorGUILayout.FloatField("Avoid Cost Mult", stamp.avoidCostMultiplier);
                 stamp.slowRadius = EditorGUILayout.FloatField("Slow Radius", stamp.slowRadius);
+                stamp.stopPotential01 = EditorGUILayout.Slider("Stop Potential", stamp.stopPotential01, 0f, 2f);
                 stamp.signPrefab = (GameObject)EditorGUILayout.ObjectField(
                     "Sign Prefab", stamp.signPrefab, typeof(GameObject), false);
                 break;
@@ -121,6 +131,59 @@ public static class CityPixelBrushEditors
                         : "Driveway lot must 4-touch street or sidewalk.",
                     MessageType.Info);
                 DrawPlaceableStampFields(ref stamp);
+                break;
+
+            case CityPixelBrushKind.RoadLanes:
+            case CityPixelBrushKind.Overpass:
+            case CityPixelBrushKind.Bridge:
+            case CityPixelBrushKind.BridgeAndUnderpass:
+                stamp.laneConfig = (RoadLaneConfigAsset)EditorGUILayout.ObjectField(
+                    "Lane Config", stamp.laneConfig, typeof(RoadLaneConfigAsset), false);
+                stamp.diggable = EditorGUILayout.Toggle("Diggable", stamp.diggable);
+                break;
+            case CityPixelBrushKind.StreetLight:
+            case CityPixelBrushKind.TrafficSignal:
+            case CityPixelBrushKind.PhonePole:
+                stamp.streetLightKind = (StreetLightKind)EditorGUILayout.EnumPopup("Kind", stamp.streetLightKind);
+                stamp.shoulderSign = EditorGUILayout.IntSlider("Shoulder", stamp.shoulderSign, -1, 1);
+                stamp.spacingAlongM = EditorGUILayout.FloatField("Spacing Along", stamp.spacingAlongM);
+                stamp.approachId = EditorGUILayout.TextField("Approach Id", stamp.approachId ?? "main");
+                stamp.signPrefab = (GameObject)EditorGUILayout.ObjectField("Prefab", stamp.signPrefab, typeof(GameObject), false);
+                stamp.pixelLightPattern = (PixelLightPatternAsset)EditorGUILayout.ObjectField(
+                    "PixelLight Pattern", stamp.pixelLightPattern, typeof(PixelLightPatternAsset), false);
+                if (GUILayout.Button("Open Pixel Light Designer"))
+                    PixelLightTimedDesignerWindow.Open();
+                break;
+            case CityPixelBrushKind.PedCallButton:
+                stamp.signPrefab = (GameObject)EditorGUILayout.ObjectField("Button Prefab", stamp.signPrefab, typeof(GameObject), false);
+                break;
+            case CityPixelBrushKind.Crosswalk:
+                stamp.barCount = EditorGUILayout.IntField("Bar Count", stamp.barCount);
+                stamp.barWidthM = EditorGUILayout.FloatField("Bar Width", stamp.barWidthM);
+                stamp.acrossLanes = EditorGUILayout.Toggle("Across Lanes", stamp.acrossLanes);
+                break;
+            case CityPixelBrushKind.Sidewalk:
+            case CityPixelBrushKind.GrassStrip:
+                stamp.laneConfig = (RoadLaneConfigAsset)EditorGUILayout.ObjectField(
+                    "Lane Config", stamp.laneConfig, typeof(RoadLaneConfigAsset), false);
+                stamp.stripWidthM = EditorGUILayout.FloatField("Strip Width", stamp.stripWidthM);
+                break;
+            case CityPixelBrushKind.JerseyBarrier:
+            case CityPixelBrushKind.GuardRail:
+                stamp.bendWithRoad = EditorGUILayout.Toggle("Bend With Road", stamp.bendWithRoad);
+                stamp.laneDisabled = EditorGUILayout.Toggle("Lane Disabled", stamp.kind == CityPixelBrushKind.JerseyBarrier && stamp.laneDisabled);
+                stamp.signPrefab = (GameObject)EditorGUILayout.ObjectField("Prefab", stamp.signPrefab, typeof(GameObject), false);
+                break;
+            case CityPixelBrushKind.WireEnd:
+                stamp.poleId = EditorGUILayout.TextField("Pole Id", stamp.poleId ?? "");
+                stamp.wireId = EditorGUILayout.TextField("Wire Id", stamp.wireId ?? "");
+                stamp.wireT01 = EditorGUILayout.Slider("T", stamp.wireT01, 0f, 1f);
+                stamp.wireEndKind = (StreetWireEndKind)EditorGUILayout.EnumPopup("End Kind", stamp.wireEndKind);
+                break;
+            case CityPixelBrushKind.Debris:
+                stamp.signPrefab = (GameObject)EditorGUILayout.ObjectField("Debris Prefab", stamp.signPrefab, typeof(GameObject), false);
+                stamp.laneConfig = (RoadLaneConfigAsset)EditorGUILayout.ObjectField(
+                    "Lane Config", stamp.laneConfig, typeof(RoadLaneConfigAsset), false);
                 break;
         }
     }
@@ -201,6 +264,22 @@ public static class CityPixelBrushEditors
             s.tunnelStress01 = src.tunnelStress01;
             s.wallDestructible = src.wallDestructible;
             s.diggable = src.diggable;
+            s.laneConfig = src.laneConfig;
+            s.streetLightKind = src.streetLightKind;
+            s.shoulderSign = src.shoulderSign;
+            s.spacingAlongM = src.spacingAlongM;
+            s.approachId = src.approachId;
+            s.stopPotential01 = src.stopPotential01;
+            s.bendWithRoad = src.bendWithRoad;
+            s.poleId = src.poleId;
+            s.wireId = src.wireId;
+            s.wireT01 = src.wireT01;
+            s.wireEndKind = src.wireEndKind;
+            s.barCount = src.barCount;
+            s.barWidthM = src.barWidthM;
+            s.acrossLanes = src.acrossLanes;
+            s.stripWidthM = src.stripWidthM;
+            s.laneDisabled = src.laneDisabled;
         }
         s.frameIndex = frame;
         s.cellX = x;

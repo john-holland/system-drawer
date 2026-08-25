@@ -79,6 +79,8 @@ public static class FeatureBudgetDefaults
                 new[] { "ParkourFall", "ParkourLand" }, null, true),
             Entry(FeatureBudgetIds.Digging, "Digging / Tunnel SPH", 31,
                 new[] { "Digging", "TopologicalDig", "TunnelSupport", "DigScoop" }, null, true),
+            Entry(FeatureBudgetIds.VehicleDetect, "Vehicle YOLO Detect", 32,
+                new[] { "VehicleDetect", "Yolo26Vehicle", "VehicleTrack" }, null, true),
         };
     }
 

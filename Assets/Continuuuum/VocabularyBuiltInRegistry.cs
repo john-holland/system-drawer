@@ -172,6 +172,15 @@ public static class VocabularyBuiltInRegistry
             Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, fuelTags);
         foreach (var w in new[] { "refuel", "recycle", "commute" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, civilTags);
+        string[] roadTags = { "civil", "road" };
+        foreach (var w in new[]
+                 {
+                     "road-lane", "sidewalk", "crosswalk", "curb", "grass-strip",
+                     "phone-pole", "street-wire", "wire-end", "hanging-shoes", "walk-button",
+                     "intersection", "road-sign", "jersey-barrier", "guard-rail",
+                     "emergency-bar", "street-luminaire", "street-light", "traffic-signal"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, roadTags);
 
         // Life systems channels / organs (lemma property ops)
         string[] lifeTags = { "life", "body" };

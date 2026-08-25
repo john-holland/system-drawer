@@ -49,6 +49,7 @@ public sealed class LotGrassGrowthController : MonoBehaviour
     public List<LotGrassCutMemory> cuts = new List<LotGrassCutMemory>();
     public List<int> sectionParent = new List<int>();
     public float nextSectionSpawnChance = 1f;
+    public float stripWidthM = 0.8f;
 
     public GameObject spawnedPrefabInstance;
     public PlantCutTakeRuntime cutTake;

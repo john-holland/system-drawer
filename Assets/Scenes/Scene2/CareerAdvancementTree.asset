@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5df7c39f4e4958a43b4b647e91de4ebd, type: 3}
+  m_Name: CareerAdvancementTree
+  m_EditorClassIdentifier: Locomotion.Runtime::CareerAdvancementTree
+  roles:
+  - {fileID: 11400000, guid: 9047c9425ac235f4fb1e563883a3089a, type: 2}

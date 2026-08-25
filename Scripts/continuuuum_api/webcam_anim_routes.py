@@ -14,13 +14,37 @@ from urllib.parse import urlencode
 from flask import jsonify, request, send_from_directory
 
 try:
-    from pose_detectors import DetectPending, is_gpu_spec, is_whisper_spec, run_detect_hop
+    from pose_detectors import (
+        DetectPending,
+        is_cabin_spec,
+        is_gpu_spec,
+        is_vehicle_spec,
+        is_whisper_spec,
+        run_detect_hop,
+    )
 except ImportError:
-    from continuuuum_api.pose_detectors import DetectPending, is_gpu_spec, is_whisper_spec, run_detect_hop
+    from continuuuum_api.pose_detectors import (
+        DetectPending,
+        is_cabin_spec,
+        is_gpu_spec,
+        is_vehicle_spec,
+        is_whisper_spec,
+        run_detect_hop,
+    )
 
 GetConn = Callable[[], sqlite3.Connection]
 
 KIND_VALUE = "webcam_anim_recording"
+
+
+def _as_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, (int, float)):
+        return value != 0
+    return str(value).strip().lower() in ("1", "true", "yes")
 
 SEED_MODELS = [
     {
@@ -31,6 +55,24 @@ SEED_MODELS = [
         "defaultForKind": "pose",
         "detectorId": "continuuuum-remote",
         "notes": "Pose / webcam IK. Weights via pip install mediapipe (Python 3.12). Do not vendor .tflite.",
+    },
+    {
+        "id": "yolo26_vehicle@intel",
+        "kind": "vehicle",
+        "label": "Intel YOLO26 vehicle detection",
+        "enabled": True,
+        "defaultForKind": "vehicle",
+        "detectorId": "continuuuum-remote",
+        "notes": "Required for exterior Vehicle takes. Intel/vehicle-detection YOLO26 (car/motorcycle/bus/truck). OpenVINO IR in YOLO26_CACHE; no MediaPipe fallback.",
+    },
+    {
+        "id": "cabin_composite@v1",
+        "kind": "vehicle",
+        "label": "Cabin composite (pose + polar VO + optional YOLO)",
+        "enabled": True,
+        "defaultForKind": "",
+        "detectorId": "continuuuum-remote",
+        "notes": "In-cabin Vehicle takes: MediaPipe/MoCapAnything + polar windshield VO. YOLO26 is optional traffic through glass.",
     },
     {
         "id": "whisper@base",
@@ -527,6 +569,13 @@ def _row_to_dict(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
         "queueError": queue_error,
         "species": meta.get("species") or "",
         "poseTrackPath": meta.get("poseTrackPath") or meta.get("pose_track_path") or "",
+        "vehicleTrackPath": meta.get("vehicleTrackPath") or meta.get("vehicle_track_path") or "",
+        "polarVelocityPath": meta.get("polarVelocityPath") or meta.get("polar_velocity_path") or "",
+        "cabinCamera": _as_bool(meta.get("cabinCamera") if meta.get("cabinCamera") is not None else meta.get("cabin_camera")),
+        "inferShoulderShifts": _as_bool(
+            meta.get("inferShoulderShifts") if meta.get("inferShoulderShifts") is not None else meta.get("infer_shoulder_shifts")
+        ),
+        "facingYawDegrees": float(meta.get("facingYawDegrees") or meta.get("facing_yaw_degrees") or 0),
     }
     out["previewUrl"] = _preview_url(out)
     return out
@@ -556,6 +605,13 @@ def _extract_meta(body: dict[str, Any]) -> dict[str, Any]:
         "targetHint": src.get("targetHint") or src.get("target_hint") or "ragdoll",
         "species": src.get("species") or "",
         "poseTrackPath": src.get("poseTrackPath") or src.get("pose_track_path") or "",
+        "vehicleTrackPath": src.get("vehicleTrackPath") or src.get("vehicle_track_path") or "",
+        "polarVelocityPath": src.get("polarVelocityPath") or src.get("polar_velocity_path") or "",
+        "cabinCamera": _as_bool(src.get("cabinCamera") if "cabinCamera" in src else src.get("cabin_camera")),
+        "inferShoulderShifts": _as_bool(
+            src.get("inferShoulderShifts") if "inferShoulderShifts" in src else src.get("infer_shoulder_shifts")
+        ),
+        "facingYawDegrees": float(src.get("facingYawDegrees") or src.get("facing_yaw_degrees") or 0),
         "detectorProfileId": src.get("detectorProfileId") or src.get("detector_profile_id") or "",
         "mocapRoot": src.get("mocapRoot") or src.get("mocap_root") or "",
         "mocapTimeoutSec": src.get("mocapTimeoutSec") or src.get("mocap_timeout_sec") or "",
@@ -620,6 +676,10 @@ def _merge_recording_meta(conn: sqlite3.Connection, rec_id: str, extra: dict[str
         meta = {}
     if extra.get("pose_track_path"):
         meta["poseTrackPath"] = extra["pose_track_path"]
+    if extra.get("vehicle_track_path"):
+        meta["vehicleTrackPath"] = extra["vehicle_track_path"]
+    if extra.get("polar_velocity_path"):
+        meta["polarVelocityPath"] = extra["polar_velocity_path"]
     if extra.get("bvh_path"):
         meta["bvhPath"] = extra["bvh_path"]
     if extra.get("npy_path"):
@@ -655,7 +715,9 @@ def _complete_running(conn: sqlite3.Connection) -> None:
         err = None
         pending = False
         artifacts: dict[str, Any] = {}
-        if file_path and Path(file_path).is_file() and (is_gpu_spec(spec) or is_whisper_spec(spec)):
+        if file_path and Path(file_path).is_file() and (
+            is_gpu_spec(spec) or is_whisper_spec(spec) or is_vehicle_spec(spec) or is_cabin_spec(spec)
+        ):
             try:
                 artifacts = run_detect_hop(file_path, payload)
             except DetectPending:
@@ -803,6 +865,17 @@ def register_webcam_anim_routes(app: Any, get_conn: GetConn) -> None:
             except KeyError as exc:
                 return jsonify({"error": str(exc)}), 400
         spec = (meta.get("model_spec") or "").strip()
+        kind_l = (meta.get("webcamAnimKind") or "").strip().lower()
+        cabin = _as_bool(meta.get("cabinCamera"))
+        if kind_l == "vehicle" and cabin and not spec:
+            meta["model_spec"] = "cabin_composite@v1"
+            spec = meta["model_spec"]
+        elif kind_l == "vehicle" and cabin and spec.startswith("yolo26_vehicle@"):
+            meta["model_spec"] = "cabin_composite@v1"
+            spec = meta["model_spec"]
+        elif kind_l == "vehicle" and not spec:
+            meta["model_spec"] = "yolo26_vehicle@intel"
+            spec = meta["model_spec"]
         if spec.startswith("mocapanything@") and not (meta.get("species") or "").strip():
             return jsonify({"error": "mocapanything@v2 requires species"}), 400
         rec_id = (body.get("id") or "").strip() or ("wrec_" + uuid.uuid4().hex[:12])
@@ -859,3 +932,32 @@ def register_webcam_anim_routes(app: Any, get_conn: GetConn) -> None:
         except (OSError, json.JSONDecodeError) as exc:
             return jsonify({"error": str(exc)}), 500
         return jsonify(data)
+
+    @app.route("/api/webcam-animations/live-pose", methods=["POST"])
+    def webcam_anim_live_pose():
+        upload = request.files.get("file") if request.files else None
+        if upload is None or not upload.filename:
+            return jsonify({"error": "image file required"}), 400
+        spec = (request.form.get("model_spec") or request.args.get("model_spec") or "mediapipe_holistic@v1").strip()
+        t_ms = request.form.get("tMs") or request.form.get("t_ms") or "0"
+        dest_dir = Path(tempfile.gettempdir()) / "webcam_anim_live_pose"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest = dest_dir / (uuid.uuid4().hex[:12] + (Path(upload.filename).suffix or ".jpg"))
+        upload.save(dest)
+        try:
+            try:
+                from pose_detectors.mediapipe_holistic import INSTALL_HINT, run_image
+            except ImportError:
+                from continuuuum_api.pose_detectors.mediapipe_holistic import INSTALL_HINT, run_image
+            try:
+                body = run_image(str(dest), {"model_spec": spec, "tMs": float(t_ms)})
+            except RuntimeError as exc:
+                msg = str(exc)
+                code = 503 if "mediapipe" in msg.lower() or "install mediapipe" in msg.lower() else 400
+                return jsonify({"error": msg}), code
+            return jsonify(body)
+        finally:
+            try:
+                dest.unlink(missing_ok=True)
+            except OSError:
+                pass

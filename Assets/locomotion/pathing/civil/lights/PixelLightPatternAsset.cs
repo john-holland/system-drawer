@@ -75,6 +75,38 @@ public sealed class PixelLightPatternAsset : ScriptableObject
         return a;
     }
 
+    public static PixelLightPatternAsset CreateWigWagPreset(bool leftOnFirst = true)
+    {
+        var a = CreateInstance<PixelLightPatternAsset>();
+        a.gridWidth = 16;
+        a.gridHeight = 2;
+        a.stepMs = 250f;
+        var layer = new PixelLightLayer { layerId = "wigwag" };
+        string left = new string('#', 8) + new string(' ', 8);
+        string right = new string(' ', 8) + new string('#', 8);
+        var f0 = new PixelLightFrame();
+        var f1 = new PixelLightFrame();
+        for (int y = 0; y < 2; y++)
+        {
+            f0.rows.Add(leftOnFirst ? left : right);
+            f1.rows.Add(leftOnFirst ? right : left);
+        }
+        layer.frames.Add(f0);
+        layer.frames.Add(f1);
+        a.layers.Add(layer);
+        return a;
+    }
+
+    public static PixelLightPatternAsset CreateSplitChasePreset()
+    {
+        var a = CreateChasePreset();
+        a.gridWidth = 16;
+        a.gridHeight = 2;
+        return a;
+    }
+
+    public static PixelLightPatternAsset CreateSteadyBurnPreset() => CreateSolid('#', 16, 2);
+
     public float[,] Evaluate(int frameIndex)
     {
         var grid = new float[gridHeight, gridWidth];

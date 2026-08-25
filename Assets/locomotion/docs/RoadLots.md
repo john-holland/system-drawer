@@ -4,7 +4,7 @@
 
 ## Outlets
 
-`RoadLotOutlet.roadSegmentId` + along-arc. Isolated lots (no outlets) are valid. `RoadTravelBinding.EnrichDriveSegmentWithRoadLot` sets `MultiModalSegment.roadLotId` and snaps the last drive waypoint onto the pad.
+`RoadLotOutlet.roadSegmentId` + along-arc. Isolated lots (no outlets) are valid. `RoadTravelBinding.EnrichDriveSegmentWithRoadLot` sets `MultiModalSegment.roadLotId` and snaps the last drive waypoint onto the pad. `IntersectionLot` (`lotKind = Intersection`) snaps Drive to the **incoming leg outlet**, not the pad center. See [RoadLanes.md](RoadLanes.md).
 
 ## Boundary walls
 

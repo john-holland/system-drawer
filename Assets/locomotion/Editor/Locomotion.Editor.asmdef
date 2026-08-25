@@ -9,12 +9,14 @@
     "HierarchicalPathFinding",
     "Generated.Runtime",
     "SystemDrawer",
+    "SystemDrawer.FeatureBudget",
     "BedogaGenerator",
     "Planetary",
     "Weather.Runtime",
     "SdfMax",
     "SdfMax.Editor",
-    "Locomotion.Open.Runtime"
+    "Locomotion.Open.Runtime",
+    "Roads.Runtime"
   ],
   "includePlatforms": [
     "Editor"

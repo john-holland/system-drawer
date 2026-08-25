@@ -1,0 +1,70 @@
+{
+    "layout": {
+        "laneCount": 2,
+        "laneWidthM": 3.5,
+        "directionSign": [
+            1,
+            -1
+        ]
+    },
+    "grid": {
+        "followTimeSec": 3.0,
+        "gridCarLengths": 1.0,
+        "occupancy01": 0.8500000238418579,
+        "carLengthM": 4.5
+    },
+    "recipe": [],
+    "debris": [],
+    "controlPoints": [],
+    "sidewalkWidthM": 1.7999999523162842,
+    "sidewalkPaddingM": 0.20000000298023225,
+    "mattingWidth01": 0.0,
+    "curbHeightM": 0.15000000596046449,
+    "curbWidthM": 0.20000000298023225,
+    "dappleBevel01": 0.0,
+    "grassStripWidthM": 0.800000011920929,
+    "supportPrefab": {
+        "instanceID": 0
+    },
+    "wallPrefab": {
+        "instanceID": 0
+    },
+    "diggableVolumePrefab": {
+        "instanceID": 0
+    },
+    "jerseyBarrierPrefab": {
+        "instanceID": 0
+    },
+    "guardRailPrefab": {
+        "instanceID": 0
+    },
+    "streetLightPrefab": {
+        "instanceID": 0
+    },
+    "trafficSignalPrefab": {
+        "instanceID": 0
+    },
+    "phonePolePrefab": {
+        "instanceID": 0
+    },
+    "pedCallButtonPrefab": {
+        "instanceID": 0
+    },
+    "signPrefab": {
+        "instanceID": 0
+    },
+    "crosswalkMaterialOwner": {
+        "instanceID": 0
+    },
+    "streetLightKind": 0,
+    "shoulderSign": 1,
+    "spacingAlongM": 28.0,
+    "approachId": "main",
+    "pixelLightPattern": {
+        "instanceID": 0
+    },
+    "pixelLightColors": {
+        "instanceID": 0
+    },
+    "stopPotential01": 1.0
+}

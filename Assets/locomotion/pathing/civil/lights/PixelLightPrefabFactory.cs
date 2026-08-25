@@ -46,6 +46,34 @@ public static class PixelLightPrefabFactory
         return go;
     }
 
+    public static GameObject CreateWarningBarRuntime(Transform parent = null)
+    {
+        var root = new GameObject("EmergencyWarningBar");
+        if (parent != null)
+            root.transform.SetParent(parent, false);
+        var bar = root.AddComponent<EmergencyWarningBar>();
+        bar.leftBank = CreateBank(root.transform, "LeftBank", true);
+        bar.rightBank = CreateBank(root.transform, "RightBank", false);
+        bar.SetKind(EmergencyWarningBarKind.Police);
+        root.AddComponent<EmergencyVehiclePresence>().bar = bar;
+        root.AddComponent<RoadLaneLemmaResolver>().placeholderName = RoadLaneLemmaPropertyKeys.EmergencyBar;
+        return root;
+    }
+
+    static PixelLightRig CreateBank(Transform parent, string name, bool leftOnFirst)
+    {
+        var go = CreateDefaultRuntime(parent);
+        go.name = name;
+        go.transform.localPosition = new Vector3(leftOnFirst ? -0.35f : 0.35f, 0f, 0f);
+        go.transform.localScale = new Vector3(1.6f, 0.35f, 0.4f);
+        var rig = go.GetComponent<PixelLightRig>();
+        rig.gridWidth = 16;
+        rig.gridHeight = 2;
+        rig.syncMode = PixelLightSyncMode.Free;
+        rig.pattern = PixelLightPatternAsset.CreateWigWagPreset(leftOnFirst);
+        return rig;
+    }
+
     static readonly string[] LitShaderCandidates =
     {
         "Universal Render Pipeline/Lit",

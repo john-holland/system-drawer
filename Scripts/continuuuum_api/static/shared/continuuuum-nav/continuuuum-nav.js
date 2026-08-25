@@ -23,6 +23,7 @@
     { id: 'stations', label: 'Stations', path: '/stations' },
     { id: 'keycards', label: 'Keycards', path: '/keycards' },
     { id: 'vehicle-inventory', label: 'Vehicle Inventory', path: '/vehicle-inventory' },
+    { id: 'phone-wires', label: 'Phone Wires', path: '/phone-wires' },
     { id: 'camera', label: 'Camera', path: '/camera-pathing' },
     { id: 'table-read', label: 'Table Read', path: '/table-read' },
     { id: 'sql-viewer', label: 'SQL Viewer', path: '/sql-viewer' },
@@ -154,6 +155,7 @@
       stations: lemmaBase + '/stations',
       keycards: lemmaBase + '/keycards',
       'vehicle-inventory': lemmaBase + '/vehicle-inventory',
+      'phone-wires': lemmaBase + '/phone-wires',
       camera: lemmaBase + '/camera-pathing',
       'table-read': lemmaBase + '/table-read',
       'sql-viewer': lemmaBase + '/sql-viewer',
@@ -190,6 +192,7 @@
     if (path.indexOf('/stations') >= 0) return 'stations';
     if (path.indexOf('/keycards') >= 0) return 'keycards';
     if (path.indexOf('/vehicle-inventory') >= 0) return 'vehicle-inventory';
+    if (path.indexOf('/phone-wires') >= 0) return 'phone-wires';
     if (path.indexOf('/camera-pathing') >= 0 || path.indexOf('/camera-scenes') >= 0) return 'camera';
     if (path.indexOf('/table-read') >= 0) return 'table-read';
     if (path.indexOf('/sql-viewer') >= 0) return 'sql-viewer';
@@ -379,6 +382,7 @@
     stations: { game: true, dimension: true },
     keycards: { game: true, dimension: true },
     'vehicle-inventory': { game: true, dimension: true },
+    'phone-wires': { game: true, dimension: true },
     camera: { game: true, dimension: true },
     'table-read': { game: true, dimension: false },
     'sql-viewer': { game: false, dimension: false },

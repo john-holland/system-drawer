@@ -35,9 +35,9 @@ Scalable brushes (`Building`, `Intersection`, `SchoolBusStop`) materialize **one
 
 ## Designer
 
-**Locomotion → City Pixel Grid Designer**
+**Locomotion → City Pixel Grid Designer** · **Locomotion → Road Lanes Designer** embeds the same click-to-paint grid for highway sections (X = across lanes, Y = along the ribbon).
 
-- Layer paint or **Brush Mode** (cards)
+- Layer paint or **Brush Mode** (cards). **Select** brush click-drags cells (Shift add, Ctrl/Cmd toggle, Esc clear). **Undo / Redo** (Ctrl/Cmd+Z · Ctrl+Y) — a drag-paint is one step.
 - **Add Prison Cell Layers** + **Cell** brush (diggable / destructible / tunnel stress)
 - **Add House Street / Yard / Side Layers** (`EnsureHouseLayers`) + `DrivewayLot` / `GarageLot` brushes — see [HouseConstruction.md](HouseConstruction.md)
 - **Export Prison Cell/Door/Wall Bounds4** for SG4D `PrisonCellVolume` / `DigContactCentroid`
@@ -57,6 +57,7 @@ Scalable brushes (`Building`, `Intersection`, `SchoolBusStop`) materialize **one
 | School bus | `TASchoolBusStopCard` |
 | Building | `TABuildingTypeCard` + Open Available Editors; height / candidate / floor / zone |
 | Sign | `TASignCard` (Yield/Stop/SlowChildren/BlindDrive/…) |
+| Select | Editor-only: click/drag cells; does not stamp |
 | Building / Intersection / Placeable type separator | Cuts same-type adjacency (no spawn) |
 
 **Locomotion → Ladder Logic Designer** edits `TrafficDetailLadderAsset` + light ladder timings.
@@ -68,4 +69,4 @@ Scalable brushes (`Building`, `Intersection`, `SchoolBusStop`) materialize **one
 
 ## Bake
 
-`CityPixelGridBaker` seeds Roads, blocks hazard/detour cells, adds one-way demand, Kruskal via `TrafficMstBuilder`.
+Also see [RoadLanes.md](RoadLanes.md) for Highway / overpass / street-light / sidewalk / jersey brushes and stacked stamps.

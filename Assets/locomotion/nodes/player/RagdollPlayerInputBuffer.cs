@@ -22,7 +22,9 @@ public class RagdollPlayerInputBuffer : MonoBehaviour
             vertical = State.vertical,
             sprint = State.sprint,
             jumpPressedThisFrame = false,
-            uiMode = State.uiMode
+            uiMode = State.uiMode,
+            brake01 = State.brake01,
+            selfDriving = State.selfDriving
         };
         return true;
     }

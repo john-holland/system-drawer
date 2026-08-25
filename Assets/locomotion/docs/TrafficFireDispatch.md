@@ -41,7 +41,11 @@ Consumers: firetruck bars, stage/club fixtures, **traffic signal heads**.
 
 - `/vehicle-inventory` + `GET/PUT /api/civil/vehicle-inventory`
 - Persona-day catalog includes `FireStation`
-- Discovery tokens: `dispatch`, `fire-station`, `traffic-light`, `vehicle-inventory`, `pixel-light`
+- Discovery tokens: `dispatch`, `fire-station`, `traffic-light`, `vehicle-inventory`, `pixel-light`, `phone-wire`
+
+## Emergency warning bar
+
+`EmergencyWarningBar` (16×2 wig-wag PixelLight, police/fire/EMS/utility) + local `EmergencyVehiclePresence` hear/see radius, BT graft `emergency_yield` / `emergency_flee`, pull-over overlay, fleeing-birds gizmo. See [RoadLanes.md](RoadLanes.md).
 
 ## Related
 

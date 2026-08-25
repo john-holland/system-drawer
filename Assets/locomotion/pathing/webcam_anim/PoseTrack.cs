@@ -20,6 +20,37 @@ public sealed class PoseTrack
 
     public int Count => samples != null ? samples.Count : 0;
 
+    public float LatestTimeMs()
+    {
+        if (samples == null || samples.Count == 0)
+            return 0f;
+        float latest = samples[0] != null ? samples[0].timeMs : 0f;
+        for (int i = 1; i < samples.Count; i++)
+        {
+            if (samples[i] != null && samples[i].timeMs > latest)
+                latest = samples[i].timeMs;
+        }
+        return latest;
+    }
+
+    public void AppendSamples(IList<PoseBoneSample> extra, float capWindowMs = 2000f)
+    {
+        if (extra == null || extra.Count == 0)
+            return;
+        if (samples == null)
+            samples = new List<PoseBoneSample>();
+        for (int i = 0; i < extra.Count; i++)
+        {
+            if (extra[i] != null)
+                samples.Add(extra[i]);
+        }
+        if (capWindowMs <= 0f || samples.Count == 0)
+            return;
+        float latest = LatestTimeMs();
+        float cutoff = latest - capWindowMs;
+        samples.RemoveAll(s => s == null || s.timeMs < cutoff);
+    }
+
     public static PoseTrack FromJson(string json)
     {
         if (string.IsNullOrEmpty(json))

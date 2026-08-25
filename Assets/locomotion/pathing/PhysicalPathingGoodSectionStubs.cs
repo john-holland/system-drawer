@@ -86,6 +86,30 @@ public static class PhysicalPathingGoodSectionStubs
         };
     }
 
+    public static GoodSection CreateDriveBrakeStub(string instrumentChannelKey)
+    {
+        var stack = new System.Collections.Generic.List<ImpulseAction>();
+        if (!string.IsNullOrEmpty(instrumentChannelKey))
+        {
+            stack.Add(new ImpulseAction
+            {
+                muscleGroup = instrumentChannelKey,
+                activation = 0.8f,
+                duration = 0.2f
+            });
+        }
+
+        return new GoodSection
+        {
+            sectionName = "stub_drive_brake",
+            description = "Stub brake section (requires instrument map)",
+            physicalPathingMedium = PhysicalPathingMedium.Ground,
+            driveAnimationPhase = DriveAnimationPhase.Brake,
+            driveInstrumentId = "brake",
+            impulseStack = stack
+        };
+    }
+
     static GoodSection CreateTerminalStub(string name, TravelLegMode leg, PhysicalPathingMedium medium)
     {
         return new GoodSection

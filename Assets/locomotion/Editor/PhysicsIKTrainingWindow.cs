@@ -106,6 +106,13 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private GameObject previewInstance;
     private PhysicsCardSolver previewInstanceSolver;
     private Rigidbody previewInstanceRagdollRigidbody;
+    Scene openedMeasurementScene;
+    bool openedMeasurementSceneFlag;
+    readonly List<(GameObject go, bool wasActive)> activatedObjectFlags = new List<(GameObject, bool)>();
+    readonly InteractedObjectCheckpoint checkpoint = new InteractedObjectCheckpoint();
+    double lastContactAt;
+    [SerializeField] bool editModeContactActivation = true;
+    [SerializeField] SceneAsset measurementSceneAsset;
 
     /// <summary>Number of power steps (0.5..2). Higher = more runs and finer coefficient granularity.</summary>
     [SerializeField] private int powerStepCount = 4;
@@ -156,9 +163,27 @@ public class PhysicsIKTrainingWindow : EditorWindow
         w.Show();
     }
 
+    public static void OpenAndTrainFromCurrentPose(PhysicsIKTrainingRunAsset asset, PhysicsCardSolver assignedSolver)
+    {
+        var w = GetWindow<PhysicsIKTrainingWindow>("IK Animation Training");
+        w.minSize = new Vector2(420, 520);
+        w.runAsset = asset;
+        if (assignedSolver != null)
+            w.solver = assignedSolver;
+        if (asset != null)
+        {
+            asset.initialPoseMode = IKTrainingInitialPoseMode.Current;
+            w.testCategory = asset.testCategory;
+        }
+        w.Show();
+        w.StartTrainingRun(null);
+    }
+
     private void OnEnable()
     {
         EditorApplication.update -= OnTrainingUpdate;
+        EditorApplication.update -= OnEditorContactUpdate;
+        EditorApplication.update += OnEditorContactUpdate;
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         if (running)
             EditorApplication.update += OnTrainingUpdate;
@@ -169,10 +194,12 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private void OnDisable()
     {
         EditorApplication.update -= OnTrainingUpdate;
+        EditorApplication.update -= OnEditorContactUpdate;
         EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         if (running)
             ResetRagdollStateAfterRun();
         running = false;
+        EndMeasurementContext();
         CleanupPreviewScene();
     }
 
@@ -265,6 +292,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
     private void StartTrainingRun(AnimationBehaviorTree treeToUse)
     {
         RestoreRagdollKinematicState();
+        BeginMeasurementContext();
         ApplyOptionalInitialPose();
         var rb = GetEffectiveRagdollRigidbody();
         if (rb != null)
@@ -844,23 +872,26 @@ public class PhysicsIKTrainingWindow : EditorWindow
     {
         RestoreRagdollKinematicState();
         var rb = GetEffectiveRagdollRigidbody();
-        if (!hasStoredRagdollState || rb == null) return;
-        if (!Application.isPlaying)
+        if (hasStoredRagdollState && rb != null)
         {
-            Undo.RecordObject(rb.transform, "Reset ragdoll after training");
-            Undo.RecordObject(rb, "Reset ragdoll after training");
+            if (!Application.isPlaying)
+            {
+                Undo.RecordObject(rb.transform, "Reset ragdoll after training");
+                Undo.RecordObject(rb, "Reset ragdoll after training");
+            }
+            rb.transform.position = storedRagdollPosition;
+            rb.transform.rotation = storedRagdollRotation;
+            rb.linearVelocity = storedRagdollVelocity;
+            rb.angularVelocity = storedRagdollAngularVelocity;
+            rb.constraints = storedRagdollConstraints;
+            if (!Application.isPlaying)
+            {
+                EditorUtility.SetDirty(rb.transform);
+                EditorUtility.SetDirty(rb);
+            }
+            hasStoredRagdollState = false;
         }
-        rb.transform.position = storedRagdollPosition;
-        rb.transform.rotation = storedRagdollRotation;
-        rb.linearVelocity = storedRagdollVelocity;
-        rb.angularVelocity = storedRagdollAngularVelocity;
-        rb.constraints = storedRagdollConstraints;
-        if (!Application.isPlaying)
-        {
-            EditorUtility.SetDirty(rb.transform);
-            EditorUtility.SetDirty(rb);
-        }
-        hasStoredRagdollState = false;
+        EndMeasurementContext();
     }
 
     void ApplyMobilityPreset()
@@ -948,6 +979,70 @@ public class PhysicsIKTrainingWindow : EditorWindow
         }
         storedRagdollRigidbodies = null;
         storedRagdollKinematic = null;
+    }
+
+    void BeginMeasurementContext()
+    {
+        EndMeasurementContext();
+        if (runAsset == null)
+            return;
+        if (runAsset.loadMeasurementSceneAdditive && !string.IsNullOrEmpty(runAsset.measurementScenePath))
+        {
+            openedMeasurementScene = EditorSceneManager.OpenScene(runAsset.measurementScenePath, OpenSceneMode.Additive);
+            openedMeasurementSceneFlag = openedMeasurementScene.IsValid();
+        }
+        bool activate = runAsset.activateTrainingObjectsInEditor;
+        if (!activate && (!string.IsNullOrEmpty(runAsset.measurementScenePath)
+            || (runAsset.measurementObjectWeights != null && runAsset.measurementObjectWeights.Count > 0)))
+            activate = true;
+        if (!activate)
+            return;
+        var objects = runAsset.ResolveMeasurementObjects();
+        activatedObjectFlags.Clear();
+        var snap = IkTrainingLiveScore.ActivateInEditor(objects);
+        for (int i = 0; i < snap.Count; i++)
+        {
+            activatedObjectFlags.Add(snap[i]);
+            checkpoint.RememberFirstSeen(snap[i].go);
+        }
+    }
+
+    void EndMeasurementContext()
+    {
+        IkTrainingLiveScore.RestoreActiveFlags(activatedObjectFlags);
+        activatedObjectFlags.Clear();
+        if (openedMeasurementSceneFlag && openedMeasurementScene.IsValid())
+            EditorSceneManager.CloseScene(openedMeasurementScene, true);
+        openedMeasurementSceneFlag = false;
+        openedMeasurementScene = default;
+    }
+
+    void OnEditorContactUpdate()
+    {
+        if (!editModeContactActivation)
+            return;
+        double now = EditorApplication.timeSinceStartup;
+        if (now - lastContactAt < 0.1)
+            return;
+        lastContactAt = now;
+        var solver = GetEffectiveSolver();
+        if (solver == null)
+            return;
+        var ragdoll = solver.GetComponent<RagdollSystem>() ?? solver.GetComponentInChildren<RagdollSystem>();
+        if (ragdoll == null)
+            return;
+        var objects = runAsset != null ? runAsset.ResolveMeasurementObjects() : null;
+        var result = GoodSectionContactActivation.Tick(ragdoll, objects, checkpoint);
+        if (result.contacts != null && objects != null)
+        {
+            for (int i = 0; i < result.contacts.Count; i++)
+                GoodSectionContactActivation.CollectCascadeFromMoved(result.contacts[i], objects, checkpoint);
+        }
+        var drawer = ragdoll.GetComponent<SystemDrawerAnimator>()
+                     ?? ragdoll.GetComponentInParent<SystemDrawerAnimator>()
+                     ?? ragdoll.GetComponentInChildren<SystemDrawerAnimator>();
+        if (drawer != null)
+            drawer.TickLayersFromEditor();
     }
 
     private void OnTrainingUpdate()
@@ -1211,6 +1306,46 @@ public class PhysicsIKTrainingWindow : EditorWindow
         if (EditorGUI.EndChangeCheck() && usePreviewSceneActor)
             EnsurePreviewInstance();
         runAsset = (PhysicsIKTrainingRunAsset)EditorGUILayout.ObjectField(Tips.RunAsset, runAsset, typeof(PhysicsIKTrainingRunAsset), false);
+        if (runAsset != null)
+        {
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Measurement scene + weights", EditorStyles.miniLabel);
+            EditorGUI.BeginChangeCheck();
+            measurementSceneAsset = (SceneAsset)EditorGUILayout.ObjectField(
+                "Measurement scene", measurementSceneAsset, typeof(SceneAsset), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                runAsset.measurementScenePath = measurementSceneAsset != null
+                    ? AssetDatabase.GetAssetPath(measurementSceneAsset)
+                    : "";
+                EditorUtility.SetDirty(runAsset);
+            }
+            if (measurementSceneAsset == null && !string.IsNullOrEmpty(runAsset.measurementScenePath))
+                measurementSceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(runAsset.measurementScenePath);
+            runAsset.loadMeasurementSceneAdditive = EditorGUILayout.Toggle(
+                "Load measurement scene additive", runAsset.loadMeasurementSceneAdditive);
+            bool hasMeasure = !string.IsNullOrEmpty(runAsset.measurementScenePath)
+                || (runAsset.measurementObjectWeights != null && runAsset.measurementObjectWeights.Count > 0);
+            if (hasMeasure)
+                runAsset.activateTrainingObjectsInEditor = true;
+            runAsset.activateTrainingObjectsInEditor = EditorGUILayout.Toggle(
+                "Activate training objects in editor", runAsset.activateTrainingObjectsInEditor);
+            editModeContactActivation = EditorGUILayout.Toggle(
+                "Edit-mode contact activation", editModeContactActivation);
+            using (var so = new SerializedObject(runAsset))
+            {
+                EditorGUILayout.PropertyField(so.FindProperty("measurementObjectWeights"), true);
+                EditorGUILayout.PropertyField(so.FindProperty("actorLimbWeights"), true);
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+            EditorGUI.BeginDisabledGroup(!checkpoint.CanReset);
+            if (GUILayout.Button("Reset to state"))
+                checkpoint.Reset();
+            EditorGUI.EndDisabledGroup();
+            EditorGUILayout.HelpBox(
+                "Activate-in-editor SetActive(true) listed props without Play Mode. Additive measurement scene unloads when the sweep ends. Reset to state stays disabled until a GoodSection enables or physics translates an object.",
+                MessageType.None);
+        }
         testCategory = (PhysicsIKTrainingCategory)EditorGUILayout.EnumPopup(Tips.TestCategory, testCategory);
         if (runAsset != null)
         {

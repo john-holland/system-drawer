@@ -99,8 +99,19 @@ public class Sensor : MonoBehaviour
             timestamp = Time.time
         };
 
-        // Detect contacts via collisions (would be populated by OnCollisionStay)
-        // For now, return empty data
+        // Detect contacts via nearby colliders (shared with edit-mode GoodSectionContactActivation).
+        Collider[] colliders = Physics.OverlapSphere(transform.position, Mathf.Max(0.05f, range * 0.15f), detectionLayer);
+        if (colliders == null)
+            return data;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            var c = colliders[i];
+            if (c == null || c.gameObject == gameObject)
+                continue;
+            if (c.transform.IsChildOf(transform))
+                continue;
+            data.detectedObjects.Add(c.gameObject);
+        }
         return data;
     }
 

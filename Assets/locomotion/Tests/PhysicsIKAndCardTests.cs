@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
+using Locomotion.Rig;
 using PhysicsCard = GoodSection;
 
 /// <summary>
@@ -368,6 +369,161 @@ public class PhysicsIKAndCardTests
         }
         Assert.IsTrue(hasShoot, "SolveForGoal(GoalType.Shoot) should return a path that includes a shoot card when one is available.");
         Object.DestroyImmediate(solverGo);
+    }
+
+    [Test]
+    public void IkTrainingLiveScore_PrefersHeavyLimbAndObject()
+    {
+        var actor = new GameObject("ScoreActor");
+        var hand = new GameObject("RightHand");
+        hand.transform.SetParent(actor.transform, false);
+        var light = new GameObject("lightObj");
+        var heavy = new GameObject("heavyObj");
+        light.transform.position = new Vector3(8f, 0f, 0f);
+        heavy.transform.position = new Vector3(0.5f, 0f, 0f);
+        var run = ScriptableObject.CreateInstance<PhysicsIKTrainingRunAsset>();
+        try
+        {
+            var map = actor.AddComponent<BoneMap>();
+            map.Set("Human:RightHand", hand.transform);
+            run.actorLimbWeights = new List<IkTrainingLimbWeight>
+            {
+                new IkTrainingLimbWeight { traitId = "Human:RightHand", weight = 2f }
+            };
+            run.measurementObjectWeights = new List<IkTrainingObjectWeight>
+            {
+                new IkTrainingObjectWeight { hierarchyPath = "lightObj", weight = 0.1f },
+                new IkTrainingObjectWeight { hierarchyPath = "heavyObj", weight = 10f }
+            };
+            Assert.IsTrue(IkTrainingLiveScore.TryScore(run, map, out float nearHeavy));
+            run.measurementObjectWeights = new List<IkTrainingObjectWeight>
+            {
+                new IkTrainingObjectWeight { hierarchyPath = "lightObj", weight = 10f },
+                new IkTrainingObjectWeight { hierarchyPath = "heavyObj", weight = 0.1f }
+            };
+            Assert.IsTrue(IkTrainingLiveScore.TryScore(run, map, out float nearLightHeavy));
+            Assert.Greater(nearHeavy, nearLightHeavy);
+        }
+        finally
+        {
+            Object.DestroyImmediate(run);
+            Object.DestroyImmediate(actor);
+            Object.DestroyImmediate(light);
+            Object.DestroyImmediate(heavy);
+        }
+    }
+
+    [Test]
+    public void PhysicsIKTrainingRunner_RunOne_UsesWeightedScoreNotRng()
+    {
+        var actor = new GameObject("LiveScoreActor");
+        var hand = new GameObject("RightHand");
+        hand.transform.SetParent(actor.transform, false);
+        var target = new GameObject("measureTarget");
+        target.transform.position = new Vector3(0.4f, 0f, 0f);
+        var run = ScriptableObject.CreateInstance<PhysicsIKTrainingRunAsset>();
+        try
+        {
+            var map = actor.AddComponent<BoneMap>();
+            map.Set("Human:RightHand", hand.transform);
+            var solver = actor.AddComponent<PhysicsCardSolver>();
+            run.hitTarget = target;
+            run.actorLimbWeights = new List<IkTrainingLimbWeight>
+            {
+                new IkTrainingLimbWeight { traitId = "Human:RightHand", weight = 1f }
+            };
+            var a = PhysicsIKTrainingRunner.RunOne(solver, PhysicsIKTrainedSet.Default(), PhysicsIKTrainingCategory.Idle, 1, null, run);
+            var b = PhysicsIKTrainingRunner.RunOne(solver, PhysicsIKTrainedSet.Default(), PhysicsIKTrainingCategory.Idle, 99, null, run);
+            Assert.AreEqual(a.accuracyScore, b.accuracyScore, 1e-5f);
+            Assert.Greater(a.accuracyScore, 0f);
+        }
+        finally
+        {
+            Object.DestroyImmediate(run);
+            Object.DestroyImmediate(actor);
+            Object.DestroyImmediate(target);
+        }
+    }
+
+    [Test]
+    public void IkTraining_ActivateObjectsInEditor_RestoresActiveSelf()
+    {
+        var go = new GameObject("MeasureProp");
+        go.SetActive(false);
+        try
+        {
+            var snap = IkTrainingLiveScore.ActivateInEditor(new List<GameObject> { go });
+            Assert.IsTrue(go.activeSelf);
+            IkTrainingLiveScore.RestoreActiveFlags(snap);
+            Assert.IsFalse(go.activeSelf);
+        }
+        finally
+        {
+            Object.DestroyImmediate(go);
+        }
+    }
+
+    [Test]
+    public void GoodSectionContactActivation_OverlappingCollider_AddsSectionWithoutPlayMode()
+    {
+        var actor = new GameObject("ContactActor");
+        var limb = new GameObject("Limb");
+        limb.transform.SetParent(actor.transform, false);
+        limb.AddComponent<BoxCollider>();
+        var prop = new GameObject("Prop");
+        prop.AddComponent<BoxCollider>();
+        var rs = actor.AddComponent<RagdollSystem>();
+        rs.ragdollRoot = limb.transform;
+        var ns = actor.AddComponent<NervousSystem>();
+        var section = new GoodSection { sectionName = "contact-gs" };
+        ns.goodSections.Add(section);
+        var solver = actor.AddComponent<PhysicsCardSolver>();
+        var checkpoint = new InteractedObjectCheckpoint();
+        try
+        {
+            Assert.IsFalse(Application.isPlaying);
+            var result = GoodSectionContactActivation.Tick(rs, new List<GameObject> { prop }, checkpoint);
+            Assert.Greater(result.contactCount, 0);
+            Assert.Greater(result.sectionsEnabled, 0);
+            Assert.IsTrue(solver.availableCards.Contains(section));
+            Assert.IsTrue(checkpoint.CanReset);
+        }
+        finally
+        {
+            Object.DestroyImmediate(actor);
+            Object.DestroyImmediate(prop);
+        }
+    }
+
+    [Test]
+    public void InteractedObjectCheckpoint_DisabledUntilDirty_RestoresFirstSeenCascade()
+    {
+        var a = new GameObject("A");
+        var b = new GameObject("B");
+        a.AddComponent<BoxCollider>();
+        b.AddComponent<BoxCollider>();
+        a.transform.position = Vector3.zero;
+        b.transform.position = Vector3.zero;
+        var cp = new InteractedObjectCheckpoint();
+        try
+        {
+            Assert.IsFalse(cp.CanReset);
+            cp.RememberFirstSeen(a);
+            GoodSectionContactActivation.CollectCascadeFromMoved(a, new List<GameObject> { a, b }, cp);
+            Assert.GreaterOrEqual(cp.SnapshotCount, 2);
+            Assert.IsFalse(cp.CanReset);
+            a.transform.localPosition = new Vector3(2f, 0f, 0f);
+            cp.MarkDirtyFromPhysicsTranslation(a);
+            Assert.IsTrue(cp.CanReset);
+            cp.Reset();
+            Assert.AreEqual(0f, a.transform.localPosition.x, 1e-4f);
+            Assert.IsFalse(cp.CanReset);
+        }
+        finally
+        {
+            Object.DestroyImmediate(a);
+            Object.DestroyImmediate(b);
+        }
     }
 }
 #endif

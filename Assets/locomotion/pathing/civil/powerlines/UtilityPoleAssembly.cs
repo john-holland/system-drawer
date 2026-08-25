@@ -25,6 +25,25 @@ public sealed class UtilityPoleAssembly : MonoBehaviour
     public PowerLineTensionLemma tensionLemma;
     public List<Transform> climbStepAnchors = new List<Transform>();
     [Range(0f, 1f)] public float lean01;
+    public string poleId;
+
+    void OnEnable()
+    {
+        if (string.IsNullOrEmpty(poleId))
+            poleId = gameObject.name;
+        PhonePoleIndex.Register(this);
+    }
+
+    void OnDisable() => PhonePoleIndex.Unregister(this);
+
+    public Vector3 TopAttachmentWorld
+    {
+        get
+        {
+            if (crossarm != null) return crossarm.position;
+            return transform.position + Vector3.up * heightM * 0.85f;
+        }
+    }
 
     public void EnsureVisuals()
     {
@@ -114,6 +133,4 @@ public sealed class UtilityPoleAssembly : MonoBehaviour
         if (tensionLemma.ShouldBreakPole(tension01))
             gameObject.SetActive(false);
     }
-
-    public Vector3 TopAttachmentWorld => transform.position + Vector3.up * heightM * 0.92f;
 }

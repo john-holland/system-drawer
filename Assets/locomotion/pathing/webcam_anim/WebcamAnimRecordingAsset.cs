@@ -20,7 +20,21 @@ public sealed class WebcamAnimRecordingAsset : ScriptableObject
     public string targetHint = "ragdoll";
     public string species = "";
     public string poseTrackPath = "";
+    public string vehicleTrackPath = "";
+    public string polarVelocityPath = "";
+    [Range(0f, 360f)] public float facingYawDegrees;
+    public bool cabinCamera;
+    public bool inferShoulderShifts;
     public PoseTrack lastTrack;
+    public VehicleTrack lastVehicleTrack;
+    public CabinPolarVelocity lastPolarVelocity;
+
+    [Header("Preview overlay")]
+    [Range(0f, 1f)] public float previewVideoOpacity = WebcamAnimPreviewOverlay.DefaultVideoOpacity;
+    public float previewVideoScale = 1f;
+    public Vector2 previewVideoOffset01;
+    public bool syncVehicleRagdoll = true;
+    public WebcamAnimCameraShot[] cameraShots = System.Array.Empty<WebcamAnimCameraShot>();
 
     void OnValidate()
     {
@@ -50,6 +64,13 @@ public sealed class WebcamAnimRecordingAsset : ScriptableObject
             species = meta.species;
         if (!string.IsNullOrEmpty(meta.poseTrackPath))
             poseTrackPath = meta.poseTrackPath;
+        if (!string.IsNullOrEmpty(meta.vehicleTrackPath))
+            vehicleTrackPath = meta.vehicleTrackPath;
+        if (!string.IsNullOrEmpty(meta.polarVelocityPath))
+            polarVelocityPath = meta.polarVelocityPath;
+        facingYawDegrees = meta.facingYawDegrees;
+        cabinCamera = meta.cabinCamera;
+        inferShoulderShifts = meta.inferShoulderShifts;
         if (System.Enum.TryParse(meta.webcamAnimKind, true, out WebcamAnimKind parsedKind))
             kind = parsedKind;
         if (!string.IsNullOrEmpty(meta.granularity) &&

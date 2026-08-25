@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03ce0c17de034064ea69141f8decba98, type: 3}
+  m_Name: RoadLaneConfig
+  m_EditorClassIdentifier: Locomotion.Runtime::RoadLaneConfigAsset
+  layout:
+    laneCount: 2
+    laneWidthM: 3.5
+    directionSign: 01000000ffffffff
+  grid:
+    followTimeSec: 3
+    gridCarLengths: 1
+    occupancy01: 0.85
+    carLengthM: 4.5
+  recipe: []
+  debris: []
+  controlPoints: []
+  sidewalkWidthM: 1.8
+  sidewalkPaddingM: 0.2
+  mattingWidth01: 0
+  curbHeightM: 0.15
+  curbWidthM: 0.2
+  dappleBevel01: 0
+  grassStripWidthM: 0.8
+  supportPrefab: {fileID: 0}
+  wallPrefab: {fileID: 0}
+  diggableVolumePrefab: {fileID: 0}
+  jerseyBarrierPrefab: {fileID: 0}
+  guardRailPrefab: {fileID: 0}
+  streetLightPrefab: {fileID: 0}
+  trafficSignalPrefab: {fileID: 0}
+  phonePolePrefab: {fileID: 0}
+  pedCallButtonPrefab: {fileID: 0}
+  signPrefab: {fileID: 0}
+  crosswalkMaterialOwner: {fileID: 0}
+  streetLightKind: 0
+  shoulderSign: 1
+  spacingAlongM: 28
+  approachId: main
+  pixelLightPattern: {fileID: 0}
+  pixelLightColors: {fileID: 0}
+  stopPotential01: 1

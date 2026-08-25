@@ -26,6 +26,14 @@ def is_whisper_spec(spec: str) -> bool:
     return (spec or "").strip().startswith("whisper@")
 
 
+def is_vehicle_spec(spec: str) -> bool:
+    return (spec or "").strip().startswith("yolo26_vehicle@")
+
+
+def is_cabin_spec(spec: str) -> bool:
+    return (spec or "").strip().startswith("cabin_composite@")
+
+
 def set_hop_runner(spec: str, fn: HopFn | None) -> None:
     if fn is None:
         _HOPS.pop(spec, None)
@@ -44,6 +52,14 @@ def _default_runner(spec: str) -> HopFn | None:
         return run
     if spec.startswith("whisper@"):
         from .whisper_usc import run
+
+        return run
+    if spec.startswith("yolo26_vehicle@"):
+        from .yolo26_vehicle import run
+
+        return run
+    if spec.startswith("cabin_composite@"):
+        from .cabin_composite import run
 
         return run
     return None

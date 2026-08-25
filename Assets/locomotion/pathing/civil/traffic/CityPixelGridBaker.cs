@@ -82,7 +82,8 @@ public static class CityPixelGridBaker
         for (int li = 0; li < grid.layers.Count; li++)
         {
             var layer = grid.layers[li];
-            if (layer == null || layer.kind != CityPixelLayerKind.Roads) continue;
+            if (layer == null) continue;
+            if (layer.kind != CityPixelLayerKind.Roads && layer.kind != CityPixelLayerKind.Highway) continue;
             if (frameIndex >= layer.frames.Count) continue;
             var frame = layer.frames[frameIndex];
             for (int y = 0; y < grid.height; y++)
@@ -113,7 +114,11 @@ public static class CityPixelGridBaker
         {
             var layer = grid.layers[li];
             if (layer == null) continue;
-            if (layer.kind == CityPixelLayerKind.Roads || layer.kind == CityPixelLayerKind.Custom) continue;
+            if (layer.kind == CityPixelLayerKind.Roads || layer.kind == CityPixelLayerKind.Custom
+                || layer.kind == CityPixelLayerKind.Highway || layer.kind == CityPixelLayerKind.Overpass
+                || layer.kind == CityPixelLayerKind.StreetLight || layer.kind == CityPixelLayerKind.GrassStrip
+                || layer.kind == CityPixelLayerKind.Sidewalk || layer.kind == CityPixelLayerKind.Street)
+                continue;
             if (frameIndex >= layer.frames.Count) continue;
             var frame = layer.frames[frameIndex];
             for (int y = 0; y < grid.height; y++)
@@ -131,6 +136,8 @@ public static class CityPixelGridBaker
                 var s = grid.brushStamps[i];
                 if (s.frameIndex != frameIndex) continue;
                 if (s.kind == CityPixelBrushKind.Detour || s.kind == CityPixelBrushKind.StopSign)
+                    blocked.Add(graph.SnapId(grid.CellToWorld(s.cellX, s.cellY)));
+                if (s.laneDisabled)
                     blocked.Add(graph.SnapId(grid.CellToWorld(s.cellX, s.cellY)));
                 if (s.kind == CityPixelBrushKind.OneWay)
                 {

@@ -128,9 +128,11 @@ def test_models_seed_and_put_concurrency(app_client):
     assert "pose" in kinds
     assert "whisper" in kinds
     assert "music" in kinds
+    assert "vehicle" in kinds
     assert data["totalConcurrency"] >= 1
     ids = {m["id"] for m in data["models"]}
     assert "whisper@base" in ids
+    assert "yolo26_vehicle@intel" in ids
     put = app_client.put(
         "/api/webcam-animations/models",
         json={"totalConcurrency": 3, "models": data["models"]},
@@ -409,4 +411,270 @@ def test_whisper_missing_usc_fails_queue(app_client):
         assert "USC" in (got.get("queueError") or "")
     finally:
         set_transcribe_impl(None)
+
+
+def test_yolo26_vehicle_stub_writes_vehicle_track(app_client, tmp_path):
+    from pose_detectors import set_hop_runner
+    from pose_detectors.yolo26_vehicle import write_vehicle_track
+
+    track_path = tmp_path / "veh.vehicletrack.json"
+
+    def ok(_path, payload):
+        write_vehicle_track(
+            track_path,
+            payload.get("model_spec") or "yolo26_vehicle@intel",
+            [
+                {
+                    "tMs": 0,
+                    "trackId": 1,
+                    "classId": 2,
+                    "className": "car",
+                    "conf": 0.9,
+                    "bbox": {"x1": 0.1, "y1": 0.1, "x2": 0.4, "y2": 0.4},
+                    "cx": 0.25,
+                    "cy": 0.25,
+                }
+            ],
+            [
+                {
+                    "startMs": 0,
+                    "endMs": 100,
+                    "headingRad": 0.1,
+                    "subjectTrackId": 1,
+                    "subjectClassId": 2,
+                    "hasFacingYawOverride": False,
+                    "facingYawOverride": 0.0,
+                }
+            ],
+        )
+        return {"vehicle_track_path": str(track_path)}
+
+    set_hop_runner("yolo26_vehicle@intel", ok)
+    try:
+        r = app_client.post(
+            "/api/webcam-animations",
+            data={
+                "type_metadata": json.dumps(
+                    {
+                        "kind": KIND_VALUE,
+                        "webcamAnimKind": "vehicle",
+                        "model_spec": "yolo26_vehicle@intel",
+                        "subsection": "drive",
+                    }
+                ),
+                "file": (io.BytesIO(b"clip"), "car.mp4"),
+            },
+            content_type="multipart/form-data",
+        )
+        assert r.status_code == 201
+        rec_id = r.get_json()["id"]
+        got = app_client.get("/api/webcam-animations/" + rec_id).get_json()
+        assert got["queueStatus"] == "done"
+        assert got["vehicleTrackPath"] == str(track_path)
+        assert (got.get("type_metadata") or {}).get("vehicleTrackPath") == str(track_path)
+    finally:
+        set_hop_runner("yolo26_vehicle@intel", None)
+
+
+def test_yolo26_missing_weights_fails_queue(app_client):
+    from pose_detectors import set_hop_runner
+
+    def boom(_path, _payload):
+        raise RuntimeError("Intel YOLO26 vehicle weights missing")
+
+    set_hop_runner("yolo26_vehicle@intel", boom)
+    try:
+        r = app_client.post(
+            "/api/webcam-animations",
+            data={
+                "type_metadata": json.dumps(
+                    {
+                        "kind": KIND_VALUE,
+                        "webcamAnimKind": "vehicle",
+                        "model_spec": "yolo26_vehicle@intel",
+                        "subsection": "drive",
+                    }
+                ),
+                "file": (io.BytesIO(b"clip"), "car.mp4"),
+            },
+            content_type="multipart/form-data",
+        )
+        rec_id = r.get_json()["id"]
+        got = app_client.get("/api/webcam-animations/" + rec_id).get_json()
+        assert got["queueStatus"] == "failed"
+        assert "YOLO26" in (got.get("queueError") or "")
+    finally:
+        set_hop_runner("yolo26_vehicle@intel", None)
+
+
+def test_vehicle_kind_defaults_yolo26_spec(app_client):
+    r = app_client.post(
+        "/api/webcam-animations",
+        json={"kind": KIND_VALUE, "webcamAnimKind": "vehicle", "subsection": "roll"},
+    )
+    assert r.status_code == 201
+    assert r.get_json()["model_spec"] == "yolo26_vehicle@intel"
+
+
+def test_cabin_camera_defaults_composite_spec(app_client):
+    r = app_client.post(
+        "/api/webcam-animations",
+        json={
+            "kind": KIND_VALUE,
+            "webcamAnimKind": "vehicle",
+            "cabinCamera": True,
+            "inferShoulderShifts": True,
+        },
+    )
+    assert r.status_code == 201
+    body = r.get_json()
+    assert body["model_spec"] == "cabin_composite@v1"
+    assert body["cabinCamera"] is True
+    assert body["inferShoulderShifts"] is True
+
+
+def test_cabin_composite_succeeds_without_yolo_weights(app_client, tmp_path):
+    from pose_detectors import set_hop_runner
+    from pose_detectors.cabin_polar import write_polar_track
+    from pose_detectors.posetrack import sample, write_track
+    from pose_detectors.yolo26_vehicle import write_vehicle_track
+
+    pose_p = tmp_path / "c.posetrack.json"
+    polar_p = tmp_path / "c.polar.json"
+    veh_p = tmp_path / "c.vehicletrack.json"
+
+    def stub(_path, payload):
+        write_track(pose_p, "mediapipe_holistic@v1", [sample("Human:Hips", 0.0, 0, 1, 0)])
+        write_polar_track(
+            polar_p,
+            "cabin_polar@v1",
+            [{"tMs": 0, "radialExpand": 0.2, "azimuthalYaw": 0.0, "speedHint": 4.0, "yawRateHint": 0.0}],
+        )
+        write_vehicle_track(veh_p, "yolo26_vehicle@intel", [], [])
+        return {
+            "pose_track_path": str(pose_p),
+            "polar_velocity_path": str(polar_p),
+            "vehicle_track_path": str(veh_p),
+        }
+
+    set_hop_runner("cabin_composite@v1", stub)
+    try:
+        r = app_client.post(
+            "/api/webcam-animations",
+            data={
+                "type_metadata": json.dumps(
+                    {
+                        "kind": KIND_VALUE,
+                        "webcamAnimKind": "vehicle",
+                        "cabinCamera": True,
+                        "model_spec": "cabin_composite@v1",
+                    }
+                ),
+                "file": (io.BytesIO(b"clip"), "cabin.mp4"),
+            },
+            content_type="multipart/form-data",
+        )
+        rec_id = r.get_json()["id"]
+        got = app_client.get("/api/webcam-animations/" + rec_id).get_json()
+        assert got["queueStatus"] == "done"
+        assert got["polarVelocityPath"] == str(polar_p)
+        assert got["poseTrackPath"] == str(pose_p)
+        assert got["cabinCamera"] is True
+    finally:
+        set_hop_runner("cabin_composite@v1", None)
+
+
+def test_live_pose_stub_writes_hips_and_hands(app_client):
+    from pose_detectors.mediapipe_holistic import set_live_pose_runner
+
+    def stub(_path, payload):
+        t = float(payload.get("tMs") or 0)
+        spec = payload.get("model_spec") or "mediapipe_holistic@v1"
+
+        def samp(trait):
+            return {
+                "traitId": trait,
+                "timeMs": t,
+                "localPosition": {"x": 0, "y": 0, "z": 0},
+                "localRotation": {"x": 0, "y": 0, "z": 0, "w": 1},
+            }
+
+        return {
+            "modelSpec": spec,
+            "tMs": t,
+            "samples": [samp("Human:Hips"), samp("Human:LeftHand"), samp("Human:RightHand")],
+        }
+
+    set_live_pose_runner(stub)
+    try:
+        r = app_client.post(
+            "/api/webcam-animations/live-pose",
+            data={
+                "file": (io.BytesIO(b"\xff\xd8fake"), "frame.jpg"),
+                "model_spec": "mediapipe_holistic@v1",
+                "tMs": "42",
+            },
+            content_type="multipart/form-data",
+        )
+        assert r.status_code == 200
+        body = r.get_json()
+        assert body["tMs"] == 42
+        ids = {s["traitId"] for s in body["samples"]}
+        assert "Human:Hips" in ids
+        assert "Human:LeftHand" in ids
+        assert "Human:RightHand" in ids
+    finally:
+        set_live_pose_runner(None)
+
+
+def test_live_pose_missing_mediapipe_returns_503(app_client):
+    from pose_detectors.mediapipe_holistic import INSTALL_HINT, set_live_pose_runner
+
+    def boom(_path, _payload):
+        raise RuntimeError(INSTALL_HINT)
+
+    set_live_pose_runner(boom)
+    try:
+        r = app_client.post(
+            "/api/webcam-animations/live-pose",
+            data={
+                "file": (io.BytesIO(b"\xff\xd8fake"), "frame.jpg"),
+                "model_spec": "mediapipe_holistic@v1",
+            },
+            content_type="multipart/form-data",
+        )
+        assert r.status_code == 503
+        assert r.status_code != 500
+        body = r.get_json()
+        assert "mediapipe" in (body.get("error") or "").lower()
+    finally:
+        set_live_pose_runner(None)
+
+
+def test_run_image_stub_returns_samples_without_mediapipe():
+    from pose_detectors.mediapipe_holistic import run_image, set_live_pose_runner
+
+    def stub(_path, payload):
+        t = float(payload.get("tMs") or 0)
+        return {
+            "modelSpec": "mediapipe_holistic@v1",
+            "tMs": t,
+            "samples": [
+                {
+                    "traitId": "Human:Hips",
+                    "timeMs": t,
+                    "localPosition": {"x": 0, "y": 0, "z": 0},
+                    "localRotation": {"x": 0, "y": 0, "z": 0, "w": 1},
+                }
+            ],
+        }
+
+    set_live_pose_runner(stub)
+    try:
+        body = run_image("unused.jpg", {"tMs": 7, "model_spec": "mediapipe_holistic@v1"})
+        assert body["tMs"] == 7
+        assert body["samples"][0]["traitId"] == "Human:Hips"
+    finally:
+        set_live_pose_runner(None)
+
 

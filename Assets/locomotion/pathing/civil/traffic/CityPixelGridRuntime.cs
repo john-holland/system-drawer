@@ -142,6 +142,7 @@ public sealed class CityPixelGridRuntime : MonoBehaviour
                 case CityPixelBrushKind.Sign:
                     SpawnPrefab(s.signPrefab, world, rot);
                     _signAvoidPoints.Add(world);
+                    CityPixelStampMaterializer.Materialize(s, world, rot, materializeRoot, warden);
                     break;
                 case CityPixelBrushKind.Detour:
                     if (s.signagePrefabs != null)
@@ -151,6 +152,15 @@ public sealed class CityPixelGridRuntime : MonoBehaviour
                     }
                     else
                         SpawnPrefab(s.signPrefab, world, rot);
+                    break;
+                default:
+                    var spawned = CityPixelStampMaterializer.Materialize(s, world, rot, materializeRoot, warden);
+                    if (spawned != null)
+                    {
+                        _spawned.Add(spawned);
+                        if (s.kind == CityPixelBrushKind.StopSign || s.kind == CityPixelBrushKind.Sign || s.kind == CityPixelBrushKind.Detour)
+                            _signAvoidPoints.Add(world);
+                    }
                     break;
             }
         }
@@ -217,6 +227,14 @@ public sealed class CityPixelGridRuntime : MonoBehaviour
         decorator.controller = ctrl;
         decorator.createHeadsIfMissing = true;
         decorator.EnsureHeads();
+        var lot = go.GetComponent<IntersectionLot>() ?? go.AddComponent<IntersectionLot>();
+        var pad = go.GetComponent<RoadLot>() ?? go.AddComponent<RoadLot>();
+        pad.lotKind = RoadLotKind.Intersection;
+        lot.pad = pad;
+        lot.lights = ctrl;
+        lot.intersectionCard = TAIntersectionCard.Generate(go.transform.position);
+        lot.intersectionCard.lightController = ctrl;
+        go.AddComponent<RoadLaneLemmaResolver>().placeholderName = RoadLaneLemmaPropertyKeys.Intersection;
         var stamp = chunk.cells[0].stamp;
         if (stamp?.pixelLightPattern != null)
         {

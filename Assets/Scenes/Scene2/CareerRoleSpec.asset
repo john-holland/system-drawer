@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ac0a97a9aa3bce46aa1159d1396aec7, type: 3}
+  m_Name: CareerRoleSpec
+  m_EditorClassIdentifier: Locomotion.Runtime::CareerRoleSpec
+  roleId: line_worker
+  displayName: Line worker
+  isGovernment: 0
+  requireNoPretraining: 0
+  requiresManagement: 0
+  requiresHiringManager: 0
+  prerequisiteRoleIds: []
+  lane: {fileID: 11400000, guid: 7cb2960312dd35b40ad0f112024b0ca3, type: 2}
+  certificationIds: []
+  degreeIds: []
+  expected01:
+  - 0.55
+  - 0.55
+  - 0.55
+  - 0.4
+  fireLimit01:
+  - 0.9
+  - 0.9
+  - 0.9
+  - 0.85
+  peckingOrder: 20
