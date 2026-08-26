@@ -38,6 +38,7 @@ public class SystemDrawerFacilitatorHubWindow : EditorWindow
     private void OnGUI()
     {
         EditorGUILayout.LabelField("System Drawer Facilitator Hub", EditorStyles.boldLabel);
+        FacilitatorHubUi.DrawWindowFilterBar();
         EditorGUILayout.HelpBox(
             "Open editor windows via menu paths below, or bind a facilitator in the scene.",
             MessageType.None);
@@ -65,13 +66,13 @@ public class SystemDrawerFacilitatorHubWindow : EditorWindow
             if (_so != null && _so.targetObject != null)
                 _so.Update();
 
-            FacilitatorHubUi.DrawToolbox(_facilitator, _so, ref _adHocMenuPath);
+            FacilitatorHubUi.DrawToolbox(_facilitator, _so, ref _adHocMenuPath, drawFilter: false);
 
             if (_so != null && _so.targetObject != null)
                 _so.ApplyModifiedProperties();
         }
         else
-            FacilitatorHubUi.DrawToolbox(null, null, ref _adHocMenuPath);
+            FacilitatorHubUi.DrawToolbox(null, null, ref _adHocMenuPath, drawFilter: false);
         EditorGUILayout.EndScrollView();
 
         FacilitatorHubUi.DrawDimensionFooter();
@@ -84,6 +85,35 @@ internal static class FacilitatorHubUi
     private const string PrefDim = "SystemDrawer.GameDimension.Dim";
     private const string PrefGame = "SystemDrawer.GameDimension.Game";
     private const string PrefApi = "SystemDrawer.GameDimension.ApiBase";
+    private const string PrefWindowFilter = "SystemDrawer.FacilitatorHub.WindowFilter";
+    private static string _windowFilter;
+
+    internal static string WindowFilter
+    {
+        get
+        {
+            if (_windowFilter == null)
+                _windowFilter = EditorPrefs.GetString(PrefWindowFilter, "");
+            return _windowFilter;
+        }
+        set
+        {
+            _windowFilter = value ?? "";
+            EditorPrefs.SetString(PrefWindowFilter, _windowFilter);
+        }
+    }
+
+    internal static void DrawWindowFilterBar()
+    {
+        EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+        GUILayout.Label("Filter windows", GUILayout.Width(92));
+        string next = GUILayout.TextField(WindowFilter, EditorStyles.toolbarSearchField);
+        if (next != WindowFilter)
+            WindowFilter = next;
+        if (GUILayout.Button("Clear", EditorStyles.toolbarButton, GUILayout.Width(48)))
+            WindowFilter = "";
+        EditorGUILayout.EndHorizontal();
+    }
 
     internal static void DrawDimensionFooter()
     {
@@ -163,9 +193,9 @@ internal static class FacilitatorHubUi
     }
 
     internal static void DrawToolbox(SystemDrawerFacilitator fac, SerializedObject facilitatorSo,
-        ref string adHocMenuPath)
+        ref string adHocMenuPath, bool drawFilter = true)
     {
-        DrawMenuCatalog(ref adHocMenuPath);
+        DrawMenuCatalog(ref adHocMenuPath, drawFilter);
 
         if (facilitatorSo == null && fac != null)
             facilitatorSo = new SerializedObject(fac);
@@ -243,8 +273,11 @@ internal static class FacilitatorHubUi
             MessageType.None);
     }
 
-    private static void DrawMenuCatalog(ref string adHocMenuPath)
+    private static void DrawMenuCatalog(ref string adHocMenuPath, bool drawFilter)
     {
+        if (drawFilter)
+            DrawWindowFilterBar();
+
         EditorGUILayout.LabelField("Open window", EditorStyles.boldLabel);
         adHocMenuPath = EditorGUILayout.DelayedTextField("Menu path (ad-hoc)", adHocMenuPath);
         EditorGUILayout.BeginHorizontal();
@@ -257,6 +290,19 @@ internal static class FacilitatorHubUi
 
         EditorGUILayout.EndHorizontal();
 
+        string filter = WindowFilter;
+        bool filtering = !string.IsNullOrWhiteSpace(filter);
+        if (filtering)
+        {
+            var matches = SystemDrawerHubMenuCatalog.Filter(filter, distinctMenuPath: true).ToList();
+            EditorGUILayout.LabelField(
+                matches.Count == 1 ? "1 matching window" : $"{matches.Count} matching windows",
+                EditorStyles.miniLabel);
+            foreach (var entry in matches)
+                DrawCatalogButton($"{entry.Label}  ({entry.Category})", entry.MenuPath);
+            return;
+        }
+
         foreach (var cat in SystemDrawerHubMenuCatalog.All.Select(e => e.Category).Distinct())
         {
             if (!FoldState.TryGetValue(cat, out var fold))
@@ -267,19 +313,21 @@ internal static class FacilitatorHubUi
                 continue;
             EditorGUI.indentLevel++;
             foreach (var entry in SystemDrawerHubMenuCatalog.All.Where(e => e.Category == cat))
-            {
-                EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button(entry.Label, GUILayout.ExpandWidth(true)))
-                {
-                    if (!EditorApplication.ExecuteMenuItem(entry.MenuPath))
-                        Debug.LogWarning($"[SystemDrawerFacilitator] Menu not found: {entry.MenuPath}");
-                }
-
-                EditorGUILayout.EndHorizontal();
-            }
-
+                DrawCatalogButton(entry.Label, entry.MenuPath);
             EditorGUI.indentLevel--;
         }
+    }
+
+    static void DrawCatalogButton(string label, string menuPath)
+    {
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button(label, GUILayout.ExpandWidth(true)))
+        {
+            if (!EditorApplication.ExecuteMenuItem(menuPath))
+                Debug.LogWarning($"[SystemDrawerFacilitator] Menu not found: {menuPath}");
+        }
+
+        EditorGUILayout.EndHorizontal();
     }
 }
 

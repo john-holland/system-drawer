@@ -52,6 +52,32 @@ public sealed class PaintBrushCatalog : ScriptableObject
                 };
                 d.endCurve = AnimationCurve.Linear(0f, 1f, 1f, 0.4f);
                 break;
+            case PaintBrushDefinition.BrushKind.Quill:
+                d.displayName = "Quill";
+                d.endCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0.02f);
+                d.conicalCurve = AnimationCurve.Linear(0f, 1f, 1f, 0.22f);
+                d.bristleLengthM = 0.018f;
+                d.ferruleRadiusM = 0.005f;
+                d.plumeTipHold = 0.92f;
+                d.ferruleAngle = new HairLineAngleCurve
+                {
+                    emergenceAngleDegByAzimuth01 = AnimationCurve.Linear(0f, -10f, 1f, 10f)
+                };
+                d.defaultPaintColor = new Color(0.05f, 0.06f, 0.12f, 1f);
+                break;
+            case PaintBrushDefinition.BrushKind.Nib:
+                d.displayName = "Nib";
+                d.endCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0.04f);
+                d.conicalCurve = AnimationCurve.Linear(0f, 1f, 1f, 0.28f);
+                d.bristleLengthM = 0.014f;
+                d.ferruleRadiusM = 0.004f;
+                d.plumeTipHold = 0.9f;
+                d.ferruleAngle = new HairLineAngleCurve
+                {
+                    emergenceAngleDegByAzimuth01 = AnimationCurve.Linear(0f, -8f, 1f, 8f)
+                };
+                d.defaultPaintColor = new Color(0.05f, 0.06f, 0.12f, 1f);
+                break;
             case PaintBrushDefinition.BrushKind.FlatLiner:
                 d.ferruleHairLine = new HairLineCurve
                 {

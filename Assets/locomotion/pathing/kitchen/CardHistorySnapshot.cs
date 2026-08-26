@@ -11,6 +11,7 @@ public sealed class CardHistorySnapshot
     public string actorOrSolverId;
     public long unixMs;
     public bool isChefGoal;
+    public bool isScribeGoal;
     public bool isCombatGoal;
     public bool isLoveMakingGoal;
     public bool isThreatGoal;
@@ -40,6 +41,7 @@ public sealed class CardHistorySnapshot
         snap.displayName = !string.IsNullOrEmpty(card.sectionName) ? card.sectionName : snap.typeName;
         snap.physicalPathingTag = card.physicalPathingTag ?? "";
         snap.isChefGoal = card.isChefGoal || card is ChefCard;
+        snap.isScribeGoal = card.isScribeGoal || card is ScribeCard;
         snap.isCombatGoal = card.isCombatGoal || card is CombatCard;
         snap.isLoveMakingGoal = card.isLoveMakingGoal || card is LoveCard;
         snap.isThreatGoal = card.isThreatGoal || card is ThreatCard;

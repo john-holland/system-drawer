@@ -23,6 +23,7 @@ public sealed class EducationalStep
     public string eventId;
     public string enablesEventId;
     public Bounds4? spatiotemporalVolume;
+    public string courseId;
 
     public float[] Expected01() => CivilianPaperDoll.Pad4(expected01, 0.5f);
 
@@ -43,6 +44,7 @@ public sealed class EducationalTravelAgent : TravelAgent
     public List<EducationalStep> steps = new List<EducationalStep>();
     public int selectedStepIndex;
     public CareerWarden warden;
+    public EducationWarden educationWarden;
     public NarrativeCalendarAsset calendar;
     public CivilianPaperDoll doll;
     public CareerRoleSpec targetRole;
@@ -116,6 +118,68 @@ public sealed class EducationalTravelAgent : TravelAgent
         {
             paperDoll.educationalPlan = this;
             paperDoll.employment = CivilianEmploymentStatus.Training;
+        }
+        return steps;
+    }
+
+    /// <summary>Build class/dorm steps from a university curriculum course load.</summary>
+    public List<EducationalStep> ResolveCourseLoad(
+        CivilianPaperDoll paperDoll,
+        UniversityCurriculumAsset curriculum,
+        UniversityCampusAsset campus,
+        UniversityAgeBracket bracket)
+    {
+        doll = paperDoll;
+        steps = new List<EducationalStep>();
+        if (curriculum == null || curriculum.courses == null)
+            return steps;
+
+        for (int i = 0; i < curriculum.courses.Count; i++)
+        {
+            var course = curriculum.courses[i];
+            if (course == null) continue;
+            if (course.ageBracket != bracket) continue;
+            var step = NewStep(course.station, course.courseId, CareerPlanEffect.None, course.courseId);
+            step.courseId = course.courseId;
+            if (campus != null)
+            {
+                var room = campus.FindRoom(course.campusRoomId);
+                if (room != null)
+                {
+                    step.predictedWorld = campus.RoomWorld(course.campusRoomId);
+                    if (!string.IsNullOrEmpty(room.inpaintPrompt) || room.worldPosition.sqrMagnitude > 1e-6f)
+                    {
+                        step.hasInpaint = true;
+                        step.inpaintWorld = step.predictedWorld;
+                    }
+                }
+            }
+            var staff = curriculum.StaffForCourse(course.courseId);
+            if (staff.Count > 0 && !string.IsNullOrEmpty(staff[0].inpaintPrompt))
+            {
+                step.hasInpaint = true;
+                if (step.inpaintWorld.sqrMagnitude < 1e-6f)
+                    step.inpaintWorld = step.predictedWorld;
+            }
+            steps.Add(step);
+        }
+
+        if (campus != null)
+        {
+            var dorm = campus.FindRoom("dorm");
+            if (dorm != null)
+            {
+                var board = NewStep(LearningStationKind.Desk, "room-and-board", CareerPlanEffect.None, "dorm");
+                board.courseId = "room-and-board";
+                board.predictedWorld = campus.RoomWorld("dorm");
+                steps.Add(board);
+            }
+        }
+
+        if (paperDoll != null)
+        {
+            paperDoll.educationalPlan = this;
+            paperDoll.employment = CivilianEmploymentStatus.Student;
         }
         return steps;
     }

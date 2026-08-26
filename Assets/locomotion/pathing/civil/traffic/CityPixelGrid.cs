@@ -32,7 +32,23 @@ public enum CityPixelLayerKind
     Underpass = 24,
     Debris = 25,
     StreetLight = 26,
-    GrassStrip = 27
+    GrassStrip = 27,
+    CampusQuad = 28,
+    CampusPath = 29,
+    CampusDorm = 30,
+    CampusLecture = 31,
+    CampusLibrary = 32,
+    CampusDining = 33,
+    CampusMaintenance = 34,
+    CampusParking = 35
+}
+
+public enum CityPixelCrowdHint
+{
+    None = 0,
+    Flock = 1,
+    Congregate = 2,
+    Commute = 3
 }
 
 public enum CityPixelBrushKind
@@ -174,6 +190,13 @@ public sealed class CityPixelBrushStamp
     public float barWidthM = 0.4f;
     public bool acrossLanes = true;
     public float stripWidthM = 0.8f;
+    [Tooltip("Crowd / RTS hint for campus and city cells.")]
+    public CityPixelCrowdHint crowdHint = CityPixelCrowdHint.None;
+    public string flockGroupId;
+    public string ambulationCacheKey;
+    [Range(0f, 1f)] public float cacheLikelihood01 = 0.35f;
+    public float cacheToleranceM = 1.5f;
+    public TravelAuthoringRow travelHintRow;
 }
 
 [Serializable]
@@ -444,6 +467,20 @@ public sealed class CityPixelGrid : ScriptableObject
         AddLayerIfMissing("grass_strip", CityPixelLayerKind.GrassStrip, new Color(0.25f, 0.6f, 0.25f));
         AddLayerIfMissing("support", CityPixelLayerKind.Support, new Color(0.55f, 0.55f, 0.6f));
         EnsureHouseLayers();
+        EnsureLayersAndFrames();
+    }
+
+    public void EnsureCampusLayers()
+    {
+        EnsureLayersAndFrames();
+        AddLayerIfMissing("campus_quad", CityPixelLayerKind.CampusQuad, new Color(0.28f, 0.62f, 0.32f));
+        AddLayerIfMissing("campus_path", CityPixelLayerKind.CampusPath, new Color(0.55f, 0.52f, 0.45f));
+        AddLayerIfMissing("campus_dorm", CityPixelLayerKind.CampusDorm, new Color(0.62f, 0.42f, 0.32f));
+        AddLayerIfMissing("campus_lecture", CityPixelLayerKind.CampusLecture, new Color(0.35f, 0.45f, 0.72f));
+        AddLayerIfMissing("campus_library", CityPixelLayerKind.CampusLibrary, new Color(0.5f, 0.35f, 0.65f));
+        AddLayerIfMissing("campus_dining", CityPixelLayerKind.CampusDining, new Color(0.8f, 0.55f, 0.25f));
+        AddLayerIfMissing("campus_maintenance", CityPixelLayerKind.CampusMaintenance, new Color(0.7f, 0.7f, 0.3f));
+        AddLayerIfMissing("campus_parking", CityPixelLayerKind.CampusParking, new Color(0.28f, 0.28f, 0.32f));
         EnsureLayersAndFrames();
     }
 

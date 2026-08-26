@@ -21,12 +21,13 @@ public static class WebcamAnimTimeScrubberDrawer
         float min = (float)scrubber.startMs;
         float max = (float)Mathf.Max((float)scrubber.endMs, min + 1f);
         float play = (float)scrubber.playheadMs;
-        EditorGUI.BeginChangeCheck();
-        play = EditorGUILayout.Slider("Playhead ms", play, min, max);
-        if (EditorGUI.EndChangeCheck())
+        float next = WebcamAnimTimelineFields.DrawPlayheadMs("Playhead ms", play, max);
+        if (next < min)
+            next = min;
+        if (Mathf.Abs(next - play) > 1e-3f)
         {
             scrubber.Pause();
-            scrubber.Seek(play);
+            scrubber.Seek(next);
         }
 
         Rect bar = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(12f));

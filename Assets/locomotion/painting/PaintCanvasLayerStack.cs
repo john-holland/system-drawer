@@ -30,6 +30,9 @@ public sealed class PaintCanvasLayerStack : ScriptableObject
     public bool smudgeDryLayers;
     [Min(0.001f)] public float smudgeRadius = 0.02f;
     [Range(0f, 2f)] public float smudgeStrength = 1f;
+    public bool singleLayerMixing;
+    [Range(0f, 1f)] public float dilution = 0.2f;
+    [Min(0.00005f)] public float layerThicknessM = 0.002f;
 
     public PaintLayerExpression TopWetLayer()
     {
@@ -65,6 +68,27 @@ public sealed class PaintCanvasLayerStack : ScriptableObject
             dry01 = 0f,
             albedo = Color.white
         });
+    }
+
+    public void ApplyInkProfile(InkMaterialProfile ink)
+    {
+        if (ink == null) return;
+        singleLayerMixing = ink.singleLayerMixing;
+        dilution = ink.dilution;
+        layerThicknessM = ink.layerThicknessM;
+    }
+
+    public void MixDeposit(Color incoming, float load01, InkMaterialProfile ink)
+    {
+        var layer = TopWetLayer();
+        if (layer == null) return;
+        float t = Mathf.Clamp01(load01);
+        if (ink != null && ink.MixesIntoSingleLayer)
+            layer.albedo = Color.Lerp(layer.albedo, incoming, ink.dilution * t);
+        else if (singleLayerMixing)
+            layer.albedo = Color.Lerp(layer.albedo, incoming, dilution * t);
+        else
+            layer.albedo = Color.Lerp(layer.albedo, incoming, t * 0.35f);
     }
 }
 

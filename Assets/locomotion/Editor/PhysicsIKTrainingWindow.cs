@@ -121,8 +121,11 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
     [Tooltip("When on, apply each run to solver/ragdoll and wait Preview duration so you can watch the animation (requires Play Mode).")]
     [SerializeField] private bool playAnimationDuringTraining;
-    [Tooltip("Seconds to show each run when Play animation during training is on.")]
-    [SerializeField] private float previewDurationSeconds = 2f;
+    [Tooltip("Seconds to show each run when Play animation during training is on. 0 = video length, then loaded animation clip.")]
+    [SerializeField] private float previewDurationSeconds;
+    [Tooltip("Video / take length in seconds passed from the webcam window. Used when Preview duration is 0.")]
+    [SerializeField] private float sourceVideoDurationSeconds;
+    string previewDurationDraft;
     [Tooltip("When on, set all ragdoll rigidbodies to non-kinematic at run start so joints can move (physics/IK); restore at end.")]
     [SerializeField] private bool ensureRagdollNonKinematicDuringTraining = true;
 
@@ -163,7 +166,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         w.Show();
     }
 
-    public static void OpenAndTrainFromCurrentPose(PhysicsIKTrainingRunAsset asset, PhysicsCardSolver assignedSolver)
+    public static void OpenAndTrainFromCurrentPose(PhysicsIKTrainingRunAsset asset, PhysicsCardSolver assignedSolver, float videoDurationSeconds = 0f)
     {
         var w = GetWindow<PhysicsIKTrainingWindow>("IK Animation Training");
         w.minSize = new Vector2(420, 520);
@@ -175,6 +178,8 @@ public class PhysicsIKTrainingWindow : EditorWindow
             asset.initialPoseMode = IKTrainingInitialPoseMode.Current;
             w.testCategory = asset.testCategory;
         }
+        if (videoDurationSeconds > 0f)
+            w.sourceVideoDurationSeconds = videoDurationSeconds;
         w.Show();
         w.StartTrainingRun(null);
     }
@@ -854,6 +859,55 @@ public class PhysicsIKTrainingWindow : EditorWindow
         }
     }
 
+    float GetAnimationFileDurationSeconds()
+    {
+        float best = 0f;
+        AnimationClip poseClip = GetInitialPoseClip();
+        if (poseClip != null && poseClip.length > best)
+            best = poseClip.length;
+        var tree = animationTree != null ? animationTree : runAsset != null ? runAsset.animationTree : null;
+        if (tree == null)
+        {
+            var rs = GetEffectiveSolver()?.GetComponent<RagdollSystem>();
+            tree = rs?.animationTree;
+        }
+        var treeClip = tree != null ? tree.GetAnimationClip() : null;
+        if (treeClip != null && treeClip.length > best)
+            best = treeClip.length;
+        if (runAsset != null)
+        {
+            if (runAsset.idleClip != null && runAsset.idleClip.length > best)
+                best = runAsset.idleClip.length;
+            if (runAsset.tPoseClip != null && runAsset.tPoseClip.length > best)
+                best = runAsset.tPoseClip.length;
+            if (runAsset.hPoseClip != null && runAsset.hPoseClip.length > best)
+                best = runAsset.hPoseClip.length;
+            if (runAsset.fPoseClip != null && runAsset.fPoseClip.length > best)
+                best = runAsset.fPoseClip.length;
+        }
+        return best;
+    }
+
+    float ResolvePreviewDurationSeconds()
+    {
+        return AnimationSpanDuration.ResolveSeconds(
+            previewDurationSeconds,
+            sourceVideoDurationSeconds,
+            GetAnimationFileDurationSeconds(),
+            AnimationSpanDuration.DefaultPreviewSeconds);
+    }
+
+    string PreviewDurationSourceLabel()
+    {
+        if (previewDurationSeconds > 0f)
+            return "user limit";
+        if (sourceVideoDurationSeconds > 0f)
+            return "video";
+        if (GetAnimationFileDurationSeconds() > 0f)
+            return "animation file";
+        return "default";
+    }
+
     /// <summary>If run asset has an initial pose mode other than Current and a clip is available, sample it at time 0 onto the ragdoll and zero velocities.</summary>
     private void ApplyOptionalInitialPose()
     {
@@ -1142,7 +1196,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         {
             previewing = true;
             currentPreviewSet = set;
-            previewEndTime = EditorApplication.timeSinceStartup + (double)Mathf.Max(0.1f, previewDurationSeconds);
+            previewEndTime = EditorApplication.timeSinceStartup + (double)Mathf.Max(0.1f, ResolvePreviewDurationSeconds());
         }
         else
         {
@@ -1622,7 +1676,25 @@ public class PhysicsIKTrainingWindow : EditorWindow
         playAnimationDuringTraining = EditorGUILayout.Toggle("Play animation during training", playAnimationDuringTraining);
         if (playAnimationDuringTraining)
         {
-            previewDurationSeconds = EditorGUILayout.Slider("Preview duration (s)", previewDurationSeconds, 0.5f, 10f);
+            if (previewDurationDraft == null)
+            {
+                previewDurationDraft = previewDurationSeconds > 0f
+                    ? AnimationSpanDuration.FormatSeconds(previewDurationSeconds)
+                    : "";
+            }
+            EditorGUI.BeginChangeCheck();
+            previewDurationDraft = EditorGUILayout.DelayedTextField("Duration (s)", previewDurationDraft);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (string.IsNullOrWhiteSpace(previewDurationDraft))
+                    previewDurationSeconds = 0f;
+                else if (AnimationSpanDuration.TryParseSeconds(previewDurationDraft, out float parsed) && parsed >= 0f)
+                    previewDurationSeconds = parsed;
+            }
+            float resolved = ResolvePreviewDurationSeconds();
+            EditorGUILayout.LabelField(
+                $"Using {AnimationSpanDuration.FormatSeconds(resolved)} s ({PreviewDurationSourceLabel()}). Empty = video or loaded clip.",
+                EditorStyles.miniLabel);
             if (!Application.isPlaying)
                 EditorGUILayout.HelpBox("Enter Play Mode and click Start Training to see the ragdoll animate each run.", MessageType.Info);
         }

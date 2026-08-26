@@ -186,6 +186,24 @@ public static class CityPixelBrushEditors
                     "Lane Config", stamp.laneConfig, typeof(RoadLaneConfigAsset), false);
                 break;
         }
+
+        DrawCrowdHintFields(ref stamp);
+    }
+
+    public static void DrawCrowdHintFields(ref CityPixelBrushStamp stamp)
+    {
+        if (stamp == null) return;
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Crowd / RTS TravelAgent Hints", EditorStyles.boldLabel);
+        stamp.crowdHint = (CityPixelCrowdHint)EditorGUILayout.EnumPopup("Crowd Hint", stamp.crowdHint);
+        stamp.flockGroupId = EditorGUILayout.TextField("Flock Group Id", stamp.flockGroupId ?? "");
+        stamp.ambulationCacheKey = EditorGUILayout.TextField("Ambulation Cache Key", stamp.ambulationCacheKey ?? "");
+        stamp.cacheLikelihood01 = EditorGUILayout.Slider("Cache Likelihood", stamp.cacheLikelihood01, 0f, 1f);
+        stamp.cacheToleranceM = EditorGUILayout.FloatField("Cache Tolerance M", stamp.cacheToleranceM);
+        if (stamp.travelHintRow == null)
+            stamp.travelHintRow = new TravelAuthoringRow { kind = TravelAuthoringRowKind.Hint };
+        stamp.travelHintRow.kind = TravelAuthoringRowKind.Hint;
+        stamp.travelHintRow.notes = EditorGUILayout.TextField("Hint Notes", stamp.travelHintRow.notes ?? "");
     }
 
     static void DrawPlaceableStampFields(ref CityPixelBrushStamp stamp)
@@ -218,6 +236,9 @@ public static class CityPixelBrushEditors
             case CivilSystemKind.CarRepair:
             case CivilSystemKind.Prison:
                 Debug.Log($"[CityPixel] Open Available Editors for {kind}: PixelLight, LadderLogic, CityPixel (+ assign CivilInstitutionStub in scene).");
+                break;
+            case CivilSystemKind.School:
+                TryMenu("Locomotion/Campus Pixel Grid Designer");
                 break;
             default:
                 Debug.Log($"[CityPixel] Open Available Editors for {kind}: opened shared locomotion editors. Kind-specific windows may be missing.");
@@ -280,6 +301,12 @@ public static class CityPixelBrushEditors
             s.acrossLanes = src.acrossLanes;
             s.stripWidthM = src.stripWidthM;
             s.laneDisabled = src.laneDisabled;
+            s.crowdHint = src.crowdHint;
+            s.flockGroupId = src.flockGroupId;
+            s.ambulationCacheKey = src.ambulationCacheKey;
+            s.cacheLikelihood01 = src.cacheLikelihood01;
+            s.cacheToleranceM = src.cacheToleranceM;
+            s.travelHintRow = src.travelHintRow;
         }
         s.frameIndex = frame;
         s.cellX = x;

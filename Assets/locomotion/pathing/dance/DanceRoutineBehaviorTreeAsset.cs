@@ -84,8 +84,15 @@ public sealed class DanceRoutineBehaviorTreeAsset : ScriptableObject
 
     public double TimelineDurationMs()
     {
-        if (webcamTake != null && webcamTake.endMs > webcamTake.startMs)
-            return webcamTake.endMs;
+        if (webcamTake != null)
+        {
+            if (webcamTake.userDurationLimitMs > 0.0)
+                return webcamTake.startMs + webcamTake.userDurationLimitMs;
+            if (!webcamTake.userSetTimeline && webcamTake.cachedVideoDurationMs > webcamTake.endMs)
+                return webcamTake.startMs + webcamTake.cachedVideoDurationMs;
+            if (webcamTake.endMs > webcamTake.startMs)
+                return webcamTake.endMs;
+        }
         double max = 0;
         MaxEnd(ActiveSongSpans, ref max);
         MaxEnd(ActiveDialogSpans, ref max);

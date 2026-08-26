@@ -73,9 +73,11 @@ public sealed class PaintBrushSystemTests
     {
         var cat = ScriptableObject.CreateInstance<PaintBrushCatalog>();
         cat.EnsureBuiltins();
-        Assert.AreEqual(6, cat.brushes.Count);
+        Assert.AreEqual(8, cat.brushes.Count);
         Assert.IsNotNull(cat.Get(PaintBrushDefinition.BrushKind.Fan));
         Assert.IsNotNull(cat.Get(PaintBrushDefinition.BrushKind.Round));
+        Assert.IsNotNull(cat.Get(PaintBrushDefinition.BrushKind.Quill));
+        Assert.IsNotNull(cat.Get(PaintBrushDefinition.BrushKind.Nib));
         var copies = cat.brushes.ToArray();
         Object.DestroyImmediate(cat);
         for (int i = 0; i < copies.Length; i++)

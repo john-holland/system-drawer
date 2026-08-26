@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 /// <summary>
 /// Menu paths for Facilitator Hub buttons (<see cref="UnityEditor.EditorApplication.ExecuteMenuItem"/>).
 /// Includes Window/System Drawer/ and Locomotion/ designer windows.
@@ -16,6 +19,34 @@ internal static class SystemDrawerHubMenuCatalog
             Label = label;
             MenuPath = menuPath;
         }
+
+        internal bool Matches(string filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return true;
+            string q = filter.Trim();
+            return Contains(Category, q) || Contains(Label, q) || Contains(MenuPath, q);
+        }
+
+        static bool Contains(string hay, string needle) =>
+            !string.IsNullOrEmpty(hay) &&
+            hay.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    internal static IEnumerable<Entry> Filter(string filter, bool distinctMenuPath = false)
+    {
+        var seen = distinctMenuPath
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : null;
+        for (int i = 0; i < All.Length; i++)
+        {
+            var e = All[i];
+            if (!e.Matches(filter))
+                continue;
+            if (seen != null && !seen.Add(e.MenuPath))
+                continue;
+            yield return e;
+        }
     }
 
     internal static readonly Entry[] All =
@@ -30,6 +61,7 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Narrative", "Interpretation Examiner", "Window/System Drawer/Narrative/Interpretation Examiner"),
         new Entry("Narrative", "Prompt Interpreter Diff", "Window/System Drawer/Narrative/Prompt Interpreter Diff"),
         new Entry("Narrative", "Weather Event Wizard", "Window/System Drawer/Narrative/Weather Event Wizard"),
+        new Entry("Narrative", "Import Dialogue Set From Text", "Window/Locomotion/Narrative/Import Dialogue Set From Text"),
         new Entry("Animation", "Animation Hierarchy", "Window/System Drawer/Animation/Animation Hierarchy"),
         new Entry("Animation", "Behavior Tree Timeline", "Window/System Drawer/Animation/Behavior Tree Timeline"),
         new Entry("Animation", "IK Animation Training", "Window/System Drawer/Animation/IK Animation Training"),
@@ -55,9 +87,13 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("City Planning", "Pixel Light Timed Designer", "Locomotion/Pixel Light Timed Designer"),
         new Entry("City Planning", "Airport Pixel Light Designer", "Locomotion/Airport Pixel Light Designer"),
         new Entry("City Planning", "Prison Warden Power Diamond", "Locomotion/Prison Warden Power Diamond"),
+        new Entry("City Planning", "Campus Pixel Grid Designer", "Locomotion/Campus Pixel Grid Designer"),
         new Entry("City Planning", "Civilian Paper Doll", "Locomotion/Civilian Paper Doll"),
         new Entry("City Planning", "Educational Travel Agent", "Locomotion/Educational Travel Agent"),
         new Entry("City Planning", "SDF Max Composition Editor", "Window/System Drawer/SDF Max Composition Editor"),
+        new Entry("Civil", "Campus Pixel Grid Designer", "Locomotion/Campus Pixel Grid Designer"),
+        new Entry("Civil", "Educational Travel Agent", "Locomotion/Educational Travel Agent"),
+        new Entry("Civil", "Civilian Paper Doll", "Locomotion/Civilian Paper Doll"),
         new Entry("Ragdoll", "Fitting Wizard", "Window/System Drawer/Ragdoll/Fitting Wizard"),
         new Entry("Ragdoll", "From-Scratch Replicator", "Window/System Drawer/Ragdoll/From-Scratch Replicator"),
         new Entry("Ragdoll", "Systems Matrix", "Window/System Drawer/Ragdoll/Systems Matrix"),
@@ -74,20 +110,36 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Cards", "Love", "Window/System Drawer/Cards/Love"),
         new Entry("Cards", "Wrestling", "Window/System Drawer/Cards/Wrestling"),
         new Entry("Cards", "Chef", "Window/System Drawer/Cards/Chef"),
+        new Entry("Cards", "Scribe", "Window/System Drawer/Cards/Scribe"),
+        new Entry("Cards", "Damage Types", "Window/System Drawer/Combat/Damage Types"),
         new Entry("Audio", "Sound Cache Generator", "Window/System Drawer/Audio/Sound Cache Generator"),
         new Entry("Music", "Composition Summary", "Window/System Drawer/Music/Composition Summary"),
         new Entry("Music", "Timeline Overlays", "Window/System Drawer/Music/Timeline Overlays"),
         new Entry("Music", "Audio Equipment Timeline", "Window/System Drawer/Music/Audio Equipment Timeline"),
         new Entry("Weather", "Weather Service Wizard", "Window/System Drawer/Weather/Service Wizard"),
+        new Entry("Weather", "Cloud Perspective Bake", "Window/Weather/Cloud Perspective Bake"),
         new Entry("Hygiene", "Hygiene Editor", "Window/System Drawer/Hygiene/Hygiene Editor"),
         new Entry("Look", "Paint Studio Bake", "Window/System Drawer/Paint Studio Bake"),
+        new Entry("Look", "Pen and Ink Studio", "Window/System Drawer/Pen and Ink Studio"),
+        new Entry("Look", "Open-Close Topology Preview", "Window/Locomotion/Open-Close Topology Preview"),
+        new Entry("Look", "Object Open-Close Topology", "Window/Locomotion/Object Open-Close Topology"),
         new Entry("System Tests", "Audio", "Window/System Drawer/System Tests/Audio"),
         new Entry("System Tests", "Smell", "Window/System Drawer/System Tests/Smell"),
         new Entry("System Tests", "Ragdoll Cohesion", "Window/System Drawer/System Tests/Ragdoll Cohesion"),
         new Entry("Continuuuum", "Continuuuum Library", "Window/Continuuuum/Continuuuum Library"),
         new Entry("Continuuuum", "Continuuuum Explorer", "Window/Continuuuum/Continuuuum Explorer"),
+        new Entry("Continuuuum", "Continuuuum Episodes", "Window/Continuuuum/Continuuuum Episodes"),
+        new Entry("Continuuuum", "Continuuuum Work Orders", "Window/Continuuuum/Continuuuum Work Orders"),
+        new Entry("Continuuuum", "Build Manager", "Window/Continuuuum/Build Manager"),
         new Entry("Continuuuum", "Lemma Properties", "Window/Continuuuum/Lemma Properties"),
         new Entry("Continuuuum", "Lemma Build", "Window/System Drawer/Lemmas/Lemma Build"),
+        new Entry("Continuuuum", "Script Editor", "Window/Continuuuum/Script Editor"),
+        new Entry("Continuuuum", "Script Editor + Lemma Properties", "Window/Continuuuum/Script Editor + Lemma Properties"),
+        new Entry("Continuuuum", "Change Lists", "Window/Continuuuum/Change Lists"),
+        new Entry("Continuuuum", "Script Karaoke", "Window/Continuuuum/Script Karaoke"),
+        new Entry("Continuuuum", "Drink Flow Bake", "Window/Continuuuum/Drink Flow Bake"),
+        new Entry("Continuuuum", "Drink Jaw Tilt Audit", "Window/Continuuuum/Drink Jaw Tilt Audit"),
+        new Entry("Continuuuum", "Telecom Webtop Dev", "Window/Continuuuum/Telecom Webtop Dev"),
         new Entry("Continuuuum", "Notifications", "Window/Continuuuum/Notifications"),
         new Entry("Continuuuum", "Stations", "Window/System Drawer/Stations"),
         new Entry("Diagnostics", "Memory Swizzle View", "Window/System Drawer/Diagnostics/Memory Swizzle View"),
@@ -106,5 +158,6 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Networking", "Update Structured Chat for Lexicon", "Window/System Drawer/Networking/Update Structured Chat for Lexicon"),
         new Entry("Networking", "Structured Chat Lexicon", "Window/System Drawer/Networking/Structured Chat Lexicon"),
         new Entry("Networking", "Copy Dedicated Server Launch Args", "Window/System Drawer/Networking/Copy Dedicated Server Launch Args"),
+        new Entry("Networking", "Apply Launch Args To Scene Server", "Window/System Drawer/Networking/Apply Launch Args To Scene Server"),
     };
 }

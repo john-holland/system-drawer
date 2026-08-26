@@ -65,6 +65,8 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Parkour fall | `FeatureBudgetIds.ParkourFall` (`parkour_fall`) — fall/land BT |
 | Digging | `FeatureBudgetIds.Digging` (`digging`) — scoop SPH, tunnel support/collapse |
 | Vehicle detect | `FeatureBudgetIds.VehicleDetect` (`vehicle_detect`) — Intel YOLO26 vehicle hop for video steering |
+| Pen and ink | `FeatureBudgetIds.PaintInk` (`paint_ink`) — ink profile, quill nib, drying/see-through, SPH splatter |
+| University campus | `FeatureBudgetIds.University` (`university`) — EducationWarden, campus asset, Campus Pixel Grid |
 
 ### PixelLight / grid slots budget
 

@@ -25,7 +25,8 @@ public sealed class PaintingIkTrainingCatalog : ScriptableObject
 
     public void EnsureDefaults()
     {
-        if (entries != null && entries.Count > 0) return;
+        if (entries == null || entries.Count == 0)
+        {
         entries = new List<Entry>
         {
             new Entry
@@ -86,5 +87,40 @@ public sealed class PaintingIkTrainingCatalog : ScriptableObject
                 notes = "Frame grips only; fail if wet paint would smudge. Developer opt-in."
             }
         };
+        }
+        EnsureInkEntries();
+    }
+
+    public void EnsureInkEntries()
+    {
+        if (entries == null)
+            entries = new List<Entry>();
+        AddIfMissing("pen_dip", "Pen dip", PhysicsIKTrainingCategory.Drink,
+            "Assets/locomotion/painting/Animations/PenDip", "Nib tip to wet film / pile / drink stream");
+        AddIfMissing("ink_stroke", "Ink stroke", PhysicsIKTrainingCategory.ToolUse,
+            "Assets/locomotion/painting/Animations/InkStroke", "Nib follows drawing-target SDF");
+        AddIfMissing("cap_open", "Cap open", PhysicsIKTrainingCategory.Open,
+            "Assets/locomotion/painting/Animations/CapOpen", "Open pen cap");
+        AddIfMissing("cap_close", "Cap close", PhysicsIKTrainingCategory.Close,
+            "Assets/locomotion/painting/Animations/CapClose", "Close pen cap");
+        AddIfMissing("blot_dry", "Blot dry", PhysicsIKTrainingCategory.ToolUse,
+            "Assets/locomotion/painting/Animations/BlotDry", "Towel / canvas blot");
+    }
+
+    void AddIfMissing(string id, string displayName, PhysicsIKTrainingCategory category, string folder, string notes)
+    {
+        for (int i = 0; i < entries.Count; i++)
+        {
+            if (entries[i] != null && entries[i].id == id)
+                return;
+        }
+        entries.Add(new Entry
+        {
+            id = id,
+            displayName = displayName,
+            category = category,
+            suggestedClipFolder = folder,
+            notes = notes
+        });
     }
 }

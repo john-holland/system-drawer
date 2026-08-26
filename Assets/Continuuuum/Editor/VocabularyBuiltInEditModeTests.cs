@@ -141,6 +141,51 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_PenInkLemmas()
+    {
+        string[] nouns = { "pen", "quill", "nib", "ink", "cap", "paint", "towel", "whiteboard" };
+        foreach (var term in nouns)
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", term);
+            Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(id), term);
+        }
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "write")));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "dip")));
+        Assert.AreEqual("cap-open", BuiltInSynonyms.CanonicalizeToken("cap_open"));
+        Assert.AreEqual("single-layer-mix", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "single", "layer", "mix" }));
+    }
+
+    [Test]
+    public void VocabularyBuiltInRegistry_Includes_UniversityLemmas()
+    {
+        string[] nouns = { "campus", "curriculum", "headmaster", "dean", "dorm", "course-load", "age-bracket", "teacher", "assistant" };
+        foreach (var term in nouns)
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", term);
+            Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(id), term);
+        }
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "enroll")));
+        Assert.AreEqual("course-load", BuiltInSynonyms.CanonicalizeToken("course_load"));
+        Assert.AreEqual("age-bracket", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "age", "bracket" }));
+    }
+
+    [Test]
+    public void VocabularyBuiltInRegistry_Includes_ScribeLemmas()
+    {
+        string[] nouns = { "scribe-set", "page", "anchor", "format", "pecking-order", "scribe" };
+        foreach (var term in nouns)
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", term);
+            Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(id), term);
+        }
+        Assert.AreEqual("scribe-set", BuiltInSynonyms.CanonicalizeToken("scribe_set"));
+        Assert.AreEqual("pecking-order", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "pecking", "order" }));
+    }
+
+    [Test]
     public void VocabularyBuiltInRegistry_Includes_StructuralChatOpenCloseLemmas()
     {
         Assert.AreEqual(VocabularyBuiltInIds.EnChat, VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "chat"));

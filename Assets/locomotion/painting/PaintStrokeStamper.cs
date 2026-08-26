@@ -33,8 +33,16 @@ public sealed class PaintStrokeStamper : MonoBehaviour
         float load = brush.Load01;
         if (load <= 1e-4f) return;
 
-        // Footprint from end × conical × hairline sample ring
-        float radiusUv = brush.definition.ferruleRadiusM * (0.5f + load) * (1f + canvas.streakiness);
+        var pen = brush.GetComponent<PenInkInstrument>() ?? GetComponent<PenInkInstrument>();
+        var ink = canvas.inkProfile != null ? canvas.inkProfile : pen != null ? pen.ResolveInk() : null;
+        float thicknessScale = canvas.layerStack.layerThicknessM / 0.002f;
+        float radiusUv = brush.definition.ferruleRadiusM * (0.5f + load) * (1f + canvas.streakiness) * thicknessScale;
+        if (pen != null)
+        {
+            var nib = pen.ResolveNib();
+            float contact = Vector3.Angle(pen.TipForward, -canvas.transform.forward);
+            radiusUv *= 0.35f + 0.65f * nib.GaussianSpread01(contact);
+        }
         float dryAlong = 0f;
         if (_hasLast)
         {
@@ -53,7 +61,7 @@ public sealed class PaintStrokeStamper : MonoBehaviour
         canvas.Viscosity?.Stamp(uv, sample, radiusUv);
         canvas.Viscosity?.Apply();
 
-        AppendSdfSegment(brush, tip, uv, load, dryAlong);
+        AppendSdfSegment(brush, tip, uv, load, dryAlong, ink);
 
         var hydro = canvas.Hydro;
         if (hydro != null)
@@ -62,12 +70,19 @@ public sealed class PaintStrokeStamper : MonoBehaviour
             hydro.SeedFromStamp(tip, brush.loadedColor, load, wet01: load, count: 10);
             if (brush.pileSource != null)
                 hydro.pileSource = brush.pileSource;
+            if (hydro.feedRidgeForceToNib && pen != null)
+            {
+                if (hydro.nibFeedbackTarget == null)
+                    hydro.nibFeedbackTarget = pen;
+                hydro.Simulate(Time.fixedDeltaTime);
+                hydro.TryFeedRidgeForceToNib(pen);
+            }
         }
 
         canvas.BindMaterials();
     }
 
-    void AppendSdfSegment(PaintBrushRuntime brush, Vector3 worldTip, Vector2 uv, float load, float dryAlong)
+    void AppendSdfSegment(PaintBrushRuntime brush, Vector3 worldTip, Vector2 uv, float load, float dryAlong, InkMaterialProfile ink)
     {
         var layer = canvas.layerStack.TopWetLayer();
         if (layer == null) return;
@@ -112,7 +127,7 @@ public sealed class PaintStrokeStamper : MonoBehaviour
             layer.composition.rootNodeIndex = nodes.Count - 1;
         }
 
-        layer.albedo = Color.Lerp(layer.albedo, brush.loadedColor, load * 0.35f);
+        canvas.layerStack.MixDeposit(brush.loadedColor, load, ink);
         layer.dry01 = Mathf.Clamp01(layer.dry01 + dryAlong * 0.02f);
         // Specular finalized by PaintCanvasHydroSolver; seed a wet-film baseline
         layer.specular = Mathf.Clamp01(0.2f + (1f - layer.dry01) * 0.5f);

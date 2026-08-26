@@ -18,6 +18,18 @@ public struct PaintCanvasHydroParticle
     public bool active;
 }
 
+/// <summary>Sampled SPH ridge / pressure at a nib tip for optional force feedback.</summary>
+public struct HydroNibRidgeSample
+{
+    public float density;
+    public float tension;
+    public float ridgeHeightM;
+    public float contactForceN;
+    public float requestedBendDeg;
+    public Vector3 worldForce;
+    public int neighborCount;
+}
+
 /// <summary>
 /// Realtime canvas hydro: rolling-sphere + SPH-style tension on IntegralConvexTree leaves
 /// of the top wet layer SDF. Writes viscosity (R wet / G dry / B mass / A caustic-spec)
@@ -37,6 +49,11 @@ public sealed class PaintCanvasHydroSolver : MonoBehaviour
     [Min(1)] public int rebuildIctEveryNFrames = 8;
     [Range(0f, 0.05f)] public float sdfBandM = 0.012f;
     public bool runSimulation = true;
+    [Tooltip("When on, SPH film ridge (∇ρ) and pressure apply force back to the assigned nib.")]
+    public bool feedRidgeForceToNib;
+    public PenInkInstrument nibFeedbackTarget;
+    [Min(0f)] public float ridgeForceGain = 8f;
+    [Min(0f)] public float ridgeBendGainDeg = 12f;
 
     PaintCanvasHydroParticle[] _pool;
     int _active;
@@ -50,6 +67,8 @@ public sealed class PaintCanvasHydroSolver : MonoBehaviour
 
     public int ActiveCount => _active;
     public PaintCanvasHydroParticle[] Particles => _pool;
+    public float EffectiveSphDryRate =>
+        canvas != null && canvas.inkProfile != null ? canvas.inkProfile.sphDryRate : 0.02f;
 
     void Awake()
     {
@@ -95,6 +114,8 @@ public sealed class PaintCanvasHydroSolver : MonoBehaviour
 
         StepSph(dt);
         ProjectToSdfSurface();
+        if (feedRidgeForceToNib)
+            TryFeedRidgeForceToNib(nibFeedbackTarget);
         WriteViscosityAndSpecular();
         canvas.BindMaterials();
     }
@@ -117,6 +138,23 @@ public sealed class PaintCanvasHydroSolver : MonoBehaviour
             Spawn(local + offset, Vector3.zero, pigment, mass / count, wet01);
         }
         MarkIctDirty();
+    }
+
+    public bool TryGetFilmCentroid(out Vector3 world)
+    {
+        world = canvas != null ? canvas.transform.position : Vector3.zero;
+        if (_pool == null || canvas == null) return false;
+        Vector3 acc = Vector3.zero;
+        float w = 0f;
+        for (int i = 0; i < _pool.Length; i++)
+        {
+            if (!_pool[i].active) continue;
+            acc += _pool[i].localPos * _pool[i].mass;
+            w += _pool[i].mass;
+        }
+        if (w < 1e-6f) return false;
+        world = canvas.transform.TransformPoint(acc / w);
+        return true;
     }
 
     /// <summary>Brush hairs pull away: outward flux thins film → semi-gloss.</summary>
@@ -246,6 +284,83 @@ public sealed class PaintCanvasHydroSolver : MonoBehaviour
             if (_pool[i].active) _active++;
     }
 
+    /// <summary>Advance SPH without writing viscosity (tests / stamp feedback).</summary>
+    public void Simulate(float dt)
+    {
+        EnsurePool();
+        float step = Mathf.Max(1e-4f, dt);
+        StepSph(step);
+        ProjectToSdfSurface();
+    }
+
+    public HydroNibRidgeSample SampleRidgeAt(Vector3 worldTip)
+    {
+        var sample = new HydroNibRidgeSample();
+        if (canvas == null)
+            return sample;
+        EnsurePool();
+        Vector3 local = canvas.transform.InverseTransformPoint(worldTip);
+        local.z = 0f;
+        float h = Mathf.Max(1e-4f, kernelRadiusM);
+        float h2 = h * h;
+        float rho = 0f;
+        Vector3 gradRho = Vector3.zero;
+        float tensionAcc = 0f;
+        int n = 0;
+        for (int i = 0; i < _pool.Length; i++)
+        {
+            if (!_pool[i].active) continue;
+            Vector3 r = local - _pool[i].localPos;
+            r.z = 0f;
+            float d2 = r.sqrMagnitude;
+            if (d2 > h2 * 4f) continue;
+            n++;
+            rho += _pool[i].mass * Poly6(d2, h);
+            float dist = Mathf.Sqrt(Mathf.Max(d2, 1e-12f));
+            if (dist < h)
+            {
+                Vector3 dir = r / dist;
+                gradRho += dir * (_pool[i].mass * SpikyGrad(dist, h));
+                tensionAcc += _pool[i].tension;
+            }
+        }
+
+        sample.neighborCount = n;
+        sample.density = rho;
+        sample.tension = n > 0 ? tensionAcc / n : 0f;
+        float gradMag = gradRho.magnitude;
+        sample.ridgeHeightM = gradMag * h;
+        float gain = Mathf.Max(0f, ridgeForceGain);
+        float pressureN = rho * pressureGain * gain;
+        Vector3 forceLocal = -gradRho * (surfaceTension * tensionGain * gain);
+        Vector3 worldRidge = canvas.transform.TransformDirection(forceLocal);
+        Vector3 worldPressure = canvas.transform.forward * pressureN;
+        sample.worldForce = worldRidge + worldPressure;
+        sample.contactForceN = sample.worldForce.magnitude;
+        sample.requestedBendDeg = sample.ridgeHeightM / h * Mathf.Max(0f, ridgeBendGainDeg);
+        return sample;
+    }
+
+    /// <summary>
+    /// Optional two-way couple: SPH ridge + pressure push the nib. Does not re-seed hydro (no splatter).
+    /// </summary>
+    public bool TryFeedRidgeForceToNib(PenInkInstrument instrument, Collider contactCollider = null)
+    {
+        if (!feedRidgeForceToNib || instrument == null || canvas == null)
+            return false;
+        var sample = SampleRidgeAt(instrument.TipWorld);
+        instrument.lastHydroRidgeHeightM = sample.ridgeHeightM;
+        instrument.lastHydroWorldForce = sample.worldForce;
+        var rb = instrument.GetComponent<Rigidbody>();
+        if (rb == null && instrument.tip != null)
+            rb = instrument.tip.GetComponent<Rigidbody>();
+        if (rb != null && !rb.isKinematic && sample.worldForce.sqrMagnitude > 1e-8f)
+            rb.AddForce(sample.worldForce, ForceMode.Force);
+        Vector3 n = canvas.transform.forward;
+        instrument.ContactCanvas(canvas, sample.requestedBendDeg, sample.contactForceN, contactCollider, n, splatter: false);
+        return sample.neighborCount > 0 || sample.contactForceN > 0f;
+    }
+
     void StepSph(float dt)
     {
         float h = Mathf.Max(1e-4f, kernelRadiusM);
@@ -315,8 +430,10 @@ public sealed class PaintCanvasHydroSolver : MonoBehaviour
             _pool[i].localPos.x = Mathf.Clamp(_pool[i].localPos.x, -0.55f, 0.55f);
             _pool[i].localPos.y = Mathf.Clamp(_pool[i].localPos.y, -0.55f, 0.55f);
 
-            // Dry slowly when low wet / low tension beads settle
-            float dryRate = 0.02f * dt * (1f - _pool[i].wet);
+            float baseDry = canvas != null && canvas.inkProfile != null
+                ? canvas.inkProfile.sphDryRate
+                : 0.02f;
+            float dryRate = baseDry * dt * (1f - _pool[i].wet);
             _pool[i].wet = Mathf.Clamp01(_pool[i].wet - dryRate);
         }
     }

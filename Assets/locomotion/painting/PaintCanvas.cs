@@ -6,6 +6,12 @@ using UnityEngine;
 [AddComponentMenu("Locomotion/Painting/Paint Canvas")]
 public sealed class PaintCanvas : MonoBehaviour
 {
+    public enum SurfaceKind
+    {
+        Plane,
+        CurvedDecal
+    }
+
     public PaintCanvasLayerStack layerStack;
     public Renderer canvasRenderer;
     public int viscosityWidth = 128;
@@ -15,6 +21,8 @@ public sealed class PaintCanvas : MonoBehaviour
     [Range(0f, 1f)] public float streakiness = 0.35f;
     [Tooltip("Canvas film surface tension (hydro beads / gloss).")]
     [Range(0f, 1f)] public float surfaceTension = 0.85f;
+    public InkMaterialProfile inkProfile;
+    public SurfaceKind surfaceKind = SurfaceKind.Plane;
 
     PaintPlanarViscosityCache _visc;
     PaintCanvasHydroSolver _hydro;
@@ -43,8 +51,18 @@ public sealed class PaintCanvas : MonoBehaviour
     {
         if (layerStack != null)
             layerStack.EnsureBaseLayer();
+        ApplyInkProfile();
         EnsureViscosity();
         EnsureHydro();
+    }
+
+    public void ApplyInkProfile()
+    {
+        if (inkProfile == null || layerStack == null)
+            return;
+        layerStack.ApplyInkProfile(inkProfile);
+        if (inkProfile.MixesIntoSingleLayer)
+            streakiness = Mathf.Min(streakiness, 0.2f);
     }
 
     public void EnsureViscosity()
@@ -65,8 +83,13 @@ public sealed class PaintCanvas : MonoBehaviour
     void OnDestroy() => _visc?.Dispose();
     public bool WorldToCanvasUv(Vector3 world, out Vector2 uv)
     {
+        if (surfaceKind == SurfaceKind.CurvedDecal)
+        {
+            var curved = GetComponent<PaintCanvasCurvedDecal>();
+            if (curved != null)
+                return curved.WorldToUv(world, out uv);
+        }
         Vector3 local = transform.InverseTransformPoint(world);
-        // Assume quad in XY local, normal Z
         uv = new Vector2(local.x + 0.5f, local.y + 0.5f);
         return uv.x >= 0f && uv.x <= 1f && uv.y >= 0f && uv.y <= 1f;
     }

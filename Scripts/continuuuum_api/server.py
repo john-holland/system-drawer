@@ -4134,6 +4134,18 @@ register_dialogue_routes(app, get_conn, _get_current_user)
 
 try:
 
+    from continuuuum_api.scribe_routes import register_scribe_routes
+
+except ImportError:
+
+    from scribe_routes import register_scribe_routes
+
+
+register_scribe_routes(app, get_conn, _get_current_user)
+
+
+try:
+
 
     from continuuuum_api.quest_routes import register_quest_routes
 

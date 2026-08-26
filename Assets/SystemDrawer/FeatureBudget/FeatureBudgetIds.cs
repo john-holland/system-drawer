@@ -34,4 +34,6 @@ public static class FeatureBudgetIds
     public const string ParkourFall = "parkour_fall";
     public const string Digging = "digging";
     public const string VehicleDetect = "vehicle_detect";
+    public const string PaintInk = "paint_ink";
+    public const string University = "university";
 }

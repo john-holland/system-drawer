@@ -181,6 +181,11 @@ public sealed class CityPixelGridDesignerWindow : EditorWindow
             CityPixelGridDesignerUndo.RecordComplete(_grid, "Add House Layers");
             _grid.EnsureHouseLayers();
         }
+        if (GUILayout.Button("Add Campus Quad / Path / Building Layers"))
+        {
+            CityPixelGridDesignerUndo.RecordComplete(_grid, "Add Campus Layers");
+            _grid.EnsureCampusLayers();
+        }
     }
 
     void DrawModeAndBrush()

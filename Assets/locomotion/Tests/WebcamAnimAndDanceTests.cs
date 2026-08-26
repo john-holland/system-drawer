@@ -390,5 +390,55 @@ Frame Time: 0.033333
         Assert.AreEqual(10f + 50f + 20f, scaled.x, 0.01f);
         Assert.AreEqual(0.5f, WebcamAnimPreviewOverlay.VideoTint(0.5f).a, 0.001f);
     }
+
+    [Test]
+    public void AnimationSpanDuration_UserThenVideoThenFile()
+    {
+        Assert.AreEqual(8f, AnimationSpanDuration.ResolveSeconds(8f, 12f, 4f), 1e-4f);
+        Assert.AreEqual(12f, AnimationSpanDuration.ResolveSeconds(0f, 12f, 4f), 1e-4f);
+        Assert.AreEqual(4f, AnimationSpanDuration.ResolveSeconds(0f, 0f, 4f), 1e-4f);
+        Assert.AreEqual(2f, AnimationSpanDuration.ResolveSeconds(0f, 0f, 0f), 1e-4f);
+        Assert.AreEqual(15000.0, AnimationSpanDuration.ResolveMs(0, 15000, 4000), 1e-6);
+        Assert.IsTrue(AnimationSpanDuration.LooksLikeDefaultRecordingSpan(0, 1000));
+        Assert.IsFalse(AnimationSpanDuration.LooksLikeDefaultRecordingSpan(0, 8400));
+        Assert.IsTrue(AnimationSpanDuration.TryParseSeconds("12.5", out float s));
+        Assert.AreEqual(12.5f, s, 1e-4f);
+        Assert.IsFalse(AnimationSpanDuration.TryParseSeconds(" ", out _));
+    }
+
+    [Test]
+    public void RecordingAsset_AutoDuration_RespectsUserThenVideoThenFile()
+    {
+        var asset = ScriptableObject.CreateInstance<WebcamAnimRecordingAsset>();
+        try
+        {
+            Assert.IsTrue(asset.TimelineLooksDefault);
+            asset.ApplyAutoDurationFromSources(videoMs: 0, animationFileMs: 8400);
+            Assert.AreEqual(8400.0, asset.endMs, 1e-6);
+
+            asset.startMs = 0;
+            asset.endMs = 1000;
+            asset.userSetTimeline = false;
+            asset.ApplyAutoDurationFromSources(videoMs: 12400, animationFileMs: 8400);
+            Assert.AreEqual(12400.0, asset.endMs, 1e-6);
+            Assert.AreEqual(12400.0, asset.cachedVideoDurationMs, 1e-6);
+
+            asset.userDurationLimitMs = 5000;
+            asset.userSetTimeline = false;
+            asset.startMs = 0;
+            asset.endMs = 1000;
+            asset.ApplyAutoDurationFromSources(videoMs: 12400, animationFileMs: 8400);
+            Assert.AreEqual(5000.0, asset.endMs, 1e-6);
+
+            asset.SetUserDurationMs(3000);
+            Assert.IsTrue(asset.userSetTimeline);
+            asset.ApplyAutoDurationFromSources(videoMs: 20000, animationFileMs: 9000);
+            Assert.AreEqual(3000.0, asset.endMs, 1e-6);
+        }
+        finally
+        {
+            Object.DestroyImmediate(asset);
+        }
+    }
 }
 #endif

@@ -245,6 +245,8 @@ public class GoodSection
     [Header("Kitchen / Threat")]
     [Tooltip("Chef / cooking duty card (GoalType.Cooking).")]
     public bool isChefGoal;
+    [Tooltip("Scribe / document card (Copy / Illuminate / Bind / Deliver).")]
+    public bool isScribeGoal;
     [Tooltip("Threat escalation card (GoalType.Threat).")]
     public bool isThreatGoal;
     [Tooltip("Corrective justice card (GoalType.Justice).")]

@@ -77,6 +77,16 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("street luminaire", "street-luminaire");
             BuiltInSynonyms.RegisterAlias("street light", "street-light");
             BuiltInSynonyms.RegisterAlias("traffic signal", "traffic-signal");
+            BuiltInSynonyms.RegisterAlias("single layer mix", "single-layer-mix");
+            BuiltInSynonyms.RegisterAlias("max bend deg", "max-bend-deg");
+            BuiltInSynonyms.RegisterAlias("see through sec", "see-through-sec");
+            BuiltInSynonyms.RegisterAlias("cap open", "cap-open");
+            BuiltInSynonyms.RegisterAlias("course load", "course-load");
+            BuiltInSynonyms.RegisterAlias("age bracket", "age-bracket");
+            BuiltInSynonyms.RegisterAlias("head master", "headmaster");
+            BuiltInSynonyms.RegisterAlias("scribe set", "scribe-set");
+            BuiltInSynonyms.RegisterAlias("pecking order", "pecking-order");
+            BuiltInSynonyms.RegisterAlias("paint like", "paintlike");
         }
 
         public static string CanonicalizeDeictic(string token)

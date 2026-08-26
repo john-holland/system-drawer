@@ -14,7 +14,7 @@ Shared take asset: `WebcamAnimRecordingAsset` (`Assets/WebcamAnim/`). Pose uses 
 1. Actor viewport | live webcam / picked video (side by side RenderTextures).
 2. **Recording preview** — optional test-scene camera under the clip at **50% opacity** (scale/offset nudges toward 1:1). `WebcamAnimPreviewRig` holds the overlay camera + camera list.
 3. Scene bone dimension grabbers (`BoneDimensionGrabber` on `BoneMap.traitId` targets). Spawn from the inspector strip.
-4. **Time scrubber** (`WebcamAnimTimeScrubber`): Play / Pause / Stop, playhead slider, tick bar (vehicle cuts + camera switch-overs). Granularity slider (decimillisecond → minute), in/out markers, kind (`Ambulatory` / `Vehicle` / `Dance` / `Misc`).
+4. **Time scrubber** (`WebcamAnimTimeScrubber`): Play / Pause / Stop, playhead **text** field, tick bar (vehicle cuts + camera switch-overs). Granularity slider (decimillisecond → minute), **In / Out / Duration / Limit** text fields (ms). Empty duration or limit auto-fills from **video length**, then loaded pose/animation, then the span already on the recording. Typing In/Out/Duration locks the span so a later video prepare will not overwrite it. IK training preview duration uses the same order (user seconds, video, clip.length).
 5. Inspector: `model_spec`, `subsection` (reedit key), animation list index from `RagdollIKAnimationManager.availableAnimations`, local detect vs Continuuuum upload.
 
 **Sync vehicle ragdoll** (default on): playhead applies `PoseTrackPlayer` plus projected chassis pose (`VehicleTrackProjector.TrySample`) onto `VehicleActor` / occupant seat.

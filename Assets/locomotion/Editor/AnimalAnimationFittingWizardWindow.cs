@@ -90,7 +90,8 @@ public sealed class AnimalAnimationFittingWizardWindow : EditorWindow
                 EditorGUILayout.HelpBox("Unmatched joints offered as Animal: rows (never dropped).", MessageType.None);
         }
 
-        playheadMs = EditorGUILayout.Slider("Playhead ms", playheadMs, 0f, 4000f);
+        playheadMs = WebcamAnimTimelineFields.DrawPlayheadMs(
+            "Playhead ms", playheadMs, WebcamAnimTimelineFields.PlayheadMaxMs(recording, track));
         using (new EditorGUI.DisabledScope(track == null || boneMap == null))
         {
             if (GUILayout.Button("Preview"))

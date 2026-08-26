@@ -57,7 +57,25 @@ public static class BuiltInSynonyms
             { "street light", "street-light" },
             { "street_light", "street-light" },
             { "traffic signal", "traffic-signal" },
-            { "traffic_signal", "traffic-signal" }
+            { "traffic_signal", "traffic-signal" },
+            { "single layer mix", "single-layer-mix" },
+            { "single_layer_mix", "single-layer-mix" },
+            { "max bend deg", "max-bend-deg" },
+            { "max_bend_deg", "max-bend-deg" },
+            { "see through sec", "see-through-sec" },
+            { "see_through_sec", "see-through-sec" },
+            { "cap open", "cap-open" },
+            { "cap_open", "cap-open" },
+            { "course load", "course-load" },
+            { "course_load", "course-load" },
+            { "age bracket", "age-bracket" },
+            { "age_bracket", "age-bracket" },
+            { "head master", "headmaster" },
+            { "head_master", "headmaster" },
+            { "scribe set", "scribe-set" },
+            { "scribe_set", "scribe-set" },
+            { "pecking order", "pecking-order" },
+            { "pecking_order", "pecking-order" }
         };
 
     public static void RegisterAlias(string alias, string canonical)

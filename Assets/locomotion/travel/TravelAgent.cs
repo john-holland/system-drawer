@@ -66,6 +66,15 @@ public class TravelAgent : MonoBehaviour
     public float avoidRadius = 12f;
     public float avoidCostMultiplier = 4f;
 
+    [Header("Crowd / ambulation cache")]
+    public CityPixelCrowdHint crowdHint = CityPixelCrowdHint.None;
+    public string flockGroupId;
+    public string ambulationCacheKey;
+    [Tooltip("-1 = species default (humans lower, vehicles/animals higher).")]
+    public float ambulationCacheLikelihood01 = -1f;
+    public float cacheToleranceM = 1.5f;
+    public TravelAuthoringRow travelHintRow;
+
     [Header("Risk / safety band (NaN = unset)")]
     [Tooltip("Refuse routes with risk above this (e.g. 0.3 = jump over, not out a window).")]
     public float maxRisk01 = float.NaN;
@@ -407,6 +416,14 @@ public class TravelAgent : MonoBehaviour
     /// </summary>
     public void RebuildCachedPlan(GameObject goalTarget = null)
     {
+        if (AmbulationPathCache.TryReuse(this, out GenericMultiModalPathPlan reused))
+        {
+            cachedPlanBeforeMultibody = null;
+            cachedPlan = reused;
+            UpdatePathLengthMetrics();
+            return;
+        }
+
         cachedPlanBeforeMultibody = null;
         cachedPlan = new GenericMultiModalPathPlan();
         HierarchicalPathingSolver solver = pathingSolverForPreview;
@@ -520,6 +537,7 @@ public class TravelAgent : MonoBehaviour
 
         EnrichPlanWithRoads(cachedPlan);
         UpdatePathLengthMetrics();
+        AmbulationPathCache.Remember(this, cachedPlan);
     }
 
     void UpdatePathLengthMetrics()

@@ -43,6 +43,12 @@ namespace Locomotion.Rendering
         [Tooltip("Angle threshold for lead face dithering")]
         public float leadFaceFadeAngle = 45f;
 
+        [Header("Crowd")]
+        [Tooltip("When true, ditherIntensity tracks camera occlusion / crowd density.")]
+        public bool crowdDither;
+        [Range(0f, 1f)]
+        public float crowdOccupancy01;
+
         [Header("Material")]
         [Tooltip("Material to use for rendering. If null, will create one automatically.")]
         public Material material;
@@ -219,6 +225,17 @@ namespace Locomotion.Rendering
             // Set render queue for transparency
             instanceMaterial.renderQueue = 3000; // Transparent queue
             
+            UpdateMaterialProperties();
+        }
+
+        public static float DitherFromOccupancy(float occupancy01) =>
+            Mathf.Clamp01(0.2f + Mathf.Clamp01(occupancy01) * 0.75f);
+
+        public void ApplyCrowdOccupancy(float occupancy01)
+        {
+            crowdOccupancy01 = Mathf.Clamp01(occupancy01);
+            if (crowdDither)
+                ditherIntensity = DitherFromOccupancy(crowdOccupancy01);
             UpdateMaterialProperties();
         }
 

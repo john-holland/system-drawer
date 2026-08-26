@@ -168,6 +168,10 @@ public sealed class CityPixelGridRuntime : MonoBehaviour
         var chunkResult = CityPlaceableChunker.ChunkFrame(grid, frameIndex, grid.catalog);
         for (int c = 0; c < chunkResult.chunks.Count; c++)
             MaterializeChunk(chunkResult.chunks[c]);
+
+        CityPixelCrowdHints.ApplyGridFrame(grid, frameIndex);
+        var campus = GetComponent<CampusPixelRuntime>();
+        campus?.SendRoomPrompts();
     }
 
     void MaterializeChunk(CityPlaceableChunk chunk)

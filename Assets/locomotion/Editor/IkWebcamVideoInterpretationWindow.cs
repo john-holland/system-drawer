@@ -487,12 +487,7 @@ public sealed class IkWebcamVideoInterpretationWindow : EditorWindow
         g = EditorGUILayout.IntSlider("Granularity", g, 0, 6);
         _asset.granularity = WebcamAnimTimelineGranularityUtil.FromSlider(g);
         EditorGUILayout.LabelField("Tick", WebcamAnimTimelineGranularityUtil.TickMs(_asset.granularity) + " ms (" + _asset.granularity + ")");
-        EditorGUILayout.BeginHorizontal();
-        _asset.startMs = EditorGUILayout.DoubleField("In (ms)", _asset.startMs);
-        _asset.endMs = EditorGUILayout.DoubleField("Out (ms)", _asset.endMs);
-        EditorGUILayout.EndHorizontal();
-        _asset.startMs = WebcamAnimTimelineGranularityUtil.SnapMs(_asset.startMs, _asset.granularity);
-        _asset.endMs = WebcamAnimTimelineGranularityUtil.SnapMs(_asset.endMs, _asset.granularity);
+        WebcamAnimTimelineFields.DrawInOutDuration(_asset, _videoPlayer);
         _scrubber.Bind(_asset);
         WebcamAnimTimeScrubberDrawer.Draw(_scrubber, CollectTicks());
         WebcamAnimTimeScrubberDrawer.DrawOverlaySettings(_asset);
@@ -677,7 +672,12 @@ public sealed class IkWebcamVideoInterpretationWindow : EditorWindow
             var solver = _ikManager != null ? _ikManager.GetComponent<PhysicsCardSolver>() : null;
             if (solver == null && _ikManager != null)
                 solver = _ikManager.GetComponentInChildren<PhysicsCardSolver>();
-            PhysicsIKTrainingWindow.OpenAndTrainFromCurrentPose(_ikTrainRun, solver);
+            float videoDur = 0f;
+            if (WebcamAnimTimelineFields.TryGetVideoLengthMs(_videoPlayer, out double videoMs))
+                videoDur = AnimationSpanDuration.MsToSeconds(videoMs);
+            else if (_asset != null)
+                videoDur = AnimationSpanDuration.MsToSeconds(_asset.DurationMs);
+            PhysicsIKTrainingWindow.OpenAndTrainFromCurrentPose(_ikTrainRun, solver, videoDur);
         }
         EditorGUI.EndDisabledGroup();
     }
@@ -752,6 +752,7 @@ public sealed class IkWebcamVideoInterpretationWindow : EditorWindow
         _videoPlayer.url = p;
         _videoPlayer.isLooping = true;
         _videoPlayer.Pause();
+        WebcamAnimTimelineFields.BindVideoPrepare(_videoPlayer, _asset);
         _scrubber.Bind(_asset);
         _scrubber.Stop();
         _status = "Video: " + p;
@@ -816,6 +817,7 @@ public sealed class IkWebcamVideoInterpretationWindow : EditorWindow
                 _status = "Cabin pose samples=" + (_asset.lastTrack != null ? _asset.lastTrack.Count : 0) +
                           " polar=" + (_asset.lastPolarVelocity != null ? _asset.lastPolarVelocity.FrameCount : 0) +
                           " traffic=" + (_asset.lastVehicleTrack != null ? _asset.lastVehicleTrack.FrameCount : 0);
+                _asset.ApplyLoadedTrackDuration();
                 return;
             }
             _asset.modelSpec = VehicleVideoSteeringIds.Yolo26IntelSpec;
@@ -846,6 +848,7 @@ public sealed class IkWebcamVideoInterpretationWindow : EditorWindow
             : new ContinuuuumRemotePoseAnimationDetector { ApiBaseUrl = ContinuuuumApiConfig.GetApiBaseUrl() };
         _asset.lastTrack = det.Detect(_asset.localClipPath, _asset.modelSpec);
         EditorUtility.SetDirty(_asset);
+        _asset.ApplyLoadedTrackDuration();
         _status = det.Id + " samples=" + (_asset.lastTrack != null ? _asset.lastTrack.Count : 0);
     }
 

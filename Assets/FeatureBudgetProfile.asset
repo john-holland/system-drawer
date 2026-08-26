@@ -85,6 +85,8 @@ MonoBehaviour:
     - SyncRenderComponents
     - TravelAgent
     - HierarchicalPath
+    - BoidsCrowd
+    - AmbulationPathCache
     ratioFieldIds:
     - horizon.horizonDistanceKm
     supportsAestheticGranularity: 1
@@ -157,6 +159,247 @@ MonoBehaviour:
     - SemanticCompress
     ratioFieldIds: []
     supportsAestheticGranularity: 0
+  - featureId: civil_systems
+    displayName: Civil Systems / Persona Day
+    importanceRank: 13
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PersonaDay
+    - CivilVenue
+    - CivilSystem
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: pixel_light
+    displayName: PixelLight / Grid Slots
+    importanceRank: 14
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PixelLight
+    - PixelLightRig
+    - PixelLightOptic
+    - PixelLightGridMount
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: train_rail
+    displayName: Train / Rail Vehicle
+    importanceRank: 15
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - TrainVehicle
+    - TrainCoupling
+    - Rail
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: cargo_lash
+    displayName: Cargo Lash / Stability
+    importanceRank: 16
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - CargoLash
+    - CargoStability
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: planar_spline_path
+    displayName: Planar Spline Path
+    importanceRank: 17
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PlanarSplinePathLocomotion
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: rail_track
+    displayName: Rail Track Structure
+    importanceRank: 18
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - RailTrackStructure
+    - RailTrackFollow
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: train_dispatch
+    displayName: Train Dispatch / Station
+    importanceRank: 19
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - TrainStationBio
+    - TrainDispatch
+    - TrainEngineer
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: elevator
+    displayName: Elevator Vehicle
+    importanceRank: 20
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - ElevatorVehicle
+    - ElevatorButton
+    - ElevatorFloor
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: inspectors
+    displayName: Inspectors
+    importanceRank: 21
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - InspectorBio
+    - InspectorKnock
+    - JusticeDog
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: pet_warden
+    displayName: Pet Warden / Opinion
+    importanceRank: 22
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PetWarden
+    - RagdollOpinion
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: gas_station
+    displayName: Gas Station / Fuel
+    importanceRank: 23
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - GasStation
+    - FuelPump
+    - GasRailRefuel
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: park
+    displayName: Park / Walking Paths
+    importanceRank: 24
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - ParkRuntime
+    - ParkBio
+    - LotGrass
+    - ParkPlant
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: sanitation_facility
+    displayName: Sanitation Facility
+    importanceRank: 25
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - SanitationFacility
+    - SanitationSort
+    - PoopQuifer
+    - RoadCareCrew
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: garbage_truck
+    displayName: Garbage Truck / TrashWarden
+    importanceRank: 26
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - GarbageTruck
+    - TrashWarden
+    - GarbageBag
+    - TrashBin
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: sewer_graph
+    displayName: Sewer Graph / Drainage
+    importanceRank: 27
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - SewerGraph
+    - SewerBuildingTap
+    - RoadsideDrain
+    - DryWell
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: street_blocks
+    displayName: Street Blocks Designer
+    importanceRank: 28
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - StreetBlocks
+    - HeightMapInterior
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: factory
+    displayName: Factory / Line
+    importanceRank: 29
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - Factory
+    - FactoryLine
+    - FactoryBio
+    ratioFieldIds: []
+    supportsAestheticGranularity: 0
+  - featureId: parkour_fall
+    displayName: Parkour Fall BT
+    importanceRank: 30
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - ParkourFall
+    - ParkourLand
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: digging
+    displayName: Digging / Tunnel SPH
+    importanceRank: 31
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - Digging
+    - TopologicalDig
+    - TunnelSupport
+    - DigScoop
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: vehicle_detect
+    displayName: Vehicle YOLO Detect
+    importanceRank: 32
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - VehicleDetect
+    - Yolo26Vehicle
+    - VehicleTrack
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: paint_ink
+    displayName: Pen and Ink
+    importanceRank: 33
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - PenInk
+    - InkDrying
+    - QuillNib
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
+  - featureId: university
+    displayName: University Campus
+    importanceRank: 34
+    controlMode: 2
+    manualEnabled: 1
+    perfScopePrefixes:
+    - EducationWarden
+    - UniversityCampus
+    - CampusPixel
+    ratioFieldIds: []
+    supportsAestheticGranularity: 1
   ratioBindings:
   - fieldId: horizon.fullSimRadiusKm
     ratio: 0.002

@@ -182,6 +182,25 @@ public static class VocabularyBuiltInRegistry
                  })
             Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, roadTags);
 
+        string[] inkTags = { "paint", "ink" };
+        foreach (var w in new[] { "pen", "quill", "nib", "ink", "cap", "paint", "towel", "whiteboard" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, inkTags);
+        foreach (var w in new[] { "write", "dip" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, inkTags);
+        foreach (var w in new[] { "wet", "dry", "paintlike" })
+            Add("adj", w, "adjective", VocabularyBuiltInCategory.DiscourseCausality, inkTags);
+
+        string[] uniTags = { "civil", "education" };
+        foreach (var w in new[] { "campus", "curriculum", "headmaster", "dean", "dorm", "course-load", "age-bracket", "teacher", "assistant" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, uniTags);
+        Add("verb", "enroll", "verb", VocabularyBuiltInCategory.Action, uniTags);
+
+        string[] scribeTags = { "civil", "scribe" };
+        foreach (var w in new[] { "scribe-set", "page", "anchor", "format", "pecking-order", "scribe" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, scribeTags);
+        foreach (var w in new[] { "copy", "illuminate", "bind", "deliver" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, scribeTags);
+
         // Life systems channels / organs (lemma property ops)
         string[] lifeTags = { "life", "body" };
         foreach (var w in new[]

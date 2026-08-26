@@ -13,7 +13,9 @@ public sealed class PaintBrushDefinition : ScriptableObject
         Square,
         Round,
         Angle,
-        FlatLiner
+        FlatLiner,
+        Quill,
+        Nib
     }
 
     public BrushKind kind = BrushKind.Round;

@@ -25,7 +25,7 @@ public static class FeatureBudgetDefaults
                 new[] { "PlanetTile", "RequestTile" },
                 new[] { FeatureBudgetRatioFieldIds.SdfNearFullKm }),
             Entry(FeatureBudgetIds.Pathing, "Pathing / Travel", 5,
-                new[] { "SyncRenderComponents", "TravelAgent", "HierarchicalPath" },
+                new[] { "SyncRenderComponents", "TravelAgent", "HierarchicalPath", "BoidsCrowd", "AmbulationPathCache" },
                 new[] { FeatureBudgetRatioFieldIds.HorizonDistanceKm }),
             Entry(FeatureBudgetIds.Networking, "Networking", 6,
                 new[] { "NetworkLod", "TreeStream" }, null, false),
@@ -81,6 +81,10 @@ public static class FeatureBudgetDefaults
                 new[] { "Digging", "TopologicalDig", "TunnelSupport", "DigScoop" }, null, true),
             Entry(FeatureBudgetIds.VehicleDetect, "Vehicle YOLO Detect", 32,
                 new[] { "VehicleDetect", "Yolo26Vehicle", "VehicleTrack" }, null, true),
+            Entry(FeatureBudgetIds.PaintInk, "Pen and Ink", 33,
+                new[] { "PenInk", "InkDrying", "QuillNib" }, null, true),
+            Entry(FeatureBudgetIds.University, "University Campus", 34,
+                new[] { "EducationWarden", "UniversityCampus", "CampusPixel" }, null, true),
         };
     }
 

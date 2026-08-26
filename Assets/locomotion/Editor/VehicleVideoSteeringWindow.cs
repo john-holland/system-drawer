@@ -210,6 +210,7 @@ public sealed class VehicleVideoSteeringWindow : EditorWindow
                 _asset.cabinCamera ? "Facing yaw (window-forward)" : "Facing yaw",
                 _asset.facingYawDegrees, 0f, 360f);
             _asset.vehicleTrackPath = EditorGUILayout.TextField("Vehicle track path", _asset.vehicleTrackPath);
+            WebcamAnimTimelineFields.DrawInOutDuration(_asset, _videoPlayer);
             _scrubber.Bind(_asset);
             WebcamAnimTimeScrubberDrawer.Draw(_scrubber, CollectTicks());
             WebcamAnimTimeScrubberDrawer.DrawOverlaySettings(_asset);
@@ -291,6 +292,7 @@ public sealed class VehicleVideoSteeringWindow : EditorWindow
         _videoPlayer.url = p;
         _videoPlayer.isLooping = true;
         _videoPlayer.Pause();
+        WebcamAnimTimelineFields.BindVideoPrepare(_videoPlayer, _asset);
         _status = "Video: " + p;
     }
 
@@ -370,6 +372,7 @@ public sealed class VehicleVideoSteeringWindow : EditorWindow
             _asset.lastVehicleTrack = VehicleTrack.TryLoad(_asset.vehicleTrackPath);
             _status = "Cabin polar frames=" + _asset.lastPolarVelocity.FrameCount +
                       " traffic=" + (_asset.lastVehicleTrack != null ? _asset.lastVehicleTrack.FrameCount : 0);
+            _asset.ApplyLoadedTrackDuration();
             EditorUtility.SetDirty(_asset);
             return;
         }
@@ -381,6 +384,7 @@ public sealed class VehicleVideoSteeringWindow : EditorWindow
         _status = loaded != null
             ? "Loaded vehicle track frames=" + _asset.lastVehicleTrack.FrameCount
             : "Local stub vehicle track (Continuuuum yolo26_vehicle@intel hop required for real detect).";
+        _asset.ApplyLoadedTrackDuration();
         EditorUtility.SetDirty(_asset);
     }
 

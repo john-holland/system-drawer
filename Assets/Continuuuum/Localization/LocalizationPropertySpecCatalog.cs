@@ -76,8 +76,41 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildStreetLightPropertyRecords());
         list.AddRange(BuildTasteNotesPropertyRecords());
         list.AddRange(BuildTrainCarPropertyRecords());
+        list.AddRange(BuildPenInkPropertyRecords());
+        list.AddRange(BuildUniversityPropertyRecords());
+        list.AddRange(BuildScribePropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildScribePropertyRecords() => new[]
+    {
+        Spec(ScribeLemmaPropertyKeys.ScribeSet, "String", "", "Scribe document config / set id"),
+        Spec(ScribeLemmaPropertyKeys.Page, "Integer", "0", "Scribe page index"),
+        Spec(ScribeLemmaPropertyKeys.Anchor, "String", "", "Page anchor key"),
+        Spec(ScribeLemmaPropertyKeys.Format, "String", "plain", "plain|markdown|odt|docx|pdf|lemma"),
+        Spec(ScribeLemmaPropertyKeys.PeckingOrder, "Integer", "20", "Scribe pecking order"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildUniversityPropertyRecords() => new[]
+    {
+        Spec(UniversityLemmaPropertyKeys.Campus, "String", "", "University campus id"),
+        Spec(UniversityLemmaPropertyKeys.Curriculum, "String", "", "Curriculum asset / course catalog id"),
+        Spec(UniversityLemmaPropertyKeys.CourseLoad, "String", "", "Shared course load id (teacher + assistant)"),
+        Spec(UniversityLemmaPropertyKeys.AgeBracket, "String", "undergrad", "lower-school|upper-school|undergrad|graduate"),
+        Spec(UniversityLemmaPropertyKeys.Dorm, "String", "", "Room-and-board dorm id"),
+        Spec(UniversityLemmaPropertyKeys.Enroll, "Bool", "true", "Enroll eligible student"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildPenInkPropertyRecords() => new[]
+    {
+        Spec(PenInkLemmaPropertyKeys.Paintlike, "Bool", "false", "Paintlike ink keeps stacked films instead of single-layer mix"),
+        Spec(PenInkLemmaPropertyKeys.Dilution, "Float", "0.75", "Ink dilution into the top wet layer 0-1"),
+        Spec(PenInkLemmaPropertyKeys.SingleLayerMix, "Bool", "true", "Lerp incoming pigment into the top wet layer"),
+        Spec(PenInkLemmaPropertyKeys.MaxBendDeg, "Float", "10", "Quill nib max page bend in degrees"),
+        Spec(PenInkLemmaPropertyKeys.SeeThroughSec, "Float", "30", "See-through dry window in seconds"),
+        Spec(PenInkLemmaPropertyKeys.Aperture, "Float", "0.0008", "Nib / nozzle aperture radius meters"),
+        Spec(PenInkLemmaPropertyKeys.CapOpen, "Bool", "true", "Pen cap open"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildTrainCarPropertyRecords() => new[]
     {

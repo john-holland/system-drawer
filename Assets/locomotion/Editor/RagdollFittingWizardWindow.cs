@@ -278,7 +278,8 @@ namespace Locomotion.EditorTools
                     }
                 }
 
-                importPlayheadMs = EditorGUILayout.Slider("Playhead ms", importPlayheadMs, 0f, 4000f);
+                importPlayheadMs = WebcamAnimTimelineFields.DrawPlayheadMs(
+                    "Playhead ms", importPlayheadMs, WebcamAnimTimelineFields.PlayheadMaxMs(importRecording, importTrack));
                 if (GUILayout.Button("Preview at playhead"))
                 {
                     var map = boneMap != null ? boneMap : actorRoot.GetComponent<BoneMap>();
