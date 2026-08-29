@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 291ff19245d114544b89ee6953aafbfc, type: 3}
+  m_Name: WebcamAnimRecording
+  m_EditorClassIdentifier: Locomotion.Runtime::WebcamAnimRecordingAsset
+  recordingId: wrec_d09fb6c5
+  displayName: Recording
+  kind: 1
+  actorPrefab: {fileID: 5444709712563888178, guid: d4ddd0d3a86c33a459cac080063e895d, type: 3}
+  animationListIndex: -1
+  modelSpec: cabin_composite@v1
+  subsectionId: 
+  localClipPath: C:/Users/John/Downloads/gettyimages-807-15-640_adpp.mp4
+  libraryDocId: 
+  mediaJobId: 
+  startMs: 0
+  endMs: 1000
+  userDurationLimitMs: 0
+  userSetTimeline: 0
+  cachedVideoDurationMs: 0
+  granularity: 1
+  targetHint: ragdoll
+  species: 
+  poseTrackPath: 
+  vehicleTrackPath: 
+  polarVelocityPath: 
+  facingYawDegrees: 0
+  cabinCamera: 1
+  inferShoulderShifts: 0
+  lastTrack:
+    modelSpec: 
+    samples:
+    - traitId: Human:Hips
+      timeMs: 0
+      localPosition: {x: 0, y: 0, z: 0}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+    - traitId: Human:Head
+      timeMs: 0
+      localPosition: {x: 0, y: 0, z: 0}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+    - traitId: Vehicle:Root
+      timeMs: 0
+      localPosition: {x: 0, y: 0, z: 0}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+    - traitId: Misc:Root
+      timeMs: 0
+      localPosition: {x: 0, y: 0, z: 0}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+  lastVehicleTrack:
+    modelSpec: 
+    frames: []
+    segments: []
+  lastPolarVelocity:
+    modelSpec: 
+    frames: []
+  previewVideoOpacity: 0.5
+  previewVideoScale: 1
+  previewVideoOffset01: {x: 0, y: 0}
+  syncVehicleRagdoll: 1
+  cameraShots: []

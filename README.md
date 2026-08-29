@@ -432,6 +432,8 @@ When adding a new `.md` under `Assets/` or `Scripts/`, append it here (and to si
 
 - [Assets/locomotion/docs/PromptPlayerIdleThirdPerson.md](Assets/locomotion/docs/PromptPlayerIdleThirdPerson.md) — Third-person idle prompt
 
+- [Assets/locomotion/docs/SkinnedMeshLoopSection.md](Assets/locomotion/docs/SkinnedMeshLoopSection.md) — Skinned mesh loop picker, multi-loop split, prefab export
+
 
 
 **Travel pathing & reverse playback (source)**

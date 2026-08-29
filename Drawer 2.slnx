@@ -29,6 +29,7 @@
   <Project Path="Roads.Runtime.csproj" />
   <Project Path="Planetary.Tests.csproj" />
   <Project Path="Generated.Runtime.csproj" />
+  <Project Path="Locomotion.Editor.Tests.csproj" />
   <Project Path="SystemDrawer.csproj" />
   <Project Path="Locomotion.Narrative.Tests.csproj" />
   <Project Path="Weather.Editor.csproj" />
@@ -38,7 +39,6 @@
   <Project Path="Locomotion.Narrative.Editor.csproj" />
   <Project Path="Locomotion.Open.Tests.csproj" />
   <Project Path="Continuuuum.Library.Runtime.csproj" />
-  <Project Path="Locomotion.Editor.Tests.csproj" />
   <Project Path="Locomotion.Liquid.Runtime.csproj" />
   <Project Path="Continuuuum.Society.csproj" />
   <Project Path="SdfMax.Editor.csproj" />
@@ -59,6 +59,7 @@
   <Project Path="SystemDrawer.FeatureBudget.Tests.csproj" />
   <Project Path="Generated.Tests.csproj" />
   <Project Path="Roads.Editor.csproj" />
+  <Project Path="SystemDrawer.Editor.Tests.csproj" />
   <Project Path="SystemDrawer.Lemmas.csproj" />
   <Project Path="SystemDrawer.PerfTrace.Editor.Tests.csproj" />
   <Project Path="BedogaPlacement.csproj" />

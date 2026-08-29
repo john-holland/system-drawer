@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a26506b6ea00fc1468382dd3a97621c2, type: 3}
   m_Name: Recipe
   m_EditorClassIdentifier: Locomotion.Runtime::RecipeBehaviorTreeAsset
-  recipeId: 
+  recipeId: Recipe
   displayName: Name
   ingredients: []
   steps: []

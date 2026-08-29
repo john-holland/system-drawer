@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a26506b6ea00fc1468382dd3a97621c2, type: 3}
   m_Name: RecipeBehaviorTree
   m_EditorClassIdentifier: Locomotion.Runtime::RecipeBehaviorTreeAsset
-  recipeId: 
-  displayName: New Recipe
+  recipeId: RecipeBehaviorTree
+  displayName: c
   ingredients:
   - commodity:
       displayName: nanas classic sauce
@@ -41,7 +41,7 @@ MonoBehaviour:
     supplementable: 1
     createIfMissing: 1
     tasteNotes: []
-  servesAmount: 1
+  servesAmount: 2
   tasteNotes:
   - note: 4
     intensity01: 0.5

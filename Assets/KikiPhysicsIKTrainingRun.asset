@@ -17,6 +17,7 @@ MonoBehaviour:
   animationTree: {fileID: 0}
   solver: {fileID: 0}
   testCategory: 0
+  locomotionGoalWorld: {x: 0, y: 0, z: 0}
   initialPoseMode: 0
   idleClip: {fileID: 0}
   tPoseClip: {fileID: 0}
@@ -25,6 +26,11 @@ MonoBehaviour:
   cardSlot:
     sectionName: 
     description: 
+    physicalPathingMedium: 0
+    physicalPathingTag: 
+    driveAnimationPhase: 0
+    driveInstrumentId: 
+    terminalLegMode: 0
     impulseStack: []
     requiredState:
       rootPosition: {x: 0, y: 0, z: 0}
@@ -77,6 +83,9 @@ MonoBehaviour:
     isCarry: 0
     carriedObject: {fileID: 0}
     pleaseHold: 0
+    skipRelease: 0
+    skipReturn: 0
+    repeatCount: 1
     carryAttachBoneName: 
     isIsometric: 0
     isPlaceGoal: 0
@@ -97,6 +106,24 @@ MonoBehaviour:
     shootHandMode: 1
     shootMinRange: 0
     shootMaxRange: 0
+    isSitGoal: 0
+    isStandOnSurfaceGoal: 0
+    isChairRotateGoal: 0
+    isChairSchoochGoal: 0
+    isWrestlingGoal: 0
+    isEatGoal: 0
+    isToiletGoal: 0
+    isHygieneGoal: 0
+    hygieneKind: 
+    isLoveMakingGoal: 0
+    isCombatGoal: 0
+    isChefGoal: 0
+    isThreatGoal: 0
+    isJusticeGoal: 0
+    isCivicGoal: 0
+    isCivilGoal: 0
+    isTravelAgentGoal: 0
+    isPlumbingGoal: 0
   toolSlot: {fileID: 0}
   needsToBeThrown: 0
   thrownObject: {fileID: 0}
@@ -112,6 +139,11 @@ MonoBehaviour:
   isometricCard:
     sectionName: 
     description: 
+    physicalPathingMedium: 0
+    physicalPathingTag: 
+    driveAnimationPhase: 0
+    driveInstrumentId: 
+    terminalLegMode: 0
     impulseStack: []
     requiredState:
       rootPosition: {x: 0, y: 0, z: 0}
@@ -164,6 +196,9 @@ MonoBehaviour:
     isCarry: 0
     carriedObject: {fileID: 0}
     pleaseHold: 0
+    skipRelease: 0
+    skipReturn: 0
+    repeatCount: 1
     carryAttachBoneName: 
     isIsometric: 0
     isPlaceGoal: 0
@@ -184,6 +219,24 @@ MonoBehaviour:
     shootHandMode: 1
     shootMinRange: 0
     shootMaxRange: 0
+    isSitGoal: 0
+    isStandOnSurfaceGoal: 0
+    isChairRotateGoal: 0
+    isChairSchoochGoal: 0
+    isWrestlingGoal: 0
+    isEatGoal: 0
+    isToiletGoal: 0
+    isHygieneGoal: 0
+    hygieneKind: 
+    isLoveMakingGoal: 0
+    isCombatGoal: 0
+    isChefGoal: 0
+    isThreatGoal: 0
+    isJusticeGoal: 0
+    isCivicGoal: 0
+    isCivilGoal: 0
+    isTravelAgentGoal: 0
+    isPlumbingGoal: 0
   isometricHoldDuration: 5
   placeObject: {fileID: 0}
   placeTargetPosition: {x: 0, y: 0, z: 0}
@@ -205,6 +258,16 @@ MonoBehaviour:
   shootLaunchedObject: {fileID: 0}
   shootHandMode: 1
   shootAnimationTrees: []
+  loveTrainAgainstActors: []
+  loveTrainAgainstActorKeys: []
+  heavyPettingIkAnimation: {fileID: 0}
+  parkourAnimGroupTag: 
+  attachSherpaCarry: 0
+  measurementScenePath: Assets/Scenes/Scene2.unity
+  loadMeasurementSceneAdditive: 1
+  activateTrainingObjectsInEditor: 1
+  measurementObjectWeights: []
+  actorLimbWeights: []
   trainedSets: []
   rangeDiamondMin:
     degreesWeight: 0
