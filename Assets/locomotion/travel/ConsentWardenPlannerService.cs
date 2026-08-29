@@ -47,8 +47,15 @@ public sealed class ConsentWardenPlannerService : MonoBehaviour, ITravelRiskPlan
     public LoveCard SoftGate(LoveCard card)
     {
         if (card == null) return null;
-        if (card.physicality01 > maxPhysicality01)
-            card.physicality01 = maxPhysicality01;
+        var venue = GetComponent<ConsentWarden>() ?? FindFirstObjectByType<ConsentWarden>();
+        float cap = maxPhysicality01;
+        if (venue != null)
+        {
+            venue.Evaluate();
+            cap = venue.maxPhysicality01;
+        }
+        if (card.physicality01 > cap)
+            card.physicality01 = cap;
         if (requireConsentFlag)
             card.requiresConsent = true;
         return card;

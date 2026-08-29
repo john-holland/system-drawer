@@ -40,7 +40,12 @@ public enum CityPixelLayerKind
     CampusLibrary = 32,
     CampusDining = 33,
     CampusMaintenance = 34,
-    CampusParking = 35
+    CampusParking = 35,
+    CourtBench = 36,
+    CourtWell = 37,
+    CourtJury = 38,
+    CourtGallery = 39,
+    CourtBar = 40
 }
 
 public enum CityPixelCrowdHint
@@ -484,6 +489,17 @@ public sealed class CityPixelGrid : ScriptableObject
         EnsureLayersAndFrames();
     }
 
+    public void EnsureCourtroomLayers()
+    {
+        EnsureLayersAndFrames();
+        AddLayerIfMissing("court_bench", CityPixelLayerKind.CourtBench, new Color(0.45f, 0.28f, 0.18f));
+        AddLayerIfMissing("court_well", CityPixelLayerKind.CourtWell, new Color(0.72f, 0.68f, 0.55f));
+        AddLayerIfMissing("court_jury", CityPixelLayerKind.CourtJury, new Color(0.35f, 0.5f, 0.72f));
+        AddLayerIfMissing("court_gallery", CityPixelLayerKind.CourtGallery, new Color(0.55f, 0.42f, 0.62f));
+        AddLayerIfMissing("court_bar", CityPixelLayerKind.CourtBar, new Color(0.62f, 0.38f, 0.22f));
+        EnsureLayersAndFrames();
+    }
+
     void AddLayerIfMissing(string id, CityPixelLayerKind kind, Color color)
     {
         for (int i = 0; i < layers.Count; i++)
@@ -513,6 +529,20 @@ public sealed class CityPixelGrid : ScriptableObject
         ExportKindClusters(CityPixelLayerKind.Cells, frameIndex, volumes);
         ExportKindClusters(CityPixelLayerKind.Doors, frameIndex, volumes);
         ExportKindClusters(CityPixelLayerKind.Walls, frameIndex, volumes);
+        return volumes;
+    }
+
+    /// <summary>Export painted courtroom clusters as Bounds4 payloads.</summary>
+    public List<Bounds4> ExportCourtroomClustersToBounds4(int frameIndex)
+    {
+        var volumes = new List<Bounds4>();
+        EnsureLayersAndFrames();
+        frameIndex = Mathf.Clamp(frameIndex, 0, Mathf.Max(0, frameCount - 1));
+        ExportKindClusters(CityPixelLayerKind.CourtBench, frameIndex, volumes);
+        ExportKindClusters(CityPixelLayerKind.CourtWell, frameIndex, volumes);
+        ExportKindClusters(CityPixelLayerKind.CourtJury, frameIndex, volumes);
+        ExportKindClusters(CityPixelLayerKind.CourtGallery, frameIndex, volumes);
+        ExportKindClusters(CityPixelLayerKind.CourtBar, frameIndex, volumes);
         return volumes;
     }
 

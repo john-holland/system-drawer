@@ -5,6 +5,8 @@
         "SystemDrawer.Networking",
         "SystemDrawer",
         "BedogaGenerator",
+        "Locomotion.Runtime",
+        "Locomotion.Narrative.Runtime",
         "Weather.Runtime",
         "Continuuuum.Runtime",
         "UnityEngine.TestRunner",

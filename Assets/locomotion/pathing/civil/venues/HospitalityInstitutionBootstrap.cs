@@ -57,6 +57,9 @@ public sealed class HospitalityInstitutionBootstrap : MonoBehaviour
                 Ensure<GovLegislativeVenueRuntime>();
                 Ensure<GovernmentLegislativeBuildingBioRhythm>();
                 Ensure<CompanyRegistration>();
+                Ensure<GovernmentWarden>();
+                Ensure<GovernmentModelRagdoll>();
+                Ensure<GovernmentModelBioRhythm>();
                 break;
             case CivilSystemKind.Monarchic:
                 Ensure<MonarchicVenueRuntime>();

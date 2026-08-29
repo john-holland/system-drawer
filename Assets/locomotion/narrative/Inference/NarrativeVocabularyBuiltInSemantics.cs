@@ -87,7 +87,7 @@ namespace Locomotion.Narrative
         {
             var clauses = new List<string>();
             if (string.IsNullOrWhiteSpace(text)) return clauses;
-            string[] words = VocabularyBuiltInTokenizer.TokenizeText(text);
+            string[] words = AdverbIfPostfix.ApplyToText(text);
             if (words.Length == 0) return clauses;
             // Includes NSM causality/temporal discourse primes (if/because/not/when/before/after/maybe/can).
             var conj = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

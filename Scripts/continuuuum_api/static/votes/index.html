@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Votes — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/shared/game-lobby-list/game-lobby-list.css">
+  <link rel="stylesheet" href="/static/votes/votes.css">
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="votes-main">
+    <section class="votes-pane" id="votes-pane-lobbies">
+      <header class="votes-header">
+        <h1>Votes</h1>
+        <p class="votes-lead">Ballots, sessions, and tallies. Measures pass laws; questions change jurisdiction; candidates are electoral.</p>
+      </header>
+      <div class="votes-pane-head">
+        <h2>Lobbies</h2>
+        <label class="votes-lobby-filter">Filter
+          <input id="votes-lobby-filter" type="search" placeholder="Kind, name, or property value" autocomplete="off">
+        </label>
+      </div>
+      <div id="votes-lobbies" class="votes-pane-scroll"></div>
+    </section>
+    <section class="votes-pane" id="votes-pane-ballot">
+      <div class="votes-pane-head"><h2>Ballot</h2></div>
+      <div class="votes-pane-scroll">
+      <form id="votes-ballot-form" class="votes-ballot-form">
+        <label>Name <input id="votes-ballot-name" placeholder="mayor-q" required></label>
+        <label>Kind
+          <select id="votes-ballot-kind">
+            <option value="Measure">Measure — yes/no passing laws</option>
+            <option value="Question">Question — yes/no jurisdictional changes</option>
+            <option value="Candidate">Candidate — electoral</option>
+          </select>
+        </label>
+        <div id="votes-method-row">
+          <label>Tally
+            <select id="votes-tally-method">
+              <option value="plurality">Plurality</option>
+              <option value="irv">Ranked choice (IRV)</option>
+              <option value="stv">STV</option>
+            </select>
+          </label>
+          <label id="votes-seats-wrap">Seats <input id="votes-seats" type="number" min="2" value="2"></label>
+        </div>
+        <label>Title <input id="votes-ballot-title" value="Ballot"></label>
+        <label>Prompt <input id="votes-ballot-prompt"></label>
+        <p class="votes-muted" id="votes-list-label">questions</p>
+        <div id="votes-options"></div>
+        <button type="button" id="votes-add-option">Add option</button>
+        <h3>Demographics</h3>
+        <p class="votes-muted">Slices on this question. Changing a share splits the remainder evenly across the others (leftover hundredth on the last). Follow-on votes inherit these unless overridden.</p>
+        <div id="votes-demo"></div>
+        <button type="button" id="votes-add-slice">Add demographic slice</button>
+        <h3>Government mix</h3>
+        <div class="votes-gov">
+          <label>Republic <input id="gov-republic" type="number" step="0.05" value="0.7"></label>
+          <label>Parliamentary <input id="gov-parl" type="number" step="0.05" value="0"></label>
+          <label>Theocracy <input id="gov-theo" type="number" step="0.05" value="0"></label>
+          <label>Ceremonial monarchy <input id="gov-cer" type="number" step="0.05" value="0"></label>
+          <label>Real monarchy <input id="gov-real" type="number" step="0.05" value="0"></label>
+          <label>Junta <input id="gov-junta" type="number" step="0.05" value="0"></label>
+          <label><input id="gov-senate-theo" type="checkbox"> Parliamentary senate enables theocracy</label>
+        </div>
+        <p class="votes-err" id="votes-ballot-err" hidden></p>
+        <div>
+          <button type="submit">Save ballot</button>
+          <button type="button" id="votes-build-ballot">Build onto active session</button>
+          <button type="button" id="votes-remove-ballot">Remove ballot</button>
+        </div>
+      </form>
+      <div id="votes-ballots"></div>
+      </div>
+    </section>
+    <section class="votes-pane" id="votes-pane-runs">
+      <div class="votes-pane-head">
+        <h2>Runs</h2>
+        <button id="votes-create-run" type="button">Create run</button>
+      </div>
+      <div id="votes-runs" class="votes-pane-scroll"></div>
+    </section>
+    <section class="votes-pane" id="votes-pane-results">
+      <div class="votes-pane-head"><h2>Results</h2></div>
+      <div id="votes-results" class="votes-pane-scroll"></div>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-cave-shell.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-tome-bootstrap.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/game-lobby-list/game-lobby-list.js"></script>
+  <script src="/static/votes/votes.js"></script>
+</body>
+</html>

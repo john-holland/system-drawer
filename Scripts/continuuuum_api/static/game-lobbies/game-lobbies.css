@@ -1,0 +1,20 @@
+.gl-main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+.gl-header { margin-bottom: 1rem; }
+.gl-header h1 { margin: 0 0 0.25rem; }
+.gl-query { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.8rem; }
+.gl-query input[type="search"], .gl-query input[type="text"] { min-width: 10rem; }
+.gl-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; }
+.gl-tabs button.active { font-weight: 700; }
+.gl-panel { display: none; }
+.gl-panel.active { display: block; }
+.gl-lead { opacity: 0.8; margin-top: 0; }
+.gl-config, .gl-lobby, .gl-session { border: 1px solid #444; padding: 0.7rem; margin: 0.5rem 0; }
+.gl-session { margin-left: 1rem; }
+.gl-config-form label { display: block; margin: 0.35rem 0; }
+.gl-config-form input, .gl-config-form select, .gl-config-form textarea { width: 100%; max-width: 36rem; }
+.gl-config-form textarea { min-height: 4rem; }
+.gl-lobby button, .gl-session button, .gl-config button { margin-right: 0.35rem; margin-top: 0.25rem; }
+#gl-graph { background: #111; border: 1px solid #333; touch-action: none; }
+.gl-link { stroke: #888; }
+.gl-node circle { fill: #6af; cursor: pointer; }
+.gl-node text { fill: #eee; font-size: 11px; }

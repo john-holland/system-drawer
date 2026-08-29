@@ -19,6 +19,10 @@
     { id: 'network', label: 'Network', path: '/network-definitions' },
     { id: 'cities', label: 'Cities', path: '/city-config' },
     { id: 'society', label: 'Society', path: '/society-dashboard' },
+    { id: 'votes', label: 'Votes', path: '/votes' },
+    { id: 'game-lobbies', label: 'Game Lobbies', path: '/game-lobbies' },
+    { id: 'voting-places', label: 'Voting Places', path: '/voting-places' },
+    { id: 'players', label: 'Players', path: '/players' },
     { id: 'restaurants', label: 'Restaurants', path: '/restaurants' },
     { id: 'stations', label: 'Stations', path: '/stations' },
     { id: 'keycards', label: 'Keycards', path: '/keycards' },
@@ -151,6 +155,10 @@
       network: lemmaBase + '/network-definitions',
       cities: lemmaBase + '/city-config',
       society: lemmaBase + '/society-dashboard',
+      votes: lemmaBase + '/votes',
+      'game-lobbies': lemmaBase + '/game-lobbies',
+      'voting-places': lemmaBase + '/voting-places',
+      players: lemmaBase + '/players',
       restaurants: lemmaBase + '/restaurants',
       stations: lemmaBase + '/stations',
       keycards: lemmaBase + '/keycards',
@@ -188,6 +196,10 @@
     if (path.indexOf('/network-definitions') >= 0) return 'network';
     if (path.indexOf('/city-config') >= 0) return 'cities';
     if (path.indexOf('/society-dashboard') >= 0) return 'society';
+    if (path.indexOf('/game-lobbies') >= 0) return 'game-lobbies';
+    if (path.indexOf('/voting-places') >= 0) return 'voting-places';
+    if (path.indexOf('/players') >= 0) return 'players';
+    if (path.indexOf('/votes') >= 0) return 'votes';
     if (path.indexOf('/restaurants') >= 0) return 'restaurants';
     if (path.indexOf('/stations') >= 0) return 'stations';
     if (path.indexOf('/keycards') >= 0) return 'keycards';
@@ -378,6 +390,10 @@
     network: { game: true, dimension: true },
     cities: { game: true, dimension: true },
     society: { game: true, dimension: true },
+    votes: { game: true, dimension: true },
+    'game-lobbies': { game: true, dimension: true },
+    'voting-places': { game: true, dimension: true },
+    players: { game: true, dimension: true },
     restaurants: { game: true, dimension: true },
     stations: { game: true, dimension: true },
     keycards: { game: true, dimension: true },

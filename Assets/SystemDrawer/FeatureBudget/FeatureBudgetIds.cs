@@ -36,4 +36,7 @@ public static class FeatureBudgetIds
     public const string VehicleDetect = "vehicle_detect";
     public const string PaintInk = "paint_ink";
     public const string University = "university";
+    public const string LegalCourt = "legal_court";
+    public const string Relationship = "relationship";
+    public const string Voting = "voting";
 }

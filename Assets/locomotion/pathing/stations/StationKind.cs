@@ -12,5 +12,6 @@ public enum StationKind
     Class = 8,
     Library = 9,
     Phone = 10,
-    Conversation = 11
+    Conversation = 11,
+    VotingBooth = 12
 }

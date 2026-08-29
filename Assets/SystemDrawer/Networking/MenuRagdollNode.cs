@@ -9,6 +9,7 @@ public class MenuRagdollNode : SGBehaviorTreeNode2D
     public MenuServerModeMask serverModeMask = MenuServerModeMask.All;
     public MenuClientRoleMask clientRoleMask = MenuClientRoleMask.All;
     public bool useLocalHangingPhysics;
+    public LobbyTypeBinding lobbyTypeBinding = new LobbyTypeBinding();
 
     [Tooltip("When true and host sync is on, spec-owned fields are read-only in the inspector.")]
     public bool managedByNetworkRequirements;
@@ -71,6 +72,28 @@ public class MenuRagdollNode : SGBehaviorTreeNode2D
         var server = FindAnyObjectByType<ServerOrchestrator>();
         if (eventName == "lobby.spectate.join" && server != null && !server.AllowSpectators)
             return false;
+
+        var binding = lobbyTypeBinding;
+        if (binding == null || !binding.hasBinding)
+        {
+            var menu = GetComponentInParent<MenuRagdoll>();
+            if (menu != null)
+                binding = menu.lobbyTypeBinding;
+        }
+        if (binding != null && binding.hasBinding)
+        {
+            LobbyPrefabParameters activePrefab = null;
+            if (server != null && server.Settings != null)
+                activePrefab = server.Settings.prefab;
+            if (activePrefab == null)
+            {
+                var menu = GetComponentInParent<MenuRagdoll>();
+                if (menu != null)
+                    activePrefab = menu.prefab;
+            }
+            if (!binding.Matches(activePrefab))
+                return false;
+        }
 
         return true;
     }

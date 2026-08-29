@@ -1,0 +1,40 @@
+.gll-config, .gll-lobby, .gll-session {
+  border: 1px solid #444;
+  padding: 0.7rem;
+  margin: 0.5rem 0;
+}
+.gll-session { margin-left: 1rem; }
+.gll-lobby button, .gll-session button, .gll-config button {
+  margin-right: 0.35rem;
+  margin-top: 0.25rem;
+}
+.gll-muted { opacity: 0.75; font-size: 0.9rem; }
+.gll-debug {
+  font-size: 0.82rem;
+  background: #111;
+  border: 1px solid #333;
+  padding: 0.4rem 0.55rem;
+  margin-top: 0.4rem;
+  white-space: pre-wrap;
+}
+.gll-players { margin-top: 0.4rem; font-size: 0.9rem; }
+.gll-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 20;
+}
+.gll-modal-backdrop[hidden] { display: none; }
+.gll-modal {
+  background: #1a1a1a; border: 1px solid #555;
+  padding: 1rem 1.2rem; min-width: 18rem; max-width: 32rem; max-height: 90vh; overflow: auto;
+}
+#gll-edit-modal .gll-modal {
+  background: #eee;
+  border: 1px solid #333;
+}
+#gll-edit-title { color: #555; }
+.gll-modal h2 { margin-top: 0; }
+.gll-modal label { display: block; margin: 0.35rem 0; }
+.gll-modal input, .gll-modal select, .gll-modal textarea { width: 100%; max-width: 36rem; box-sizing: border-box; }
+.gll-modal textarea { min-height: 4rem; }
+.gll-modal-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+.gll-err { color: #f88; font-size: 0.9rem; margin: 0.4rem 0; }

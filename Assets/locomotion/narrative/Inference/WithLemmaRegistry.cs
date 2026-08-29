@@ -87,6 +87,12 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("scribe set", "scribe-set");
             BuiltInSynonyms.RegisterAlias("pecking order", "pecking-order");
             BuiltInSynonyms.RegisterAlias("paint like", "paintlike");
+            BuiltInSynonyms.RegisterAlias("home address", "home-address");
+            BuiltInSynonyms.RegisterAlias("geneva conventions", "geneva-conventions");
+            BuiltInSynonyms.RegisterAlias("respects geneva conventions", "respects-geneva-conventions");
+            BuiltInSynonyms.RegisterAlias("rights returned", "rights-returned");
+            BuiltInSynonyms.RegisterAlias("announce rights returned", "announce-rights-returned");
+            BuiltInSynonyms.RegisterAlias("constitution rights returned", "announce-rights-returned");
         }
 
         public static string CanonicalizeDeictic(string token)

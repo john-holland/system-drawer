@@ -39,6 +39,9 @@ public sealed class PrisonVenueTests
         Assert.IsNotNull(go.GetComponent<KeycardLock>());
         Assert.IsNotNull(go.GetComponent<AuthWarden>());
         Assert.IsNotNull(go.GetComponent<PrisonWarden>());
+        Assert.IsNotNull(go.GetComponent<ThreatWarden>());
+        Assert.IsNotNull(go.GetComponent<GenevaConventionWarden>());
+        Assert.AreSame(go.GetComponent<GenevaConventionWarden>(), go.GetComponent<PrisonWarden>().genevaWarden);
 
         var cards = ragdoll.dispatchBio.FacilitateCards(new DispatchRequest
         {

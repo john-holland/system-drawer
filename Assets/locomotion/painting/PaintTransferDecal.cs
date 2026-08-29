@@ -10,6 +10,7 @@ public sealed class PaintTransferDecal : MonoBehaviour
     [Range(0f, 1f)] public float transferOpacity = 0.75f;
     [Min(0.01f)] public float decalSize = 0.08f;
     public float decalLifetime = 12f;
+    public int inkLayer;
 
     public void TryApply(Collider source, Vector3 worldPoint, Vector3 normal, Color paintColor)
     {
@@ -19,7 +20,8 @@ public sealed class PaintTransferDecal : MonoBehaviour
 
         var go = new GameObject("PaintTransferDecal");
         go.transform.SetParent(renderer.transform, true);
-        go.transform.position = worldPoint + normal.normalized * 0.001f;
+        float stack = 0.001f + inkLayer * 0.0005f;
+        go.transform.position = worldPoint + normal.normalized * stack;
         go.transform.rotation = Quaternion.LookRotation(-normal);
         go.transform.localScale = Vector3.one * decalSize;
 

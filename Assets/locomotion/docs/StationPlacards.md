@@ -29,7 +29,7 @@ Editor: **Window → System Drawer → Stations** — list + **Upload level stat
 
 ## Kinds
 
-`cooking` | `train` | `bus` | `computer` | `silo` | `railmaintenance` | `generic`
+`cooking` | `train` | `bus` | `computer` | `silo` | `railmaintenance` | `votingbooth` | `generic`
 
 Building seeds: `train_station`, `bus_depot`, `grain_silo`, `rail_maintenance_depot` (+ existing restaurant for kitchens).
 

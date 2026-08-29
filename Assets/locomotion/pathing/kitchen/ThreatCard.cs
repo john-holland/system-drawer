@@ -73,6 +73,7 @@ public class ThreatCard : GoodSection
     {
         if (alert == ThreatAlertLevel.AllClear) return "all-clear";
         if (alert == ThreatAlertLevel.UnderAttack) return "under-attack";
+        if (kind == ThreatKind.Torture) return LegalLemmaPropertyKeys.Torture;
         if (kind == ThreatKind.Intruder) return "potential-intruders";
         if (alert >= ThreatAlertLevel.OnEdge) return "on-edge";
         return "advisory";
@@ -89,6 +90,7 @@ public class ThreatCard : GoodSection
             case ThreatKind.EquipmentFault:
                 return new List<string> { ThreatAgencyId.BuildingMaintenance };
             case ThreatKind.Intruder:
+            case ThreatKind.Torture:
                 return new List<string> { ThreatAgencyId.Security, ThreatAgencyId.Owner };
             default:
                 return new List<string> { ThreatAgencyId.Owner };

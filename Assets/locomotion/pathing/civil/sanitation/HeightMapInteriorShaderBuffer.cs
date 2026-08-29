@@ -13,8 +13,10 @@ public sealed class HeightMapInteriorShaderBuffer : MonoBehaviour
     public List<MeshRenderer> descendingMeshes = new List<MeshRenderer>();
     public List<Rect> removedQuads = new List<Rect>();
     public bool dirty = true;
-    readonly MaterialPropertyBlock _mpb = new MaterialPropertyBlock();
+    MaterialPropertyBlock _mpb;
     readonly Dictionary<int, TransformSnapshot> _snapshots = new Dictionary<int, TransformSnapshot>();
+
+    MaterialPropertyBlock PropertyBlock => _mpb ??= new MaterialPropertyBlock();
 
     struct TransformSnapshot
     {
@@ -128,9 +130,9 @@ public sealed class HeightMapInteriorShaderBuffer : MonoBehaviour
         var rend = GetComponent<Renderer>();
         if (rend != null)
         {
-            rend.GetPropertyBlock(_mpb);
-            _mpb.SetTexture(heightMapProperty, heightMap);
-            rend.SetPropertyBlock(_mpb);
+            rend.GetPropertyBlock(PropertyBlock);
+            PropertyBlock.SetTexture(heightMapProperty, heightMap);
+            rend.SetPropertyBlock(PropertyBlock);
         }
     }
 }

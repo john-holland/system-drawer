@@ -172,6 +172,18 @@ public static class VocabularyBuiltInRegistry
             Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, fuelTags);
         foreach (var w in new[] { "refuel", "recycle", "commute" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, civilTags);
+        string[] voteQueueTags = { "civil", "vote", "queue" };
+        foreach (var w in new[] { "vote", "ballot", "recount", "tally", "queue", "address", "home-address", "property" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, voteQueueTags);
+        foreach (var w in new[] { "vote", "queue", "queued", "tally", "recount" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, voteQueueTags);
+        foreach (var w in new[] { "randomly", "happily", "if-so" })
+            Add("adv", w, "adverb", VocabularyBuiltInCategory.DiscourseCausality, voteQueueTags);
+        string[] legalTags = { "civil", "legal" };
+        foreach (var w in new[] { "geneva-conventions", "torture", "respects-geneva-conventions", "rights-returned" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, legalTags);
+        foreach (var w in new[] { "announce", "returned", "announce-rights-returned" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, legalTags);
         string[] roadTags = { "civil", "road" };
         foreach (var w in new[]
                  {
@@ -200,6 +212,10 @@ public static class VocabularyBuiltInRegistry
             Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, scribeTags);
         foreach (var w in new[] { "copy", "illuminate", "bind", "deliver" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, scribeTags);
+
+        string[] relTags = { "civil", "romance", "relationship" };
+        foreach (var w in new[] { "stage", "consent", "doctrine", "subjects", "affection", "romance" })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, relTags);
 
         // Life systems channels / organs (lemma property ops)
         string[] lifeTags = { "life", "body" };

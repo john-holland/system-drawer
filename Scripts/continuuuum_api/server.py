@@ -4179,6 +4179,12 @@ register_telecom_routes(app, get_conn)
 
 register_society_routes(app, get_conn)
 
+try:
+    from continuuuum_api.vote_routes import register_vote_routes
+except ImportError:
+    from vote_routes import register_vote_routes
+register_vote_routes(app, get_conn)
+
 
 register_galactic_routes(app, get_conn)
 

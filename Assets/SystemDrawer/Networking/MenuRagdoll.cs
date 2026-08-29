@@ -11,8 +11,11 @@ public sealed class MenuRagdoll : MenuRagdollBase
     public bool allowSpectators = true;
     public int maxPlayers = 8;
     public int maxSpectators = 4;
+    public int minPlayersToStart = 1;
     public string defaultHostAddress = "127.0.0.1";
     public int defaultLobbyPort;
+    public LobbyTypeBinding lobbyTypeBinding = new LobbyTypeBinding();
+    public LobbyPrefabParameters prefab = new LobbyPrefabParameters();
 
     [Header("Lobby Join")]
     public string joinHostPort;
@@ -21,6 +24,18 @@ public sealed class MenuRagdoll : MenuRagdollBase
     public LobbyHostOptions BuildHostOptions()
     {
         var settings = NetworkSettings.Default;
+        var p = prefab ?? new LobbyPrefabParameters();
+        p.gameSize = maxPlayers;
+        p.minPlayersToStart = minPlayersToStart;
+        p.requirePassword = requireLobbyPassword;
+        p.allowSpectators = allowSpectators;
+        p.maxSpectators = maxSpectators;
+        if (lobbyTypeBinding != null && lobbyTypeBinding.hasBinding)
+        {
+            p.lobbyTypeId = lobbyTypeBinding.lobbyTypeId;
+            p.contentKind = lobbyTypeBinding.contentKind;
+            p.contentId = lobbyTypeBinding.contentId;
+        }
         return new LobbyHostOptions
         {
             sessionName = string.IsNullOrEmpty(sessionName) ? settings.lobbySessionName : sessionName,
@@ -28,7 +43,9 @@ public sealed class MenuRagdoll : MenuRagdollBase
             maxSpectators = maxSpectators,
             allowSpectators = allowSpectators,
             password = requireLobbyPassword ? hostLobbyPassword : "",
-            lobbyPort = defaultLobbyPort > 0 ? defaultLobbyPort : settings.lobbyPort
+            lobbyPort = defaultLobbyPort > 0 ? defaultLobbyPort : settings.lobbyPort,
+            minPlayersToStart = minPlayersToStart,
+            prefab = p
         };
     }
 

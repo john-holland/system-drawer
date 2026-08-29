@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Locomotion.Narrative;
 using UnityEngine;
@@ -38,7 +39,9 @@ public sealed class ServerOrchestrator : MonoBehaviour
     string _lobbyPasswordHash = "";
     int _maxPlayers = 8;
     long _lastRewindSeq;
+    Coroutine _lobbyHeartbeat;
 
+    public NetworkSettings Settings => settings;
     public NetworkServerMode Mode => mode;
     public bool IsDedicated { get; private set; }
     public bool AllowSpectators => allowSpectators;
@@ -48,8 +51,28 @@ public sealed class ServerOrchestrator : MonoBehaviour
     public bool IsLobbyHosting => _lobby != null && _lobby.IsRunning;
     public string LobbyAdvertiseAddress => _lobby?.AdvertiseAddress ?? bindAddress;
     public int ClientCount => _clients.Count;
+    public int MaxPlayers => _maxPlayers;
+    public int ListenPort => _listeningPort > 0 ? _listeningPort : listenPort;
+    public int ActiveLobbyPort => _activeLobbyPort;
     public bool LobbyLockedByLaunchArgs => lobbyLockedByLaunchArgs;
     public string LobbyPasswordPlaintext => lobbyPassword ?? "";
+    public GameSessionHost GameSessions { get; private set; }
+
+    public int PlayerCount
+    {
+        get
+        {
+            int n = 0;
+            foreach (var pair in _clientRoles)
+            {
+                if (pair.Value != NetworkClientRole.Spectator)
+                    n++;
+            }
+            return n;
+        }
+    }
+
+    public string LastHelloRejectReason { get; private set; }
 
     public void SetLobbyPassword(string password)
     {
@@ -67,6 +90,40 @@ public sealed class ServerOrchestrator : MonoBehaviour
         _maxPlayers = settings.maxPlayers;
         if (_lockstep == null)
             _lockstep = new LockstepDecisionValidator(_treeRegistry);
+        if (GameSessions == null)
+            GameSessions = GetComponent<GameSessionHost>() ?? gameObject.AddComponent<GameSessionHost>();
+        GameSessions.lobbySessionName = settings != null ? settings.lobbySessionName : GameSessions.lobbySessionName;
+        GameSessions.treeRegistry = _treeRegistry;
+        GameSessions.lockstep = _lockstep;
+        if (settings != null && settings.prefab != null)
+            GameSessions.prefab = settings.prefab;
+        GameSessions.SessionsChanged -= OnGameSessionsChanged;
+        GameSessions.SessionsChanged += OnGameSessionsChanged;
+    }
+
+    void OnGameSessionsChanged()
+    {
+        if (IsLobbyHosting)
+            GameLobbyContinuuuumClient.Heartbeat(this);
+    }
+
+    public void ApplyLobbyPrefab(LobbyPrefabParameters prefab)
+    {
+        EnsureReady();
+        if (prefab == null)
+            return;
+        if (settings.prefab == null)
+            settings.prefab = new LobbyPrefabParameters();
+        settings.prefab = prefab.Clone();
+        _maxPlayers = prefab.gameSize > 0 ? prefab.gameSize : settings.maxPlayers;
+        settings.maxPlayers = _maxPlayers;
+        maxSpectators = prefab.maxSpectators;
+        allowSpectators = prefab.allowSpectators;
+        settings.maxSpectators = prefab.maxSpectators;
+        settings.allowSpectators = prefab.allowSpectators;
+        SetMode(prefab.mode);
+        if (GameSessions != null)
+            GameSessions.prefab = settings.prefab;
     }
 
     public void SetLobbyLockedByLaunchArgs(bool locked) => lobbyLockedByLaunchArgs = locked;
@@ -86,6 +143,16 @@ public sealed class ServerOrchestrator : MonoBehaviour
         else if (string.IsNullOrEmpty(options.password))
             lobbyPassword = "";
         _lobbyPasswordHash = LobbyPasswordHash.Hash(lobbyPassword, settings.lobbySessionName);
+        if (options.prefab != null)
+        {
+            if (options.prefab.gameSize <= 0)
+                options.prefab.gameSize = _maxPlayers;
+            if (options.minPlayersToStart > 0)
+                options.prefab.minPlayersToStart = options.minPlayersToStart;
+            ApplyLobbyPrefab(options.prefab);
+        }
+        else if (options.minPlayersToStart > 0 && settings.prefab != null)
+            settings.prefab.minPlayersToStart = options.minPlayersToStart;
     }
 
     void Awake()
@@ -197,14 +264,61 @@ public sealed class ServerOrchestrator : MonoBehaviour
         _activeLobbyPort = lp;
         var svc = SystemDrawerService.FindInScene();
         svc?.Register(SystemDrawerServiceKeys.NetworkLobbyServer, this);
+        if (GameSessions != null && (GameSessions.sessions == null || GameSessions.sessions.Count == 0))
+            GameSessions.CreateSession(name);
+        GameLobbyContinuuuumClient.Heartbeat(this);
+        if (Application.isPlaying)
+        {
+            if (_lobbyHeartbeat != null)
+                StopCoroutine(_lobbyHeartbeat);
+            _lobbyHeartbeat = StartCoroutine(LobbyHeartbeatLoop());
+        }
+    }
+
+    IEnumerator LobbyHeartbeatLoop()
+    {
+        var wait = new WaitForSeconds(5f);
+        while (_lobby != null && _lobby.IsRunning)
+        {
+            yield return GameLobbyContinuuuumClient.HeartbeatRoutine(this);
+            yield return wait;
+        }
+        _lobbyHeartbeat = null;
     }
 
     public void StopLobbyHost()
     {
+        if (_lobbyHeartbeat != null)
+        {
+            StopCoroutine(_lobbyHeartbeat);
+            _lobbyHeartbeat = null;
+        }
+        bool wasRunning = _lobby != null && _lobby.IsRunning;
+        string name = settings != null ? settings.lobbySessionName : GameSessions != null ? GameSessions.lobbySessionName : "";
+        if (wasRunning && !string.IsNullOrEmpty(name))
+            GameLobbyContinuuuumClient.CloseLobby(name);
         _lobby?.Stop();
         _activeLobbyPort = -1;
         var svc = SystemDrawerService.FindInScene();
         svc?.Unregister(SystemDrawerServiceKeys.NetworkLobbyServer);
+    }
+
+    public void CopyHeartbeatPlayerIds(List<string> dest)
+    {
+        CopyNonSpectatorPlayerIds(dest);
+        if (dest.Count == 0)
+            _lobby?.CopyPendingPlayerIds(dest);
+    }
+
+    public void CopyNonSpectatorPlayerIds(List<string> dest)
+    {
+        if (dest == null) return;
+        dest.Clear();
+        foreach (var pair in _clientRoles)
+        {
+            if (pair.Value != NetworkClientRole.Spectator)
+                dest.Add(pair.Key);
+        }
     }
 
     public void RegisterClient(string clientId, string endpoint = "", NetworkClientRole role = NetworkClientRole.Player)
@@ -356,21 +470,33 @@ public sealed class ServerOrchestrator : MonoBehaviour
     void HandleHello(NetworkMessageEnvelope env)
     {
         NetworkHelloPayload.Parse(env.PayloadJson, out string clientId, out NetworkClientRole role, out string passwordHash);
+        if (!TryAcceptHello(clientId, role, passwordHash, out string reason))
+        {
+            Debug.LogWarning("[ServerOrchestrator] hello rejected: " + reason);
+            KickClient(clientId);
+        }
+    }
+
+    public bool TryAcceptHello(string clientId, NetworkClientRole role, string passwordHash, out string reason)
+    {
+        LastHelloRejectReason = "";
+        reason = "";
         if (!string.IsNullOrEmpty(_lobbyPasswordHash))
         {
             if (string.IsNullOrEmpty(passwordHash) || passwordHash != _lobbyPasswordHash)
             {
-                Debug.LogWarning("[ServerOrchestrator] hello rejected: password");
-                KickClient(clientId);
-                return;
+                reason = "password";
+                LastHelloRejectReason = reason;
+                return false;
             }
         }
         if (role == NetworkClientRole.Spectator)
         {
             if (!allowSpectators)
             {
-                Debug.LogWarning("[ServerOrchestrator] hello rejected: spectators disabled");
-                return;
+                reason = "spectators disabled";
+                LastHelloRejectReason = reason;
+                return false;
             }
             int specCount = 0;
             foreach (var pair in _clientRoles)
@@ -380,11 +506,22 @@ public sealed class ServerOrchestrator : MonoBehaviour
             }
             if (specCount >= maxSpectators)
             {
-                Debug.LogWarning("[ServerOrchestrator] hello rejected: spectator cap");
-                return;
+                reason = "spectator cap";
+                LastHelloRejectReason = reason;
+                return false;
+            }
+        }
+        else
+        {
+            if (PlayerCount >= _maxPlayers)
+            {
+                reason = "player cap";
+                LastHelloRejectReason = reason;
+                return false;
             }
         }
         RegisterClient(clientId, "", role);
+        return true;
     }
 
     void OnUdpMessage(NetworkMessageEnvelope env)

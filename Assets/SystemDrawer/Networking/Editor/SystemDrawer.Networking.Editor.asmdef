@@ -5,7 +5,8 @@
         "SystemDrawer.Networking",
         "SystemDrawer",
         "SystemDrawer.Editor",
-        "BedogaGenerator"
+        "BedogaGenerator",
+        "Continuuuum.Runtime"
     ],
     "includePlatforms": [
         "Editor"

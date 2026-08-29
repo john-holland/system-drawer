@@ -36,6 +36,17 @@ public sealed class PrisonBootstrap : MonoBehaviour
             gameObject.AddComponent<KeycardLock>();
         if (GetComponent<PrisonWarden>() == null)
             gameObject.AddComponent<PrisonWarden>();
+        if (GetComponent<ThreatWarden>() == null)
+            gameObject.AddComponent<ThreatWarden>();
+        if (GetComponent<GenevaConventionWarden>() == null)
+            gameObject.AddComponent<GenevaConventionWarden>();
+        var prison = GetComponent<PrisonWarden>();
+        var threat = GetComponent<ThreatWarden>();
+        var geneva = GetComponent<GenevaConventionWarden>();
+        prison.threatWarden = threat;
+        prison.genevaWarden = geneva;
+        geneva.threatWarden = threat;
+        geneva.prisonWarden = prison;
         if (GetComponent<PrisonRetinueClient>() == null)
             gameObject.AddComponent<PrisonRetinueClient>();
         if (CentralDispatchHub.Instance == null && FindFirstObjectByType<CentralDispatchHub>() == null)

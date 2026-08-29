@@ -85,6 +85,12 @@ public static class FeatureBudgetDefaults
                 new[] { "PenInk", "InkDrying", "QuillNib" }, null, true),
             Entry(FeatureBudgetIds.University, "University Campus", 34,
                 new[] { "EducationWarden", "UniversityCampus", "CampusPixel" }, null, true),
+            Entry(FeatureBudgetIds.LegalCourt, "Legal / Court", 35,
+                new[] { "CourtWarden", "CorruptionWarden", "ConstitutionWarden", "RightsWarden", "LawWarden", "GovernmentWarden", "TheocraticWarden", "JusticeWarden", "GenevaConventionWarden", "LawTravelAgent", "ConversationBusTravelAgent", "LegalBuilding" }, null, true),
+            Entry(FeatureBudgetIds.Relationship, "Relationship", 36,
+                new[] { "LoveWarden", "RomanceWarden", "ConsentWarden", "RelationshipTravelAgent", "TheocraticWarden", "JusticeWarden" }, null, true),
+            Entry(FeatureBudgetIds.Voting, "Voting / Polling Place", 37,
+                new[] { "VotingPlace", "VoteBehaviorTree", "LaneGrid", "BallotUI", "GameSession" }, null, true),
         };
     }
 

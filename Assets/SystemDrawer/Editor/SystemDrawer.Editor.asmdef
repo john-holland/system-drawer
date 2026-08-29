@@ -11,7 +11,9 @@
         "Roads.Runtime",
         "HierarchicalPathFinding",
         "SystemDrawer.FeatureBudget",
-        "BedogaGenerator"
+        "BedogaGenerator",
+        "SdfMax",
+        "SystemDrawer.Networking"
     ],
     "includePlatforms": [
         "Editor"

@@ -38,6 +38,9 @@ public sealed class PrisonWarden : MonoBehaviour
     public PrisonWardenLimits limits;
     public List<PrisonWardenLimits> powerDiamondWardens = new List<PrisonWardenLimits>();
     public WrestlingCard restraintCard;
+    public bool respectsGenevaConventions = true;
+    public GenevaConventionWarden genevaWarden;
+    public ThreatWarden threatWarden;
     [Range(0f, 1f)] public float lastScore01;
     public PrisonWardenAction lastRecommendation = PrisonWardenAction.Remuneration;
 
@@ -62,13 +65,29 @@ public sealed class PrisonWarden : MonoBehaviour
     {
         float limit = limits != null ? limits.LimitFor(axis) : 0.5f;
         lastScore01 = Mathf.Clamp01(intensity01);
-        if (developerInpaint)
+        _ = developerInpaint;
+        bool physical = string.Equals(axis, "physical", StringComparison.OrdinalIgnoreCase);
+        if (respectsGenevaConventions && ShouldRestrainForGeneva(physical))
         {
-            lastRecommendation = lastScore01 > limit ? PrisonWardenAction.Restraint : PrisonWardenAction.Remuneration;
+            lastRecommendation = PrisonWardenAction.Restraint;
             return lastRecommendation;
         }
         lastRecommendation = lastScore01 > limit ? PrisonWardenAction.Restraint : PrisonWardenAction.Remuneration;
         return lastRecommendation;
+    }
+
+    bool ShouldRestrainForGeneva(bool physical)
+    {
+        var geneva = genevaWarden != null ? genevaWarden : GetComponent<GenevaConventionWarden>();
+        if (geneva != null)
+        {
+            if (physical)
+                geneva.Allow01();
+            return geneva.lastIsTorture;
+        }
+        if (!physical) return false;
+        var threat = threatWarden != null ? threatWarden : GetComponent<ThreatWarden>();
+        return threat != null && threat.IsTorture();
     }
 
     public bool OverUpperLimit(string axis, float intensity01)

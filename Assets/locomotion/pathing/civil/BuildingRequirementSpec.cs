@@ -199,6 +199,26 @@ public sealed class BuildingRequirementSpec : ScriptableObject
             list.Add(Slot("kitchen", "Kitchen", false));
             list.Add(Slot("living_quarters", "Living quarters", false));
         }
+        if (id.Contains("voting") || id.Contains("polling") || id.Contains("town_hall") || id.Contains("townhall"))
+        {
+            list.Add(Slot("booth", "Voting booth", true));
+            list.Add(Slot("ballot_table", "Ballot table", true));
+            list.Add(Slot("lane_grid", "LaneGrid queue", true));
+            list.Add(Slot("feeder_queue", "Feeder queue", false));
+            list.Add(Slot("egress", "Egress", true));
+        }
+        if (id.Contains("courthouse") || id.Contains("court_house") || id == "court" || id == "legal"
+            || id.Contains("courtroom"))
+        {
+            list.Add(Slot("chamber", "Courtroom / chamber", true));
+            list.Add(Slot("judges_chambers", "Judges' chambers", true));
+            list.Add(Slot("offices", "Offices", true));
+            list.Add(Slot("meeting_room", "Meeting room", true));
+            list.Add(Slot("cafeteria", "Cafeteria stations + commodities", true));
+            list.Add(Slot("bathroom", "Bathroom", true));
+            list.Add(Slot("gov_suite", "Gov suite", false));
+            list.Add(Slot("company_suite", "Company suite", false));
+        }
         if (id == "spa" || id.StartsWith("spa_") || id.Contains("bathhouse"))
         {
             list.Add(Slot("front_desk", "Front desk", true));

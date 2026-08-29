@@ -92,6 +92,26 @@ public static class MainMenuNetworkRequirements
 
         lobby.children.Add(host);
         lobby.children.Add(join);
+        var sessions = new NodeSpec
+        {
+            label = "Game Sessions",
+            eventName = "game.session",
+            serverModeMask = MenuServerModeMask.Multiplayer,
+            isContainer = true
+        };
+        sessions.children.Add(new NodeSpec { label = "New Game", eventName = "game.session.new", serverModeMask = MenuServerModeMask.Multiplayer });
+        sessions.children.Add(new NodeSpec { label = "Join Session", eventName = "game.session.join", serverModeMask = MenuServerModeMask.Multiplayer });
+        sessions.children.Add(new NodeSpec
+        {
+            label = "Spectate Session",
+            eventName = "game.session.spectate",
+            serverModeMask = MenuServerModeMask.Multiplayer,
+            clientRoleMask = MenuClientRoleMask.SpectatorOnly
+        });
+        sessions.children.Add(new NodeSpec { label = "Close Session", eventName = "game.session.close", serverModeMask = MenuServerModeMask.Multiplayer });
+        sessions.children.Add(new NodeSpec { label = "Umbrella Close", eventName = "game.session.close.umbrella", serverModeMask = MenuServerModeMask.Multiplayer });
+        sessions.children.Add(new NodeSpec { label = "Save to Local Client", eventName = "game.session.save", serverModeMask = MenuServerModeMask.Multiplayer });
+        lobby.children.Add(sessions);
         lobby.children.Add(new NodeSpec { label = "Start Game", eventName = "lobby.game.start", serverModeMask = MenuServerModeMask.Multiplayer });
         lobby.children.Add(new NodeSpec
         {

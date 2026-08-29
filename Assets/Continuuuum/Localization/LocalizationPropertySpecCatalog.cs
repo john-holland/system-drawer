@@ -79,8 +79,66 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildPenInkPropertyRecords());
         list.AddRange(BuildUniversityPropertyRecords());
         list.AddRange(BuildScribePropertyRecords());
+        list.AddRange(BuildRelationshipPropertyRecords());
+        list.AddRange(BuildLegalPropertyRecords());
+        list.AddRange(BuildVotePropertyRecords());
+        list.AddRange(BuildGameSessionPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildVotePropertyRecords() => new[]
+    {
+        Spec(VoteLemmaPropertyKeys.Vote, "String", "", "Vote run / ballot cast"),
+        Spec(VoteLemmaPropertyKeys.Ballot, "String", "", "Ballot spec id"),
+        Spec(VoteLemmaPropertyKeys.Recount, "String", "", "Recount run id"),
+        Spec(VoteLemmaPropertyKeys.Tally, "Integer", "0", "Tally hash / count"),
+        Spec(VoteLemmaPropertyKeys.Queue, "String", "", "Polling queue / feeder lane"),
+        Spec(VoteLemmaPropertyKeys.Queued, "String", "", "Queued-by-address policy"),
+        Spec(VoteLemmaPropertyKeys.Address, "String", "", "Street / civic address"),
+        Spec(VoteLemmaPropertyKeys.HomeAddress, "String", "", "homeAddress property on the voter"),
+        Spec(VoteLemmaPropertyKeys.Randomly, "String", "", "Random feeder when no home address"),
+        Spec(VoteLemmaPropertyKeys.Happily, "String", "", "Adverb that can take postfix if-so"),
+        Spec(VoteLemmaPropertyKeys.IfSo, "String", "", "Postfix anaphor; if is also prefix / infix / circumfix"),
+        Spec(VoteLemmaPropertyKeys.Property, "String", "", "Named civic property key"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildGameSessionPropertyRecords() => new[]
+    {
+        Spec(GameSessionLemmaPropertyKeys.GameSession, "String", "", "GameSession id inside lobby"),
+        Spec(GameSessionLemmaPropertyKeys.Saving, "String", "", "Saving a game session"),
+        Spec(GameSessionLemmaPropertyKeys.Loading, "String", "", "Loading a game session"),
+        Spec(GameSessionLemmaPropertyKeys.LocalSave, "String", "", "Save to local client"),
+        Spec(GameSessionLemmaPropertyKeys.SaveServerToLocal, "String", "", "Copy server structure to local"),
+        Spec(GameSessionLemmaPropertyKeys.LocalServer, "String", "", "Local server structure"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildLegalPropertyRecords() => new[]
+    {
+        Spec(LegalLemmaPropertyKeys.Court, "String", "american", "Court kind / courthouse id"),
+        Spec(LegalLemmaPropertyKeys.Constitution, "Float", "1", "Constitution allow 0-1"),
+        Spec(LegalLemmaPropertyKeys.Scripture, "String", "", "Active scripture refs"),
+        Spec(LegalLemmaPropertyKeys.Chamber, "String", "house", "Legislative chamber"),
+        Spec(LegalLemmaPropertyKeys.Rights, "Float", "1", "Rights allow 0-1"),
+        Spec(LegalLemmaPropertyKeys.Law, "String", "", "Law card / statute id"),
+        Spec(LegalLemmaPropertyKeys.Junta, "Float", "0", "Junta suspend constitution 0-1"),
+        Spec(LegalLemmaPropertyKeys.GenevaConventions, "String", "", "Geneva Convention Warden"),
+        Spec(LegalLemmaPropertyKeys.Torture, "Bool", "false", "ThreatWarden isTorture"),
+        Spec(LegalLemmaPropertyKeys.RespectsGenevaConventions, "Bool", "true", "Junta / prison respects Geneva Conventions"),
+        Spec(LegalLemmaPropertyKeys.Announce, "String", "", "Announce a civic / legal event"),
+        Spec(LegalLemmaPropertyKeys.Returned, "String", "", "A right or article returned"),
+        Spec(LegalLemmaPropertyKeys.RightsReturned, "Bool", "false", "Rights restored after limit or removal"),
+        Spec(LegalLemmaPropertyKeys.AnnounceRightsReturned, "String", "", "ConstitutionWarden AnnounceRightsReturned event"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildRelationshipPropertyRecords() => new[]
+    {
+        Spec(RelationshipLemmaPropertyKeys.Stage, "String", "notion", "Relationship stage / RomanceSeverity"),
+        Spec(RelationshipLemmaPropertyKeys.Consent, "Float", "1", "Consent allow 0-1"),
+        Spec(RelationshipLemmaPropertyKeys.Doctrine, "Float", "1", "Theocratic doctrine allow 0-1"),
+        Spec(RelationshipLemmaPropertyKeys.Subjects, "String", "", "Relationship subject ids"),
+        Spec(RelationshipLemmaPropertyKeys.Affection, "Float", "0.5", "Love/romance affection 0-1"),
+        Spec(RelationshipLemmaPropertyKeys.Romance, "String", "", "Romance profile / route id"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildScribePropertyRecords() => new[]
     {

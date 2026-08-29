@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voting Places — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/votes/votes.css">
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="votes-main">
+    <header class="votes-header">
+      <h1>Voting places</h1>
+      <p class="votes-lead">Bind a polling place to a lobby instance. Vote configs on that lobby’s sessions apply to follow-on ballots.</p>
+    </header>
+    <form id="vp-form" class="votes-ballot-form">
+      <input type="hidden" id="vp-id">
+      <label>Name <input id="vp-name" required placeholder="town-hall-polls"></label>
+      <label>Lobby id
+        <select id="vp-lobby"></select>
+      </label>
+      <label>Feeder policy
+        <select id="vp-feeder-policy">
+          <option value="addressOrRandom">Queued by address, or randomly if no home address</option>
+        </select>
+      </label>
+      <label>Booth layout
+        <select id="vp-booth-layout">
+          <option value="single">Single</option>
+          <option value="twoSectionBackToBack">2 section back to back</option>
+          <option value="fourSectionDivided">4 section divided</option>
+        </select>
+      </label>
+      <label>Feeder count <input id="vp-feeder-count" type="number" min="1" value="1"></label>
+      <label>Properties JSON <textarea id="vp-json">{}</textarea></label>
+      <p class="votes-err" id="vp-err" hidden></p>
+      <button type="submit">Save</button>
+      <button type="button" id="vp-new">New</button>
+    </form>
+    <div id="vp-list"></div>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-cave-shell.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-tome-bootstrap.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/voting-places/voting-places.js"></script>
+</body>
+</html>

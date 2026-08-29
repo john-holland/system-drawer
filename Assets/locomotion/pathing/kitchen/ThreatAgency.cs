@@ -37,7 +37,8 @@ public enum ThreatKind
     Fire,
     Intruder,
     GasLeak,
-    EquipmentFault
+    EquipmentFault,
+    Torture
 }
 
 public enum JusticeAction

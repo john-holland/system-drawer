@@ -186,6 +186,52 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_RelationshipLemmas()
+    {
+        string[] nouns = { "stage", "consent", "doctrine", "subjects", "affection", "romance" };
+        foreach (var term in nouns)
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", term);
+            Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(id), term);
+        }
+        Assert.AreEqual("stage", BuiltInSynonyms.CanonicalizeToken("relationship_stage"));
+        Assert.AreEqual("stage", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "relationship", "stage" }));
+    }
+
+    [Test]
+    public void VocabularyBuiltInRegistry_Includes_GenevaConventionLemmas()
+    {
+        foreach (var term in new[] { LegalLemmaPropertyKeys.GenevaConventions, LegalLemmaPropertyKeys.Torture, LegalLemmaPropertyKeys.RespectsGenevaConventions })
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", term);
+            Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(id), term);
+        }
+        Assert.AreEqual("geneva-conventions", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "geneva", "conventions" }));
+        Assert.AreEqual("respects-geneva-conventions", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "respects", "geneva", "conventions" }));
+    }
+
+    [Test]
+    public void VocabularyBuiltInRegistry_Includes_AnnounceRightsReturnedLemmas()
+    {
+        string announce = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", LegalLemmaPropertyKeys.Announce);
+        string returned = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", LegalLemmaPropertyKeys.Returned);
+        string rightsReturned = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", LegalLemmaPropertyKeys.RightsReturned);
+        string announceRights = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", LegalLemmaPropertyKeys.AnnounceRightsReturned);
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(announce));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(returned));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(rightsReturned));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(announceRights));
+        Assert.AreEqual("rights-returned", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "rights", "returned" }));
+        Assert.AreEqual("announce-rights-returned", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "announce", "rights", "returned" }));
+        Assert.AreEqual("announce-rights-returned", BuiltInSynonyms.CanonicalizeToken("announce_rights_returned"));
+        Assert.AreEqual("announce-rights-returned", BuiltInSynonyms.CanonicalizeToken("AnnounceRightsReturned"));
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("announce rights returned", out var hit));
+        Assert.AreEqual("announce-rights-returned", hit.Term);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("constitution rights returned", out var evt));
+        Assert.AreEqual("announce-rights-returned", evt.Term);
+    }
+
+    [Test]
     public void VocabularyBuiltInRegistry_Includes_StructuralChatOpenCloseLemmas()
     {
         Assert.AreEqual(VocabularyBuiltInIds.EnChat, VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "chat"));
@@ -208,6 +254,129 @@ public class VocabularyBuiltInEditModeTests
         Assert.AreEqual("close-chat", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "close", "the", "chat" }));
         Assert.AreEqual("chat", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "chat", "window" }));
         Assert.AreEqual("word-bank", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "word", "bank" }));
+    }
+
+    [Test]
+    public void BuiltInSynonyms_GameSessionPhrases_MapToCanonicalLemma()
+    {
+        Assert.AreEqual("game-session", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "game", "session" }));
+        Assert.AreEqual("local-save", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "local", "save" }));
+        Assert.AreEqual("save-server-to-local", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "save", "server", "to", "local" }));
+        Assert.AreEqual("local-server", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "local", "server" }));
+        Assert.AreEqual("local-save", BuiltInSynonyms.CanonicalizeToken("local_save"));
+        Assert.AreEqual("game-session", BuiltInSynonyms.CanonicalizeToken("game_session"));
+    }
+
+    [Test]
+    public void VocabularyBuiltInRegistry_Includes_VoteQueueLemmas()
+    {
+        foreach (var term in VoteLemmaPropertyKeys.LemmaPlaceholders)
+            Assert.IsTrue(VocabularyBuiltInLookup.TryGetByLemma(term, out _), term);
+        string queued = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "queued");
+        string home = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "home-address");
+        string randomly = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "adv", "randomly");
+        string ifSo = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "adv", "if-so");
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(queued));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(home));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(randomly));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(ifSo));
+        Assert.AreEqual("home-address", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "home", "address" }));
+        Assert.IsNull(BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "if", "so" }));
+        Assert.AreEqual("if-so", BuiltInSynonyms.CanonicalizeToken("if_so"));
+        Assert.AreEqual("home-address", BuiltInSynonyms.CanonicalizeToken("homeAddress"));
+    }
+
+    [Test]
+    public void AdverbIfPostfix_GreedyIfSo_OnHappilyAndRandomly()
+    {
+        var happily = AdverbIfPostfix.Apply(new[] { "write", "happily", "if", "so" });
+        CollectionAssert.AreEqual(new[] { "write", "happily-if-so" }, happily);
+        var queued = AdverbIfPostfix.ApplyToText(VoteLemmaPropertyKeys.DefaultInpaintPrompt);
+        CollectionAssert.AreEqual(new[] { "queued", "by", "address", "or", "randomly-if-so" }, queued);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryGetByLemma("happily-if-so", out var composed));
+        Assert.AreEqual("happily-if-so", composed.Term);
+        Assert.AreEqual("adverb", composed.PosTag);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("write happily, if so", out var write));
+        Assert.AreEqual("write", write.Term);
+        Assert.IsFalse(VocabularyBuiltInLookup.TryGetByLemma("write-happily-if-so", out _));
+    }
+
+    [Test]
+    public void If_OperatorPositions_PrefixInfixPostfixCircumfix()
+    {
+        Assert.AreEqual(IfOperatorPosition.Prefix, IfPredicate.Classify(new[] { "if", "no", "home", "address" }, 0));
+        Assert.AreEqual(IfOperatorPosition.Prefix, IfPredicate.Classify(new[] { "if", "so" }, 0));
+        Assert.AreEqual(IfOperatorPosition.Prefix, IfPredicate.Classify(new[] { "or", "if", "queued" }, 1));
+        Assert.AreEqual(IfOperatorPosition.Infix, IfPredicate.Classify(new[] { "happily", "if", "queued" }, 1));
+        Assert.AreEqual(IfOperatorPosition.Infix, IfPredicate.Classify(new[] { "queued", "by", "address", "if", "home", "address" }, 3));
+        Assert.AreEqual(IfOperatorPosition.Infix, IfPredicate.Classify(new[] { "randomly", "if", "no", "property" }, 1));
+        Assert.AreEqual(IfOperatorPosition.Postfix, IfPredicate.Classify(new[] { "happily", "if", "so" }, 1));
+        Assert.AreEqual(IfOperatorPosition.Postfix, IfPredicate.Classify(new[] { "queued", "if", "so" }, 1));
+        Assert.AreEqual(IfOperatorPosition.Postfix, IfPredicate.Classify(new[] { "queued", "if" }, 1));
+        Assert.AreEqual(IfOperatorPosition.Circumfix, IfPredicate.Classify(new[] { "if", "pause", "then", "forward" }, 0));
+        Assert.AreEqual(IfOperatorPosition.Circumfix, IfPredicate.Classify(new[] { "write", "if", "pause", "then", "forward" }, 1));
+        Assert.AreEqual(IfOperatorPosition.Circumfix, IfPredicate.Classify(new[] { "if", "so", "then", "queue" }, 0));
+        Assert.AreEqual(IfOperatorPosition.Circumfix, IfPredicate.Classify(new[] { "happily", "if", "so", "then", "write" }, 1));
+
+        Assert.IsTrue(AdverbIfPostfix.IsPrefixIf(new[] { "if", "no", "home", "address" }, 0));
+        Assert.IsFalse(AdverbIfPostfix.IsPrefixIf(new[] { "happily", "if", "queued" }, 1));
+        Assert.IsFalse(AdverbIfPostfix.IsPrefixIf(new[] { "happily", "if", "so" }, 1));
+
+        CollectionAssert.AreEqual(
+            new[] { "if", "so" },
+            AdverbIfPostfix.ApplyToText("if so"));
+        CollectionAssert.AreEqual(
+            new[] { "if", "no", "home", "address", "property" },
+            AdverbIfPostfix.ApplyToText("if no home address property"));
+        CollectionAssert.AreEqual(
+            new[] { "if", "pause", "then", "forward" },
+            AdverbIfPostfix.ApplyToText("if pause then forward"));
+        CollectionAssert.AreEqual(
+            new[] { "write", "happily", "if", "queued" },
+            AdverbIfPostfix.Apply(new[] { "write", "happily", "if", "queued" }));
+        CollectionAssert.AreEqual(
+            new[] { "queued", "by", "address", "if", "home", "address" },
+            AdverbIfPostfix.ApplyToText("queued by address if home address"));
+        CollectionAssert.AreEqual(
+            new[] { "queued", "by", "address", "or", "randomly", "if", "no", "home", "address", "property" },
+            AdverbIfPostfix.ApplyToText("queued by address, or randomly if no home address property"));
+        CollectionAssert.AreEqual(
+            new[] { "write", "happily-if-so" },
+            AdverbIfPostfix.Apply(new[] { "write", "happily", "if", "so" }));
+        CollectionAssert.AreEqual(
+            new[] { "happily", "if", "so", "then", "write" },
+            AdverbIfPostfix.Apply(new[] { "happily", "if", "so", "then", "write" }));
+
+        var prefixHits = IfPredicate.FindAllInText("if no home address property");
+        Assert.AreEqual(1, prefixHits.Length);
+        Assert.AreEqual(IfOperatorPosition.Prefix, prefixHits[0].Position);
+        var infixHits = IfPredicate.FindAllInText("queued by address if home address");
+        Assert.AreEqual(1, infixHits.Length);
+        Assert.AreEqual(IfOperatorPosition.Infix, infixHits[0].Position);
+        var postfixHits = IfPredicate.FindAllInText("write happily, if so");
+        Assert.AreEqual(1, postfixHits.Length);
+        Assert.AreEqual(IfOperatorPosition.Postfix, postfixHits[0].Position);
+        Assert.IsTrue(postfixHits[0].Composed);
+        var circumHits = IfPredicate.FindAllInText("if pause then forward");
+        Assert.AreEqual(1, circumHits.Length);
+        Assert.AreEqual(IfOperatorPosition.Circumfix, circumHits[0].Position);
+
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("if", out var bare));
+        Assert.AreEqual("if", bare.Term);
+        Assert.AreEqual("conjunction", bare.PosTag);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("if so", out var ifSoPrefix));
+        Assert.AreEqual("if", ifSoPrefix.Term);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("if no home address property", out var ifNo));
+        Assert.AreEqual("if", ifNo.Term);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("if pause then forward", out var ifPause));
+        Assert.AreEqual("if", ifPause.Term);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("if so, queue randomly", out var ifSoQueue));
+        Assert.AreEqual("if", ifSoQueue.Term);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryResolvePhrase("queued by address if home address", out var queued));
+        Assert.AreEqual("queued", queued.Term);
+        Assert.IsTrue(VocabularyBuiltInLookup.TryGetByLemmaExact("if-so", out var ifSoLemma));
+        Assert.AreEqual("if-so", ifSoLemma.Term);
+        Assert.AreEqual("adverb", ifSoLemma.PosTag);
     }
 
     [Test]

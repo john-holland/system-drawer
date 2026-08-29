@@ -375,7 +375,11 @@ namespace Locomotion.Narrative.EditorTools
                 if (GUILayout.Button("Save", EditorStyles.toolbarButton, GUILayout.Width(50)))
                     SaveCurrent();
                 if (GUILayout.Button("Gen dialogue", EditorStyles.toolbarButton, GUILayout.Width(80)))
-                    Debug.Log("[Dialogue] POST /api/dialogue/suggest/generate with setId + context from lemma library or Compile Dialogue.");
+                {
+                    var bus = UnityEngine.Object.FindFirstObjectByType<ConversationBusTravelAgent>();
+                    string extra = bus != null ? bus.ComposeDialoguePrompt() : "";
+                    Debug.Log("[Dialogue] POST /api/dialogue/suggest/generate with setId + observed laws/scripture.\n" + extra);
+                }
                 if (GUILayout.Button("Add suggest", EditorStyles.toolbarButton, GUILayout.Width(80)))
                     Debug.Log("[Dialogue] POST /api/dialogue/suggest/accept after generate returns suggestionId.");
             }

@@ -20,6 +20,31 @@ public sealed class PrisonWardenTests
     }
 
     [Test]
+    public void ScoreStep_PhysicalTorture_RespectsGeneva_Restrains()
+    {
+        var go = new GameObject("prison-geneva");
+        try
+        {
+            var prison = go.AddComponent<PrisonWarden>();
+            prison.limits = ScriptableObject.CreateInstance<PrisonWardenLimits>();
+            prison.limits.physical01 = 0.9f;
+            Assert.IsTrue(prison.respectsGenevaConventions);
+            var threat = go.AddComponent<ThreatWarden>();
+            threat.RaiseThreat(ThreatKind.Torture);
+            prison.threatWarden = threat;
+            Assert.AreEqual(PrisonWardenAction.Restraint, prison.ScoreStep("physical", 0.1f, false));
+
+            prison.respectsGenevaConventions = false;
+            Assert.AreEqual(PrisonWardenAction.Remuneration, prison.ScoreStep("physical", 0.1f, false));
+            Object.DestroyImmediate(prison.limits);
+        }
+        finally
+        {
+            Object.DestroyImmediate(go);
+        }
+    }
+
+    [Test]
     public void JusticeAgent_DefaultPipeline_And_Calendar()
     {
         var go = new GameObject("ta");

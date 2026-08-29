@@ -17,6 +17,7 @@ public sealed class NetworkSettings : ScriptableObject
     public int maxSpectators = 4;
     public bool allowSpectators = true;
     public bool allowLobbyPassword = true;
+    public LobbyPrefabParameters prefab = new LobbyPrefabParameters();
 
     [Header("LOD streaming (world units)")]
     public float clientLodRadius = 50f;

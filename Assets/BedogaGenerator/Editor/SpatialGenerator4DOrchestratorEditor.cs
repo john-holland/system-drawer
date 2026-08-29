@@ -283,5 +283,9 @@ public class SpatialGenerator4DOrchestratorEditor : Editor
         }
 
         serializedObject.ApplyModifiedProperties();
+
+        EditorGUILayout.Space();
+        if (GUILayout.Button("Master Rebake", GUILayout.Height(24)))
+            MasterRebakeRunner.Run();
     }
 }

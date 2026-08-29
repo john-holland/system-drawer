@@ -39,7 +39,9 @@ public enum CivilSystemKind
     Park = 35,
     SanitationFacility = 36,
     Prison = 37,
-    UnemploymentOffice = 38
+    UnemploymentOffice = 38,
+    CourtHouse = 39,
+    VotingPlace = 40
 }
 
 /// <summary>Per-venue simulation fidelity under budget + speed LOD.</summary>

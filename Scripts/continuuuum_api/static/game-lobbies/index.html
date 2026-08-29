@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game Lobbies — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css">
+  <link rel="stylesheet" href="/static/shared/game-lobby-list/game-lobby-list.css">
+  <link rel="stylesheet" href="/static/game-lobbies/game-lobbies.css">
+  <script src="/static/shared/vendor/d3.min.js"></script>
+</head>
+<body>
+  <div id="continuuuum-nav-root"></div>
+  <main class="gl-main">
+    <header class="gl-header">
+      <h1>Game Lobbies</h1>
+      <p class="gl-lead">Named configs spawn many live lobby instances. Sessions nest under an instance.</p>
+    </header>
+    <div class="gl-query">
+      <input id="gl-q" type="search" placeholder="Query sessions…" autocomplete="off">
+      <input id="gl-lobby" type="text" placeholder="Lobby instance name">
+      <label><input id="gl-live" type="checkbox"> Live only</label>
+      <select id="gl-kind">
+        <option value="">All content</option>
+        <option value="game_mode">Game mode</option>
+        <option value="expansion">Expansion</option>
+        <option value="mod">Mod</option>
+      </select>
+      <button type="button" id="gl-prev">Prev</button>
+      <span id="gl-page">0 / 0</span>
+      <button type="button" id="gl-next">Next</button>
+    </div>
+    <nav class="gl-tabs">
+      <button type="button" data-tab="configure">Configure &amp; Create</button>
+      <button type="button" data-tab="lobbies" class="active">Lobbies</button>
+      <button type="button" data-tab="graph">Graph</button>
+    </nav>
+    <section id="tab-configure" class="gl-panel">
+      <p class="gl-lead">Designed templates. Spawn as many live rooms as you need from the Lobbies tab.</p>
+      <form id="gl-config-form" class="gl-config-form">
+        <input type="hidden" id="cfg-id">
+        <label>Name <input id="cfg-name" required placeholder="mayor-dog-mp"></label>
+        <label>Lobby type id <input id="cfg-type" placeholder="vanilla"></label>
+        <label>Content kind
+          <select id="cfg-kind">
+            <option value="game_mode">Game mode</option>
+            <option value="expansion">Expansion</option>
+            <option value="mod">Mod</option>
+          </select>
+        </label>
+        <label>Content id <input id="cfg-content"></label>
+        <label>Game size <input id="cfg-size" type="number" value="8"></label>
+        <label>Mode
+          <select id="cfg-mode">
+            <option value="SinglePlayer">SinglePlayer</option>
+            <option value="AuthoritativePeerToPeer">AuthoritativePeerToPeer</option>
+            <option value="ClassicLockstep">ClassicLockstep</option>
+          </select>
+        </label>
+        <label>Min players to start <input id="cfg-min" type="number" value="1"></label>
+        <label>Max spectators <input id="cfg-spec" type="number" value="4"></label>
+        <label><input id="cfg-password" type="checkbox"> Require password</label>
+        <label><input id="cfg-spectators" type="checkbox" checked> Allow spectators</label>
+        <label>Properties JSON <textarea id="cfg-json">{}</textarea></label>
+        <div>
+          <button type="submit">Save config</button>
+          <button type="button" id="cfg-new">New</button>
+        </div>
+      </form>
+      <div id="gl-configs"></div>
+    </section>
+    <section id="tab-lobbies" class="gl-panel active">
+      <div id="gl-lobbies"></div>
+    </section>
+    <section id="tab-graph" class="gl-panel">
+      <svg id="gl-graph" width="100%" height="480"></svg>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-cave-shell.js"></script>
+  <script src="/static/shared/continuuuum-cave-shell/continuuuum-tome-bootstrap.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/game-lobby-list/game-lobby-list.js"></script>
+  <script src="/static/game-lobbies/game-lobbies.js"></script>
+</body>
+</html>

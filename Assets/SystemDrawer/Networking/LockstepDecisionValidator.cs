@@ -6,6 +6,8 @@ public sealed class LockstepDecisionValidator
     readonly NetworkTreeRegistry _registry;
     readonly HashSet<string> _approvedLeaves = new HashSet<string>();
 
+    public string ActiveGameSessionId = "";
+
     public LockstepDecisionValidator(NetworkTreeRegistry registry)
     {
         _registry = registry;
@@ -26,6 +28,10 @@ public sealed class LockstepDecisionValidator
             if (string.IsNullOrEmpty(prefix))
                 continue;
             if (!CausalityFamilyAudit.IsCompatiblePrefix(prefix, causalityLeafId))
+                continue;
+            if (!string.IsNullOrEmpty(ActiveGameSessionId)
+                && !string.IsNullOrEmpty(pair.Value.GameSessionId)
+                && pair.Value.GameSessionId != ActiveGameSessionId)
                 continue;
             if (pair.Value.TransmitPolicy == TreeTransmitPolicy.LocalOnly &&
                 pair.Value.OwnerClientId != clientId)

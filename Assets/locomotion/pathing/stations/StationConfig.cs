@@ -12,6 +12,7 @@ public sealed class StationConfig
     public TrainStationRuntime trainStation;
     public GrainSiloStubRuntime grainSilo;
     public RailMaintenanceDepotStub railMaintenanceDepot;
+    public VotingBoothStation votingBooth;
     public string vehicleId;
     public string vehicleRouteId;
     public string buildingStableId;

@@ -186,6 +186,11 @@ public sealed class CityPixelGridDesignerWindow : EditorWindow
             CityPixelGridDesignerUndo.RecordComplete(_grid, "Add Campus Layers");
             _grid.EnsureCampusLayers();
         }
+        if (GUILayout.Button("Add Courtroom Bench / Well / Jury / Gallery / Bar Layers"))
+        {
+            CityPixelGridDesignerUndo.RecordComplete(_grid, "Add Courtroom Layers");
+            _grid.EnsureCourtroomLayers();
+        }
     }
 
     void DrawModeAndBrush()

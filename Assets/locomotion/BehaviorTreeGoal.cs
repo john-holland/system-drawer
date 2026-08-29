@@ -128,7 +128,9 @@ public enum GoalType
     /// <summary>Plumbing: clog / plunge / snake (plumbing cards).</summary>
     Plumbing,
     /// <summary>RTS / house construction (ConstructionPhaseCard + HouseConstructionTravelAgent).</summary>
-    Construction
+    Construction,
+    /// <summary>Polling-place vote (VoterCard + VoteBehaviorTreeNode). High priority unless developer in-paint.</summary>
+    Vote
 }
 
 /// <summary>

@@ -56,6 +56,7 @@ public sealed class NetworkTreeRegistry
                 hash = hash * 31 + (int)pair.Value.TransmitPolicy;
                 hash = hash * 31 + (pair.Value.OwnerClientId ?? "").GetHashCode();
                 hash = hash * 31 + (pair.Value.CausalityLeafPrefix ?? "").GetHashCode();
+                hash = hash * 31 + (pair.Value.GameSessionId ?? "").GetHashCode();
             }
             return hash;
         }

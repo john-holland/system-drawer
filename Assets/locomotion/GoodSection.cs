@@ -261,6 +261,8 @@ public class GoodSection
     public bool isTravelAgentGoal;
     [Tooltip("Plumbing card (GoalType.Plumbing).")]
     public bool isPlumbingGoal;
+    [Tooltip("Polling-place vote card (GoalType.Vote).")]
+    public bool isVoteGoal;
 
     // Execution state
     private int currentActionIndex = 0;

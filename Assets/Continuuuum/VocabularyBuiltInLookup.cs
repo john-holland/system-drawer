@@ -40,25 +40,54 @@ public static class VocabularyBuiltInLookup
         if (string.IsNullOrWhiteSpace(phrase)) return false;
         EnsureInit();
 
-        string[] raw = VocabularyBuiltInTokenizer.TokenizeText(phrase);
+        string[] raw = AdverbIfPostfix.ApplyToText(phrase);
         if (raw.Length == 0) return false;
-        for (int i = 0; i < raw.Length; i++)
-            raw[i] = BuiltInSynonyms.CanonicalizeToken(raw[i]);
+        // Leading if (prefix or if-then circumfix) is always the conjunction.
+        if (IfPredicate.TryClassify(raw, 0, out var ifPos)
+            && (ifPos == IfOperatorPosition.Prefix || ifPos == IfOperatorPosition.Circumfix)
+            && TryGetByLemmaExact("if", out descriptor))
+            return true;
 
         for (int w = raw.Length; w >= 1; w--)
         {
-            string sub = string.Join(" ", raw, 0, w);
+            var slice = new string[w];
+            Array.Copy(raw, 0, slice, 0, w);
+            string multi = BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(slice);
+            if (!string.IsNullOrEmpty(multi) && TryGetByLemma(multi, out descriptor))
+                return true;
+            string hyphen = string.Join("-", slice);
+            if (TryGetByLemma(hyphen, out descriptor))
+                return true;
+            string sub = string.Join(" ", slice);
             if (_byLemma.TryGetValue(sub, out descriptor))
                 return true;
         }
         return false;
     }
 
-    /// <summary>True if lemma exists as built-in term.</summary>
-    public static bool TryGetByLemma(string lemma, out VocabularyBuiltInDescriptor descriptor)
+    /// <summary>Exact registry term only (no adverb-if composition). Used by <see cref="AdverbIfPostfix"/>.</summary>
+    public static bool TryGetByLemmaExact(string lemma, out VocabularyBuiltInDescriptor descriptor)
     {
         EnsureInit();
         lemma = BuiltInSynonyms.CanonicalizeToken(lemma ?? "");
         return _byLemma.TryGetValue(lemma, out descriptor);
+    }
+
+    /// <summary>True if lemma exists as built-in term, or a greedy adverb+if / if-so composition.</summary>
+    public static bool TryGetByLemma(string lemma, out VocabularyBuiltInDescriptor descriptor)
+    {
+        EnsureInit();
+        lemma = BuiltInSynonyms.CanonicalizeToken(lemma ?? "");
+        if (_byLemma.TryGetValue(lemma, out descriptor))
+            return true;
+        if (AdverbIfPostfix.TryStem(lemma, out string adverb, out string postfix))
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "adv", lemma);
+            descriptor = new VocabularyBuiltInDescriptor(
+                id, "en", lemma, "adverb", VocabularyBuiltInCategory.DiscourseCausality,
+                new[] { "civil", "vote", "queue", postfix });
+            return true;
+        }
+        return false;
     }
 }

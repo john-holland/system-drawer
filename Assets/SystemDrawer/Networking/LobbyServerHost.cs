@@ -28,6 +28,17 @@ public sealed class LobbyServerHost : IDisposable
     public int PendingSpectatorCount => _pendingSpectators.Count;
     public int PendingClientCount => PendingPlayerCount + PendingSpectatorCount;
     public bool PasswordRequired => !string.IsNullOrEmpty(_passwordHash);
+
+    public void CopyPendingPlayerIds(List<string> dest)
+    {
+        if (dest == null) return;
+        dest.Clear();
+        lock (_pendingPlayers)
+        {
+            for (int i = 0; i < _pendingPlayers.Count; i++)
+                dest.Add(_pendingPlayers[i]);
+        }
+    }
     public string AdvertiseAddress { get; private set; } = "127.0.0.1";
 
     public void Start(string bindAddress, int lobbyPort, int gamePort, string sessionName,

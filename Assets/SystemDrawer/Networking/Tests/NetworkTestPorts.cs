@@ -48,7 +48,11 @@ static class NetworkTestPorts
         foreach (var client in Object.FindObjectsByType<ClientOrchestrator>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             Object.DestroyImmediate(client.gameObject);
         foreach (var server in Object.FindObjectsByType<ServerOrchestrator>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            server.StopLobbyHost();
+            server.StopListening();
             Object.DestroyImmediate(server.gameObject);
+        }
         foreach (var menu in Object.FindObjectsByType<MenuRagdoll>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             Object.DestroyImmediate(menu.gameObject);
     }

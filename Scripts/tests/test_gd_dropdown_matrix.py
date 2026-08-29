@@ -38,6 +38,8 @@ EXPECTED = {
     "garbage-bags": (True, True),
     "transit": (True, True),
     "restaurants": (True, True),
+    "votes": (True, True),
+    "game-lobbies": (True, True),
     "table-read": (True, False),
 }
 

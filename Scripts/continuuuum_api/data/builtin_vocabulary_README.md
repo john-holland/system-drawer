@@ -69,16 +69,15 @@ When adding a builtin:
 3. Export JSON, then `POST /api/lemma-completion/sync-builtins` (or re-seed).
 4. Prefer `{P:canonical|…}` in prompts; treat free text as a best-effort prefix match.
 
-## Suggested shared parse (not implemented in lookup yet)
+## Shared parse (`VocabularyBuiltInLookup.TryResolvePhrase`)
 
-Longest-first, after tokenize:
+Longest-first, after tokenize + per-token synonym canonicalize:
 
-1. Multi-word synonym on the slice (`open the chat` → `open-chat`).
+0. `if` is a predicate in every operator position (`IfPredicate`): prefix `if P`, infix `P if Q`, postfix `P if` / `P if so`, circumfix `if P then Q`. The anaphor `if so` after an adverb composes (`randomly, if so` → `randomly-if-so`). A leading prefix/circumfix `if` always resolves to the conjunction, not `if-so`.
+1. Multi-word synonym on the slice (`open the chat` → `open-chat`; `home address` → `home-address`).
 2. Hyphen-join the slice (`open` + `chat` → `open-chat`) and look up.
 3. Space-join only if a registry term is actually spaced (almost none are).
 4. Single-token lookup last, so compounds win over generic verbs.
-
-Until lookup does that, title binding and `{P:…}` painting will keep disagreeing on hyphenated chat / civil / stunt lemmas.
 
 ## Related
 

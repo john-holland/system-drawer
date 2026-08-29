@@ -67,6 +67,9 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Vehicle detect | `FeatureBudgetIds.VehicleDetect` (`vehicle_detect`) — Intel YOLO26 vehicle hop for video steering |
 | Pen and ink | `FeatureBudgetIds.PaintInk` (`paint_ink`) — ink profile, quill nib, drying/see-through, SPH splatter |
 | University campus | `FeatureBudgetIds.University` (`university`) — EducationWarden, campus asset, Campus Pixel Grid |
+| Legal / court | `FeatureBudgetIds.LegalCourt` (`legal_court`) rank 35 — Court/Corruption/Constitution/Rights/Law/Government, LawTravelAgent, ConversationBusTravelAgent, LegalBuilding, plus shared TheocraticWarden, JusticeWarden, GenevaConventionWarden |
+| Relationship | `FeatureBudgetIds.Relationship` (`relationship`) rank 36 — LoveWarden, RomanceWarden, ConsentWarden, RelationshipTravelAgent plus shared TheocraticWarden, JusticeWarden |
+| Voting / polling | `FeatureBudgetIds.Voting` (`voting`) rank 37 — VotingPlace, VoteBehaviorTree, LaneGrid, BallotUI, GameSession |
 
 ### PixelLight / grid slots budget
 

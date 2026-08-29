@@ -161,6 +161,27 @@ public sealed class PixelLightMultiSlotCatalog : ScriptableObject
         return e;
     }
 
+    /// <summary>Bench / well / jury / gallery / bar slots for courtroom PixelLight designers.</summary>
+    public void EnsureCourtroomSlots()
+    {
+        if (gridSlots == null)
+            gridSlots = new List<PixelLightGridSlotEntry>();
+        EnsureLabeledSlot("court_bench", "Bench");
+        EnsureLabeledSlot("court_well", "Well");
+        EnsureLabeledSlot("court_jury", "Jury");
+        EnsureLabeledSlot("court_gallery", "Gallery");
+        EnsureLabeledSlot("court_bar", "Bar");
+    }
+
+    void EnsureLabeledSlot(string slotId, string label)
+    {
+        for (int i = 0; i < gridSlots.Count; i++)
+            if (gridSlots[i] != null && gridSlots[i].slotId == slotId)
+                return;
+        var e = AddSlot(label);
+        e.slotId = slotId;
+    }
+
     public void SyncSlotsFromHeli(HelicopterVehicleRagdoll heli)
     {
         if (heli == null) return;

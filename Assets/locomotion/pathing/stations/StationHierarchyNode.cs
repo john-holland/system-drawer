@@ -72,6 +72,12 @@ public sealed class StationHierarchyNode : MonoBehaviour
                                              ?? gameObject.AddComponent<RailMaintenanceDepotStub>();
             BridgeTrainCivilVenue(CivilSystemKind.RailMaintenanceDepot, "rail_maintenance_depot");
         }
+        else if (kind == StationKind.VotingBooth)
+        {
+            if (config.votingBooth == null)
+                config.votingBooth = GetComponent<VotingBoothStation>()
+                                    ?? GetComponentInChildren<VotingBoothStation>();
+        }
     }
 
     void BridgeTrainCivilVenue(CivilSystemKind civilKind, string buildingTypeId)

@@ -9,6 +9,7 @@ public sealed class NetworkTreeDescriptor
     public TreeTransmitPolicy TransmitPolicy = TreeTransmitPolicy.LocalOnly;
     public string OwnerClientId = "";
     public string CausalityLeafPrefix = "";
+    public string GameSessionId = "";
     public bool StreamForOwnership;
     public UnityEngine.Object Source;
 
@@ -21,6 +22,7 @@ public sealed class NetworkTreeDescriptor
             TransmitPolicy = TransmitPolicy,
             OwnerClientId = OwnerClientId,
             CausalityLeafPrefix = CausalityLeafPrefix,
+            GameSessionId = GameSessionId,
             StreamForOwnership = StreamForOwnership,
             Source = Source
         };

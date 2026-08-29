@@ -314,6 +314,8 @@ public class PhysicsCardSolver : MonoBehaviour
             return new List<PhysicsCard> { ThreatCard.Generate(ThreatKind.Generic, gameObject, goal.target) };
         if (goal.type == GoalType.Justice)
             return new List<PhysicsCard> { JusticeCard.Generate(JusticeAction.ShutOffHeat, goal.target) };
+        if (goal.type == GoalType.Vote)
+            return new List<PhysicsCard> { VoterCard.GenerateDefault(goal.target) };
         if (goal.type == GoalType.Civic)
             return new List<PhysicsCard> { ConsiderCivicCards.MakeDefaultCard() };
         if (goal.type == GoalType.Civil)
@@ -612,6 +614,18 @@ public class PhysicsCardSolver : MonoBehaviour
             {
                 if (card == null) continue;
                 if (card.isJusticeGoal || card is JusticeCard) return card;
+            }
+        }
+
+        // Vote (ahead of Civic/Civil unless developer in-paint on the place)
+        if (goal.type == GoalType.Vote)
+        {
+            foreach (var card in cards)
+            {
+                if (card == null) continue;
+                var voter = card as VoterCard;
+                if (voter != null && voter.BlockedByDeveloperInpaint()) continue;
+                if (card.isVoteGoal || voter != null) return card;
             }
         }
 

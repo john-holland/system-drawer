@@ -1,0 +1,38 @@
+.votes-main { max-width: 1100px; margin: 0 auto; padding: 0 1rem; }
+.votes-pane {
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  scroll-snap-align: start;
+  padding: 1rem 0 1.2rem;
+  border-bottom: 1px solid #333;
+}
+.votes-pane-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
+}
+.votes-pane-head h2 { margin: 0; }
+.votes-pane-scroll { flex: 1 1 auto; overflow: auto; min-height: 0; }
+.votes-lobby-filter { display: flex; align-items: center; gap: 0.4rem; margin: 0; }
+.votes-lobby-filter input { min-width: 14rem; }
+html { scroll-snap-type: y proximity; }
+.votes-header { margin-bottom: 0.6rem; }
+.votes-header h1 { margin: 0 0 0.25rem; }
+.votes-lead, .votes-muted { opacity: 0.8; margin-top: 0; }
+.votes-card { border: 1px solid #444; padding: 0.6rem 0.8rem; margin: 0.4rem 0; }
+.votes-card button { margin-right: 0.4rem; }
+.votes-ballot-form label { display: block; margin: 0.35rem 0; }
+.votes-ballot-form input, .votes-ballot-form select { max-width: 28rem; width: 100%; box-sizing: border-box; }
+.votes-option, .votes-slice { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin: 0.3rem 0; }
+.votes-option input, .votes-slice input { max-width: 10rem; }
+.votes-gov { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; }
+.votes-gov label { min-width: 10rem; }
+.votes-err { color: #f88; }
+.votes-kind { font-size: 0.85rem; opacity: 0.8; }
+#votes-method-row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: end; }

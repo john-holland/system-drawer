@@ -62,6 +62,22 @@ public class MainMenuNetworkRequirementsSyncTests
         Assert.AreEqual(menu, field.menuRagdoll);
     }
 
+    [Test]
+    public void Sync_CreatesGameSessionNodes()
+    {
+        _root = BuildMenuRoot(out _, out var gen);
+        gen.syncNetworkRequirements = true;
+        gen.UpdateMainMenuForNetworkRequirements();
+
+        var nodes = _root.GetComponentsInChildren<MenuRagdollNode>(true);
+        Assert.IsTrue(nodes.Any(n => n.eventName == "game.session.new"));
+        Assert.IsTrue(nodes.Any(n => n.eventName == "game.session.join"));
+        Assert.IsTrue(nodes.Any(n => n.eventName == "game.session.spectate"));
+        Assert.IsTrue(nodes.Any(n => n.eventName == "game.session.close"));
+        Assert.IsTrue(nodes.Any(n => n.eventName == "game.session.close.umbrella"));
+        Assert.IsTrue(nodes.Any(n => n.eventName == "game.session.save"));
+    }
+
     static GameObject BuildMenuRoot(out MenuRagdoll menu, out MainMenuSpatialGenerator gen)
     {
         var root = new GameObject("MenuRagdollRoot");

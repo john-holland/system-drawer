@@ -33,6 +33,13 @@ public sealed class ThreatWarden : MonoBehaviour
 
     [Header("Agencies")]
     public List<ThreatAgencyState> agencies = new List<ThreatAgencyState>();
+    public ThreatKind lastKind = ThreatKind.Generic;
+
+    [Header("Torture consult")]
+    public ConsentWarden consentWarden;
+    public RightsWarden rightsWarden;
+    public JusticeWarden justiceWarden;
+    public RomanceWarden romanceWarden;
 
     public event Action<ThreatCard> ThreatRaised;
 
@@ -83,6 +90,16 @@ public sealed class ThreatWarden : MonoBehaviour
         return default;
     }
 
+    /// <summary>Peak agency threat in 0–1. Missing agencies score 0.</summary>
+    public float MaxThreat01()
+    {
+        if (agencies == null || agencies.Count == 0) return 0f;
+        float m = 0f;
+        for (int i = 0; i < agencies.Count; i++)
+            m = Mathf.Max(m, agencies[i].threatScore01);
+        return Mathf.Clamp01(m);
+    }
+
     public void SetLevels(string agencyId, ThreatAlertLevel alert, ThreatLevel threat, float alert01 = -1f, float threat01 = -1f)
     {
         EnsureDefaultAgencies();
@@ -111,15 +128,54 @@ public sealed class ThreatWarden : MonoBehaviour
         agencies.Add(neu);
     }
 
+    public static bool IsTorture(
+        float threat01,
+        ThreatKind kind,
+        float? consentAllow01,
+        bool? rightsSuspended,
+        float? rightsAllow01,
+        JusticeWardenAction? justice,
+        float? romance01)
+    {
+        if (kind == ThreatKind.Torture) return true;
+        if (threat01 < 0.5f) return false;
+        bool coerced = consentAllow01.HasValue && consentAllow01.Value < 0.34f;
+        bool rightsBad = rightsSuspended == true
+                         || (rightsAllow01.HasValue && rightsAllow01.Value < 0.34f);
+        bool unjust = justice == JusticeWardenAction.Restrain;
+        bool romanceCoerced = romance01.HasValue && romance01.Value >= 0.62f
+                              && consentAllow01.HasValue && consentAllow01.Value < 0.34f;
+        return coerced || rightsBad || unjust || romanceCoerced;
+    }
+
+    public bool IsTorture()
+    {
+        var consent = consentWarden != null ? consentWarden : GetComponent<ConsentWarden>();
+        var rights = rightsWarden != null ? rightsWarden : GetComponent<RightsWarden>();
+        var justice = justiceWarden != null ? justiceWarden : GetComponent<JusticeWarden>();
+        var romance = romanceWarden != null ? romanceWarden : GetComponent<RomanceWarden>();
+        if (justice != null)
+            justice.Evaluate();
+        float? consentAllow = consent != null ? consent.Allow01() : (float?)null;
+        bool? rightsSusp = rights != null ? rights.Suspended() : (bool?)null;
+        float? rightsAllow = rights != null ? rights.Allow01() : (float?)null;
+        JusticeWardenAction? just = justice != null ? justice.lastAction : (JusticeWardenAction?)null;
+        float? romanceScore = romance != null ? romance.lastScore01 : (float?)null;
+        return IsTorture(MaxThreat01(), lastKind, consentAllow, rightsSusp, rightsAllow, just, romanceScore);
+    }
+
     public ThreatCard RaiseThreat(ThreatKind kind, GameObject source = null, string agencyId = null)
     {
-        string agency = agencyId ?? ThreatAgencyId.Kitchen;
+        lastKind = kind;
+        string agency = agencyId ?? (kind == ThreatKind.Torture ? ThreatAgencyId.Security : ThreatAgencyId.Kitchen);
         ThreatAlertLevel alert = kind == ThreatKind.Fire || kind == ThreatKind.Intruder
             ? ThreatAlertLevel.UnderAttack
-            : ThreatAlertLevel.OnEdge;
+            : kind == ThreatKind.Torture
+                ? ThreatAlertLevel.Elevated
+                : ThreatAlertLevel.OnEdge;
         ThreatLevel threat = kind == ThreatKind.Intruder
             ? ThreatLevel.PotentialIntruders
-            : kind == ThreatKind.Fire
+            : kind == ThreatKind.Fire || kind == ThreatKind.Torture
                 ? ThreatLevel.ActiveThreat
                 : ThreatLevel.LocalizedHazard;
         SetLevels(agency, alert, threat);

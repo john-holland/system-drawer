@@ -7,4 +7,6 @@ public sealed class LobbyHostOptions
     public bool allowSpectators = true;
     public string password;
     public int lobbyPort;
+    public int minPlayersToStart = 1;
+    public LobbyPrefabParameters prefab = new LobbyPrefabParameters();
 }

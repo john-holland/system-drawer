@@ -137,13 +137,104 @@ public abstract class MenuRagdollBase : MonoBehaviour
                 TryJoinLobby(e.Payload, NetworkClientRole.Spectator);
                 return true;
             case "lobby.game.start":
+                if (!HasMinPlayersToStart(out var startReason))
+                {
+                    BubbleStartDenied(startReason);
+                    return true;
+                }
                 TryConnect(e.Payload as string ?? "127.0.0.1:7777", NetworkClientRole.Player);
                 return true;
             case "lobby.game.end":
                 Client?.Disconnect();
                 return true;
+            case "game.session.new":
+                HandleNewGame();
+                return true;
+            case "game.session.join":
+                HandleJoinSession(e.Payload, NetworkClientRole.Player);
+                return true;
+            case "game.session.spectate":
+                HandleJoinSession(e.Payload, NetworkClientRole.Spectator);
+                return true;
+            case "game.session.close":
+                Server?.GameSessions?.CloseSession(e.Payload as string ?? Server.GameSessions.ActiveId, GameSessionCloseMode.AdoptToHigher);
+                return true;
+            case "game.session.close.umbrella":
+                Server?.GameSessions?.CloseSession(e.Payload as string ?? Server.GameSessions.ActiveId, GameSessionCloseMode.Umbrella);
+                return true;
+            case "game.session.save":
+                Server?.GameSessions?.SaveToLocalClient(e.Payload as string);
+                return true;
         }
         return false;
+    }
+
+    void HandleNewGame()
+    {
+        if (!HasMinPlayersToStart(out var reason))
+        {
+            BubbleStartDenied(reason);
+            return;
+        }
+        if (Server == null)
+            return;
+        if (!Server.IsLobbyHosting)
+        {
+            if (Menu != null)
+                Server.StartLobbyHost(Menu.BuildHostOptions());
+            else
+                Server.StartLobbyHost();
+        }
+        Server.EnsureReady();
+        Server.GameSessions?.CreateSession("New Game");
+        GameLobbyContinuuuumClient.Heartbeat(Server);
+    }
+
+    void HandleJoinSession(object payload, NetworkClientRole role)
+    {
+        string text = payload as string;
+        if (!string.IsNullOrEmpty(text) && text.IndexOf(':') < 0)
+            Server?.GameSessions?.SwitchActiveById(text);
+        if (role == NetworkClientRole.Spectator && Server != null && !Server.AllowSpectators)
+            return;
+        if (!string.IsNullOrEmpty(text) && text.IndexOf(':') >= 0)
+            TryConnect(text, role);
+        else
+            TryJoinLobby(payload, role);
+    }
+
+    bool HasMinPlayersToStart(out string reason)
+    {
+        reason = "";
+        int min = 1;
+        if (Menu != null)
+            min = Menu.minPlayersToStart;
+        var server = Server;
+        if (server != null && server.Settings != null && server.Settings.prefab != null)
+            min = Mathf.Max(min, server.Settings.prefab.minPlayersToStart);
+        int count = server != null ? server.PlayerCount : 0;
+        if (server != null && server.IsLobbyHosting && count == 0)
+            count = 1;
+        if (count < min)
+        {
+            reason = "minPlayersToStart";
+            return false;
+        }
+        int max = server != null ? server.MaxPlayers : (Menu != null ? Menu.maxPlayers : 8);
+        if (count > max)
+        {
+            reason = "maxPlayers";
+            return false;
+        }
+        return true;
+    }
+
+    void BubbleStartDenied(string reason)
+    {
+        var nodes = GetComponentsInChildren<MenuRagdollNode>(true);
+        var evt = new MenuRagdollEvent("lobby.game.start.denied", null, reason);
+        for (int i = 0; i < nodes.Length; i++)
+            nodes[i].BubbleUp(evt);
     }
 
     void BroadcastMenuRefresh()

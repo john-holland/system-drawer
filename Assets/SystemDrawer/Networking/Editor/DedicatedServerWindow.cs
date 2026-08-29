@@ -62,6 +62,10 @@ public sealed class DedicatedServerWindow : EditorWindow
             NetworkRuntimeCli.TryExecute(_runtimeCli, _server);
 
         EditorGUILayout.Space();
+        if (GUILayout.Button("Master Rebake"))
+            MasterRebakeRunner.Run();
+
+        EditorGUILayout.Space();
         var audit = _server.AuditClientTrees();
         EditorGUILayout.LabelField("Causality audit", audit.Ok ? "OK" : audit.Reason);
         _scroll = EditorGUILayout.BeginScrollView(_scroll);

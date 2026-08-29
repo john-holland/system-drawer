@@ -16,6 +16,8 @@ public sealed class CivilSystemLattice
         CivilSystemKind.School,
         CivilSystemKind.PoliceStation,
         CivilSystemKind.Prison,
+        CivilSystemKind.CourtHouse,
+        CivilSystemKind.VotingPlace,
         CivilSystemKind.Church,
         CivilSystemKind.Library,
         CivilSystemKind.Mall,
@@ -115,6 +117,9 @@ public sealed class CivilSystemLattice
         if (id.Contains("checkpoint") || id.Contains("military_gate")) return CivilSystemKind.MilitaryCheckpoint;
         if (id.Contains("spy") || id.Contains("intelligence")) return CivilSystemKind.SpyAgency;
         if (id.Contains("embassy") || id.Contains("consulate")) return CivilSystemKind.Embassy;
+        if (id.Contains("courthouse") || id.Contains("court_house") || id == "court" || id == "legal"
+            || id.StartsWith("court_") || id.Contains("courtroom"))
+            return CivilSystemKind.CourtHouse;
         if (id.Contains("legislative") || id.Contains("capitol") || id.Contains("parliament")) return CivilSystemKind.GovLegislative;
         if (id.Contains("monarch") || id.Contains("palace") || id.Contains("royal")) return CivilSystemKind.Monarchic;
         if (id == "spa" || id.StartsWith("spa_") || id.EndsWith("_spa") || id.Contains("bathhouse")) return CivilSystemKind.Spa;
@@ -140,6 +145,7 @@ public sealed class CivilSystemLattice
             return CivilSystemKind.SanitationFacility;
         if (id.Contains("factory")) return CivilSystemKind.Factory;
         if (id.Contains("gym")) return CivilSystemKind.Gym;
+        if (id.Contains("voting") || id.Contains("polling")) return CivilSystemKind.VotingPlace;
         if (id.Contains("town_hall") || id.Contains("townhall") || id.Contains("city_hall")) return CivilSystemKind.TownHall;
         if (id.Contains("gas")) return CivilSystemKind.GasStation;
         if (id == "park" || id.StartsWith("park_") || id.EndsWith("_park")
