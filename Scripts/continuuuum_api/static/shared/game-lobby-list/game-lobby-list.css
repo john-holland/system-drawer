@@ -38,3 +38,4 @@
 .gll-modal textarea { min-height: 4rem; }
 .gll-modal-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
 .gll-err { color: #f88; font-size: 0.9rem; margin: 0.4rem 0; }
+.gll-host { margin-top: 0.4rem; font-size: 0.85rem; opacity: 0.9; }

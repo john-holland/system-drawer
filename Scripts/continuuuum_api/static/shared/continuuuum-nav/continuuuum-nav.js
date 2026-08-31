@@ -12,6 +12,7 @@
     { id: 'payroll', label: 'Payroll', path: '/payroll' },
     { id: 'game-dimensions', label: 'Associations', path: '/game-dimensions' },
     { id: 'webcam-animations', label: 'Webcam Anim', path: '/webcam-animations' },
+    { id: 'image-to-model', label: 'Image to model', path: '/image-to-model' },
     { id: 'legal-tracker', label: 'Legal', path: '/legal-tracker' },
     { id: 'docket-watch', label: 'Docket', path: '/docket-watch' },
     { id: 'chat-entitlements', label: 'Chat TOS', path: '/chat-entitlements', adminOnly: true },
@@ -148,6 +149,7 @@
       payroll: lemmaBase + '/payroll',
       'game-dimensions': lemmaBase + '/game-dimensions',
       'webcam-animations': lemmaBase + '/webcam-animations',
+      'image-to-model': lemmaBase + '/image-to-model',
       'legal-tracker': lemmaBase + '/legal-tracker',
       'docket-watch': lemmaBase + '/docket-watch',
       'chat-entitlements': lemmaBase + '/chat-entitlements',
@@ -224,6 +226,7 @@
     if (path.indexOf('/payroll') >= 0) return 'payroll';
     if (path.indexOf('/game-dimensions') >= 0) return 'game-dimensions';
     if (path.indexOf('/webcam-animations') >= 0) return 'webcam-animations';
+    if (path.indexOf('/image-to-model') >= 0) return 'image-to-model';
     if (path.indexOf('/legal-tracker') >= 0) return 'legal-tracker';
     if (path.indexOf('/docket-watch') >= 0) return 'docket-watch';
     if (path.indexOf('/chat-entitlements') >= 0) return 'chat-entitlements';
@@ -383,6 +386,7 @@
     payroll: { game: false, dimension: false },
     'game-dimensions': { game: false, dimension: false },
     'webcam-animations': { game: true, dimension: true },
+    'image-to-model': { game: true, dimension: true },
     'legal-tracker': { game: false, dimension: false },
     'docket-watch': { game: false, dimension: false },
     'chat-entitlements': { game: false, dimension: false },

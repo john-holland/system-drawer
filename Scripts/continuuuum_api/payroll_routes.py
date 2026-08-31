@@ -49,6 +49,8 @@ try:
         patch_member,
         patch_retainer,
         post_income,
+        tenant_retainer_split,
+        ensure_minecraftuuuum_tenant_payroll,
     )
 except ImportError:
     from payroll_engine import (
@@ -70,6 +72,8 @@ except ImportError:
         patch_member,
         patch_retainer,
         post_income,
+        tenant_retainer_split,
+        ensure_minecraftuuuum_tenant_payroll,
     )
 
 def register_payroll_routes(
@@ -94,6 +98,7 @@ def register_payroll_routes(
             conn = get_conn()
             try:
                 ensure_payroll_schema(conn)
+                ensure_minecraftuuuum_tenant_payroll(conn)
             finally:
                 conn.close()
             app._payroll_ready = True
@@ -343,5 +348,22 @@ def register_payroll_routes(
             except ValueError as e:
                 return jsonify({"error": str(e)}), 400
             return jsonify(result), 201
+        finally:
+            conn.close()
+
+    @app.route("/api/payroll/tenants/<tenant_id>/split", methods=["GET"])
+    def payroll_tenant_split(tenant_id: str):
+        conn = get_conn()
+        try:
+            return jsonify(tenant_retainer_split(conn, tenant_id))
+        finally:
+            conn.close()
+
+    @app.route("/api/payroll/tenants/<tenant_id>/ensure", methods=["POST"])
+    def payroll_tenant_ensure(tenant_id: str):
+        conn = get_conn()
+        try:
+            company = ensure_minecraftuuuum_tenant_payroll(conn, tenant_id)
+            return jsonify({"company": company, "split": tenant_retainer_split(conn, tenant_id)})
         finally:
             conn.close()

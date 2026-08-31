@@ -282,6 +282,20 @@
     profileSel.addEventListener("change", updatePinnedSpec);
   }
 
+  var voxelSheet = $("wa-voxel-sheet");
+  var voxelCb = $("wa-voxel-ragdoll");
+  if (voxelSheet && window.ItmSheet) {
+    ItmSheet.mount(voxelSheet);
+    if (voxelCb) {
+      voxelCb.addEventListener("change", function () {
+        voxelSheet.hidden = !voxelCb.checked;
+        if (voxelCb.checked) {
+          ItmSheet.applyGranularity(voxelSheet, Object.assign({}, ItmSheet.MINECRAFT, { snapToGrid: true }));
+        }
+      });
+    }
+  }
+
   $("wa-form").addEventListener("submit", async function (ev) {
     ev.preventDefault();
     var form = ev.target;
@@ -300,6 +314,13 @@
       libraryDocId: fd.get("libraryDocId") || "",
       species: fd.get("species") || "",
     };
+    if (voxelCb && voxelCb.checked && window.ItmSheet && voxelSheet) {
+      var sheet = ItmSheet.values(voxelSheet);
+      body.voxelRagdoll = true;
+      body.spatialGranularity = sheet.granularity;
+      body.axisArt = sheet.axisArt;
+      body.assignment = sheet.assignment;
+    }
     $("wa-status").textContent = "Enqueueing…";
     try {
       var saved;

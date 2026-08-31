@@ -14,7 +14,8 @@
   <main class="gl-main">
     <header class="gl-header">
       <h1>Game Lobbies</h1>
-      <p class="gl-lead">Named configs spawn many live lobby instances. Sessions nest under an instance.</p>
+      <p class="gl-lead">Named configs spawn many live lobby instances. Sessions nest under an instance. Minecraft private servers can flip to Proton Unity or Unreal.</p>
+      <p id="gl-retainer" class="gl-retainer">Loading tenant retainer…</p>
     </header>
     <div class="gl-query">
       <input id="gl-q" type="search" placeholder="Query sessions…" autocomplete="off">
@@ -49,6 +50,45 @@
           </select>
         </label>
         <label>Content id <input id="cfg-content"></label>
+        <label>Runtime
+          <select id="cfg-runtime">
+            <option value="minecraft">Minecraft</option>
+            <option value="proton_unity">Proton Unity</option>
+            <option value="unreal">Unreal</option>
+          </select>
+        </label>
+        <fieldset class="gl-host">
+          <legend>Hosting</legend>
+          <label>Advertise address <input id="cfg-addr" placeholder="127.0.0.1"></label>
+          <label>Game port <input id="cfg-gport" type="number" value="25565"></label>
+          <label>Lobby port <input id="cfg-lport" type="number" value="7780"></label>
+          <label>Query port <input id="cfg-qport" type="number"></label>
+          <label>RCON port <input id="cfg-rport" type="number"></label>
+          <label>MOTD <input id="cfg-motd"></label>
+          <label>Version <input id="cfg-ver"></label>
+          <label><input id="cfg-online" type="checkbox" checked> Online mode (Microsoft)</label>
+          <label><input id="cfg-whitelist" type="checkbox"> Whitelist</label>
+          <label>World <input id="cfg-world" value="world"></label>
+          <label>Seed <input id="cfg-seed"></label>
+          <label>Difficulty <input id="cfg-diff" value="normal"></label>
+          <label>Gamemode <input id="cfg-gm" value="survival"></label>
+          <label>Mod loader <input id="cfg-loader" value="neoforge"></label>
+          <label class="gl-unity">Scene path <input id="cfg-scene"></label>
+          <label class="gl-unity">Host agent <input id="cfg-hostagent"></label>
+          <label class="gl-unity">Build id <input id="cfg-build"></label>
+          <label class="gl-unreal">Unreal project <input id="cfg-uproject"></label>
+          <label class="gl-unreal">Map <input id="cfg-umap"></label>
+        </fieldset>
+        <fieldset class="gl-oauth">
+          <legend>Mojang / Microsoft OAuth parameters</legend>
+          <p class="gl-lead">Stored on the tenant. No live login dance this pass. Put secrets in env refs, not git.</p>
+          <label>Client id <input id="oauth-client"></label>
+          <label>Azure tenant <input id="oauth-azure" placeholder="common"></label>
+          <label>Redirect URI <input id="oauth-redirect"></label>
+          <label>Scopes (comma) <input id="oauth-scopes" value="XboxLive.signin,offline_access"></label>
+          <button type="button" id="oauth-save">Save OAuth params</button>
+          <span id="oauth-status" class="gl-lead"></span>
+        </fieldset>
         <label>Game size <input id="cfg-size" type="number" value="8"></label>
         <label>Mode
           <select id="cfg-mode">

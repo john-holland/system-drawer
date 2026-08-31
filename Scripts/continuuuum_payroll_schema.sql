@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS payroll_companies (
   phase TEXT NOT NULL DEFAULT 'pre_hwm',
   currency TEXT NOT NULL DEFAULT 'USD',
   unity_enterprise_override_usd REAL,
+  tenant_id TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

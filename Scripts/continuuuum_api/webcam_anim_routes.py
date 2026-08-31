@@ -615,6 +615,9 @@ def _extract_meta(body: dict[str, Any]) -> dict[str, Any]:
         "detectorProfileId": src.get("detectorProfileId") or src.get("detector_profile_id") or "",
         "mocapRoot": src.get("mocapRoot") or src.get("mocap_root") or "",
         "mocapTimeoutSec": src.get("mocapTimeoutSec") or src.get("mocap_timeout_sec") or "",
+        "voxelRagdoll": src.get("voxelRagdoll") if "voxelRagdoll" in src else src.get("voxel_ragdoll"),
+        "spatialGranularity": src.get("spatialGranularity") or src.get("spatial_granularity"),
+        "axisArt": src.get("axisArt") or src.get("axis_art"),
     }
 
 

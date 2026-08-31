@@ -1,0 +1,96 @@
+.itm-title {
+  font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive;
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  color: #ffeb3b;
+  text-shadow: 0.04em 0.04em 0 #fff, 0.08em 0.08em 0 #fff;
+  position: relative;
+  margin: 0 0 0.35rem;
+  line-height: 1.1;
+  display: inline-block;
+}
+.itm-title::after {
+  content: attr(data-title);
+  position: absolute;
+  left: 0.06em;
+  top: 0.08em;
+  color: transparent;
+  -webkit-text-stroke: 0.04em #fff;
+  z-index: -1;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.itm-sheet {
+  display: grid;
+  gap: 0.75rem;
+}
+.itm-gran {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+.itm-axis {
+  display: grid;
+  gap: 0.4rem;
+}
+.itm-face {
+  border: 1px solid #30363d;
+  padding: 0.45rem;
+  background: #0d1117;
+}
+.itm-face h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+.itm-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.itm-check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.itm-props[hidden] {
+  display: none;
+}
+.itm-props {
+  border: 1px dashed #445;
+  padding: 0.5rem;
+  margin: 0.35rem 0;
+}
+.itm-preview {
+  max-width: 180px;
+  max-height: 180px;
+  display: block;
+  margin: 0.35rem 0;
+  background: #111;
+}
+.itm-webgl {
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid #30363d;
+  background: #111;
+}
+.itm-sheet label,
+.itm-gran label,
+.itm-face label {
+  display: block;
+  font-size: 0.85rem;
+  color: #8b949e;
+}
+.itm-sheet input,
+.itm-sheet select,
+.itm-gran input,
+.itm-gran select,
+.itm-face input {
+  width: 100%;
+  background: #0d1117;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  padding: 0.3rem;
+  box-sizing: border-box;
+}
+.itm-sheet input[type="checkbox"] {
+  width: auto;
+}

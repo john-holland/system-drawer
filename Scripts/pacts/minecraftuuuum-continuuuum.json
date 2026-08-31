@@ -1,0 +1,184 @@
+{
+  "consumer": {
+    "name": "minecraftuuuum"
+  },
+  "interactions": [
+    {
+      "description": "a library search reachability probe",
+      "providerStates": [
+        {
+          "name": "library search is available"
+        }
+      ],
+      "request": {
+        "headers": {
+          "X-Tenant-ID": "minecraftuuuum"
+        },
+        "method": "GET",
+        "path": "/api/library/search",
+        "query": {
+          "limit": [
+            "1"
+          ]
+        }
+      },
+      "response": {
+        "body": [
+
+        ],
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a tenant oauth connections request",
+      "providerStates": [
+        {
+          "name": "minecraftuuuum oauth connections table exists"
+        }
+      ],
+      "request": {
+        "headers": {
+          "X-Tenant-ID": "minecraftuuuum"
+        },
+        "method": "GET",
+        "path": "/api/tenant/oauth-connections"
+      },
+      "response": {
+        "body": {
+          "items": [
+
+          ],
+          "tenantId": "minecraftuuuum"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a tenant retainer split request",
+      "providerStates": [
+        {
+          "name": "minecraftuuuum tenant payroll is seeded"
+        }
+      ],
+      "request": {
+        "headers": {
+          "X-Tenant-ID": "minecraftuuuum"
+        },
+        "method": "GET",
+        "path": "/api/payroll/tenants/minecraftuuuum/split"
+      },
+      "response": {
+        "body": {
+          "companyId": "pay_example0000",
+          "continuuuumHwmPct": 0.1,
+          "creatorPct": 0.7,
+          "platformEnabled": true,
+          "platformKind": "platform_microsoft",
+          "platformPct": 0.3,
+          "retainer": true,
+          "serviceCursorEnabled": false,
+          "serviceUnityEnabled": false,
+          "serviceUnrealEnabled": false,
+          "tenantId": "minecraftuuuum"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.companyId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.continuuuumHwmPct": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.creatorPct": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.platformEnabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.platformPct": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.retainer": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.serviceCursorEnabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.serviceUnityEnabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.serviceUnrealEnabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.6.17"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "continuuuum"
+  }
+}

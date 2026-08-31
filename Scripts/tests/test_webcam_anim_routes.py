@@ -63,6 +63,27 @@ def test_post_accepts_type_metadata_keys(app_client):
     assert body["type_metadata"]["model_spec"] == "mediapipe_holistic@test"
 
 
+def test_post_stores_voxel_ragdoll_spatial_granularity(app_client):
+    r = app_client.post(
+        "/api/webcam-animations",
+        json={
+            "kind": KIND_VALUE,
+            "webcamAnimKind": "ambulatory",
+            "model_spec": "stub@local",
+            "granularity": "millisecond",
+            "voxelRagdoll": True,
+            "spatialGranularity": {"preset": "minecraft", "blockMeters": 1, "pixelGrid": 16},
+            "axisArt": {"north": {"fold": True}},
+        },
+    )
+    assert r.status_code == 201
+    meta = r.get_json()["type_metadata"]
+    assert meta["voxelRagdoll"] is True
+    assert meta["spatialGranularity"]["pixelGrid"] == 16
+    assert meta["granularity"] == "millisecond"
+    assert meta["axisArt"]["north"]["fold"] is True
+
+
 def test_list_filters_by_webcam_anim_recording_kind(app_client):
     app_client.post(
         "/api/webcam-animations",

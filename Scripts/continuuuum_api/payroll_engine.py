@@ -13,6 +13,9 @@ SCHEMA_PATH = Path(__file__).resolve().parent.parent / "continuuuum_payroll_sche
 
 DEFAULT_HWM_USD = 100_000.0
 DEFAULT_HWM_RETAINER_PCT = 0.10
+MINECRAFTUUUUM_TENANT = "minecraftuuuum"
+PLATFORM_MICROSOFT_PCT = 0.30
+PLATFORM_MICROSOFT_KIND = "platform_microsoft"
 DEFAULT_CURSOR_MONTHLY = 40.0
 MONTHLY_CRON = "0 0 1 * *"
 UNITY_ENTERPRISE_THRESHOLD_USD = 25_000_000.0
@@ -62,6 +65,8 @@ def ensure_payroll_schema(conn: sqlite3.Connection) -> None:
             conn.execute(
                 "ALTER TABLE payroll_companies ADD COLUMN unity_enterprise_override_usd REAL"
             )
+        if "tenant_id" not in cols:
+            conn.execute("ALTER TABLE payroll_companies ADD COLUMN tenant_id TEXT")
     if _table_exists(conn, "payroll_retainers"):
         rcols = _cols(conn, "payroll_retainers")
         if "amount_locked" not in rcols:
@@ -172,11 +177,12 @@ def _ensure_company_balance(conn: sqlite3.Connection, company_id: str) -> None:
     )
 
 
-def _seed_service_retainers(conn: sqlite3.Connection, company_id: str) -> None:
+def _seed_service_retainers(conn: sqlite3.Connection, company_id: str, *, enabled: int = 1) -> None:
     now = _now()
     for kind, name, track in (
         ("service_unity", "Unity (gameplay)", "gameplay"),
         ("service_cursor", "Cursor (technical)", "technical"),
+        ("service_unreal", "Unreal (gameplay)", "gameplay"),
     ):
         existing = conn.execute(
             """SELECT id FROM payroll_retainers
@@ -185,13 +191,14 @@ def _seed_service_retainers(conn: sqlite3.Connection, company_id: str) -> None:
         ).fetchone()
         if existing:
             continue
+        seed_enabled = 0 if kind == "service_unreal" else enabled
         conn.execute(
             """INSERT INTO payroll_retainers
                (id, company_id, name, kind, mode, percent, amount_usd, cron_expr,
                 forward_company_id, forward_label, user_ids_json, auto_track, enabled,
                 created_at, updated_at)
-               VALUES (?, ?, ?, ?, 'fixed_cron', NULL, 0, ?, NULL, NULL, '[]', ?, 1, ?, ?)""",
-            (new_id("prt"), company_id, name, kind, MONTHLY_CRON, track, now, now),
+               VALUES (?, ?, ?, ?, 'fixed_cron', NULL, 0, ?, NULL, NULL, '[]', ?, ?, ?, ?)""",
+            (new_id("prt"), company_id, name, kind, MONTHLY_CRON, track, seed_enabled, now, now),
         )
     _update_service_retainer_amounts(conn, company_id)
 
@@ -233,6 +240,117 @@ def get_company(conn: sqlite3.Connection, company_id: str) -> dict[str, Any] | N
     return _company_dict(row)
 
 
+def find_company_by_tenant(conn: sqlite3.Connection, tenant_id: str) -> dict[str, Any] | None:
+    ensure_payroll_schema(conn)
+    if not tenant_id:
+        return None
+    row = conn.execute(
+        "SELECT * FROM payroll_companies WHERE tenant_id = ? LIMIT 1",
+        (tenant_id,),
+    ).fetchone()
+    if row:
+        return _company_dict(row)
+    row = conn.execute(
+        "SELECT * FROM payroll_companies WHERE lower(name) = lower(?) LIMIT 1",
+        (tenant_id,),
+    ).fetchone()
+    return _company_dict(row) if row else None
+
+
+def set_service_retainer_enabled(
+    conn: sqlite3.Connection, company_id: str, kind: str, enabled: bool
+) -> None:
+    conn.execute(
+        """UPDATE payroll_retainers SET enabled = ?, updated_at = ?
+           WHERE company_id = ? AND kind = ?""",
+        (1 if enabled else 0, _now(), company_id, kind),
+    )
+
+
+def tenant_retainer_split(conn: sqlite3.Connection, tenant_id: str | None = None) -> dict[str, Any]:
+    """Marketplace 70/30 + Continuuuum HWM + optional Unity/Cursor/Unreal flags."""
+    company = ensure_minecraftuuuum_tenant_payroll(conn, tenant_id or MINECRAFTUUUUM_TENANT)
+    cid = company["id"]
+    retainers = list_retainers(conn, cid)
+    by_kind = {r["kind"]: r for r in retainers}
+    platform = by_kind.get(PLATFORM_MICROSOFT_KIND) or {}
+    platform_pct = float(platform.get("percent") or PLATFORM_MICROSOFT_PCT)
+    return {
+        "tenantId": company.get("tenantId") or MINECRAFTUUUUM_TENANT,
+        "companyId": cid,
+        "creatorPct": round(1.0 - platform_pct, 4),
+        "platformPct": platform_pct,
+        "continuuuumHwmPct": float(company.get("hwmRetainerPct") or DEFAULT_HWM_RETAINER_PCT),
+        "platformKind": PLATFORM_MICROSOFT_KIND,
+        "platformEnabled": bool(platform.get("enabled", True)),
+        "serviceUnityEnabled": bool((by_kind.get("service_unity") or {}).get("enabled")),
+        "serviceCursorEnabled": bool((by_kind.get("service_cursor") or {}).get("enabled")),
+        "serviceUnrealEnabled": bool((by_kind.get("service_unreal") or {}).get("enabled")),
+        "retainer": True,
+    }
+
+
+def ensure_minecraftuuuum_tenant_payroll(
+    conn: sqlite3.Connection, tenant_id: str = MINECRAFTUUUUM_TENANT
+) -> dict[str, Any]:
+    """Idempotent company + Mojang/Microsoft 30% + HWM 10%; Unity/Cursor/Unreal disabled."""
+    ensure_payroll_schema(conn)
+    slug = (tenant_id or MINECRAFTUUUUM_TENANT).strip() or MINECRAFTUUUUM_TENANT
+    existing = find_company_by_tenant(conn, slug)
+    if existing is None:
+        company = create_company(conn, name="Minecraftuuuum")
+        cid = company["id"]
+        conn.execute(
+            "UPDATE payroll_companies SET tenant_id = ?, hwm_retainer_pct = ?, updated_at = ? WHERE id = ?",
+            (slug, DEFAULT_HWM_RETAINER_PCT, _now(), cid),
+        )
+    else:
+        cid = existing["id"]
+        conn.execute(
+            """UPDATE payroll_companies
+               SET tenant_id = ?, hwm_retainer_pct = ?, updated_at = ?
+               WHERE id = ?""",
+            (slug, DEFAULT_HWM_RETAINER_PCT, _now(), cid),
+        )
+        _seed_service_retainers(conn, cid, enabled=0)
+
+    now = _now()
+    plat = conn.execute(
+        """SELECT id FROM payroll_retainers
+           WHERE company_id = ? AND kind = ? LIMIT 1""",
+        (cid, PLATFORM_MICROSOFT_KIND),
+    ).fetchone()
+    first_platform = plat is None
+    if first_platform:
+        conn.execute(
+            """INSERT INTO payroll_retainers
+               (id, company_id, name, kind, mode, percent, amount_usd, cron_expr,
+                forward_company_id, forward_label, user_ids_json, auto_track, enabled,
+                created_at, updated_at)
+               VALUES (?, ?, ?, ?, 'percent', ?, NULL, NULL, NULL, ?, '[]', NULL, 1, ?, ?)""",
+            (
+                new_id("prt"),
+                cid,
+                "Mojang / Microsoft (Marketplace)",
+                PLATFORM_MICROSOFT_KIND,
+                PLATFORM_MICROSOFT_PCT,
+                "Mojang/Microsoft",
+                now,
+                now,
+            ),
+        )
+        for kind in ("service_unity", "service_cursor", "service_unreal"):
+            conn.execute(
+                """UPDATE payroll_retainers SET enabled = 0, updated_at = ?
+                   WHERE company_id = ? AND kind = ?""",
+                (now, cid, kind),
+            )
+    conn.commit()
+    company = get_company(conn, cid)
+    assert company is not None
+    return company
+
+
 def find_company_by_product(conn: sqlite3.Connection, product_id: str) -> dict[str, Any] | None:
     ensure_payroll_schema(conn)
     if not product_id:
@@ -264,6 +382,7 @@ def _company_dict(row: sqlite3.Row | dict) -> dict[str, Any]:
         "phase": r["phase"],
         "currency": r.get("currency") or "USD",
         "unityEnterpriseOverrideUsd": r.get("unity_enterprise_override_usd"),
+        "tenantId": r.get("tenant_id"),
         "createdAt": r.get("created_at"),
         "updatedAt": r.get("updated_at"),
     }

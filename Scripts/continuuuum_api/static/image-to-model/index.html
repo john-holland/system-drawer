@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image to model — Continuuuum</title>
+  <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
+  <link rel="stylesheet" href="/webcam-animations/webcam-anim.css" />
+  <link rel="stylesheet" href="/static/shared/image-to-model/itm-sheet.css" />
+  <link rel="stylesheet" href="/image-to-model/image-to-model.css" />
+</head>
+<body class="wa-page">
+  <div id="continuuuum-nav-root"></div>
+  <main class="wa-main">
+    <header class="wa-header">
+      <div>
+        <h1 class="itm-title" data-title="Image to model!">Image to model!</h1>
+        <p class="wa-sub">Modly mesh (not vendored) + VoxelRagdollActor. Spatial granularity is not webcam timeline ticks.</p>
+      </div>
+    </header>
+
+    <section class="wa-panel">
+      <h2>Source</h2>
+      <form id="itm-form">
+        <label>artworkId <input id="artworkId" name="artworkId" placeholder="art_…" /></label>
+        <label>Image <input type="file" id="src-image" name="image" accept="image/*" /></label>
+        <label>Mask (optional) <input type="file" id="src-mask" name="mask" accept="image/*" /></label>
+        <p>
+          <img id="img-prev" class="itm-preview" alt="" hidden />
+          <img id="mask-prev" class="itm-preview" alt="" hidden />
+        </p>
+        <button type="submit">Store image / mask / faces</button>
+      </form>
+      <p id="itm-status" class="wa-meta"></p>
+    </section>
+
+    <section class="wa-panel">
+      <h2>UCC asset parameters</h2>
+      <div id="itm-sheet"></div>
+    </section>
+
+    <section class="wa-panel">
+      <h2>Features</h2>
+      <label>Available backends
+        <select id="feat-box" multiple size="6"></select>
+      </label>
+      <div id="feat-checks" class="itm-checks"></div>
+      <div id="feat-props"></div>
+      <p>
+        <button type="button" id="modly-run">Generate mesh (Modly)</button>
+        <span id="modly-status" class="wa-meta"></span>
+      </p>
+    </section>
+
+    <section class="wa-panel">
+      <h2>Unity WebGL preview</h2>
+      <p id="webgl-hint" class="wa-meta"></p>
+      <iframe id="webgl" class="itm-webgl" title="Continuuuum editor preview"></iframe>
+    </section>
+  </main>
+  <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
+  <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/image-to-model/itm-sheet.js"></script>
+  <script src="/image-to-model/image-to-model.js"></script>
+</body>
+</html>

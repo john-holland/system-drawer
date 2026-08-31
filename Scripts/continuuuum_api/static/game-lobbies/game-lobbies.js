@@ -52,12 +52,62 @@
     el('cfg-password').checked = !!(c && c.requirePassword);
     el('cfg-spectators').checked = !c || c.allowSpectators !== false;
     var props = c && c.propertiesJson;
-    el('cfg-json').value = typeof props === 'string' ? props : JSON.stringify(props || {}, null, 2);
+    if (typeof props === 'string') {
+      try { props = JSON.parse(props); } catch (err) { props = {}; }
+    }
+    props = props || {};
+    el('cfg-json').value = JSON.stringify(props, null, 2);
+    el('cfg-runtime').value = (c && c.runtimeKind) || props.runtimeKind || 'minecraft';
+    el('cfg-addr').value = (c && c.advertiseAddress) || props.advertiseAddress || '';
+    el('cfg-gport').value = props.gamePort || (el('cfg-runtime').value === 'minecraft' ? 25565 : 7777);
+    el('cfg-lport').value = props.lobbyPort || 7780;
+    el('cfg-qport').value = props.queryPort || '';
+    el('cfg-rport').value = props.rconPort || '';
+    el('cfg-motd').value = props.motd || '';
+    el('cfg-ver').value = props.version || '';
+    el('cfg-online').checked = props.onlineMode !== false;
+    el('cfg-whitelist').checked = !!props.whitelist;
+    el('cfg-world').value = props.worldName || 'world';
+    el('cfg-seed').value = props.seed || '';
+    el('cfg-diff').value = props.difficulty || 'normal';
+    el('cfg-gm').value = props.gamemode || 'survival';
+    el('cfg-loader').value = props.modLoader || 'neoforge';
+    el('cfg-scene').value = props.scenePath || '';
+    el('cfg-hostagent').value = props.hostAgent || '';
+    el('cfg-build').value = props.buildId || '';
+    el('cfg-uproject').value = props.project || '';
+    el('cfg-umap').value = props.map || '';
+  }
+
+  function hostingFromForm() {
+    return {
+      advertiseAddress: el('cfg-addr').value.trim(),
+      gamePort: Number(el('cfg-gport').value) || null,
+      lobbyPort: Number(el('cfg-lport').value) || 7780,
+      queryPort: el('cfg-qport').value ? Number(el('cfg-qport').value) : null,
+      rconPort: el('cfg-rport').value ? Number(el('cfg-rport').value) : null,
+      motd: el('cfg-motd').value.trim(),
+      version: el('cfg-ver').value.trim(),
+      onlineMode: el('cfg-online').checked,
+      whitelist: el('cfg-whitelist').checked,
+      worldName: el('cfg-world').value.trim() || 'world',
+      seed: el('cfg-seed').value.trim(),
+      difficulty: el('cfg-diff').value.trim() || 'normal',
+      gamemode: el('cfg-gm').value.trim() || 'survival',
+      modLoader: el('cfg-loader').value.trim() || 'neoforge',
+      scenePath: el('cfg-scene').value.trim(),
+      hostAgent: el('cfg-hostagent').value.trim(),
+      buildId: el('cfg-build').value.trim(),
+      project: el('cfg-uproject').value.trim(),
+      map: el('cfg-umap').value.trim(),
+      runtimeKind: el('cfg-runtime').value
+    };
   }
 
   function readConfigForm() {
     var props = {};
     try { props = JSON.parse(el('cfg-json').value || '{}'); } catch (err) { props = {}; }
+    Object.assign(props, hostingFromForm());
     var body = {
       name: el('cfg-name').value.trim(),
       lobbyTypeId: el('cfg-type').value.trim(),
@@ -69,7 +119,12 @@
       maxSpectators: Number(el('cfg-spec').value),
       requirePassword: el('cfg-password').checked,
       allowSpectators: el('cfg-spectators').checked,
-      propertiesJson: props
+      propertiesJson: props,
+      runtimeKind: el('cfg-runtime').value,
+      tenantId: 'minecraftuuuum',
+      advertiseAddress: props.advertiseAddress,
+      lobbyPort: props.lobbyPort,
+      gamePort: props.gamePort
     };
     if (el('cfg-id').value) body.id = el('cfg-id').value;
     return body;
@@ -189,5 +244,45 @@
   });
 
   GLL.bind({ onRefresh: refresh });
+  fetch('/api/payroll/tenants/minecraftuuuum/split')
+    .then(function (r) { return r.json(); })
+    .then(function (s) {
+      el('gl-retainer').textContent =
+        'Tenant ' + (s.tenantId || 'minecraftuuuum') +
+        ': creator ' + Math.round((s.creatorPct || 0.7) * 100) + '%' +
+        ' · Mojang/Microsoft ' + Math.round((s.platformPct || 0.3) * 100) + '%' +
+        ' · Continuuuum HWM ' + Math.round((s.continuuuumHwmPct || 0.1) * 100) + '%' +
+        ' · Unity sub ' + (s.serviceUnityEnabled ? 'on' : 'off') +
+        ' · Cursor sub ' + (s.serviceCursorEnabled ? 'on' : 'off') +
+        ' · Unreal sub ' + (s.serviceUnrealEnabled ? 'on' : 'off');
+    })
+    .catch(function () {
+      el('gl-retainer').textContent = 'Tenant retainer unavailable (payroll not reachable).';
+    });
+  fetch('/api/tenant/oauth-connections?tenant=minecraftuuuum')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var ms = (data.items || []).filter(function (i) { return i.provider === 'microsoft'; })[0];
+      if (!ms) return;
+      el('oauth-client').value = ms.clientId || '';
+      el('oauth-azure').value = ms.azureTenant || '';
+      el('oauth-redirect').value = ms.redirectUri || '';
+      el('oauth-scopes').value = (ms.scopes || []).join(',');
+      el('oauth-status').textContent = ms.status || '';
+    })
+    .catch(function () {});
+  el('oauth-save').addEventListener('click', async function () {
+    var scopes = el('oauth-scopes').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    var row = await GLL.jsend('/api/tenant/oauth-connections?tenant=minecraftuuuum', 'PUT', {
+      provider: 'microsoft',
+      clientId: el('oauth-client').value.trim(),
+      azureTenant: el('oauth-azure').value.trim(),
+      redirectUri: el('oauth-redirect').value.trim(),
+      scopes: scopes,
+      extra: { online_mode: true, secretRef: 'MICROSOFT_OAUTH_CLIENT_SECRET' },
+      status: el('oauth-client').value.trim() ? 'configured' : 'disconnected'
+    });
+    el('oauth-status').textContent = row.status || 'saved';
+  });
   refresh().catch(function (err) { console.error(err); });
 })();

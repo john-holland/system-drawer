@@ -307,6 +307,8 @@ try:
 
     from continuuuum_api.webcam_anim_routes import register_webcam_anim_routes
 
+    from continuuuum_api.image_to_model_routes import register_image_to_model_routes
+
     from continuuuum_api.gd_association_routes import register_gd_association_routes
 
     from continuuuum_api.gd_route_annotations import configure_gd_annotations
@@ -407,6 +409,8 @@ except ImportError:
     from payroll_routes import register_payroll_routes
 
     from webcam_anim_routes import register_webcam_anim_routes
+
+    from image_to_model_routes import register_image_to_model_routes
 
     from gd_association_routes import register_gd_association_routes
 
@@ -930,18 +934,15 @@ def get_conn():
 
 
         try:
-
-
-            from continuuuum_api.payroll_engine import ensure_payroll_schema
-
-
+            from continuuuum_api.payroll_engine import (
+                ensure_minecraftuuuum_tenant_payroll,
+                ensure_payroll_schema,
+            )
         except ImportError:
-
-
-            from payroll_engine import ensure_payroll_schema
-
+            from payroll_engine import ensure_minecraftuuuum_tenant_payroll, ensure_payroll_schema
 
         ensure_payroll_schema(conn)
+        ensure_minecraftuuuum_tenant_payroll(conn)
 
 
         try:
@@ -4309,6 +4310,7 @@ register_change_of_basis_routes(app, get_conn)
 register_mod_routes(app, get_conn, _get_current_user)
 register_payroll_routes(app, get_conn, _is_admin)
 register_webcam_anim_routes(app, get_conn)
+register_image_to_model_routes(app, get_conn)
 configure_gd_annotations(get_conn)
 register_gd_association_routes(app, get_conn, _is_admin)
 

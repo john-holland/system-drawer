@@ -78,6 +78,8 @@
       var sc = document.createElement('div');
       sc.className = 'gll-session';
       sc.style.marginLeft = (depth * 12) + 'px';
+      var ps = s.privateServer || {};
+      var runtime = ps.runtimeKind || '';
       sc.innerHTML =
         '<strong>' + esc(s.displayName || s.id) + '</strong> pecking ' + (s.peckingOrder || 0) +
         (s.live ? ' live' : '') +
@@ -87,7 +89,21 @@
         '<button type="button" data-umbrella="' + esc(s.id) + '">Umbrella close</button>' +
         '<button type="button" data-manage-players="' + esc(s.id) + '" data-lobby="' + esc(s.lobbySessionName || '') + '">Manage players</button>' +
         playersHtml(s) +
-        (opts && opts.showVotes ? voteDebugHtml(s) : '');
+        (opts && opts.showVotes ? voteDebugHtml(s) : '') +
+        (ps.id ? (
+          '<div class="gll-host">' +
+            esc(runtime || 'minecraft') +
+            (ps.advertiseAddress ? ' @ ' + esc(ps.advertiseAddress) : '') +
+            (ps.gamePort ? ':' + ps.gamePort : '') +
+            (ps.motd ? ' · ' + esc(ps.motd) : '') +
+            (ps.worldName ? ' · world ' + esc(ps.worldName) : '') +
+            (ps.onlineMode ? ' · online-mode' : '') +
+            '<div>' +
+              '<button type="button" data-flip="' + esc(ps.id) + '" data-runtime="minecraft">Minecraft</button>' +
+              '<button type="button" data-flip="' + esc(ps.id) + '" data-runtime="proton_unity">Flip Proton Unity</button>' +
+              '<button type="button" data-flip="' + esc(ps.id) + '" data-runtime="unreal">Flip Unreal</button>' +
+            '</div></div>'
+        ) : '');
       wrap.appendChild(sc);
       var nested = renderSessionTree(byParent, s.id, depth + 1, opts);
       if (nested.childNodes.length) wrap.appendChild(nested);
@@ -129,7 +145,8 @@
         box.className = 'gll-lobby';
         box.innerHTML =
           '<h3>' + esc(lb.displayName || lb.name) + (lb.active ? ' (active)' : '') +
-          (lb.playerCount != null ? ' · ' + lb.playerCount + ' players' : '') + '</h3>' +
+          (lb.playerCount != null ? ' · ' + lb.playerCount + ' players' : '') +
+          (lb.runtimeKind ? ' · ' + esc(lb.runtimeKind) : '') + '</h3>' +
           '<div class="gll-muted">' + esc(lb.name) + '</div>' +
           '<button type="button" data-edit-lobby="' + esc(lb.name) + '">Edit lobby</button>' +
           '<button type="button" data-create-session="' + esc(lb.name) + '">Create session</button>' +
@@ -203,6 +220,14 @@
           '<label>Max spectators <input id="gll-edit-spec" type="number"></label>' +
           '<label><input id="gll-edit-password" type="checkbox"> Require password</label>' +
           '<label><input id="gll-edit-spectators" type="checkbox"> Allow spectators</label>' +
+          '<label>Runtime <select id="gll-edit-runtime">' +
+            '<option value="minecraft">Minecraft</option>' +
+            '<option value="proton_unity">Proton Unity</option>' +
+            '<option value="unreal">Unreal</option>' +
+          '</select></label>' +
+          '<label>Advertise address <input id="gll-edit-addr"></label>' +
+          '<label>Game port <input id="gll-edit-gport" type="number"></label>' +
+          '<label>Lobby port <input id="gll-edit-lport" type="number"></label>' +
           '<label>Properties JSON <textarea id="gll-edit-json">{}</textarea></label>' +
           '<div class="gll-modal-actions">' +
             '<button type="button" id="gll-edit-cancel">Cancel</button>' +
@@ -226,6 +251,10 @@
     el('gll-edit-spec').value = row.maxSpectators || 4;
     el('gll-edit-password').checked = !!row.requirePassword;
     el('gll-edit-spectators').checked = row.allowSpectators !== false;
+    el('gll-edit-runtime').value = row.runtimeKind || 'minecraft';
+    el('gll-edit-addr').value = row.advertiseAddress || '';
+    el('gll-edit-gport').value = row.gamePort || '';
+    el('gll-edit-lport').value = row.lobbyPort || '';
     var props = row.propertiesJson;
     el('gll-edit-json').value = typeof props === 'string' ? props : JSON.stringify(props || {}, null, 2);
     el('gll-edit-title').textContent = kind === 'config' ? 'Edit config' : 'Edit lobby';
@@ -248,6 +277,10 @@
       maxSpectators: Number(el('gll-edit-spec').value),
       requirePassword: el('gll-edit-password').checked,
       allowSpectators: el('gll-edit-spectators').checked,
+      runtimeKind: el('gll-edit-runtime').value,
+      advertiseAddress: el('gll-edit-addr').value.trim(),
+      gamePort: el('gll-edit-gport').value ? Number(el('gll-edit-gport').value) : undefined,
+      lobbyPort: el('gll-edit-lport').value ? Number(el('gll-edit-lport').value) : undefined,
       propertiesJson: props
     };
   }
@@ -327,6 +360,13 @@
         if (manage) {
           var lobby = t.getAttribute('data-lobby') || '';
           location.href = '/players?sessionId=' + encodeURIComponent(manage) + '&lobby=' + encodeURIComponent(lobby);
+          return;
+        }
+        var flip = t.getAttribute('data-flip');
+        if (flip) {
+          var runtime = t.getAttribute('data-runtime');
+          await jsend('/api/private-servers/' + encodeURIComponent(flip) + '/flip-runtime', 'POST', { runtimeKind: runtime });
+          await refresh();
           return;
         }
         var dl = t.getAttribute('data-download-local');

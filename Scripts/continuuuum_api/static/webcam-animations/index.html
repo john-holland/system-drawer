@@ -6,6 +6,7 @@
   <title>Webcam Animations — Continuuuum</title>
   <link rel="stylesheet" href="/static/shared/continuuuum-nav/continuuuum-nav.css" />
   <link rel="stylesheet" href="/webcam-animations/webcam-anim.css" />
+  <link rel="stylesheet" href="/static/shared/image-to-model/itm-sheet.css" />
 </head>
 <body class="wa-page">
   <div id="continuuuum-nav-root"></div>
@@ -69,6 +70,8 @@
         <label>Species (MoCapAnything) <input name="species" placeholder="Lion" /></label>
         <label>Library doc id <input name="libraryDocId" placeholder="optional USC id" /></label>
         <label>Video file <input id="wa-file" name="file" type="file" accept="video/*" /></label>
+        <label class="itm-check"><input type="checkbox" id="wa-voxel-ragdoll" /> Voxel ragdoll (VoxelRagdollActor)</label>
+        <div id="wa-voxel-sheet" class="itm-props" hidden></div>
         <button type="submit">Save (enqueue)</button>
       </form>
       <div class="wa-preview-well">
@@ -85,6 +88,7 @@
   </main>
   <script src="/static/shared/continuuuum-user-session/continuuuum-user-session.js"></script>
   <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
+  <script src="/static/shared/image-to-model/itm-sheet.js"></script>
   <script src="/webcam-animations/webcam-anim.js"></script>
 </body>
 </html>

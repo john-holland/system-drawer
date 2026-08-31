@@ -140,6 +140,59 @@ def ensure_vote_tables(conn: sqlite3.Connection) -> None:
             created_utc TEXT NOT NULL,
             updated_utc TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS tenant_oauth_connections (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT NOT NULL DEFAULT 'minecraftuuuum',
+            provider TEXT NOT NULL,
+            client_id TEXT DEFAULT '',
+            azure_tenant TEXT DEFAULT '',
+            redirect_uri TEXT DEFAULT '',
+            scopes_json TEXT DEFAULT '[]',
+            extra_json TEXT DEFAULT '{}',
+            status TEXT DEFAULT 'disconnected',
+            updated_utc TEXT NOT NULL,
+            UNIQUE(tenant_id, provider)
+        );
+        CREATE TABLE IF NOT EXISTS private_servers (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT NOT NULL DEFAULT 'minecraftuuuum',
+            game_session_id TEXT,
+            lobby_name TEXT,
+            runtime_kind TEXT NOT NULL DEFAULT 'minecraft',
+            ucc_server_id TEXT,
+            advertise_address TEXT DEFAULT '',
+            game_port INTEGER DEFAULT 25565,
+            query_port INTEGER,
+            rcon_port INTEGER,
+            lobby_port INTEGER DEFAULT 7780,
+            max_players INTEGER DEFAULT 8,
+            motd TEXT DEFAULT '',
+            version TEXT DEFAULT '',
+            password_protected INTEGER DEFAULT 0,
+            online_mode INTEGER DEFAULT 1,
+            whitelist INTEGER DEFAULT 0,
+            world_name TEXT DEFAULT 'world',
+            seed TEXT DEFAULT '',
+            difficulty TEXT DEFAULT 'normal',
+            gamemode TEXT DEFAULT 'survival',
+            view_distance INTEGER DEFAULT 10,
+            simulation_distance INTEGER DEFAULT 10,
+            pvp INTEGER DEFAULT 1,
+            hardcore INTEGER DEFAULT 0,
+            level_type TEXT DEFAULT 'minecraft:normal',
+            resource_pack_url TEXT DEFAULT '',
+            mod_loader TEXT DEFAULT 'neoforge',
+            modpack_id TEXT DEFAULT '',
+            scene_path TEXT DEFAULT '',
+            host_agent TEXT DEFAULT '',
+            build_id TEXT DEFAULT '',
+            backend TEXT DEFAULT '',
+            project TEXT DEFAULT '',
+            map TEXT DEFAULT '',
+            properties_json TEXT DEFAULT '{}',
+            created_utc TEXT NOT NULL,
+            updated_utc TEXT NOT NULL
+        );
         """
     )
     _add_columns(
@@ -154,6 +207,22 @@ def ensure_vote_tables(conn: sqlite3.Connection) -> None:
         ],
     )
     _add_columns(conn, "game_lobbies", [("config_id", "TEXT")])
+    _add_columns(
+        conn,
+        "game_lobby_configs",
+        [
+            ("tenant_id", "TEXT DEFAULT 'minecraftuuuum'"),
+            ("runtime_kind", "TEXT DEFAULT 'minecraft'"),
+        ],
+    )
+    _add_columns(
+        conn,
+        "game_lobbies",
+        [
+            ("tenant_id", "TEXT DEFAULT 'minecraftuuuum'"),
+            ("runtime_kind", "TEXT DEFAULT 'minecraft'"),
+        ],
+    )
     _add_columns(
         conn,
         "vote_ballots",
@@ -192,6 +261,8 @@ def _lobby_dict(r) -> dict:
         "lastHeartbeatUtc": r["last_heartbeat_utc"],
         "createdUtc": r["created_utc"],
         "configId": r["config_id"] if "config_id" in r.keys() else "",
+        "tenantId": _col(r, "tenant_id", "minecraftuuuum") or "minecraftuuuum",
+        "runtimeKind": _col(r, "runtime_kind", "minecraft") or "minecraft",
     }
 
 
@@ -231,7 +302,326 @@ def _session_dict_full(conn: sqlite3.Connection, r) -> dict:
         }
         item.update(_run_debug(conn, run["run_id"]))
         d["runs"].append(item)
+    d["privateServer"] = _private_server_for_session(conn, r["id"])
     return d
+
+
+def _request_tenant() -> str:
+    try:
+        header = (request.headers.get("X-Tenant-ID") or request.args.get("tenant") or "").strip()
+    except RuntimeError:
+        header = ""
+    return header or "minecraftuuuum"
+
+
+def _col(row, name, default=None):
+    if row is None:
+        return default
+    try:
+        if name in row.keys():
+            return row[name]
+    except Exception:
+        pass
+    return default
+
+
+def _oauth_dict(r) -> dict:
+    try:
+        scopes = json.loads(r["scopes_json"] or "[]")
+    except json.JSONDecodeError:
+        scopes = []
+    try:
+        extra = json.loads(r["extra_json"] or "{}")
+    except json.JSONDecodeError:
+        extra = {}
+    return {
+        "id": r["id"],
+        "tenantId": r["tenant_id"],
+        "provider": r["provider"],
+        "clientId": r["client_id"] or "",
+        "azureTenant": r["azure_tenant"] or "",
+        "redirectUri": r["redirect_uri"] or "",
+        "scopes": scopes if isinstance(scopes, list) else [],
+        "extra": extra if isinstance(extra, dict) else {},
+        "status": r["status"] or "disconnected",
+        "updatedUtc": r["updated_utc"],
+    }
+
+
+def _upsert_oauth(conn: sqlite3.Connection, tenant_id: str, provider: str, body: dict) -> dict:
+    now = _now()
+    provider = (provider or body.get("provider") or "microsoft").strip().lower()
+    if provider not in ("microsoft", "mojang", "xbox"):
+        raise ValueError("provider must be microsoft|mojang|xbox")
+    scopes = body.get("scopes")
+    if isinstance(scopes, list):
+        scopes_s = json.dumps(scopes)
+    elif isinstance(scopes, str) and scopes.strip():
+        scopes_s = scopes
+    else:
+        scopes_s = "[]"
+    extra = body.get("extra") if isinstance(body.get("extra"), dict) else {}
+    extra_s = json.dumps(extra)
+    row = conn.execute(
+        "SELECT * FROM tenant_oauth_connections WHERE tenant_id=? AND provider=?",
+        (tenant_id, provider),
+    ).fetchone()
+    fields = (
+        body.get("clientId") or body.get("client_id") or (row["client_id"] if row else ""),
+        body.get("azureTenant") or body.get("azure_tenant") or (row["azure_tenant"] if row else ""),
+        body.get("redirectUri") or body.get("redirect_uri") or (row["redirect_uri"] if row else ""),
+        scopes_s,
+        extra_s,
+        body.get("status") or (row["status"] if row else "disconnected"),
+        now,
+    )
+    if row is None:
+        oid = uuid.uuid4().hex[:16]
+        conn.execute(
+            """INSERT INTO tenant_oauth_connections (
+                id, tenant_id, provider, client_id, azure_tenant, redirect_uri,
+                scopes_json, extra_json, status, updated_utc
+            ) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (oid, tenant_id, provider, *fields),
+        )
+    else:
+        conn.execute(
+            """UPDATE tenant_oauth_connections SET
+                client_id=?, azure_tenant=?, redirect_uri=?, scopes_json=?, extra_json=?,
+                status=?, updated_utc=?
+            WHERE tenant_id=? AND provider=?""",
+            (*fields, tenant_id, provider),
+        )
+    return _oauth_dict(
+        conn.execute(
+            "SELECT * FROM tenant_oauth_connections WHERE tenant_id=? AND provider=?",
+            (tenant_id, provider),
+        ).fetchone()
+    )
+
+
+def _private_server_dict(r) -> dict:
+    try:
+        props = json.loads(r["properties_json"] or "{}")
+    except json.JSONDecodeError:
+        props = {}
+    return {
+        "id": r["id"],
+        "tenantId": r["tenant_id"],
+        "gameSessionId": r["game_session_id"],
+        "lobbyName": r["lobby_name"],
+        "runtimeKind": r["runtime_kind"] or "minecraft",
+        "uccServerId": r["ucc_server_id"],
+        "advertiseAddress": r["advertise_address"] or "",
+        "gamePort": r["game_port"],
+        "queryPort": r["query_port"],
+        "rconPort": r["rcon_port"],
+        "lobbyPort": r["lobby_port"],
+        "maxPlayers": r["max_players"],
+        "motd": r["motd"] or "",
+        "version": r["version"] or "",
+        "passwordProtected": bool(r["password_protected"]),
+        "onlineMode": bool(r["online_mode"]),
+        "whitelist": bool(r["whitelist"]),
+        "worldName": r["world_name"] or "world",
+        "seed": r["seed"] or "",
+        "difficulty": r["difficulty"] or "normal",
+        "gamemode": r["gamemode"] or "survival",
+        "viewDistance": r["view_distance"],
+        "simulationDistance": r["simulation_distance"],
+        "pvp": bool(r["pvp"]),
+        "hardcore": bool(r["hardcore"]),
+        "levelType": r["level_type"] or "minecraft:normal",
+        "resourcePackUrl": r["resource_pack_url"] or "",
+        "modLoader": r["mod_loader"] or "neoforge",
+        "modpackId": r["modpack_id"] or "",
+        "scenePath": r["scene_path"] or "",
+        "hostAgent": r["host_agent"] or "",
+        "buildId": r["build_id"] or "",
+        "backend": r["backend"] or "",
+        "project": r["project"] or "",
+        "map": r["map"] or "",
+        "propertiesJson": props if isinstance(props, dict) else {},
+        "createdUtc": r["created_utc"],
+        "updatedUtc": r["updated_utc"],
+    }
+
+
+def _private_server_for_session(conn: sqlite3.Connection, session_id: str) -> dict | None:
+    row = conn.execute(
+        "SELECT * FROM private_servers WHERE game_session_id=? LIMIT 1", (session_id,)
+    ).fetchone()
+    return _private_server_dict(row) if row else None
+
+
+def _int_or(body: dict, key: str, default):
+    if key not in body or body.get(key) is None or body.get(key) == "":
+        return default
+    return int(body.get(key))
+
+
+def _upsert_private_server(conn: sqlite3.Connection, body: dict, existing_id: str | None = None) -> dict:
+    now = _now()
+    sid = existing_id or body.get("id") or uuid.uuid4().hex[:16]
+    runtime = (body.get("runtimeKind") or body.get("runtime_kind") or "minecraft").strip()
+    if runtime not in ("minecraft", "proton_unity", "unreal"):
+        raise ValueError("runtimeKind must be minecraft|proton_unity|unreal")
+    tenant_id = body.get("tenantId") or body.get("tenant_id") or _request_tenant()
+    props = body.get("propertiesJson")
+    if isinstance(props, dict):
+        props_s = json.dumps(props)
+    elif isinstance(props, str) and props.strip():
+        try:
+            json.loads(props)
+            props_s = props
+        except json.JSONDecodeError:
+            props_s = "{}"
+    else:
+        props_s = "{}"
+    row = conn.execute("SELECT * FROM private_servers WHERE id=?", (sid,)).fetchone()
+
+    def prev(col, fallback=None):
+        if row is None:
+            return fallback
+        return row[col] if col in row.keys() else fallback
+
+    values = (
+        tenant_id,
+        body.get("gameSessionId") or body.get("game_session_id") or prev("game_session_id"),
+        body.get("lobbyName") or body.get("lobby_name") or prev("lobby_name") or "",
+        runtime,
+        body.get("uccServerId") or body.get("ucc_server_id") or prev("ucc_server_id"),
+        body.get("advertiseAddress") if "advertiseAddress" in body else (prev("advertise_address") or ""),
+        _int_or(body, "gamePort", prev("game_port") or (25565 if runtime == "minecraft" else 7777)),
+        _int_or(body, "queryPort", prev("query_port")),
+        _int_or(body, "rconPort", prev("rcon_port")),
+        _int_or(body, "lobbyPort", prev("lobby_port") or 7780),
+        _int_or(body, "maxPlayers", prev("max_players") or 8),
+        body.get("motd") if "motd" in body else (prev("motd") or ""),
+        body.get("version") if "version" in body else (prev("version") or ""),
+        1 if body.get("passwordProtected") else (prev("password_protected") or 0) if "passwordProtected" not in body else 0,
+        0 if body.get("onlineMode") is False else (1 if body.get("onlineMode") else (prev("online_mode") if row else 1)),
+        1 if body.get("whitelist") else (prev("whitelist") or 0) if "whitelist" not in body else 0,
+        body.get("worldName") if "worldName" in body else (prev("world_name") or "world"),
+        body.get("seed") if "seed" in body else (prev("seed") or ""),
+        body.get("difficulty") if "difficulty" in body else (prev("difficulty") or "normal"),
+        body.get("gamemode") if "gamemode" in body else (prev("gamemode") or "survival"),
+        _int_or(body, "viewDistance", prev("view_distance") or 10),
+        _int_or(body, "simulationDistance", prev("simulation_distance") or 10),
+        0 if body.get("pvp") is False else (1 if "pvp" in body or row is None else prev("pvp")),
+        1 if body.get("hardcore") else (prev("hardcore") or 0) if "hardcore" not in body else 0,
+        body.get("levelType") if "levelType" in body else (prev("level_type") or "minecraft:normal"),
+        body.get("resourcePackUrl") if "resourcePackUrl" in body else (prev("resource_pack_url") or ""),
+        body.get("modLoader") if "modLoader" in body else (prev("mod_loader") or "neoforge"),
+        body.get("modpackId") if "modpackId" in body else (prev("modpack_id") or ""),
+        body.get("scenePath") if "scenePath" in body else (prev("scene_path") or ""),
+        body.get("hostAgent") if "hostAgent" in body else (prev("host_agent") or ""),
+        body.get("buildId") if "buildId" in body else (prev("build_id") or ""),
+        body.get("backend") if "backend" in body else (prev("backend") or ("proton_unity" if runtime == "proton_unity" else "")),
+        body.get("project") if "project" in body else (prev("project") or ""),
+        body.get("map") if "map" in body else (prev("map") or ""),
+        props_s,
+        now,
+    )
+    if row is None:
+        conn.execute(
+            """INSERT INTO private_servers (
+                id, tenant_id, game_session_id, lobby_name, runtime_kind, ucc_server_id,
+                advertise_address, game_port, query_port, rcon_port, lobby_port, max_players,
+                motd, version, password_protected, online_mode, whitelist, world_name, seed,
+                difficulty, gamemode, view_distance, simulation_distance, pvp, hardcore,
+                level_type, resource_pack_url, mod_loader, modpack_id, scene_path, host_agent,
+                build_id, backend, project, map, properties_json, created_utc, updated_utc
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (sid, *values[:-1], now, now),
+        )
+    else:
+        conn.execute(
+            """UPDATE private_servers SET
+                tenant_id=?, game_session_id=?, lobby_name=?, runtime_kind=?, ucc_server_id=?,
+                advertise_address=?, game_port=?, query_port=?, rcon_port=?, lobby_port=?,
+                max_players=?, motd=?, version=?, password_protected=?, online_mode=?,
+                whitelist=?, world_name=?, seed=?, difficulty=?, gamemode=?, view_distance=?,
+                simulation_distance=?, pvp=?, hardcore=?, level_type=?, resource_pack_url=?,
+                mod_loader=?, modpack_id=?, scene_path=?, host_agent=?, build_id=?, backend=?,
+                project=?, map=?, properties_json=?, updated_utc=?
+            WHERE id=?""",
+            (*values, sid),
+        )
+    return _private_server_dict(conn.execute("SELECT * FROM private_servers WHERE id=?", (sid,)).fetchone())
+
+
+def _ensure_session_private_server(conn: sqlite3.Connection, session_id: str, lobby_name: str) -> dict:
+    existing = conn.execute(
+        "SELECT * FROM private_servers WHERE game_session_id=?", (session_id,)
+    ).fetchone()
+    if existing:
+        return _private_server_dict(existing)
+    lobby = conn.execute("SELECT * FROM game_lobbies WHERE name=?", (lobby_name,)).fetchone()
+    runtime = "minecraft"
+    addr = ""
+    game_port = 25565
+    lobby_port = 7780
+    max_players = 8
+    tenant = "minecraftuuuum"
+    if lobby is not None:
+        runtime = _col(lobby, "runtime_kind", "minecraft") or "minecraft"
+        addr = lobby["advertise_address"] or ""
+        game_port = lobby["game_port"] or (25565 if runtime == "minecraft" else 7777)
+        lobby_port = lobby["lobby_port"] or 7780
+        max_players = lobby["max_players"] or 8
+        tenant = _col(lobby, "tenant_id", tenant) or tenant
+    return _upsert_private_server(
+        conn,
+        {
+            "tenantId": tenant,
+            "gameSessionId": session_id,
+            "lobbyName": lobby_name,
+            "runtimeKind": runtime,
+            "advertiseAddress": addr,
+            "gamePort": game_port,
+            "lobbyPort": lobby_port,
+            "maxPlayers": max_players,
+            "backend": "proton_unity" if runtime == "proton_unity" else "",
+        },
+    )
+
+
+def _flip_private_server_runtime(conn: sqlite3.Connection, server_id: str, runtime_kind: str) -> dict:
+    if runtime_kind not in ("minecraft", "proton_unity", "unreal"):
+        raise ValueError("runtimeKind must be minecraft|proton_unity|unreal")
+    row = conn.execute("SELECT * FROM private_servers WHERE id=?", (server_id,)).fetchone()
+    if row is None:
+        raise KeyError("not_found")
+    updated = _upsert_private_server(
+        conn,
+        {
+            "runtimeKind": runtime_kind,
+            "backend": "proton_unity" if runtime_kind == "proton_unity" else (row["backend"] or ""),
+            "tenantId": row["tenant_id"] or "minecraftuuuum",
+        },
+        existing_id=server_id,
+    )
+    tenant = updated["tenantId"]
+    try:
+        from continuuuum_api.payroll_engine import (
+            ensure_minecraftuuuum_tenant_payroll,
+            set_service_retainer_enabled,
+        )
+    except ImportError:
+        from payroll_engine import ensure_minecraftuuuum_tenant_payroll, set_service_retainer_enabled
+    company = ensure_minecraftuuuum_tenant_payroll(conn, tenant)
+    cid = company["id"]
+    set_service_retainer_enabled(conn, cid, "service_unity", runtime_kind == "proton_unity")
+    set_service_retainer_enabled(conn, cid, "service_unreal", runtime_kind == "unreal")
+    conn.commit()
+    updated["retainerSplit"] = None
+    try:
+        from continuuuum_api.payroll_engine import tenant_retainer_split
+    except ImportError:
+        from payroll_engine import tenant_retainer_split
+    updated["retainerSplit"] = tenant_retainer_split(conn, tenant)
+    return updated
 
 
 def _json_obj(value, fallback=None):
@@ -875,6 +1265,8 @@ def _config_dict(r) -> dict:
         "propertiesJson": parsed if isinstance(parsed, dict) else {},
         "createdUtc": r["created_utc"],
         "updatedUtc": r["updated_utc"],
+        "tenantId": _col(r, "tenant_id", "minecraftuuuum") or "minecraftuuuum",
+        "runtimeKind": _col(r, "runtime_kind", "minecraft") or "minecraft",
     }
 
 
@@ -899,6 +1291,8 @@ def _upsert_config(conn: sqlite3.Connection, body: dict, existing_id: str | None
         int(body.get("maxSpectators") or 4),
         _props_json(body.get("propertiesJson")),
         now,
+        body.get("tenantId") or body.get("tenant_id") or "minecraftuuuum",
+        body.get("runtimeKind") or body.get("runtime_kind") or "minecraft",
     )
     row = conn.execute("SELECT * FROM game_lobby_configs WHERE id=?", (cid,)).fetchone()
     if row is None:
@@ -906,16 +1300,16 @@ def _upsert_config(conn: sqlite3.Connection, body: dict, existing_id: str | None
             """INSERT INTO game_lobby_configs (
                 id, name, lobby_type_id, content_kind, content_id, max_players, min_players_to_start,
                 game_size, mode, require_password, allow_spectators, max_spectators, properties_json,
-                created_utc, updated_utc
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (cid, *fields[:12], now, now),
+                created_utc, updated_utc, tenant_id, runtime_kind
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (cid, *fields[:12], now, now, fields[13], fields[14]),
         )
     else:
         conn.execute(
             """UPDATE game_lobby_configs SET
                 name=?, lobby_type_id=?, content_kind=?, content_id=?, max_players=?, min_players_to_start=?,
                 game_size=?, mode=?, require_password=?, allow_spectators=?, max_spectators=?,
-                properties_json=?, updated_utc=?
+                properties_json=?, updated_utc=?, tenant_id=?, runtime_kind=?
             WHERE id=?""",
             (*fields, cid),
         )
@@ -997,6 +1391,8 @@ def _spawn_instance(conn: sqlite3.Connection, config_id: str, display_name: str 
         "propertiesJson": props_obj,
         "configId": config_id,
         "playerCount": 0,
+        "tenantId": _col(cfg, "tenant_id", "minecraftuuuum"),
+        "runtimeKind": _col(cfg, "runtime_kind", "minecraft"),
     }
     lobby = _upsert_lobby(conn, name, body, active=1)
     lobby["sessions"] = []
@@ -1038,19 +1434,29 @@ def _upsert_lobby(conn: sqlite3.Connection, name: str, body: dict, active: int =
         properties_json=props_s,
         active=active,
         last_heartbeat_utc=now,
+        tenant_id=body.get("tenantId") or body.get("tenant_id") or "",
+        runtime_kind=body.get("runtimeKind") or body.get("runtime_kind") or "",
     )
     cfg_id = body.get("configId")
     if not cfg_id and row is not None and "config_id" in row.keys():
         cfg_id = row["config_id"] or ""
     fields["config_id"] = cfg_id or ""
+    if not fields["tenant_id"] and row is not None:
+        fields["tenant_id"] = _col(row, "tenant_id", "minecraftuuuum") or "minecraftuuuum"
+    if not fields["tenant_id"]:
+        fields["tenant_id"] = "minecraftuuuum"
+    if not fields["runtime_kind"] and row is not None:
+        fields["runtime_kind"] = _col(row, "runtime_kind", "minecraft") or "minecraft"
+    if not fields["runtime_kind"]:
+        fields["runtime_kind"] = "minecraft"
     if row is None:
         conn.execute(
             """INSERT INTO game_lobbies (
                 name, display_name, lobby_type_id, content_kind, content_id, advertise_address,
                 lobby_port, game_port, player_count, max_players, min_players_to_start, game_size,
                 mode, require_password, allow_spectators, max_spectators, properties_json,
-                active, last_heartbeat_utc, created_utc, config_id
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                active, last_heartbeat_utc, created_utc, config_id, tenant_id, runtime_kind
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 name,
                 fields["display_name"],
@@ -1073,6 +1479,8 @@ def _upsert_lobby(conn: sqlite3.Connection, name: str, body: dict, active: int =
                 fields["last_heartbeat_utc"],
                 now,
                 fields["config_id"],
+                fields["tenant_id"],
+                fields["runtime_kind"],
             ),
         )
     else:
@@ -1081,7 +1489,7 @@ def _upsert_lobby(conn: sqlite3.Connection, name: str, body: dict, active: int =
                 display_name=?, lobby_type_id=?, content_kind=?, content_id=?, advertise_address=?,
                 lobby_port=?, game_port=?, player_count=?, max_players=?, min_players_to_start=?,
                 game_size=?, mode=?, require_password=?, allow_spectators=?, max_spectators=?,
-                properties_json=?, active=?, last_heartbeat_utc=?, config_id=?
+                properties_json=?, active=?, last_heartbeat_utc=?, config_id=?, tenant_id=?, runtime_kind=?
             WHERE name=?""",
             (
                 fields["display_name"] or row["display_name"],
@@ -1103,6 +1511,8 @@ def _upsert_lobby(conn: sqlite3.Connection, name: str, body: dict, active: int =
                 fields["active"],
                 fields["last_heartbeat_utc"],
                 fields["config_id"] or (row["config_id"] if "config_id" in row.keys() else ""),
+                fields["tenant_id"],
+                fields["runtime_kind"],
                 name,
             ),
         )
@@ -1509,6 +1919,7 @@ def register_vote_routes(app, get_conn: GetConn) -> None:
                 pecking,
             ),
         )
+        private = _ensure_session_private_server(conn, sid, lobby)
         conn.commit()
         return (
             jsonify(
@@ -1518,6 +1929,7 @@ def register_vote_routes(app, get_conn: GetConn) -> None:
                     "displayName": name,
                     "parentId": parent_id,
                     "peckingOrder": pecking,
+                    "privateServer": private,
                     "lobby": {
                         "name": lobby_row["name"],
                         "active": lobby_row["active"],
@@ -2025,3 +2437,76 @@ def register_vote_routes(app, get_conn: GetConn) -> None:
         )
         conn.commit()
         return jsonify(_voting_place_dict(conn.execute("SELECT * FROM voting_places WHERE id=?", (vid,)).fetchone()))
+
+    @app.route("/api/tenant/oauth-connections", methods=["GET", "PUT"])
+    def tenant_oauth_connections():
+        conn = get_conn()
+        ensure_vote_tables(conn)
+        tenant = request.args.get("tenant") or _request_tenant()
+        if request.method == "GET":
+            rows = conn.execute(
+                "SELECT * FROM tenant_oauth_connections WHERE tenant_id=? ORDER BY provider",
+                (tenant,),
+            ).fetchall()
+            return jsonify({"tenantId": tenant, "items": [_oauth_dict(r) for r in rows]})
+        body = request.get_json(silent=True) or {}
+        provider = body.get("provider") or "microsoft"
+        try:
+            row = _upsert_oauth(conn, tenant, provider, body)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        conn.commit()
+        return jsonify(row)
+
+    @app.route("/api/private-servers", methods=["GET", "POST"])
+    def private_servers():
+        conn = get_conn()
+        ensure_vote_tables(conn)
+        if request.method == "GET":
+            tenant = request.args.get("tenant") or _request_tenant()
+            session_id = request.args.get("gameSessionId") or ""
+            sql = "SELECT * FROM private_servers WHERE tenant_id=?"
+            args: list = [tenant]
+            if session_id:
+                sql += " AND game_session_id=?"
+                args.append(session_id)
+            rows = conn.execute(sql + " ORDER BY updated_utc DESC", args).fetchall()
+            return jsonify([_private_server_dict(r) for r in rows])
+        body = request.get_json(silent=True) or {}
+        try:
+            row = _upsert_private_server(conn, body)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        conn.commit()
+        return jsonify(row), 201
+
+    @app.route("/api/private-servers/<sid>", methods=["GET", "PUT"])
+    def private_server_one(sid):
+        conn = get_conn()
+        ensure_vote_tables(conn)
+        row = conn.execute("SELECT * FROM private_servers WHERE id=?", (sid,)).fetchone()
+        if row is None:
+            return jsonify({"error": "not found"}), 404
+        if request.method == "GET":
+            return jsonify(_private_server_dict(row))
+        body = request.get_json(silent=True) or {}
+        try:
+            updated = _upsert_private_server(conn, body, existing_id=sid)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        conn.commit()
+        return jsonify(updated)
+
+    @app.route("/api/private-servers/<sid>/flip-runtime", methods=["POST"])
+    def private_server_flip(sid):
+        conn = get_conn()
+        ensure_vote_tables(conn)
+        body = request.get_json(silent=True) or {}
+        runtime = body.get("runtimeKind") or body.get("runtime_kind")
+        try:
+            updated = _flip_private_server_runtime(conn, sid, runtime or "")
+        except KeyError:
+            return jsonify({"error": "not found"}), 404
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify(updated)
