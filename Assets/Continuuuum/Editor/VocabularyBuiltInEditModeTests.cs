@@ -268,6 +268,17 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_UtilityLemmas()
+    {
+        foreach (var term in UtilityLemmaPropertyKeys.LemmaPlaceholders)
+            Assert.IsTrue(VocabularyBuiltInLookup.TryGetByLemma(term, out _), term);
+        Assert.AreEqual("imitirrrr", BuiltInSynonyms.CanonicalizeToken("imitirrrr__"));
+        Assert.AreEqual("circuit-breaker", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "circuit", "breaker" }));
+        Assert.AreEqual("sump-pump", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "sump", "pump" }));
+        Assert.AreEqual("water-heater", BuiltInSynonyms.CanonicalizeToken("water_heater"));
+    }
+
+    [Test]
     public void VocabularyBuiltInRegistry_Includes_VoteQueueLemmas()
     {
         foreach (var term in VoteLemmaPropertyKeys.LemmaPlaceholders)

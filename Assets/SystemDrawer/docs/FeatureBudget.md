@@ -70,6 +70,9 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | Legal / court | `FeatureBudgetIds.LegalCourt` (`legal_court`) rank 35 — Court/Corruption/Constitution/Rights/Law/Government, LawTravelAgent, ConversationBusTravelAgent, LegalBuilding, plus shared TheocraticWarden, JusticeWarden, GenevaConventionWarden |
 | Relationship | `FeatureBudgetIds.Relationship` (`relationship`) rank 36 — LoveWarden, RomanceWarden, ConsentWarden, RelationshipTravelAgent plus shared TheocraticWarden, JusticeWarden |
 | Voting / polling | `FeatureBudgetIds.Voting` (`voting`) rank 37 — VotingPlace, VoteBehaviorTree, LaneGrid, BallotUI, GameSession |
+| House utility | `FeatureBudgetIds.HouseUtility` (`house_utility`) rank 38 — UtilityBioRhythm, CircuitBreaker, RecoupWheel, SumpPump |
+| Water mains | `FeatureBudgetIds.WaterMains` (`water_mains`) rank 39 — WaterGraph |
+| Basement flood | `FeatureBudgetIds.BasementFlood` (`basement_flood`) rank 40 — HouseBasementFloodCache, RollingSphereFloodSimulator |
 
 ### PixelLight / grid slots budget
 

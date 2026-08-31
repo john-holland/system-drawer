@@ -26,7 +26,8 @@ public sealed class HouseBioRhythm : MonoBehaviour
         trashFill01 = Mathf.MoveTowards(trashFill01, trashFill01 > 0.01f ? 1f : 0f, dt * 0.002f);
         laundryLoad01 = Mathf.MoveTowards(laundryLoad01, laundryLoad01 > 0.01f ? 1f : 0f, dt * 0.0015f);
         cleanliness01 = Mathf.MoveTowards(cleanliness01, 0.35f, dt * 0.001f);
-        utilityComfort01 = Mathf.Clamp01((gasAvailable01 + oilAvailable01 + electricAvailable01) / 3f);
+        if (GetComponent<UtilityBioRhythm>() == null)
+            utilityComfort01 = Mathf.Clamp01((gasAvailable01 + oilAvailable01 + electricAvailable01) / 3f);
     }
 
     public void ApplyChore(HouseChoreKind chore)
@@ -44,6 +45,9 @@ public sealed class HouseBioRhythm : MonoBehaviour
                 break;
             case HouseChoreKind.Yard:
                 cleanliness01 = Mathf.Clamp01(cleanliness01 + 0.05f);
+                break;
+            case HouseChoreKind.UtilityMaintain:
+                utilityComfort01 = Mathf.Clamp01(utilityComfort01 + 0.15f);
                 break;
         }
     }

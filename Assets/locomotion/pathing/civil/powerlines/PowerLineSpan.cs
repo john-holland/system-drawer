@@ -36,7 +36,9 @@ public sealed class PowerLineSpan : MonoBehaviour
     void Awake()
     {
         if (line == null)
-            line = gameObject.GetComponent<LineRenderer>() ?? gameObject.AddComponent<LineRenderer>();
+            line = gameObject.GetComponent<LineRenderer>();
+        if (line == null)
+            line = gameObject.AddComponent<LineRenderer>();
         line.startWidth = cableRadiusM * 2f;
         line.endWidth = cableRadiusM * 2f;
         line.material = new Material(Shader.Find("Sprites/Default") ?? Shader.Find("UI/Default"));
@@ -52,7 +54,9 @@ public sealed class PowerLineSpan : MonoBehaviour
         if (fromAnchor == null || toAnchor == null)
             return ropeSystem;
         if (ropeSystem == null)
-            ropeSystem = GetComponent<RopeSystem>() ?? gameObject.AddComponent<RopeSystem>();
+            ropeSystem = GetComponent<RopeSystem>();
+        if (ropeSystem == null)
+            ropeSystem = gameObject.AddComponent<RopeSystem>();
         ropeSystem.Config.mode = RopeMode.Grapple;
         float dist = Vector3.Distance(fromAnchor.position, toAnchor.position);
         ropeSystem.BindAnchors(fromAnchor, toAnchor, dist * sagFactor);

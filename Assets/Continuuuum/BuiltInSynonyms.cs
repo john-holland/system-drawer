@@ -104,7 +104,24 @@ public static class BuiltInSynonyms
             { "announce_rights_returned", "announce-rights-returned" },
             { "AnnounceRightsReturned", "announce-rights-returned" },
             { "constitution rights returned", "announce-rights-returned" },
-            { "constitution_rights_returned", "announce-rights-returned" }
+            { "constitution_rights_returned", "announce-rights-returned" },
+            { "water heater", "water-heater" },
+            { "water_heater", "water-heater" },
+            { "water main", "water-main" },
+            { "water_main", "water-main" },
+            { "water filter", "water-filter" },
+            { "water_filter", "water-filter" },
+            { "circuit breaker", "circuit-breaker" },
+            { "circuit_breaker", "circuit-breaker" },
+            { "wall plug", "wall-plug" },
+            { "wall_plug", "wall-plug" },
+            { "jacobs ladder", "jacobs-ladder" },
+            { "jacobs_ladder", "jacobs-ladder" },
+            { "sump pump", "sump-pump" },
+            { "sump_pump", "sump-pump" },
+            { "imitirrrr__", "imitirrrr" },
+            { "recoup wheel", "recoup" },
+            { "recoup_wheel", "recoup" }
         };
 
     public static void RegisterAlias(string alias, string canonical)

@@ -30,9 +30,19 @@ namespace SystemDrawer.DreamCycle
 
         public void EnsureTexture()
         {
+            int w = Mathf.Max(1, textureWidth);
+            int h = Mathf.Max(1, textureHeight);
+            if (_tex != null && (_tex.width != w || _tex.height != h))
+            {
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(_tex);
+                else
+                    UnityEngine.Object.DestroyImmediate(_tex);
+                _tex = null;
+            }
             if (_tex == null)
             {
-                _tex = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
+                _tex = new Texture2D(w, h, TextureFormat.RGBA32, false)
                 {
                     wrapMode = TextureWrapMode.Clamp,
                     filterMode = FilterMode.Bilinear
@@ -43,21 +53,23 @@ namespace SystemDrawer.DreamCycle
         public void RenderWave()
         {
             EnsureTexture();
-            if (waveSamples.Length == 0)
+            if (waveSamples.Length == 0 || _tex == null)
                 return;
-            var pixels = new Color32[textureWidth * textureHeight];
-            for (int y = 0; y < textureHeight; y++)
+            int w = _tex.width;
+            int h = _tex.height;
+            var pixels = new Color32[w * h];
+            for (int y = 0; y < h; y++)
             {
-                float rowT = y / (float)(textureHeight - 1);
-                for (int x = 0; x < textureWidth; x++)
+                float rowT = h <= 1 ? 0f : y / (float)(h - 1);
+                for (int x = 0; x < w; x++)
                 {
-                    float t = x / (float)(textureWidth - 1);
+                    float t = w <= 1 ? 0f : x / (float)(w - 1);
                     int idx = Mathf.Clamp(Mathf.RoundToInt(t * (waveSamples.Length - 1)), 0, waveSamples.Length - 1);
                     float v = waveSamples[idx];
                     float stormWeight = 1f - rowT;
                     Color c = Color.Lerp(smoothColor, stormColor, stormWeight);
                     float alpha = Mathf.Clamp01(Mathf.Abs(v));
-                    pixels[y * textureWidth + x] = new Color(c.r * alpha, c.g * alpha, c.b * alpha, alpha);
+                    pixels[y * w + x] = new Color(c.r * alpha, c.g * alpha, c.b * alpha, alpha);
                 }
             }
             _tex.SetPixels32(pixels);

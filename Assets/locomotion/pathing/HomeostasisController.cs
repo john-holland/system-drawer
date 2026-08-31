@@ -82,27 +82,8 @@ public sealed class HomeostasisController : MonoBehaviour
         sheet.TickRealtime(dt);
     }
 
-    bool HasBlockingIllness(string channelId)
-    {
-        if (sheet.activeEffects == null) return false;
-        double now = Time.unscaledTimeAsDouble;
-        for (int i = 0; i < sheet.activeEffects.Count; i++)
-        {
-            var ae = sheet.activeEffects[i];
-            if (ae?.spec == null) continue;
-            if (ae.spec.source != LifeSystemsEffectSource.Illness) continue;
-            if (!IsEffectActive(ae, now)) continue;
-            var deltas = ae.spec.channelDeltas;
-            if (deltas == null) continue;
-            for (int d = 0; d < deltas.Count; d++)
-            {
-                if (deltas[d] != null &&
-                    string.Equals(deltas[d].channelId, channelId, System.StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
-        }
-        return false;
-    }
+    bool HasBlockingIllness(string channelId) =>
+        sheet != null && sheet.ChannelBlockedByIllness(channelId);
 
     bool HasBlockingOrganIllness(string organId)
     {
@@ -131,6 +112,8 @@ public sealed class HomeostasisController : MonoBehaviour
     static bool IsEffectActive(LifeSystemsActiveEffect ae, double now)
     {
         if (ae.spec.durationSeconds <= 0f)
+            return true;
+        if (ae.appliedUnscaledTime < 0)
             return true;
         return now - ae.appliedUnscaledTime < ae.spec.durationSeconds;
     }

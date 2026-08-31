@@ -82,7 +82,9 @@ public sealed class HangingShoesComponent : MonoBehaviour
         GameObject go = t != null ? t.gameObject : new GameObject(name);
         if (t == null)
             go.transform.SetParent(transform, false);
-        var rb = go.GetComponent<Rigidbody>() ?? go.AddComponent<Rigidbody>();
+        var rb = go.GetComponent<Rigidbody>();
+        if (rb == null)
+            rb = go.AddComponent<Rigidbody>();
         rb.mass = 0.4f;
         if (go.GetComponent<Collider>() == null)
         {
@@ -95,7 +97,9 @@ public sealed class HangingShoesComponent : MonoBehaviour
     public RopeSystem EnsureLaceRope()
     {
         if (laceRope == null)
-            laceRope = GetComponent<RopeSystem>() ?? gameObject.AddComponent<RopeSystem>();
+            laceRope = GetComponent<RopeSystem>();
+        if (laceRope == null)
+            laceRope = gameObject.AddComponent<RopeSystem>();
         laceRope.Config.mode = RopeMode.Grapple;
         laceRope.Config.totalLengthM = knotLengthM;
         Transform head = leftShoeBody != null ? leftShoeBody.transform : transform;

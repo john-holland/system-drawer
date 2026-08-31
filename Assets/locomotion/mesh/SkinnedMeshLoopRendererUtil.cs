@@ -7,12 +7,15 @@ public static class SkinnedMeshLoopRendererUtil
     {
         if (host == null)
             return null;
-        var smr = host.GetComponent<SkinnedMeshRenderer>()
-                  ?? host.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        var smr = host.GetComponent<SkinnedMeshRenderer>();
+        if (smr == null)
+            smr = host.GetComponentInChildren<SkinnedMeshRenderer>(true);
         if (smr != null)
             return smr;
-        return host.GetComponent<MeshRenderer>()
-               ?? host.GetComponentInChildren<MeshRenderer>(true);
+        var mr = host.GetComponent<MeshRenderer>();
+        if (mr == null)
+            mr = host.GetComponentInChildren<MeshRenderer>(true);
+        return mr;
     }
 
     public static Mesh SharedMesh(Renderer renderer)

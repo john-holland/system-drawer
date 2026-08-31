@@ -93,6 +93,15 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("rights returned", "rights-returned");
             BuiltInSynonyms.RegisterAlias("announce rights returned", "announce-rights-returned");
             BuiltInSynonyms.RegisterAlias("constitution rights returned", "announce-rights-returned");
+            BuiltInSynonyms.RegisterAlias("water heater", "water-heater");
+            BuiltInSynonyms.RegisterAlias("water main", "water-main");
+            BuiltInSynonyms.RegisterAlias("water filter", "water-filter");
+            BuiltInSynonyms.RegisterAlias("circuit breaker", "circuit-breaker");
+            BuiltInSynonyms.RegisterAlias("wall plug", "wall-plug");
+            BuiltInSynonyms.RegisterAlias("jacobs ladder", "jacobs-ladder");
+            BuiltInSynonyms.RegisterAlias("sump pump", "sump-pump");
+            BuiltInSynonyms.RegisterAlias("imitirrrr__", "imitirrrr");
+            BuiltInSynonyms.RegisterAlias("recoup wheel", "recoup");
         }
 
         public static string CanonicalizeDeictic(string token)

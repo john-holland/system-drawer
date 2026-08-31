@@ -66,6 +66,10 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
     public List<DestructibleLayerRef> overflowLayers = new List<DestructibleLayerRef>();
     public HousePowerBus powerBus = new HousePowerBus();
     public HouseEaveWaterCache eaveWater;
+    public HouseBasementFloodCache basementFlood;
+    public UtilityBioRhythm utilityBio;
+    public UtilityRoomBootstrap utilityRoom;
+    public HouseUtilityTap utilityTap;
     public HouseInventoryBinder inventoryBinder;
 
     void Reset()
@@ -88,8 +92,22 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
         if (eaveWater == null)
             eaveWater = GetComponent<HouseEaveWaterCache>() ?? gameObject.AddComponent<HouseEaveWaterCache>();
         eaveWater.house = this;
+        if (basementFlood == null)
+            basementFlood = GetComponent<HouseBasementFloodCache>() ?? gameObject.AddComponent<HouseBasementFloodCache>();
+        if (utilityBio == null)
+            utilityBio = GetComponent<UtilityBioRhythm>() ?? gameObject.AddComponent<UtilityBioRhythm>();
+        utilityBio.houseBio = houseBio;
+        utilityBio.floodCache = basementFlood;
+        basementFlood.utilityBio = utilityBio;
+        if (utilityRoom == null)
+            utilityRoom = GetComponent<UtilityRoomBootstrap>() ?? gameObject.AddComponent<UtilityRoomBootstrap>();
+        utilityRoom.house = this;
+        utilityRoom.Ensure();
+        if (utilityTap == null)
+            utilityTap = GetComponent<HouseUtilityTap>() ?? gameObject.AddComponent<HouseUtilityTap>();
         if (powerBus.systems == null || powerBus.systems.Count == 0)
             HousePowerBus.FillDefault(powerBus.systems);
+        powerBus.maxDrawKw = CircuitBreakerPanel.MaxDrawKwForAmpacity();
         ApplyArchitectureScale();
     }
 
@@ -97,6 +115,7 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
     {
         base.Tick(dt);
         houseBio?.Tick(dt);
+        utilityRoom?.Tick(dt);
         powerBus?.Tick();
     }
 
@@ -115,4 +134,6 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
     }
 
     public List<HouseChoreCard> BuildChoreCards() => HouseChoreCatalog.DefaultChores(this);
+
+    public List<UtilityCard> BuildUtilityCards() => UtilityCardCatalog.DefaultCards(utilityRoom);
 }

@@ -116,7 +116,9 @@ public class TravelLegDriveNode : MoveToWaypointNode
         {
             heading.Normalize();
             desired.Normalize();
-            demand = Mathf.Clamp(Vector3.SignedAngle(heading, desired, Vector3.up) / 45f, -1f, 1f);
+            float geometric = Mathf.Clamp(Vector3.SignedAngle(heading, desired, Vector3.up) / 45f, -1f, 1f);
+            if (Mathf.Abs(geometric) > 0.05f || Mathf.Abs(steerHintSigned01) < 0.15f)
+                demand = geometric;
         }
 
         if (ambulationSolver != null)

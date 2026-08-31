@@ -39,4 +39,7 @@ public static class FeatureBudgetIds
     public const string LegalCourt = "legal_court";
     public const string Relationship = "relationship";
     public const string Voting = "voting";
+    public const string HouseUtility = "house_utility";
+    public const string WaterMains = "water_mains";
+    public const string BasementFlood = "basement_flood";
 }

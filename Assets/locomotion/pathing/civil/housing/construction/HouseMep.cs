@@ -59,7 +59,9 @@ public sealed class HouseElectricalSpan : MonoBehaviour
     void Awake()
     {
         if (line == null)
-            line = GetComponent<LineRenderer>() ?? gameObject.AddComponent<LineRenderer>();
+            line = GetComponent<LineRenderer>();
+        if (line == null)
+            line = gameObject.AddComponent<LineRenderer>();
         line.positionCount = 2;
         line.startWidth = 0.02f;
         line.endWidth = 0.02f;

@@ -8,7 +8,8 @@ public enum HouseChoreKind
     Laundry = 2,
     Clean = 3,
     Yard = 4,
-    Rest = 5
+    Rest = 5,
+    UtilityMaintain = 6
 }
 
 [System.Serializable]
@@ -54,7 +55,8 @@ public static class HouseChoreCatalog
             HouseChoreCard.Generate(HouseChoreKind.Dishes, house),
             HouseChoreCard.Generate(HouseChoreKind.Laundry, house),
             HouseChoreCard.Generate(HouseChoreKind.Clean, house),
-            HouseChoreCard.Generate(HouseChoreKind.Yard, house)
+            HouseChoreCard.Generate(HouseChoreKind.Yard, house),
+            HouseChoreCard.Generate(HouseChoreKind.UtilityMaintain, house)
         };
     }
 }

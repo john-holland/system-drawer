@@ -93,6 +93,7 @@ public static class MasterRebakeRunner
             Step("SdfMaxSkinnedMeshSurface", typeof(SdfMaxSkinnedMeshSurface).Name, BakeSdfSkinned),
             Step("HairPlumePhysicsDriver", typeof(HairPlumePhysicsDriver).Name, BakeHair),
             Step("HouseEaveWaterCache", typeof(HouseEaveWaterCache).Name, BakeEave),
+            Step("HouseBasementFloodCache", typeof(HouseBasementFloodCache).Name, BakeBasementFlood),
             Step("HeightMapInteriorShaderBuffer", typeof(HeightMapInteriorShaderBuffer).Name, BakeHeightMap),
             Step("CityPixelGridRuntime", typeof(CityPixelGridRuntime).Name, BakeCityGrid),
             Step("PlanetPhysicsManifoldBridge", typeof(PlanetPhysicsManifoldBridge).Name, BakePlanetManifold),
@@ -167,6 +168,8 @@ public static class MasterRebakeRunner
     static int BakeHair() => ForEach<HairPlumePhysicsDriver>(h => h.BakeFromConfig());
 
     static int BakeEave() => ForEach<HouseEaveWaterCache>(h => h.Prebake(0f));
+
+    static int BakeBasementFlood() => ForEach<HouseBasementFloodCache>(h => h.Prebake());
 
     static int BakeHeightMap() => ForEach<HeightMapInteriorShaderBuffer>(h => h.Prebake());
 

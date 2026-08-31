@@ -9,6 +9,9 @@ public sealed class BuildingPlumbingGroup : MonoBehaviour
     public string groupId = "default";
     [Range(0f, 1f)] public float ToiletFlushCrossTalk01 { get; private set; }
     public float crossTalkDecayPerSec = 1.2f;
+    [Tooltip("Building heater hot feed. Negative uses municipal hot only.")]
+    public float heaterHot01 = -1f;
+    public BuildingWaterShutoff shutoff;
     readonly List<FixturePlumbingNode> _fixtures = new List<FixturePlumbingNode>();
 
     void Awake()

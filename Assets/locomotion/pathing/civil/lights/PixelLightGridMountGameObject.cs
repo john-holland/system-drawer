@@ -77,9 +77,11 @@ public sealed class PixelLightGridMountGameObject : MonoBehaviour
                 if (m == null) continue;
                 float d = Vector3.Cross(col.direction, m.transform.position - col.origin).magnitude;
                 float along = Vector3.Dot(m.transform.position - col.origin, col.direction);
-                if (along > 0f && along < maxDist && d < bestDist)
+                if (along <= 0f || along >= maxDist) continue;
+                float score = d * 1000f + along;
+                if (score < bestDist)
                 {
-                    bestDist = d;
+                    bestDist = score;
                     best = m;
                 }
             }

@@ -156,7 +156,7 @@ public sealed class PlanarSplinePathLocomotion : MonoBehaviour
             float e = Mathf.Clamp01(Mathf.Max(cs.startT01, cs.endT01));
             if (e - s < 1e-4f) e = Mathf.Min(1f, s + 0.01f);
             float width = cs.width > 1e-3f ? cs.width : defaultWidth;
-            if (cs.gizmoLocalScale.x > 1e-3f)
+            if (Mathf.Abs(cs.gizmoLocalScale.x - 1f) > 1e-3f && cs.gizmoLocalScale.x > 1e-3f)
                 width = Mathf.Abs(cs.gizmoLocalScale.x) * defaultWidth;
             var plane = MakePlane(s, e, width, string.IsNullOrEmpty(cs.hierarchicalPlaneId)
                 ? "custom_" + c

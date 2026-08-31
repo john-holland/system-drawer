@@ -249,4 +249,34 @@ public sealed class StreetBlocksPlanAsset : ScriptableObject
         }
         graph.EnsureFullyConnectedToPlant();
     }
+
+    public void SeedWaterAndSewerFromBuildings(SewerGraph sewer, WaterGraph water)
+    {
+        SeedSewerFromBuildings(sewer);
+        if (water == null) return;
+        EnsureDefaultLayers();
+        for (int li = 0; li < layers.Count; li++)
+        {
+            var L = layers[li];
+            if (L == null) continue;
+            for (int i = 0; i < L.cells.Count; i++)
+            {
+                var c = L.cells[i];
+                if (c == null) continue;
+                Vector3 world = worldOrigin + new Vector3(c.x * cellWorldSize, 0f, c.y * cellWorldSize);
+                if (c.brush == StreetBlocksBrushKind.TwoWayStreet
+                    || c.brush == StreetBlocksBrushKind.Multilane
+                    || c.brush == StreetBlocksBrushKind.OneWay)
+                {
+                    water.AddOrGet("st_" + c.x + "_" + c.y, world, streetMain: true);
+                }
+                else if (c.brush == StreetBlocksBrushKind.Building)
+                {
+                    var go = new GameObject("water_seed_" + c.x + "_" + c.y);
+                    go.transform.position = world;
+                    water.AddOrGetBuildingTap(go, world);
+                }
+            }
+        }
+    }
 }

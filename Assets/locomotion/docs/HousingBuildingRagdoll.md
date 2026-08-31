@@ -7,7 +7,8 @@ House specialization of `BuildingRagdoll`.
 - `HousingBuildingRagdoll` — slots, architecture lemma, plumbing group
 - `HouseBioRhythm` — cleanliness, trash, laundry, utility comfort
 - `FamilyPeckingOrder` — residents + affinity/authority
-- `HouseChoreCard` / `HouseChoreCatalog` — trash, dishes, laundry, clean, yard
+- `HouseChoreCard` / `HouseChoreCatalog` — trash, dishes, laundry, clean, yard, utility maintain
+- `UtilityBioRhythm` / `UtilityRoomBootstrap` / `HouseUtilityTap` / `HouseBasementFloodCache` — basement plant, street tap, flood prebake (see [HouseUtility.md](HouseUtility.md))
 - `HouseInventoryBinder` — `bedroom2` / `bedroom2_dresser2` context paths
 
 ## Architecture lemmas

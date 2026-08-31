@@ -53,6 +53,7 @@ public sealed class MasterRebakeRunnerTests
     [Test] public void Attempts_SdfMaxSkinnedMeshSurface() => AssertAttempted<SdfMaxSkinnedMeshSurface>();
     [Test] public void Attempts_HairPlumePhysicsDriver() => AssertAttempted<HairPlumePhysicsDriver>();
     [Test] public void Attempts_HouseEaveWaterCache() => AssertAttempted<HouseEaveWaterCache>();
+    [Test] public void Attempts_HouseBasementFloodCache() => AssertAttempted<HouseBasementFloodCache>();
     [Test] public void Attempts_HeightMapInteriorShaderBuffer() => AssertAttempted<HeightMapInteriorShaderBuffer>();
     [Test] public void Attempts_CityPixelGridRuntime() => AssertAttempted<CityPixelGridRuntime>();
     [Test] public void Attempts_PlanetPhysicsManifoldBridge() => AssertAttempted<PlanetPhysicsManifoldBridge>();

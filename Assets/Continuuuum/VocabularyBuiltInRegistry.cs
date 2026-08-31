@@ -175,6 +175,14 @@ public static class VocabularyBuiltInRegistry
         string[] voteQueueTags = { "civil", "vote", "queue" };
         foreach (var w in new[] { "vote", "ballot", "recount", "tally", "queue", "address", "home-address", "property" })
             Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, voteQueueTags);
+        string[] utilityTags = { "civil", "utility" };
+        foreach (var w in new[]
+                 {
+                     "furnace", "water-heater", "water-main", "shutoff", "water-filter", "hvac", "utility",
+                     "circuit-breaker", "wall-plug", "jacobs-ladder", "recoup", "imitirrrr", "flood", "gunk",
+                     "sump-pump"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, utilityTags);
         foreach (var w in new[] { "vote", "queue", "queued", "tally", "recount" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, voteQueueTags);
         foreach (var w in new[] { "randomly", "happily", "if-so" })

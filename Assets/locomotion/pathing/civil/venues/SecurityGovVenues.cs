@@ -255,6 +255,7 @@ public sealed class MonarchicVenueRuntime : MonoBehaviour
 {
     public MonarchicBuildingBioRhythm bio;
     public CivilVenueAmenities amenities;
+    public List<UtilityCard> utilityCards = new List<UtilityCard>();
 
     void Awake()
     {

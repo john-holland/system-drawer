@@ -12,6 +12,9 @@ namespace Locomotion.Liquid.Flood
         public float spawnRatePerSecond = 12f;
         public bool infiniteDrain;
         public int paintEveryNthSphere = 1;
+        public float standingLiters;
+        public float lastDrainedLiters;
+        public float lastDrainedLitersPerSecond;
 
         float _spawnAccumulator;
         int _paintCounter;
@@ -64,9 +67,31 @@ namespace Locomotion.Liquid.Flood
 
         public void EmitFromFlow(float litersPerSecond)
         {
+            standingLiters += Mathf.Max(0f, litersPerSecond);
             spawnRatePerSecond = infiniteDrain
                 ? Mathf.Max(spawnRatePerSecond, litersPerSecond * 800f)
                 : litersPerSecond * 400f;
+        }
+
+        public void DrainFromFlow(float litersPerSecond)
+        {
+            lastDrainedLitersPerSecond = Mathf.Max(0f, litersPerSecond);
+            lastDrainedLiters = DrainAmount(lastDrainedLitersPerSecond);
+            spawnRatePerSecond = Mathf.Max(0f, spawnRatePerSecond - lastDrainedLitersPerSecond * 400f);
+        }
+
+        public float DrainAmount(float liters)
+        {
+            float taken = FloodDrainageAmounts.ApplyDrain(ref standingLiters, liters);
+            lastDrainedLiters = taken;
+            int recycle = Mathf.CeilToInt(FloodDrainageAmounts.SpawnRateFromLitersPerSecond(taken) / 60f);
+            spherePool?.RecycleOldest(recycle);
+            if (weatherBridge != null && taken > 0f)
+            {
+                Vector3 origin = spout != null ? spout.RimWorldPosition : transform.position;
+                weatherBridge.ReduceWaterPaint(origin, Mathf.Max(0.02f, taken * 0.01f), Mathf.Clamp01(taken / 20f));
+            }
+            return taken;
         }
     }
 }

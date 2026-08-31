@@ -220,10 +220,45 @@ public sealed class LifeSystemsSheet : MonoBehaviour
         Set01(LifeSystemsChannelCatalog.LifeForce, lifeForce.lifeForce01);
         Set01(LifeSystemsChannelCatalog.BioRhythmAmplitude, bioRhythm.amplitude01);
 
-        // Soft channel modulation from bio rhythm
-        AdjustTransient(LifeSystemsChannelCatalog.ClearThought, mod);
-        AdjustTransient(LifeSystemsChannelCatalog.Attention, mod);
-        AdjustTransient(LifeSystemsChannelCatalog.Immune, mod * 0.5f);
+        // Soft channel modulation from bio rhythm — do not fight illness locks.
+        if (!ChannelBlockedByIllness(LifeSystemsChannelCatalog.ClearThought))
+            AdjustTransient(LifeSystemsChannelCatalog.ClearThought, mod);
+        if (!ChannelBlockedByIllness(LifeSystemsChannelCatalog.Attention))
+            AdjustTransient(LifeSystemsChannelCatalog.Attention, mod);
+        if (!ChannelBlockedByIllness(LifeSystemsChannelCatalog.Immune))
+            AdjustTransient(LifeSystemsChannelCatalog.Immune, mod * 0.5f);
+    }
+
+    public bool ChannelBlockedByIllness(string channelId)
+    {
+        if (activeEffects == null || string.IsNullOrEmpty(channelId))
+            return false;
+        double now = Time.unscaledTimeAsDouble;
+        for (int i = 0; i < activeEffects.Count; i++)
+        {
+            var ae = activeEffects[i];
+            if (ae?.spec == null) continue;
+            if (ae.spec.source != LifeSystemsEffectSource.Illness) continue;
+            if (!IsEffectActive(ae, now)) continue;
+            var deltas = ae.spec.channelDeltas;
+            if (deltas == null) continue;
+            for (int d = 0; d < deltas.Count; d++)
+            {
+                if (deltas[d] != null &&
+                    string.Equals(deltas[d].channelId, channelId, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    static bool IsEffectActive(LifeSystemsActiveEffect ae, double now)
+    {
+        if (ae.spec.durationSeconds <= 0f)
+            return true;
+        if (ae.appliedUnscaledTime < 0)
+            return true;
+        return now - ae.appliedUnscaledTime < ae.spec.durationSeconds;
     }
 
     void AdjustTransient(string channelId, float delta)

@@ -230,8 +230,14 @@ public sealed class StreetBlocksDesignerWindow : EditorWindow
                 var go = new GameObject("SewerGraph");
                 graph = go.AddComponent<SewerGraph>();
             }
-            _plan.SeedSewerFromBuildings(graph);
-            Debug.Log("[StreetBlocks] Sewer nodes: " + graph.nodes.Count + " edges: " + graph.edges.Count);
+            var water = Object.FindFirstObjectByType<WaterGraph>();
+            if (water == null)
+            {
+                var wgo = new GameObject("WaterGraph");
+                water = wgo.AddComponent<WaterGraph>();
+            }
+            _plan.SeedWaterAndSewerFromBuildings(graph, water);
+            Debug.Log("[StreetBlocks] Sewer nodes: " + graph.nodes.Count + " water nodes: " + water.nodes.Count);
         }
         if (GUILayout.Button("Mark Dirty"))
             EditorUtility.SetDirty(_plan);

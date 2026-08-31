@@ -138,14 +138,14 @@ public sealed class InventoryLoadoutTests
             bindings.RebuildIndex();
             var ctx = new NarrativeExecutionContext(null, bindings, null);
             // Idle -> Approach
-            Assert.AreEqual(BehaviorTreeStatus.Running, trade.Execute(ctx, null));
+            Assert.AreEqual(Locomotion.Narrative.BehaviorTreeStatus.Running, trade.Execute(ctx, null));
             Assert.AreEqual(TradeNarrativePhase.Approach, trade.phase);
             // Force conversation
             trade.phase = TradeNarrativePhase.Conversation;
             Assert.AreEqual("Self", mgr.FindByName("knife").ownedByActorId);
             trade.PlayerAccept();
             Assert.AreEqual(TradeNarrativePhase.Accepted, trade.phase);
-            Assert.AreEqual(BehaviorTreeStatus.Success, trade.Execute(ctx, null));
+            Assert.AreEqual(Locomotion.Narrative.BehaviorTreeStatus.Success, trade.Execute(ctx, null));
             Assert.AreEqual("Other", mgr.FindByName("knife").heldByActorId);
         }
         finally

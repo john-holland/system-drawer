@@ -16,11 +16,15 @@ public sealed class VehicleGrabHold : MonoBehaviour
     public void EnsureCollider()
     {
         if (capsule == null)
-            capsule = GetComponent<CapsuleCollider>() ?? gameObject.AddComponent<CapsuleCollider>();
+            capsule = GetComponent<CapsuleCollider>();
+        if (capsule == null)
+            capsule = gameObject.AddComponent<CapsuleCollider>();
         capsule.radius = radius;
         capsule.height = height;
         capsule.direction = 1;
-        var rb = GetComponent<Rigidbody>() ?? gameObject.AddComponent<Rigidbody>();
+        var rb = GetComponent<Rigidbody>();
+        if (rb == null)
+            rb = gameObject.AddComponent<Rigidbody>();
         rb.isKinematic = kinematic;
         rb.useGravity = false;
     }

@@ -135,4 +135,44 @@ public sealed class SewerGraph : MonoBehaviour
         }
         plantSink?.AcceptInflow((poo01 + soapy01) * 0.5f);
     }
+
+    public void TransmitWaterIn(SewerNode node, float liters)
+    {
+        if (node == null) return;
+        EnsureWaterInEdge(node);
+        float bump = Mathf.Clamp01(Mathf.Max(0f, liters) * 0.02f);
+        for (int i = 0; i < edges.Count; i++)
+        {
+            var e = edges[i];
+            if (e == null || e.fromId != node.nodeId) continue;
+            if (e.flow != SewerFlowKind.WaterIn && e.flow != SewerFlowKind.PooOut) continue;
+            e.load01 = Mathf.Clamp01(e.load01 + bump);
+        }
+        plantSink?.AcceptInflow(bump);
+    }
+
+    void EnsureWaterInEdge(SewerNode node)
+    {
+        if (plantSink == null)
+            plantSink = FindFirstObjectByType<SanitationPoopQuifer>();
+        if (plantSink == null) return;
+        string sinkId = "plant_" + plantSink.GetInstanceID();
+        EnsureFullyConnectedToPlant();
+        if (HasEdge(node.nodeId, sinkId))
+        {
+            for (int i = 0; i < edges.Count; i++)
+            {
+                var e = edges[i];
+                if (e != null && e.fromId == node.nodeId && e.toId == sinkId && e.flow == SewerFlowKind.WaterIn)
+                    return;
+            }
+        }
+        edges.Add(new SewerEdge
+        {
+            fromId = node.nodeId,
+            toId = sinkId,
+            flow = SewerFlowKind.WaterIn,
+            capacity01 = 1f
+        });
+    }
 }

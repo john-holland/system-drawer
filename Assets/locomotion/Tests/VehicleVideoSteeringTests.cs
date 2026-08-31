@@ -225,7 +225,10 @@ public sealed class VehicleVideoSteeringTests
             node.speedHint = 4f;
             node.waypoint = Vector3.forward * 4f;
             Assert.IsTrue(node.TryRouteInstrumentProxy(null, 0.02f));
-            Physics.Simulate(0.02f);
+            var prevSim = Physics.simulationMode;
+            Physics.simulationMode = SimulationMode.Script;
+            try { Physics.Simulate(0.02f); }
+            finally { Physics.simulationMode = prevSim; }
             Assert.Greater(remoteBody.linearVelocity.sqrMagnitude + remoteBody.angularVelocity.sqrMagnitude, 0f);
 
             Object.DestroyImmediate(map);

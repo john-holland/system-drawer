@@ -77,6 +77,22 @@ namespace Weather
             }
         }
 
+        public int RecycleOldest(int n)
+        {
+            if (_pool == null || n <= 0)
+                return 0;
+            int recycled = 0;
+            for (int i = 0; i < _pool.Length && recycled < n; i++)
+            {
+                if (!_pool[i].active)
+                    continue;
+                _pool[i].active = false;
+                _activeCount = Mathf.Max(0, _activeCount - 1);
+                recycled++;
+            }
+            return recycled;
+        }
+
         public void ForEachActive(System.Action<WaterPhysicsSphereState> visitor)
         {
             if (_pool == null || visitor == null)

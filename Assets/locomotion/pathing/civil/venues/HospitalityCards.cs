@@ -217,6 +217,7 @@ public class MonarchCard : GoodSection
     public string decorum = "audience";
     public Transform workWaypoint;
     public Transform homeWaypoint;
+    public List<UtilityCard> utilityCards = new List<UtilityCard>();
 
     public MonarchCard()
     {

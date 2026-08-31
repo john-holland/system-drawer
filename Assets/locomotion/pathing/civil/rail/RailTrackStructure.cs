@@ -146,10 +146,13 @@ public sealed class RailTrackStructure : MonoBehaviour
 
     public void EnsureSplinePoints()
     {
-        if (alignmentSpline == null) return;
+        if (alignmentSpline == null)
+            alignmentSpline = GetComponent<PlanarSplinePathLocomotion>();
+        if (alignmentSpline == null)
+            alignmentSpline = gameObject.AddComponent<PlanarSplinePathLocomotion>();
         if (controlPoints != null && controlPoints.Count >= 2)
             alignmentSpline.controlPoints = new List<Vector3>(controlPoints);
-        else if (alignmentSpline.controlPoints.Count < 2)
+        else if (alignmentSpline.controlPoints == null || alignmentSpline.controlPoints.Count < 2)
         {
             alignmentSpline.controlPoints = new List<Vector3>
             {

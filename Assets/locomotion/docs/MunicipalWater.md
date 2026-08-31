@@ -30,3 +30,7 @@ Cross-talk flags (default **off**): `sinkGetsHotWhenToiletFlushed`, `showerGetsH
 ## Continuuuum
 
 `GET/PUT /api/civil/municipal-water`
+
+## Building heater and shutoff
+
+`BuildingPlumbingGroup.heaterHot01` (when ≥ 0) feeds fixture hot instead of only the global `MunicipalWaterService.hotSupply01`. `BuildingWaterShutoff` at the house meters zeroes fixture available cold/hot. City mains live on `WaterGraph` — see [HouseUtility.md](HouseUtility.md).

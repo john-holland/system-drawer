@@ -75,6 +75,25 @@ namespace Locomotion.Liquid
             PaintWaterSphere(hit, radius, spread, 101325f);
         }
 
+        public void ReduceWaterPaint(Vector3 center, float radius, float amount01 = 0.5f)
+        {
+            var m = ResolveManifold();
+            if (m == null || radius <= 0f)
+                return;
+            var existing = m.GetDataAtPosition(center);
+            var dry = new ManifoldCellData
+            {
+                velocity = Vector3.zero,
+                pressure = existing.pressure,
+                temperature = existing.temperature,
+                density = Mathf.Lerp(existing.density, 1.2f, amount01),
+                mode = WeatherMode.Air,
+                surfaceTensionCoeff = 0f,
+                surfaceFriction = existing.surfaceFriction
+            };
+            m.SetDataAtPosition(center, Blend(existing, dry, Mathf.Clamp01(amount01)));
+        }
+
         static ManifoldCellData Blend(ManifoldCellData a, ManifoldCellData b, float t)
         {
             t = Mathf.Clamp01(t);

@@ -85,6 +85,7 @@ public sealed class LifeSystemsTests
             var sheet = go.AddComponent<LifeSystemsSheet>();
             var homeo = go.AddComponent<HomeostasisController>();
             var svc = go.AddComponent<LifeSystemsServices>();
+            homeo.enabled = false;
             homeo.sheet = sheet;
             sheet.EnsureDefaults();
             float before = sheet.Get01(LifeSystemsChannelCatalog.Immune);

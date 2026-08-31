@@ -43,6 +43,7 @@ Scalable brushes (`Building`, `Intersection`, `SchoolBusStop`) materialize **one
 - Layer paint or **Brush Mode** (cards). **Select** brush click-drags cells (Shift add, Ctrl/Cmd toggle, Esc clear). **Undo / Redo** (Ctrl/Cmd+Z · Ctrl+Y) — a drag-paint is one step.
 - **Add Prison Cell Layers** + **Cell** brush (diggable / destructible / tunnel stress)
 - **Add House Street / Yard / Side Layers** (`EnsureHouseLayers`) + `DrivewayLot` / `GarageLot` brushes — see [HouseConstruction.md](HouseConstruction.md)
+- **Seed water / sewer from grid** (`SeedWaterAndSewerFromGrid`) — street-name pecking + house service taps; see [HouseUtility.md](HouseUtility.md)
 - **Add Campus Quad / Path / Building Layers** (`EnsureCampusLayers`) — see [UniversityCampus.md](UniversityCampus.md)
 - **Export Prison Cell/Door/Wall Bounds4** for SG4D `PrisonCellVolume` / `DigContactCentroid`
 - Prev / Next / Add Frame, granularity, **Resize Cell From Actors**

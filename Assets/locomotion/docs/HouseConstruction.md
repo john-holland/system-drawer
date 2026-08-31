@@ -72,8 +72,9 @@ See [SdfMaxComposition.md](../../SdfMax/docs/SdfMaxComposition.md).
 
 - Insulation: `InsulationBattBaker` — 2–4 pleated hair lattice bakes, fiber materials, `TransparentOccluder` dither; inactive until the insulation frame.
 - Eaves: `HouseEaveWaterCache.Prebake` writes catchment → gutter → downspout into `Weather.Water`; overflow uses `HousingBuildingRagdoll.overflowLayers`.
+- Basement utilities: furnace, recoup heater (`imitirrrr__`), HVAC, filters, 100 A panel, sump, SPH flood drain — see [HouseUtility.md](HouseUtility.md). `HouseBasementFloodCache.Prebake` is on Master Rebake after eaves.
 - Yard: `HouseYardFeatures` binds front walk (`PlanarSplinePathLocomotion`), steps (`StairwellTopologyAsset`), patio `RoadLot`, lot grass, and per-floor PixelLight grids on railings.
-- Electrical: `HousePowerBus` + `HouseElectricalSpan` (inactive prebake). HVAC: `HouseVentDuct` full-bore collider.
+- Electrical: `HousePowerBus` + `HouseElectricalSpan` (inactive prebake). 100 A service ≈ 24 kW; Spatial Generator clones a second panel when branch amps would exceed 100. HVAC: `HouseVentDuct` full-bore collider.
 - Wall brushes: `WallBrushCatalog` / `WallBrushSpec` paint discrete electrical, plumbing, drywall, and slat prefabs onto existing layers (`rough_mep`, `sheathing`, `studs`, …). **Add brush+!** registers a new spec; Foundation Layers stamps occupied cells as separate GameObjects.
 - Move-in: `MoveInCard` after the last construction frame.
 
@@ -83,6 +84,6 @@ See [SdfMaxComposition.md](../../SdfMax/docs/SdfMaxComposition.md).
 
 ## Travel agent
 
-`HouseConstructionTravelAgent` (not prison/rehab). `GoalType.Construction` → `ConstructionPhaseCard`. Site open/close on `siteRoot`. Open/close BT is baked in Open.Runtime (`HouseConstructionOpenCloseBt`) so Locomotion.Runtime does not cycle with Open.Runtime. Power diamond axes: commodities, resources, vehicle reach, blockage.
+`HouseConstructionTravelAgent. `GoalType.Construction` → `ConstructionPhaseCard`. Site open/close on `siteRoot`. Open/close BT is baked in Open.Runtime (`HouseConstructionOpenCloseBt`) so Locomotion.Runtime does not cycle with Open.Runtime. Utility install stops use `UtilityInstallationOpenCloseBt` the same way. Power diamond axes: commodities, resources, vehicle reach, blockage.
 
 `PlanRtsFromFenceRun` / `PlanRtsFromLotOrder` (garage pad/door only after a valid driveway outlet).

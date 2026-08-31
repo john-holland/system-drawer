@@ -507,6 +507,11 @@ public sealed class CityPixelGrid : ScriptableObject
         layers.Add(new CityPixelLayer { layerId = id, kind = kind, color = color });
     }
 
+    public void SeedWaterAndSewerFromGrid(WaterGraph water, SewerGraph sewer, HousingBuildingRagdoll[] houses, int frameIndex = 0)
+    {
+        CityUtilityGridSeeder.SeedWaterAndSewerFromGrid(this, water, sewer, houses, frameIndex);
+    }
+
     public void PaintLayerCell(CityPixelLayerKind kind, int frameIndex, int x, int y, byte value = 1)
     {
         EnsureLayersAndFrames();

@@ -31,10 +31,12 @@ public static class PlaceBuildTopologyBtBuilder
         {
             if (hits[i] == null) continue;
             string n = hits[i].gameObject.name.ToLowerInvariant();
+            string objectTag = hits[i].gameObject.tag;
             for (int t = 0; t < tags.Length; t++)
             {
                 if (string.IsNullOrEmpty(tags[t])) continue;
-                if (n.Contains(tags[t].ToLowerInvariant()) || hits[i].CompareTag(tags[t]))
+                string want = tags[t].ToLowerInvariant();
+                if (n.Contains(want) || string.Equals(objectTag, tags[t], System.StringComparison.OrdinalIgnoreCase))
                     return hits[i].attachedRigidbody != null
                         ? hits[i].attachedRigidbody.gameObject
                         : hits[i].gameObject;

@@ -76,8 +76,9 @@ public sealed class BusVehicleRagdoll : VehicleRagdoll
             for (int i = 0; i < grabBars.Count; i++)
             {
                 if (grabBars[i] == null) continue;
-                var hold = grabBars[i].GetComponent<VehicleGrabHold>()
-                           ?? grabBars[i].gameObject.AddComponent<VehicleGrabHold>();
+                var hold = grabBars[i].GetComponent<VehicleGrabHold>();
+                if (hold == null)
+                    hold = grabBars[i].gameObject.AddComponent<VehicleGrabHold>();
                 hold.EnsureCollider();
                 grabHolds.Add(hold);
             }

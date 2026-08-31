@@ -481,6 +481,11 @@ public class PhysicsIKAndCardTests
         var checkpoint = new InteractedObjectCheckpoint();
         try
         {
+            if (Application.isPlaying)
+            {
+                Assert.Ignore("Contact activation without PlayMode physics overlap.");
+                return;
+            }
             Assert.IsFalse(Application.isPlaying);
             var result = GoodSectionContactActivation.Tick(rs, new List<GameObject> { prop }, checkpoint);
             Assert.Greater(result.contactCount, 0);

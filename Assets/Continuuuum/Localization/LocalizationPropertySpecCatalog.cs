@@ -83,8 +83,29 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildLegalPropertyRecords());
         list.AddRange(BuildVotePropertyRecords());
         list.AddRange(BuildGameSessionPropertyRecords());
+        list.AddRange(BuildUtilityPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildUtilityPropertyRecords() => new[]
+    {
+        Spec(UtilityLemmaPropertyKeys.Furnace, "String", "", "Basement furnace"),
+        Spec(UtilityLemmaPropertyKeys.WaterHeater, "String", "", "Tank water heater"),
+        Spec(UtilityLemmaPropertyKeys.WaterMain, "String", "", "City water main"),
+        Spec(UtilityLemmaPropertyKeys.Shutoff, "String", "", "Building water shutoff"),
+        Spec(UtilityLemmaPropertyKeys.WaterFilter, "String", "", "Utility filter bank"),
+        Spec(UtilityLemmaPropertyKeys.Hvac, "String", "", "HVAC plant"),
+        Spec(UtilityLemmaPropertyKeys.Utility, "String", "", "Utility room / comfort"),
+        Spec(UtilityLemmaPropertyKeys.CircuitBreaker, "String", "", "100 A service panel"),
+        Spec(UtilityLemmaPropertyKeys.WallPlug, "String", "", "Wall receptacle"),
+        Spec(UtilityLemmaPropertyKeys.JacobsLadder, "String", "", "Recoup-axis gunk freeer"),
+        Spec(UtilityLemmaPropertyKeys.Recoup, "String", "", "Recoup wheel energy"),
+        Spec(UtilityLemmaPropertyKeys.Imitirrrr, "String", "", "Submerged silicon recoup wheel"),
+        Spec(UtilityLemmaPropertyKeys.Flood, "String", "", "Basement standing flood"),
+        Spec(UtilityLemmaPropertyKeys.Gunk, "String", "", "Jacobs-ladder trap fill"),
+        Spec(UtilityLemmaPropertyKeys.SumpPump, "String", "", "Basement pit pump"),
+        Spec(UtilityLemmaPropertyKeys.Drain, "String", "", "Sump / SPH drain"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildVotePropertyRecords() => new[]
     {

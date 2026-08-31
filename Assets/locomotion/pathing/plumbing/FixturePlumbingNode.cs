@@ -51,14 +51,27 @@ public sealed class FixturePlumbingNode : MonoBehaviour
 
     public float AvailableCold01()
     {
+        float shut = ShutoffMul();
         float baseC = water != null ? water.EffectiveCold01() * water.EffectivePressure01() : 1f;
-        return Mathf.Clamp01(baseC * (1f - GetCrossHeatSteal01()));
+        return Mathf.Clamp01(baseC * (1f - GetCrossHeatSteal01()) * shut);
     }
 
     public float AvailableHot01()
     {
-        float baseH = water != null ? water.EffectiveHot01() * water.EffectivePressure01() : 0.85f;
-        return Mathf.Clamp01(baseH + GetCrossHeatSpike01());
+        float shut = ShutoffMul();
+        float municipal = water != null ? water.EffectiveHot01() * water.EffectivePressure01() : 0.85f;
+        float heater = plumbingGroup != null && plumbingGroup.heaterHot01 >= 0f
+            ? plumbingGroup.heaterHot01
+            : municipal;
+        return Mathf.Clamp01(heater * shut + GetCrossHeatSpike01());
+    }
+
+    float ShutoffMul()
+    {
+        var off = plumbingGroup != null ? plumbingGroup.shutoff : null;
+        if (off == null && plumbingGroup != null)
+            off = plumbingGroup.GetComponent<BuildingWaterShutoff>();
+        return off != null && !off.open ? 0f : 1f;
     }
 
     float GetCrossHeatSteal01()

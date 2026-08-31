@@ -66,7 +66,7 @@ public static class HouseLotConnectivity
         }
     }
 
-    static CityPixelLayer FindLayer(CityPixelGrid grid, CityPixelLayerKind kind)
+    public static CityPixelLayer FindLayer(CityPixelGrid grid, CityPixelLayerKind kind)
     {
         for (int i = 0; i < grid.layers.Count; i++)
             if (grid.layers[i] != null && grid.layers[i].kind == kind)

@@ -91,6 +91,12 @@ public static class FeatureBudgetDefaults
                 new[] { "LoveWarden", "RomanceWarden", "ConsentWarden", "RelationshipTravelAgent", "TheocraticWarden", "JusticeWarden" }, null, true),
             Entry(FeatureBudgetIds.Voting, "Voting / Polling Place", 37,
                 new[] { "VotingPlace", "VoteBehaviorTree", "LaneGrid", "BallotUI", "GameSession" }, null, true),
+            Entry(FeatureBudgetIds.HouseUtility, "House Utility Room", 38,
+                new[] { "UtilityBioRhythm", "CircuitBreaker", "RecoupWheel", "SumpPump" }, null, true),
+            Entry(FeatureBudgetIds.WaterMains, "Water Mains", 39,
+                new[] { "WaterGraph" }, null, true),
+            Entry(FeatureBudgetIds.BasementFlood, "Basement Flood", 40,
+                new[] { "HouseBasementFloodCache", "RollingSphereFloodSimulator" }, null, true),
         };
     }
 

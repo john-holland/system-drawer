@@ -26,7 +26,6 @@ public sealed class DispatchRequest
 }
 
 /// <summary>Base biorhythm for public/private dispatch services (fire, EMS, police, floating hub).</summary>
-[DisallowMultipleComponent]
 [AddComponentMenu("Locomotion/Civil/Dispatch Bio Rhythm")]
 public class DispatchBioRhythm : MonoBehaviour
 {

@@ -229,10 +229,14 @@ public sealed class RoadLotBoundarySpline : MonoBehaviour
         bakedWallMesh.RecalculateBounds();
 
         if (wallMeshFilter == null)
-            wallMeshFilter = GetComponent<MeshFilter>() ?? gameObject.AddComponent<MeshFilter>();
+            wallMeshFilter = GetComponent<MeshFilter>();
+        if (wallMeshFilter == null)
+            wallMeshFilter = gameObject.AddComponent<MeshFilter>();
         wallMeshFilter.sharedMesh = bakedWallMesh;
         if (wallMeshCollider == null)
-            wallMeshCollider = GetComponent<MeshCollider>() ?? gameObject.AddComponent<MeshCollider>();
+            wallMeshCollider = GetComponent<MeshCollider>();
+        if (wallMeshCollider == null)
+            wallMeshCollider = gameObject.AddComponent<MeshCollider>();
         wallMeshCollider.sharedMesh = null;
         wallMeshCollider.sharedMesh = bakedWallMesh;
         return bakedWallMesh;

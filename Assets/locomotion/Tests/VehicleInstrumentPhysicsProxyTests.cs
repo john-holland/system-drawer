@@ -107,7 +107,10 @@ public class VehicleInstrumentPhysicsProxyTests
         };
         Assert.IsTrue(proxy.RouteCard(card, 0.02f));
         // ForceMode.Force accumulates; step physics once for non-kinematic body.
-        Physics.Simulate(0.02f);
+        var prevSim = Physics.simulationMode;
+        Physics.simulationMode = SimulationMode.Script;
+        try { Physics.Simulate(0.02f); }
+        finally { Physics.simulationMode = prevSim; }
         Assert.Greater(remoteBody.linearVelocity.sqrMagnitude + remoteBody.angularVelocity.sqrMagnitude, 0f);
 
         Object.DestroyImmediate(map);
