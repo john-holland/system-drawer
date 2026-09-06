@@ -51,6 +51,8 @@ See [SdfMaxComposition.md](../../SdfMax/docs/SdfMaxComposition.md).
 | **Locomotion → House Construction Travel Agent** | Step slider, harden, open/close BT bake, power diamond (blue optimal / red limits / dashed-white active / ThreatWarden halo) |
 | **Locomotion → City Pixel Grid Designer** | **Add House Street / Yard / Side Layers**; `DrivewayLot` / `GarageLot` brushes |
 | **Locomotion → Window PixelLight Grid Designer** | Pane/muntin/sill/trim/shutter/shade assembly; auto-fit PixelLight (3×3 panes → ≥7×7) with arbitrary-size override; trim runs + separate elbows |
+| **Locomotion → Garage Door Designer** | Sectional door pieces (rails, lock stiles, mullion, moulding) + PixelLight accordion |
+| **Locomotion → Garage Chain Designer** | Master/chain/broken links, axle/teeth PixelLight, SPH pull bake |
 
 ## Windows
 
@@ -66,7 +68,7 @@ See [SdfMaxComposition.md](../../SdfMax/docs/SdfMaxComposition.md).
 
 `DoorwayEdgePortal` — edge-loop overlay (`doorway_portal`), `PathingAperture`, open/close joint, `Locomotion/DoorwayPortalOcclusion` clip. While a body transits, `RigidbodyPhysicsWalk` owns meshes until the next descendant rigidbody and convex-refits via `ConvexTreeMeshColliderService`. On exit, restore prebaked meshes; **do not rewrite** `DestructibleBakeAsset`. `DestructibleEnvironmentMeshRenderer.DiscoverSources` uses the same walk and skips the portal overlay.
 
-`GarageDoorNode` is a vehicle aperture tagged `garage_door`.
+`GarageDoorNode` is a vehicle aperture tagged `garage_door`. It now holds `DoorAssemblySpec` / `GarageChainSpec` and `ConfigureRepeat` for sections. Full stack (chain, SPH pull, vertical tracks, drive force): [GarageDoor.md](GarageDoor.md).
 
 ## Insulation, eaves, yard, MEP
 

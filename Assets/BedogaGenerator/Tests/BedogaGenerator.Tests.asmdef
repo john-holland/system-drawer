@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "BedogaGenerator",
+        "BedogaPlacement",
         "Locomotion.Narrative.Runtime",
         "Locomotion.Runtime",
         "Continuuuum.Runtime"

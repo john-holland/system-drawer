@@ -10,6 +10,7 @@
     "Generated.Runtime",
     "SystemDrawer",
     "SystemDrawer.FeatureBudget",
+    "BedogaPlacement",
     "BedogaGenerator",
     "Planetary",
     "Weather.Runtime",

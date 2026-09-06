@@ -6,6 +6,7 @@
   <Project Path="SystemDrawer.Editor.csproj" />
   <Project Path="Planetary.csproj" />
   <Project Path="Locomotion.Tests.csproj" />
+  <Project Path="BedogaPlacement.csproj" />
   <Project Path="Environment.Destructible.Runtime.csproj" />
   <Project Path="HierarchicalPathFinding.csproj" />
   <Project Path="SdfMax.Tests.csproj" />
@@ -62,7 +63,6 @@
   <Project Path="SystemDrawer.Editor.Tests.csproj" />
   <Project Path="SystemDrawer.Lemmas.csproj" />
   <Project Path="SystemDrawer.PerfTrace.Editor.Tests.csproj" />
-  <Project Path="BedogaPlacement.csproj" />
   <Project Path="SystemDrawer.MemorySwizzle.Editor.Tests.csproj" />
   <Project Path="SystemDrawer.Lemmas.Editor.Tests.csproj" />
   <Project Path="HierarchicalPathFinding.Tests.csproj" />

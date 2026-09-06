@@ -306,10 +306,14 @@ public sealed class AirplaneDesignerWindow : EditorWindow
             _mountIndex = EditorGUILayout.IntSlider("Mount", _mountIndex, 0, _plane.lightMounts.Count - 1);
             var mount = _plane.lightMounts[_mountIndex];
             EditorGUILayout.ObjectField("Mount", mount, typeof(PixelLightGridMountGameObject), true);
-            if (mount != null && GUILayout.Button("Ensure rig"))
+            if (mount != null)
             {
-                mount.EnsureRig();
-                EditorUtility.SetDirty(mount);
+                PixelLightRadialBrushDrawer.DrawOnMount(mount);
+                if (GUILayout.Button("Ensure rig"))
+                {
+                    mount.EnsureRig();
+                    EditorUtility.SetDirty(mount);
+                }
             }
         }
         if (GUILayout.Button("Add mount on plane"))

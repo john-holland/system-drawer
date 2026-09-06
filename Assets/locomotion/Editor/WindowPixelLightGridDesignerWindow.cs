@@ -29,6 +29,8 @@ public sealed class WindowPixelLightGridDesignerWindow : EditorWindow
         _spec = (WindowAssemblySpec)EditorGUILayout.ObjectField("Window Assembly", _spec, typeof(WindowAssemblySpec), false);
         _plan = (HouseConstructionPlan)EditorGUILayout.ObjectField("Construction Plan", _plan, typeof(HouseConstructionPlan), false);
         _mount = (PixelLightGridMountGameObject)EditorGUILayout.ObjectField("Mount", _mount, typeof(PixelLightGridMountGameObject), true);
+        if (_mount != null)
+            PixelLightRadialBrushDrawer.DrawOnMount(_mount);
         _floorText = EditorGUILayout.TextField("Floor", _floorText);
 
         if (_spec == null)

@@ -504,6 +504,7 @@ public sealed class MagnetoHelicopterDesignerWindow : EditorWindow
         vs.mountCellX = EditorGUILayout.IntField("Mount cell X", vs.mountCellX);
         vs.mountCellY = EditorGUILayout.IntField("Mount cell Y", vs.mountCellY);
         vs.fineOffset = EditorGUILayout.Vector3Field("Fine offset", vs.fineOffset);
+        PixelLightRadialBrushDrawer.Draw(_selectedMount, vs);
         vs.snapToBake = EditorGUILayout.Toggle("Snap to bake", vs.snapToBake);
         vs.onlyActivateLightSource = EditorGUILayout.Toggle("Only activate light source", vs.onlyActivateLightSource);
 

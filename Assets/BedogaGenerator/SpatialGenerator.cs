@@ -499,17 +499,29 @@ public class SpatialGenerator : SpatialGeneratorBase
                 }
                 continue;
             }
-            // Single parent: use global slot index for this parent (pi=0) so different nodes don't get the same slot
-            int slot0 = GetNextSlotInParent(0);
-            Bounds? availableSpace = FindAvailableSpaceForNode(node, 0, slot0);
-            if (!availableSpace.HasValue)
+            // Single parent: same per-parent loop as multi-parent (fence posts / radial pieces).
+            int singleParentLimit = node.perParentPlacementLimits ? node.GetPlacementLimitValue() : 1;
+            int guard = 0;
+            while (guard++ < 256
+                && (node.perParentPlacementLimits
+                    ? GetPlacementCountInParent(node, 0) < singleParentLimit
+                    : node.CanPlace() && GetPlacementCountInParent(node, 0) < 1))
             {
-                Debug.LogWarning($"[SpatialGenerator] UniformQueue - skipped '{node.name}' (no space found)");
-                continue;
+                int slot0 = GetNextSlotInParent(0);
+                Bounds? availableSpace = FindAvailableSpaceForNode(node, 0, slot0);
+                if (!availableSpace.HasValue)
+                {
+                    if (GetPlacementCountInParent(node, 0) == 0)
+                        Debug.LogWarning($"[SpatialGenerator] UniformQueue - skipped '{node.name}' (no space found)");
+                    break;
+                }
+                PlaceNodeObjects(node, availableSpace.Value, 0);
+                node.IncrementPlacementCount();
+                IncrementPlacementCountInParent(node, 0);
+                IncrementSlotInParent(0);
+                if (!node.perParentPlacementLimits)
+                    break;
             }
-            PlaceNodeObjects(node, availableSpace.Value, 0);
-            node.IncrementPlacementCount();
-            IncrementSlotInParent(0);
         }
     }
     
@@ -659,6 +671,15 @@ public class SpatialGenerator : SpatialGeneratorBase
             Debug.LogWarning($"[SpatialGenerator] FindAvailableSpaceForNode - Node: {node.name} - parent '{parentNode.name}' has no placed instance; falling back to root solver");
         }
         
+        // Radial roots (or fallback when parent instance is missing) use polar slots around CenterPost.
+        if (!result.HasValue && node.UsesRadialPlacement())
+        {
+            int radialIndex = placementIndexInParent.HasValue ? placementIndexInParent.Value : nextRootPlacementIndex;
+            result = ResolveRadialBounds(node, node, parentNode, generationBounds, radialIndex);
+            if (result.HasValue && !placementIndexInParent.HasValue)
+                nextRootPlacementIndex++;
+        }
+
         // If no parent or no space found in parent, use root solver with a global placement index so each placement (across all nodes) gets a different slot (avoids different nodes e.g. room vs spotlight getting the same slot).
         if (!result.HasValue)
         {
@@ -698,6 +719,53 @@ public class SpatialGenerator : SpatialGeneratorBase
         
         return result;
     }
+
+    Bounds? ResolveRadialBounds(
+        SGBehaviorTreeNode specNode,
+        SGBehaviorTreeNode sizeNode,
+        SGBehaviorTreeNode parentNode,
+        Bounds parentBounds,
+        int placementIndex)
+    {
+        if (specNode == null || sizeNode == null)
+            return null;
+        var spec = specNode.ResolvedRadialSpec();
+        if (spec == null)
+            return null;
+        Vector3 optimalSize = new Vector3(
+            Mathf.Max(sizeNode.optimalSpace.x, MinSizeEpsilon),
+            Mathf.Max(sizeNode.optimalSpace.y, MinSizeEpsilon),
+            Mathf.Max(sizeNode.optimalSpace.z, MinSizeEpsilon));
+        int count = Mathf.Max(1, spec.count);
+        Vector3 axis = spec.axis.sqrMagnitude > 1e-8f ? spec.axis : Vector3.up;
+        Vector3 center = parentBounds.center;
+        if (specNode.radialHost != null && specNode.radialHost.centerPost != null)
+            center = WorldToLocalBounds(new Bounds(specNode.radialHost.centerPost.transform.position, Vector3.one * 0.01f)).center;
+        else if (spec.centerPostPosition.sqrMagnitude > 1e-10f)
+            center = spec.centerPostPosition;
+        else if (spec.useCustomSide && spec.customSide.origin.sqrMagnitude > 1e-8f)
+            center = spec.customSide.origin;
+        else
+            center = RadialSlotMath.SideOrigin(parentBounds, spec.side);
+        bool hasStart = specNode.radialHost != null && specNode.radialHost.StartPostAnchor != null;
+        Vector3 startLocal = center;
+        if (hasStart)
+            startLocal = WorldToLocalBounds(new Bounds(specNode.radialHost.StartPostAnchor.position, Vector3.one * 0.01f)).center;
+        float wrap = spec.ResolvedWrapDeg();
+        if (spec.useCustomSide)
+            wrap = RadialSlotMath.ResolveWrapDeg(spec.customSide, center, axis, startLocal, hasStart);
+        float start = spec.startAngleDeg;
+        if (hasStart)
+            start = RadialSlotMath.SignedAzimuthDeg(center, axis, center + Vector3.forward, startLocal);
+        float joinOff = spec.EffectiveJoinOffset();
+        float radius = spec.radius > 0f
+            ? spec.radius
+            : RadialSlotMath.NaturalRadius(optimalSize, count, wrap, joinOff);
+        if (parentNode != null && parentNode.placementMode == SGBehaviorTreeNode.PlacementMode.Around)
+            radius = Mathf.Max(radius, parentBounds.extents.magnitude + optimalSize.x * 0.5f);
+        Vector3 slot = RadialSlotMath.PolarSlot(center, axis, radius, placementIndex, count, start, wrap);
+        return new Bounds(slot, optimalSize);
+    }
     
     /// <summary>
     /// Find space within parent bounds. Uses parent node's placement mode (In = no translate, Left/Right/Forward/Down/Under/Up = that edge) to place children; falls back to child's fit-derived alignment when parent is null.
@@ -722,6 +790,15 @@ public class SpatialGenerator : SpatialGeneratorBase
         Vector3 boundsSize = optimalSize;
         
         bool placeOutside = false;
+        SGBehaviorTreeNode radialNode = parentNode != null && parentNode.UsesRadialPlacement()
+            ? parentNode
+            : (node != null && node.UsesRadialPlacement() ? node : null);
+        if (radialNode != null)
+        {
+            Bounds? radial = ResolveRadialBounds(radialNode, node, parentNode, parentBounds, placementIndexInParent);
+            if (radial.HasValue)
+                return radial;
+        }
         if (parentNode != null)
         {
             switch (parentNode.placementMode)
@@ -927,6 +1004,17 @@ public class SpatialGenerator : SpatialGeneratorBase
         // Combine with prefab's original rotation to preserve baked rotations
         Vector3 rotationEuler = node.GetRotationForDirection(node.GetAlignmentFromFit());
         instance.transform.rotation = Quaternion.Euler(rotationEuler) * prefab.transform.rotation;
+        var radialSpec = node.ResolvedRadialSpec();
+        if (node.UsesRadialPlacement() && radialSpec != null && radialSpec.yawToCenter)
+        {
+            Vector3 center = radialSpec.centerPostPosition;
+            if (node.radialHost != null && node.radialHost.centerPost != null)
+                center = node.radialHost.centerPost.transform.position;
+            Vector3 axis = radialSpec.axis.sqrMagnitude > 1e-8f ? radialSpec.axis : Vector3.up;
+            instance.transform.rotation = RadialSlotMath.YawToCenter(instance.transform.position, center, axis)
+                                         * prefab.transform.rotation;
+        }
+        RadialJoinSocket.Apply(instance, radialSpec);
         
         // Debug: Draw gizmo showing placement bounds before alignment
         #if UNITY_EDITOR

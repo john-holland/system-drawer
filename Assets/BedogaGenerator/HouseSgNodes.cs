@@ -112,13 +112,84 @@ public class HouseOpeningNode : HousePartNode
 [AddComponentMenu("Bedoga/House/Garage Door Node")]
 public sealed class GarageDoorNode : HouseOpeningNode
 {
+    public DoorAssemblySpec assembly;
+    public GarageChainSpec chain;
+    public int sectionCount = 4;
+
     void Reset()
     {
         jointId = "garage_door";
         apertureMode = PathingApertureMode.Vehicle;
         apertureTag = "garage_door";
         floorIndex = 1;
+        if (assembly != null)
+            sectionCount = assembly.sectionCount;
     }
+
+    public void ConfigureRepeat(int sections)
+    {
+        int n = Mathf.Max(1, sections);
+        sectionCount = n;
+        if (assembly != null)
+            assembly.sectionCount = n;
+        placementLimit = 1;
+        var parts = GetComponentsInChildren<HousePartNode>(true);
+        for (int i = 0; i < parts.Length; i++)
+        {
+            var p = parts[i];
+            if (p == null || p == this)
+                continue;
+            p.perParentPlacementLimits = true;
+            p.placementLimitType = PlacementLimitType.Specific;
+            if (p is DoorMullionNode)
+                p.placementLimit = Mathf.Max(0, n - 1);
+            else if (p is DoorLockStileNode)
+                p.placementLimit = 2;
+            else if (p is DoorMouldingNode mould)
+            {
+                mould.perParentPlacementLimits = true;
+                mould.sides = assembly != null ? assembly.MouldingSideCount : 4;
+                if (mould.radialBuild == null)
+                    mould.radialBuild = new RadialBuildSpec();
+                mould.radialBuild.count = mould.sides;
+                mould.placeSearchMode = PlaceSearchMode.Radial;
+                mould.placementMode = PlacementMode.Around;
+                p.placementLimit = mould.sides;
+            }
+            else
+                p.placementLimit = 1;
+        }
+    }
+}
+
+public enum DoorLockRailKind
+{
+    Middle = 0,
+    Frieze = 1
+}
+
+[AddComponentMenu("Bedoga/House/Door Top Rail Node")]
+public sealed class DoorTopRailNode : HousePartNode { }
+
+[AddComponentMenu("Bedoga/House/Door Bottom Rail Node")]
+public sealed class DoorBottomRailNode : HousePartNode { }
+
+[AddComponentMenu("Bedoga/House/Door Lock Stile Node")]
+public sealed class DoorLockStileNode : HousePartNode { }
+
+[AddComponentMenu("Bedoga/House/Door Lock Rail Node")]
+public sealed class DoorLockRailNode : HousePartNode
+{
+    public DoorLockRailKind railKind = DoorLockRailKind.Middle;
+}
+
+[AddComponentMenu("Bedoga/House/Door Mullion Node")]
+public sealed class DoorMullionNode : HousePartNode { }
+
+[AddComponentMenu("Bedoga/House/Door Moulding Node")]
+public sealed class DoorMouldingNode : HousePartNode
+{
+    public int sides = 4;
 }
 
 [AddComponentMenu("Bedoga/House/Doorway Edge Portal Node")]
@@ -360,6 +431,46 @@ public sealed class FencePanelNode : HousePartNode
         placementLimitType = PlacementLimitType.Specific;
         placementLimit = 1;
         floorIndex = 1;
+    }
+}
+
+[AddComponentMenu("Bedoga/House/Radial Run Node")]
+public sealed class RadialRunNode : HousePartNode
+{
+    public int pieceCount = 4;
+
+    void Reset()
+    {
+        placeSearchMode = PlaceSearchMode.Radial;
+        placementMode = PlacementMode.Around;
+        placementLimit = 1;
+        floorIndex = 1;
+        if (radialBuild == null)
+            radialBuild = new RadialBuildSpec();
+        radialBuild.count = pieceCount;
+    }
+
+    public void ConfigureRepeat(int count)
+    {
+        int n = Mathf.Max(1, count);
+        pieceCount = n;
+        placementLimit = 1;
+        placeSearchMode = PlaceSearchMode.Radial;
+        placementMode = PlacementMode.Around;
+        if (radialBuild == null)
+            radialBuild = new RadialBuildSpec();
+        radialBuild.count = n;
+        var parts = GetComponentsInChildren<HousePartNode>(true);
+        for (int i = 0; i < parts.Length; i++)
+        {
+            var p = parts[i];
+            if (p == null || p == this)
+                continue;
+            p.perParentPlacementLimits = true;
+            p.placementLimitType = PlacementLimitType.Specific;
+            p.placementLimit = n;
+            p.placeSearchMode = PlaceSearchMode.Radial;
+        }
     }
 }
 

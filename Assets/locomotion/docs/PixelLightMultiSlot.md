@@ -32,6 +32,23 @@ Assigned on:
 `maxRecommendedSlots` on the catalog warns when slot count exceeds the soft cap (default 16). Auto granularity can reduce aesthetic PixelLight work via Feature Budget like other civil features.
 
 See [`FeatureBudget.md`](../../SystemDrawer/docs/FeatureBudget.md).
+
+## Radial / N×N minigrid brush
+
+`PixelLightGridMountGameObject` and `PixelLightViewScopeSettings` share a radial stamp:
+
+- **Centroid cell** pick + 9-way side dropdown (Center / Upper Left / Up / Upper Right / Right / Lower Right / Bottom / Left Bottom / Left)
+- Optional `CustomRadialSideAsset` and **Preview configuration** (solved joints that match `startPostAnchor`)
+- **N×N minigrid** — cells of the stamp sit on a ring around the centroid / side origin
+- **Recursive block** — one nested minigrid around each outer cell
+- CenterPost / Create Anchor Objects / `customAngle` / `customAngleObject` via `RadialBuildHost`
+
+Heli PixelLight tab, Airplane PixelLight tab, and Airport accordion (`PixelLightGridSlotAccordionDrawer`) all draw `PixelLightRadialBrushDrawer`. No new Feature Budget id — still `pixel_light`.
+
+**Garage door / chain:** `GarageChainDesignerWindow` and `GarageDoorDesignerWindow` reuse the same brush for link faces, axle placement, sprocket teeth, and door-piece mounts. See [GarageDoor.md](GarageDoor.md).
+
+See [RadialBuild.md](../../BedogaGenerator/RadialBuild.md).
+
 Releasing render texture that is set as Camera.targetTexture!
 
 [FeatureBudget] BudgetMode: rolling CPU 944.59ms / target 16.67ms

@@ -18,8 +18,27 @@ public sealed class PixelLightGridMountGameObject : MonoBehaviour
     public int mountCellX;
     public int mountCellY;
     public GameObject attachToModelPiece;
+    public int minigridW = 1;
+    public int minigridH = 1;
+    public int nestedMinigridW = 1;
+    public int nestedMinigridH = 1;
+    public bool recursiveBlock;
+    public int centroidCellX;
+    public int centroidCellY;
+    public RadialSide radialSide = RadialSide.Center;
+    public RadialBuildSpec radialBuild = new RadialBuildSpec();
+    public CustomRadialSideAsset customRadialSide;
+    public int previewConfigIndex = -1;
+    public RadialBuildHost radialHost;
 
-    public Vector3 CellLocalPosition(int x, int y)
+    public RadialBuildHost ResolvedRadialHost() =>
+        radialHost != null ? radialHost : GetComponent<RadialBuildHost>();
+
+    public Vector3 CellLocalPosition(int x, int y) =>
+        CellLocalPosition(gridWidth, gridHeight, cellSize, localPlaneNormal, fineOffset, x, y);
+
+    public static Vector3 CellLocalPosition(
+        int gridWidth, int gridHeight, float cellSize, Vector3 localPlaneNormal, Vector3 fineOffset, int x, int y)
     {
         float ox = (x - gridWidth * 0.5f + 0.5f) * cellSize;
         float oy = (y - gridHeight * 0.5f + 0.5f) * cellSize;
@@ -29,6 +48,32 @@ public sealed class PixelLightGridMountGameObject : MonoBehaviour
         t.Normalize();
         Vector3 b = Vector3.Cross(n, t);
         return t * ox + b * oy + fineOffset;
+    }
+
+    public Bounds CellBounds(int x, int y) =>
+        new Bounds(CellLocalPosition(x, y), Vector3.one * Mathf.Max(0.01f, cellSize));
+
+    public System.Collections.Generic.List<PixelLightRadialStampCell> EnumerateRadialStamp()
+    {
+        var spec = radialBuild ?? new RadialBuildSpec();
+        spec.side = radialSide;
+        spec.minigridW = minigridW;
+        spec.minigridH = minigridH;
+        spec.centroidCellX = centroidCellX;
+        spec.centroidCellY = centroidCellY;
+        if (customRadialSide != null)
+        {
+            spec.useCustomSide = true;
+            spec.customSide = customRadialSide.ToPose();
+        }
+        var host = ResolvedRadialHost();
+        if (host != null && host.spec != null)
+            spec = host.spec;
+        return PixelLightRadialStamp.Enumerate(
+            gridWidth, gridHeight, cellSize, localPlaneNormal, fineOffset,
+            centroidCellX, centroidCellY, minigridW, minigridH, radialSide, spec,
+            customRadialSide != null ? customRadialSide.ToPose() : default,
+            customRadialSide != null, recursiveBlock, nestedMinigridW, nestedMinigridH);
     }
 
     public PixelLightRig EnsureRig()

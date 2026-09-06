@@ -65,6 +65,8 @@ public static class PixelLightGridSlotAccordionDrawer
                     "Contents", entry.contents);
                 entry.mount = (PixelLightGridMountGameObject)EditorGUILayout.ObjectField(
                     "Mount", entry.mount, typeof(PixelLightGridMountGameObject), true);
+                if (entry.mount != null)
+                    PixelLightRadialBrushDrawer.DrawOnMount(entry.mount);
                 entry.heliSlot = (HelicoptorGridSlotGameObject)EditorGUILayout.ObjectField(
                     "Heli grid slot", entry.heliSlot, typeof(HelicoptorGridSlotGameObject), true);
 

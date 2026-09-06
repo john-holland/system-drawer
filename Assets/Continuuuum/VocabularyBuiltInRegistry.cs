@@ -192,6 +192,16 @@ public static class VocabularyBuiltInRegistry
             Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, legalTags);
         foreach (var w in new[] { "announce", "returned", "announce-rights-returned" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, legalTags);
+        string[] carpentryTags = { "civil", "carpentry", "door" };
+        foreach (var w in new[]
+                 {
+                     "top-rail", "bottom-rail", "lock-stile", "lock-rail", "middle-rail",
+                     "frieze-rail", "mullion", "moulding", "garage-door", "stile"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, carpentryTags);
+        foreach (var w in new[] { "place-stile", "place-rail", "pack-panels", "wrap-moulding" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, carpentryTags);
+
         string[] roadTags = { "civil", "road" };
         foreach (var w in new[]
                  {

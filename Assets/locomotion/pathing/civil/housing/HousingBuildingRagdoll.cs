@@ -71,6 +71,7 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
     public UtilityRoomBootstrap utilityRoom;
     public HouseUtilityTap utilityTap;
     public HouseInventoryBinder inventoryBinder;
+    public GarageDoorDriveLink garageDrive;
 
     void Reset()
     {
@@ -105,6 +106,14 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
         utilityRoom.Ensure();
         if (utilityTap == null)
             utilityTap = GetComponent<HouseUtilityTap>() ?? gameObject.AddComponent<HouseUtilityTap>();
+        if (garageDrive == null)
+            garageDrive = GetComponent<GarageDoorDriveLink>();
+        if (garageDrive != null)
+        {
+            garageDrive.house = this;
+            if (garageDrive.doorLeaf == null && slots != null)
+                garageDrive.doorLeaf = slots.garageDoor;
+        }
         if (powerBus.systems == null || powerBus.systems.Count == 0)
             HousePowerBus.FillDefault(powerBus.systems);
         powerBus.maxDrawKw = CircuitBreakerPanel.MaxDrawKwForAmpacity();

@@ -62,6 +62,19 @@ One asset / object can hold **many loops** and emit **many objects**.
 
 Pieces keep `uv`, `boneWeights`, and `bindposes` when present. Skinned children reuse the source `bones` / `rootBone`.
 
+## CustomRadialSide (JointMiddle / FlyAway)
+
+`CustomRadialSideAsset` reuses this loop grabber as a tenth radial origin (an edge-loop face, not a cell corner). **Recognize and resize** walks the same boundary loops as material auto break-out.
+
+On the piece, two unit-cube bounds parent to the loop frame:
+
+| Object | Role |
+|--------|------|
+| **JointMiddle** | Overlap ∪ bespoke verts are the working-joint patch the solver reads |
+| **FlyAway** | Leave / clearance side — anti-overlap for neighbor pieces |
+
+`startPostBounds` on a `RadialBuildHost` CenterPost uses the same grabber. See [RadialBuild.md](../../BedogaGenerator/RadialBuild.md).
+
 ## Prefab
 
 **Save Prefab…** writes meshes, copied materials/textures, and a prefab under `Assets/locomotion/Prefabs/SkinnedLoopPieces/<name>/` (or the folder you pick). Children are named `Piece_<loopOrComponent>`. The prefab **root** has `SkinnedMeshLoopSection.sectionAsset` pointing at the same picker asset. Each child has `SkinnedMeshLoopSectionPiece` with `sectionAsset`, `loopIds`, and `splitMode`. The source instance is left in the scene; the save connects a new prefab instance.

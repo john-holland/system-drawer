@@ -111,6 +111,22 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_DoorCarpentryLemmas()
+    {
+        string[] terms =
+        {
+            "top-rail", "bottom-rail", "lock-stile", "frieze-rail", "mullion", "moulding", "garage-door"
+        };
+        foreach (var term in terms)
+        {
+            string id = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", term);
+            Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(id), term);
+        }
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "place-stile")));
+    }
+
+    [Test]
     public void VocabularyBuiltInRegistry_Includes_CivilAndLifeSystemLemmas()
     {
         string factory = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "factory");

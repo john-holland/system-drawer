@@ -30,8 +30,8 @@ public class SGBehaviorTreeNode : MonoBehaviour
     public enum FitY { Center, Down, Up }
     public enum FitZ { Center, Backward, Forward }
     public enum AxisDirection { PosX, NegX, PosY, NegY, PosZ, NegZ }
-    public enum PlaceSearchMode { CenterFirst = 0, GridFromMin = 1, GridFromMax = 2, FromFit = 3, Random = 4, SlotIndexOnly = 5 }
-    public enum PlacementMode { In, Left, Right, Forward, Down, Under, Up }
+    public enum PlaceSearchMode { CenterFirst = 0, GridFromMin = 1, GridFromMax = 2, FromFit = 3, Random = 4, SlotIndexOnly = 5, Radial = 6 }
+    public enum PlacementMode { In, Left, Right, Forward, Down, Under, Up, Around }
     
     [Header("Node Configuration")]
     [Tooltip("When true, placement limit is applied per parent instance (e.g. 1 wall of each type per room). When false, limit is global across all parents.")]
@@ -61,10 +61,13 @@ public class SGBehaviorTreeNode : MonoBehaviour
     public AxisDirection wrapDirection = AxisDirection.PosZ;
     [Tooltip("Place object flush against bounds edge (no offset). When false, alignmentOffsetCoefficient on SpatialGenerator is used.")]
     public bool placeFlush = false;
-    [Tooltip("How to search for a placement slot: CenterFirst = try center then grid; GridFromMin/Max = scan from min/max; FromFit = use fit anchor then stack/wrap; Random = random slot; SlotIndexOnly = use placement index only.")]
+    [Tooltip("How to search for a placement slot: CenterFirst = try center then grid; GridFromMin/Max = scan from min/max; FromFit = use fit anchor then stack/wrap; Random = random slot; SlotIndexOnly = use placement index only; Radial = polar slots around CenterPost.")]
     public PlaceSearchMode placeSearchMode = PlaceSearchMode.CenterFirst;
-    [Tooltip("Where to place this node's child nodes: In = no translate (center). Left/Right/Forward/Down/Under/Up = outside that face of this node's bounds (child center past min/max).")]
+    [Tooltip("Where to place this node's child nodes: In = no translate (center). Left/Right/Forward/Down/Under/Up = outside that face. Around = ring outside parent.")]
     public PlacementMode placementMode = PlacementMode.In;
+    [Header("Radial")]
+    public RadialBuildSpec radialBuild = new RadialBuildSpec();
+    public RadialBuildHost radialHost;
     
     [Header("Rotation")]
     public bool allowRotation = true;
@@ -186,6 +189,16 @@ public class SGBehaviorTreeNode : MonoBehaviour
         }
     }
     
+    public RadialBuildSpec ResolvedRadialSpec()
+    {
+        if (radialHost != null && radialHost.spec != null)
+            return radialHost.spec;
+        return radialBuild ?? new RadialBuildSpec();
+    }
+
+    public bool UsesRadialPlacement() =>
+        placeSearchMode == PlaceSearchMode.Radial || placementMode == PlacementMode.Around;
+
     /// <summary>Derives alignment direction from fit X/Y/Z (first non-center wins: X then Y then Z). Used for placement position and rotation.</summary>
     public AlignmentPreference GetAlignmentFromFit()
     {
