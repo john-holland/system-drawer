@@ -47,6 +47,8 @@ One-click **Setup Standard Assets** on System Drawer service wizards creates ver
 3. **Setup Standard Assets (all applicable)**.
 4. **Push registrations** before Play mode.
 
+**Create Object** (**Window → System Drawer → Create Object**, or the Hub toolbar button) searches first-party ScriptableObject menus and prefabs. The **Created File Path Preview** field shows the exact `Assets/` path that Create will write (including a unique suffix if the file already exists).
+
 ## Weather editor window
 
 The Weather Service Wizard window **Auto-Setup** button uses the same `WeatherStandardAssets.SetupForWizard` path as the component wizard.

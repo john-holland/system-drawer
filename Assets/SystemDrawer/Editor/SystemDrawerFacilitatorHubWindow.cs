@@ -106,6 +106,8 @@ internal static class FacilitatorHubUi
     internal static void DrawWindowFilterBar()
     {
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+        if (GUILayout.Button("Create Object", EditorStyles.toolbarButton, GUILayout.Width(100)))
+            SystemDrawerCreateObjectWindow.ShowWindow();
         GUILayout.Label("Filter windows", GUILayout.Width(92));
         string next = GUILayout.TextField(WindowFilter, EditorStyles.toolbarSearchField);
         if (next != WindowFilter)
