@@ -91,6 +91,10 @@ public class StoreBase : MonoBehaviour
                 return "Layout a mall kiosk with seasonal goods and accessories.";
             case "convenience_store":
                 return "Layout a convenience store with shelves for snacks, supplies, drinks, and sundries. Refrigerated sections for beer, snacks, and drinks. Coffee and kitchen + supplies.";
+            case "clothing_store":
+            case "tailor":
+            case "tayloring":
+                return "Layout a clothing store with racks, fitting rooms, cutting table, sewing and serger stations, dye bench, stuffing, and stockroom.";
             default:
                 return "Layout a general retail store with shelves, checkout, and stockroom.";
         }
@@ -101,5 +105,35 @@ public class StoreBase : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(shelfPromptOverride))
             return shelfPromptOverride;
         return DefaultPromptForStoreType(string.IsNullOrEmpty(builtinPromptKey) ? storeType : builtinPromptKey);
+    }
+
+    public float ShelfQuantity(string commodityKey)
+    {
+        float q = 0f;
+        if (shelves == null || string.IsNullOrEmpty(commodityKey)) return q;
+        for (int i = 0; i < shelves.Count; i++)
+        {
+            var s = shelves[i];
+            if (s != null && s.commodityKey == commodityKey)
+                q += s.quantity;
+        }
+        return q;
+    }
+
+    public bool HasCommodity(string commodityKey, float minQty = 1e-4f)
+        => ShelfQuantity(commodityKey) >= minQty;
+
+    public void DebitCommodity(string commodityKey, float qty)
+    {
+        if (shelves == null || string.IsNullOrEmpty(commodityKey) || qty <= 0f) return;
+        float remain = qty;
+        for (int i = 0; i < shelves.Count && remain > 1e-4f; i++)
+        {
+            var s = shelves[i];
+            if (s == null || s.commodityKey != commodityKey) continue;
+            float take = Mathf.Min(s.quantity, remain);
+            s.quantity -= take;
+            remain -= take;
+        }
     }
 }

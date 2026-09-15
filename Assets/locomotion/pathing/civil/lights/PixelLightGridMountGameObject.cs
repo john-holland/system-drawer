@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Snaps PixelLight rigs to a local grid for bake / fine positioning on models.</summary>
 [DisallowMultipleComponent]
 [AddComponentMenu("Locomotion/Civil/Lights/Pixel Light Grid Mount")]
-public sealed class PixelLightGridMountGameObject : MonoBehaviour
+public class PixelLightGridMountGameObject : MonoBehaviour
 {
     public int gridWidth = 8;
     public int gridHeight = 8;

@@ -368,6 +368,7 @@ public sealed class PersonaDayManager : MonoBehaviour
                                    || venue.kind == CivilSystemKind.GasStation || venue.kind == CivilSystemKind.Park
                                    || venue.kind == CivilSystemKind.SanitationFacility
                                    || venue.kind == CivilSystemKind.Factory
+                                   || venue.kind == CivilSystemKind.ClothingStore
                                    || venue.kind == CivilSystemKind.Prison))
                 shifts = PersonaShiftManager.FindOrCreate(venue.contextOwner);
             shifts?.Tick(DateTime.UtcNow, venue);
@@ -382,7 +383,12 @@ public sealed class PersonaDayManager : MonoBehaviour
             venue.contextOwner.GetComponent<SanitationFacilityBioRhythm>()?.Tick(DateTime.UtcNow, dt);
         if (venue.kind == CivilSystemKind.Factory && venue.contextOwner != null
             && venue.contextOwner.GetComponent<SanitationFacilityRuntime>() == null)
+        {
+            venue.contextOwner.GetComponent<TextileMillBioRhythm>()?.Tick(DateTime.UtcNow, dt);
             venue.contextOwner.GetComponent<FactoryBioRhythm>()?.Tick(DateTime.UtcNow, dt);
+        }
+        if (venue.kind == CivilSystemKind.ClothingStore && venue.contextOwner != null)
+            venue.contextOwner.GetComponent<TayloringBioRhythm>()?.Tick(DateTime.UtcNow, dt);
     }
 
     void TickCivilianSchedules(CivilVenueNode venue, DateTime utcNow)

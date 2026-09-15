@@ -1,7 +1,8 @@
 using System;
+using SdfMax;
 using UnityEngine;
 
-/// <summary>Per-kind garage chain link: prefab, mass, join socket, piece curve.</summary>
+/// <summary>Per-kind garage chain link: prefab, mass, join socket, piece curve, baked SDF.</summary>
 [Serializable]
 public sealed class GarageChainLinkDef
 {
@@ -10,6 +11,7 @@ public sealed class GarageChainLinkDef
     public float massKg = 0.12f;
     public string jointId = "chain_link";
     public CustomRadialSideAsset pieceCurve;
+    public SdfMaxCompositionAsset linkSdf;
     public RadialJoinKind joinKind = RadialJoinKind.Natural;
     public float joinOffset;
 

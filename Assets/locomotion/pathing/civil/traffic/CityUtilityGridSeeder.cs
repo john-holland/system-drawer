@@ -89,4 +89,21 @@ public static class CityUtilityGridSeeder
         }
         return best;
     }
+
+    public static void SeedGerFromHouses(CityPixelGrid grid, IList<HousingBuildingRagdoll> houses)
+    {
+        if (grid == null || houses == null) return;
+        grid.EnsureHouseLayers();
+        for (int h = 0; h < houses.Count; h++)
+        {
+            var house = houses[h];
+            if (house == null) continue;
+            house.gerBus ??= new GerPowerBus();
+            house.gerBus.Tick();
+            Vector3 world = house.transform.position;
+            if (!grid.WorldToCell(world, out int x, out int y))
+                continue;
+            house.gerBus.StampPowerLinesDown(grid, x, y);
+        }
+    }
 }

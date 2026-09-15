@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b6054b838df03947b456f7c7c95114d, type: 3}
+  m_Name: GarageChain
+  m_EditorClassIdentifier: Locomotion.Runtime::GarageChainSpec
+  totalLengthM: 4.8
+  linkPitchM: 0.1
+  selectedKind: 0
+  linkCurve:
+    pitchM: 0.1
+    plateOuterR: 0.018
+    waistScale: 0.578
+    plateThickness: 0.002
+    plateGap: 0.011
+    pinRadius: 0.01
+    pinLength: 0.53
+    rollerRadius: 0.008
+    rollerInnerRadius: 0.04
+    rollerLength: 0.16
+    weldK: 0.22
+    clipThickness: 0.13
+    clipSpan: 0.02
+  master:
+    kind: 0
+    prefab: {fileID: 0}
+    massKg: 0.18
+    jointId: chain_master
+    pieceCurve: {fileID: 11400000, guid: 817f174d27b1e6a4f9fcdcbc96a5670e, type: 2}
+    linkSdf: {fileID: 11400000, guid: a94c0b6938b629d42b5b1a6a2cb5cff1, type: 2}
+    joinKind: 0
+    joinOffset: 0
+  chain:
+    kind: 1
+    prefab: {fileID: 0}
+    massKg: 0.12
+    jointId: chain_link
+    pieceCurve: {fileID: 0}
+    linkSdf: {fileID: 11400000, guid: ba2599ca0a6595547b64ad703b38033e, type: 2}
+    joinKind: 0
+    joinOffset: 0
+  broken:
+    kind: 2
+    prefab: {fileID: 0}
+    massKg: 0.1
+    jointId: chain_broken
+    pieceCurve: {fileID: 0}
+    linkSdf: {fileID: 11400000, guid: 9de7dc4cc56c05946ba84099720c4e2b, type: 2}
+    joinKind: 0
+    joinOffset: 0
+  axleDiameterM: 0.04
+  axleLocalPosition: {x: 0, y: 0, z: 0}
+  axleLocalEuler: {x: 0, y: 0, z: 0}
+  toothCount: 12
+  pitchRadiusM: 0.12
+  toothDepthM: 0.018
+  radialBuild:
+    centerPostId: 
+    centerPostPosition: {x: 0, y: 0, z: 0}
+    axis: {x: 0, y: 1, z: 0}
+    count: 12
+    startAngleDeg: 0
+    wrapAngleDeg: 360
+    radius: 0.12
+    side: 0
+    useCustomSide: 0
+    customSide:
+      origin: {x: 0, y: 0, z: 0}
+      normal: {x: 0, y: 0, z: 0}
+      tangent: {x: 0, y: 0, z: 0}
+      jointMiddle:
+        m_Center: {x: 0, y: 0, z: 0}
+        m_Extent: {x: 0, y: 0, z: 0}
+      flyAway:
+        m_Center: {x: 0, y: 0, z: 0}
+        m_Extent: {x: 0, y: 0, z: 0}
+      customAngle: 0
+      hasCustomAngleObject: 0
+      customAngleObjectWorld: {x: 0, y: 0, z: 0}
+    yawToCenter: 1
+    joinKind: 0
+    joinOffset: 0
+    jointId: 
+    solvedConfigIndex: -1
+    minigridW: 1
+    minigridH: 1
+    centroidCellX: 0
+    centroidCellY: 0
+  steel:
+    densityKgPerM3: 7850
+    chainYieldN: 8000
+    chainBreakN: 12000
+    masterYieldN: 12000
+    masterBreakN: 18000
+    brokenYieldN: 0
+    brokenBreakN: 1
+    tensionScale: 0.25
+    porosityWeakening: 0.35
+  sphArcBinM: 0.1
+  pixelLightGridW: 8
+  pixelLightGridH: 8
+  pixelLightCellSize: 0.06

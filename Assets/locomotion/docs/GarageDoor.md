@@ -14,6 +14,17 @@ Sectional garage door: roller chain around an axle, carpentry pieces placed by S
 
 **Locomotion → Garage Chain Designer:** per-link PixelLight (`PixelLightRadialBrushDrawer`), piece curves (`CustomRadialSideAsset`), join kind, axle diameter/pose, tooth count (poses from `RadialSlotMath.PolarSlot`).
 
+**Locomotion → Garage Chain Link Designer:** SDF Max piece for one roller link from four standard curves (shared by Chain / Broken; Master adds the clip):
+
+| Curve | Role |
+|-------|------|
+| RaccoonMask | Side plates — two pin ears + pinched waist |
+| Pin | Axle capsules through the ears |
+| Hollow sheath | Capsule rollers that slip over the pins |
+| ShearClip | Master-only U + two-blade clip on the unwelded side |
+
+`GarageChainSpec.linkCurve` holds the dimensions. **Bake SDF** writes `GarageChainLinkDef.linkSdf` (`GarageChainLinkSdfBuiltins`). Welded sides use smooth-min; master leaves the left pin unwelded.
+
 Steel limits: `GarageSteelLimits` (7850 kg/m³). Applied to `RopeConfig` (Spool + `WeakestLink`).
 
 **SPH pull bake:** `GarageChainSphPullField.Bake` runs one particle neighborhood along the chain and stores 1D bins. Runtime `SampleTension` / `SampleBend` interpolates only. Rebake when length, pitch, axle radius, or tooth count changes.
@@ -39,3 +50,7 @@ Lemmas: `DoorCarpentryLemmaPropertyKeys` and Continuuuum nouns (`top-rail`, `loc
 `GarageDoorDriveLink`: `F = τ / r` × SPH wrap. Winds `RopeSystem` and slides the door Transform (no Open.Runtime). Broken chain → force 0.
 
 `HousingBuildingRagdoll.garageDrive` binds `slots.garageDoor`. Aperture tag stays `garage_door`.
+
+## Gearbox / chain-link belt
+
+`GarageChainSpec` can bind as a **chain-link belt** on `GearboxSpec` (same link SDF / steel / SPH wrap as the door and chainsaw). Frame vs Shell PixelLight inclusion is `Bounds4SdfInclusionPixelLightMount`. See [PixelLightMultiSlot.md](PixelLightMultiSlot.md) and [LumberYard.md](LumberYard.md).

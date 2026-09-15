@@ -97,6 +97,8 @@ public static class FeatureBudgetDefaults
                 new[] { "WaterGraph" }, null, true),
             Entry(FeatureBudgetIds.BasementFlood, "Basement Flood", 40,
                 new[] { "HouseBasementFloodCache", "RollingSphereFloodSimulator" }, null, true),
+            Entry(FeatureBudgetIds.Clothing, "Clothing / Tayloring", 41,
+                new[] { "ClothingStore", "Tayloring", "TextileMill", "ClothBolt", "SewingMachine", "Serger" }, null, true),
         };
     }
 

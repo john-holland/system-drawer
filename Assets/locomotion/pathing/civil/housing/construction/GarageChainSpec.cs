@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SdfMax;
 using UnityEngine;
 
 /// <summary>Garage roller chain: length, link kinds, axle wrap, steel limits, SPH pull bake inputs.</summary>
@@ -11,6 +12,7 @@ public sealed class GarageChainSpec : ScriptableObject
 
     [Header("Links")]
     public GarageChainLinkKind selectedKind = GarageChainLinkKind.Chain;
+    public GarageChainLinkCurve linkCurve = new GarageChainLinkCurve();
     public GarageChainLinkDef master = new GarageChainLinkDef
     {
         kind = GarageChainLinkKind.Master,
@@ -71,6 +73,15 @@ public sealed class GarageChainSpec : ScriptableObject
         yield return GarageChainLinkKind.Master;
         yield return GarageChainLinkKind.Chain;
         yield return GarageChainLinkKind.Broken;
+    }
+
+    public SdfMaxCompositionAsset BakeLinkSdf(GarageChainLinkKind kind, SdfMaxCompositionAsset dest = null)
+    {
+        linkCurve ??= new GarageChainLinkCurve();
+        linkCurve.SyncFromPitch(linkPitchM);
+        var baked = GarageChainLinkSdfBuiltins.BuildLink(linkCurve, kind, dest);
+        DefFor(kind).linkSdf = baked;
+        return baked;
     }
 
     public void SyncRadialFromTeeth()

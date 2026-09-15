@@ -42,3 +42,7 @@ Sidewalk bake: walkable width = `sidewalkWidthM - 2*padding`. Curb = `SdfMax` Sp
 ## VehicleTrack
 
 `laneIndex` on frames / segments / projected waypoints. Projector infers from civil layout lateral or image `cx` bins.
+
+## Canal lanes
+
+**Locomotion → Canal Lanes Designer** clones this window: City Pixel X = across channel, Y = along the spline, plus water bake / depth / wall / cement / girder fields. Runtime still uses `RoadSpline3D` + `RoadMeshBaker` with `sdfHalfHeight` = depth. See [Canals.md](Canals.md).

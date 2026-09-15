@@ -35,6 +35,7 @@ public class RopeSystem : MonoBehaviour
 
     public RopeConfig Config => config;
     public RopeArcLengthState Arc => _arc;
+    public float WindRateMps => _winding != null ? _winding.WindRateMps : 0f;
     public RopeOverlapIndex OverlapIndex => _overlap;
     public float NormalizedLoad => _tensile != null ? _tensile.NormalizedLoad : 0f;
     public float MaxTensionN => _tensile != null ? _tensile.MaxTensionN : 0f;

@@ -9,6 +9,9 @@ public sealed class WebcamAnimWebPreview : MonoBehaviour
     public double startMs;
     public double endMs;
     public string modelSpec;
+    public string artworkId;
+    public string granularityJson;
+    public float blockMeters = 1f;
 
     void Start()
     {
@@ -49,6 +52,16 @@ public sealed class WebcamAnimWebPreview : MonoBehaviour
                 case "endMs":
                     double.TryParse(val, out endMs);
                     break;
+                case "artworkId":
+                    artworkId = val;
+                    break;
+                case "granularity":
+                    granularityJson = val;
+                    break;
+                case "blockMeters":
+                    float.TryParse(val, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out blockMeters);
+                    break;
             }
         }
     }
@@ -61,6 +74,9 @@ public sealed class WebcamAnimWebPreview : MonoBehaviour
         return $"{b}/index.html?docId={UnityEngine.Networking.UnityWebRequest.EscapeURL(libraryDocId ?? "")}" +
                $"&apiBase={UnityEngine.Networking.UnityWebRequest.EscapeURL(apiBase ?? "")}" +
                $"&subsection={UnityEngine.Networking.UnityWebRequest.EscapeURL(subsectionId ?? "")}" +
-               $"&startMs={startMs}&endMs={endMs}";
+               $"&startMs={startMs}&endMs={endMs}" +
+               $"&artworkId={UnityEngine.Networking.UnityWebRequest.EscapeURL(artworkId ?? "")}" +
+               $"&blockMeters={blockMeters.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+               $"&granularity={UnityEngine.Networking.UnityWebRequest.EscapeURL(granularityJson ?? "")}";
     }
 }

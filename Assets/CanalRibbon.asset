@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bd84c5c9faa81a43b569d495c60d47f, type: 3}
+  m_Name: CanalRibbon
+  m_EditorClassIdentifier: Locomotion.Runtime::CanalRibbonSpec
+  lengthM: 120
+  widthM: 12
+  depthM: 4.5
+  wallAngleDeg: 15
+  wallMaterial: fabric_concrete
+  cementInnerCurveM: 0.4
+  cementOuterCurveM: 0.8
+  girderSpacingM: 6
+  fabricConcreteFill: 1
+  authoredSpeedMps: 0.6
+  authoredVelocityMps: 0.6
+  bakeBinM: 4
+  bakeNotLiveSim: 1
+  groundCompositionWhitelist:
+  - clay
+  - silt
+  - lined_concrete

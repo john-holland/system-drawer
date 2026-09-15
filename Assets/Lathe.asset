@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6895e5949c0c656448a0ff4f6acb2608, type: 3}
+  m_Name: Lathe
+  m_EditorClassIdentifier: Locomotion.Runtime::LatheSpec
+  headstockGearbox: {fileID: 0}
+  quickChangeGearbox: {fileID: 0}
+  carriageM: 0
+  bedwaysLengthM: 1.8
+  saddleM: 0
+  crossSlideM: 0
+  compoundRestDeg: 0
+  toolPostM: 0
+  apronLemma01: 0.5
+  halfNutEngaged: 0
+  leadScrewPitchMm: 3
+  headstockRpm: 0
+  tailstockM: 0
+  knurl01: 0
+  pixelLightCatalog: {fileID: 11400000, guid: 1df470abeb437ba41933fb4dd7176809, type: 2}
+  frameMount: {fileID: 0}
+  shellMount: {fileID: 0}
+  millKerfMount: {fileID: 0}
+  millCutCount: 3

@@ -88,5 +88,27 @@ namespace SdfMax.Tests
             Assert.Less(graph.SampleWorld(new Vector3(1f, 0f, 0f), 0f), 0f);
             Object.DestroyImmediate(comp);
         }
+
+        [Test]
+        public void SplineExtrusion_HonorsSubCentimeterRadius()
+        {
+            var comp = ScriptableObject.CreateInstance<SdfMaxCompositionAsset>();
+            comp.nodes.Add(new SdfMaxNode
+            {
+                op = SdfMaxOp.PrimitiveLeaf,
+                primitiveType = SdfPrimitiveType.SplineExtrusion,
+                extrusionRadius = 0.008f,
+                extrusionPath = new System.Collections.Generic.List<Vector3>
+                {
+                    new Vector3(0f, 0f, -0.005f),
+                    new Vector3(0f, 0f, 0.005f)
+                }
+            });
+            comp.rootNodeIndex = 0;
+            var graph = new SdfMaxExpressionGraph(comp, null, Matrix4x4.identity);
+            Assert.Less(graph.SampleWorld(new Vector3(0.006f, 0f, 0f), 0f), 0f);
+            Assert.Greater(graph.SampleWorld(new Vector3(0.012f, 0f, 0f), 0f), 0f);
+            Object.DestroyImmediate(comp);
+        }
     }
 }

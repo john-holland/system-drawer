@@ -65,6 +65,7 @@ public sealed class HousingBuildingRagdoll : BuildingRagdoll
     };
     public List<DestructibleLayerRef> overflowLayers = new List<DestructibleLayerRef>();
     public HousePowerBus powerBus = new HousePowerBus();
+    public GerPowerBus gerBus = new GerPowerBus();
     public HouseEaveWaterCache eaveWater;
     public HouseBasementFloodCache basementFlood;
     public UtilityBioRhythm utilityBio;

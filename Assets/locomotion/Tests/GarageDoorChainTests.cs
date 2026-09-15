@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using SdfMax;
 using UnityEngine;
 
 public sealed class GarageDoorChainTests
@@ -175,5 +176,64 @@ public sealed class GarageDoorChainTests
         Assert.AreEqual(90f, DoorCarpentryLemmaPropertyKeys.DefaultStilePerpRailDeg, 0.01f);
         Assert.AreEqual(0f, DoorCarpentryLemmaPropertyKeys.DefaultMullionParallelStileDeg, 0.01f);
         Assert.Contains(DoorCarpentryLemmaPropertyKeys.LemmaWrapMoulding, DoorCarpentryLemmaPropertyKeys.AllKeys);
+    }
+
+    [Test]
+    public void LinkCurve_RaccoonMask_ClosedSymmetricWaist()
+    {
+        var curve = new GarageChainLinkCurve();
+        var path = GarageChainLinkCurves.RaccoonMaskPath(curve);
+        Assert.Greater(path.Count, 8);
+        Assert.IsTrue(GarageChainLinkCurves.IsClosed(path));
+        Assert.IsTrue(GarageChainLinkCurves.IsLeftRightSymmetric(path));
+        Assert.Less(curve.WaistHalfWidth, curve.PlateOuterR);
+        float midY = 0f;
+        int midHits = 0;
+        for (int i = 0; i < path.Count; i++)
+        {
+            if (Mathf.Abs(path[i].x) < curve.Pitch * 0.08f)
+            {
+                midY += Mathf.Abs(path[i].y);
+                midHits++;
+            }
+        }
+        Assert.Greater(midHits, 0);
+        Assert.Less(midY / midHits, curve.PlateOuterR * 0.85f);
+    }
+
+    [Test]
+    public void LinkSdf_PlateEarSolid_SheathHollow()
+    {
+        var curve = new GarageChainLinkCurve();
+        var sheath = GarageChainLinkSdfBuiltins.BuildHollowSheath(curve, Vector3.zero);
+        var sheathEval = new SdfMaxEvaluator(new SdfMaxExpressionGraph(sheath, null, Matrix4x4.identity));
+        Assert.Greater(sheathEval.Sample(Vector3.zero, 0f), 0f);
+        float midR = 0.5f * (curve.RollerInnerRadius + curve.RollerRadius);
+        Assert.Less(sheathEval.Sample(new Vector3(midR, 0f, 0f), 0f), 0f);
+
+        var link = GarageChainLinkSdfBuiltins.BuildLink(curve, GarageChainLinkKind.Chain);
+        var eval = new SdfMaxEvaluator(new SdfMaxExpressionGraph(link, null, Matrix4x4.identity));
+        Vector3 ear = curve.LeftPin + new Vector3(0f, curve.PlateOuterR * 0.45f, curve.PlateGap * 0.5f);
+        Assert.Less(eval.Sample(ear, 0f), 0f);
+        Assert.Greater(eval.Sample(new Vector3(1f, 1f, 1f), 0f), 0f);
+        Object.DestroyImmediate(sheath);
+        Object.DestroyImmediate(link);
+    }
+
+    [Test]
+    public void LinkSdf_MasterHasClip_BrokenMatchesChain()
+    {
+        var spec = ScriptableObject.CreateInstance<GarageChainSpec>();
+        var chain = spec.BakeLinkSdf(GarageChainLinkKind.Chain);
+        var broken = spec.BakeLinkSdf(GarageChainLinkKind.Broken);
+        var master = spec.BakeLinkSdf(GarageChainLinkKind.Master);
+        Assert.AreEqual(chain.nodes.Count, broken.nodes.Count);
+        Assert.Greater(master.nodes.Count, chain.nodes.Count);
+        Assert.AreSame(chain, spec.chain.linkSdf);
+        Assert.AreSame(master, spec.master.linkSdf);
+        Object.DestroyImmediate(chain);
+        Object.DestroyImmediate(broken);
+        Object.DestroyImmediate(master);
+        Object.DestroyImmediate(spec);
     }
 }

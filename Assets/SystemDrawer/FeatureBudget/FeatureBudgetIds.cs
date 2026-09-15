@@ -42,4 +42,5 @@ public static class FeatureBudgetIds
     public const string HouseUtility = "house_utility";
     public const string WaterMains = "water_mains";
     public const string BasementFlood = "basement_flood";
+    public const string Clothing = "clothing";
 }

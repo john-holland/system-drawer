@@ -7,12 +7,22 @@ public enum CutProjectionMode
     Projected
 }
 
+public enum CutToolKind
+{
+    Axe = 0,
+    Saw = 1,
+    Chainsaw = 2,
+    Lathe = 3,
+    Needle = 4
+}
+
 /// <summary>Tool that emits combat cut events on an interval with projection options.</summary>
 [AddComponentMenu("Locomotion/Combat/Cut Tool")]
 public sealed class CutToolComponent : MonoBehaviour
 {
     public bool active;
     public float cutInterval = 0.2f;
+    public CutToolKind toolKind = CutToolKind.Chainsaw;
     public string cutterProfileId = "chainsaw";
     public string cutProfileId = "human_flesh";
     public CutProjectionMode projectionMode = CutProjectionMode.Projected;

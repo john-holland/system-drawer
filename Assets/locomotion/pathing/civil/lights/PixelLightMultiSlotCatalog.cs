@@ -16,7 +16,9 @@ public enum PixelLightDesignerView
 public enum PixelLightDesignerScope
 {
     Airframe = 0,
-    Magneto = 1
+    Magneto = 1,
+    Frame = 2,
+    Shell = 3
 }
 
 /// <summary>Per view × scope × magneto PixelLight property bag (independent saves).</summary>
@@ -185,12 +187,29 @@ public sealed class PixelLightMultiSlotCatalog : ScriptableObject
         return created;
     }
 
+    public string NextIncrementingLabel(string prefix)
+    {
+        if (gridSlots == null)
+            gridSlots = new List<PixelLightGridSlotEntry>();
+        string head = (string.IsNullOrEmpty(prefix) ? "Mount" : prefix).Trim() + " ";
+        int max = 0;
+        for (int i = 0; i < gridSlots.Count; i++)
+        {
+            string lab = gridSlots[i] != null ? gridSlots[i].label : null;
+            if (string.IsNullOrEmpty(lab) || !lab.StartsWith(head, StringComparison.Ordinal))
+                continue;
+            if (int.TryParse(lab.Substring(head.Length), out int n))
+                max = Mathf.Max(max, n);
+        }
+        return head + (max + 1);
+    }
+
     public PixelLightGridSlotEntry AddSlot(string label = null)
     {
         var e = new PixelLightGridSlotEntry
         {
             slotId = Guid.NewGuid().ToString("N").Substring(0, 8),
-            label = string.IsNullOrEmpty(label) ? "Slot " + (gridSlots.Count + 1) : label,
+            label = string.IsNullOrEmpty(label) ? NextIncrementingLabel("Mount") : label,
             accordionExpanded = true
         };
         gridSlots.Add(e);

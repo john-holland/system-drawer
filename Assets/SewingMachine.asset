@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b7bd60e22f86fe4a8147de6ca2118c2, type: 3}
+  m_Name: SewingMachine
+  m_EditorClassIdentifier: Locomotion.Runtime::SewingMachineSpec
+  pixelLightCatalog: {fileID: 0}
+  needleBarGearbox: {fileID: 0}
+  needleKind: 4
+  threadGuides:
+  - spool
+  - tension
+  - takeup
+  - needle
+  - hook
+  - bobbin
+  threadingPath: {fileID: 0}
+  frameMount: {fileID: 0}
+  shellMount: {fileID: 0}

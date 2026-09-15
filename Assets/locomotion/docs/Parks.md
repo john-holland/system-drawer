@@ -32,7 +32,12 @@ Menu **Locomotion → Park Plant Planner** (`ParkPlantPlannerWindow`):
 - Plant/color dropdown, pencil, fill
 - Placement squares auto on paint/move
 - Time-layer +/− for staged growth
+- Fiber plants (`flax` / `hemp` / `cotton`) stay on this planner; `FiberFarmTravelAgent` authors harvest stages. See [ClothingTayloring.md](ClothingTayloring.md).
 
 ## FeatureBudget
 
 Id: `park` (`FeatureBudgetIds.Park`); planar spline / grass under park grounds.
+
+## Tree growth (lumber)
+
+`TreeGrowthTravelAgent` extends plant defs from this planner (do not invent a second plant engine). Open/close BT is `TreeGrowthOpenCloseBt` in Open.Runtime. See [LumberYard.md](LumberYard.md).

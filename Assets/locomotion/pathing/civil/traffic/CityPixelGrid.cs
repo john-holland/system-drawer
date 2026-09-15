@@ -45,7 +45,8 @@ public enum CityPixelLayerKind
     CourtWell = 37,
     CourtJury = 38,
     CourtGallery = 39,
-    CourtBar = 40
+    CourtBar = 40,
+    Apartment = 41
 }
 
 public enum CityPixelCrowdHint
@@ -458,6 +459,7 @@ public sealed class CityPixelGrid : ScriptableObject
         AddLayerIfMissing("house_left", CityPixelLayerKind.HouseLeft, new Color(0.7f, 0.5f, 0.38f));
         AddLayerIfMissing("house_right", CityPixelLayerKind.HouseRight, new Color(0.68f, 0.48f, 0.36f));
         AddLayerIfMissing("house_back", CityPixelLayerKind.HouseBack, new Color(0.62f, 0.44f, 0.34f));
+        AddLayerIfMissing("apartment", CityPixelLayerKind.Apartment, new Color(0.55f, 0.38f, 0.52f));
         EnsureLayersAndFrames();
     }
 

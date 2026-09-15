@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8321a5bbe009864f80040442ea398fc, type: 3}
+  m_Name: InkMaterialProfile
+  m_EditorClassIdentifier: Locomotion.Runtime::InkMaterialProfile
+  paintlikeInk: 0
+  singleLayerMixing: 1
+  dilution: 0.75
+  layerThicknessM: 0.0004
+  sphDryRate: 0.45
+  specularWet: 0.85
+  specularDry: 0.08
+  seeThroughDrySeconds: 30
+  seeThroughAlpha: 0.12
+  defaultInkColor: {r: 0.05, g: 0.06, b: 0.12, a: 1}

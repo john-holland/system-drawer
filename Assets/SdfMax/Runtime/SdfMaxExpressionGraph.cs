@@ -264,7 +264,7 @@ namespace SdfMax
 
         static float EvalSplineExtrusion(Vector3 p, SdfMaxNode node)
         {
-            float rad = Mathf.Max(0.01f, node.extrusionRadius);
+            float rad = Mathf.Max(1e-4f, node.extrusionRadius);
             Vector3 a = Vector3.zero;
             Vector3 b = node.extrusionEnd.sqrMagnitude > 1e-8f ? node.extrusionEnd : new Vector3(1f, 0f, 0f);
             if (node.extrusionPath != null && node.extrusionPath.Count >= 2)

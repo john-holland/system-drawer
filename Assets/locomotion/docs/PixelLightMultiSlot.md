@@ -16,6 +16,7 @@ Assigned on:
 - `MagnetoHelicopterConfigurationAsset.pixelLightCatalog`
 - `AirplaneVehicleRagdoll.pixelLightCatalog`
 - Airport Pixel Light Designer catalog field
+- Sewing machine / serger Frame/Shell (`SewingMachineSpec`, `SergerSpec`) — needle bar, hook, bobbin. See [ClothingTayloring.md](ClothingTayloring.md).
 
 ## Multi grid slots
 
@@ -6006,3 +6007,16 @@ UnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)
 4. Quick brush row: **On / Delete / Grid Slot / Fill / Chase / Clear**. **Grid Slot** click places a `HelicoptorGridSlot` at that cell (overlay **G**). **Delete** on a **G** cell prompts *Do you want to delete this grid slot?* (Yes/No) and removes the scene slot + catalog entry.
 5. **Frame scrubber** — IntSlider + Time (ms) slider + tick bar to hand-scrub pattern frames; optional live preview on the selected mount (pauses rig playback).
 6. Save all on Overview persists catalog + craft config.
+
+## Gearbox Frame / Shell (six isometric cube faces)
+
+**Locomotion → Gearbox Designer** paints on `PixelLightGridMountGameObject` with the radial brush. Scope is **Frame vs Shell** (`PixelLightDesignerScope.Frame` / `Shell`), not Airframe/Magneto. Each `view × Frame|Shell` bag is an independent `PixelLightViewScopeSettings`. Preview cameras are isometric (~35° tilt / 45° yaw per cube face via `PixelLightIsometricViews`).
+
+`Bounds4SdfInclusionPixelLightMount`:
+
+- **Shell** — closed outer volume; stamp cells whose 4-bounds sit inside the envelope. Subtract hardware from the interior.
+- **Frame** — open members (tube/girder); stamp cells on the member, not in the cavity.
+
+Optional `SdfMaxCompositionAsset composition` and **Convert from mesh** (`SdfMaxMeshAutoSetup`) override the curve. Priority: assigned composition → converted mesh → curve. Hardware Subtract unions axle/pin/sprocket/lathe spindle SDFs (`SdfMaxOp.Subtract`).
+
+`GearboxSpec` ratios: gear–gear `drivenTeeth / drivingTeeth`; belt from pulley diameters; chain-link belt binds `GarageChainSpec` (path length differs from V-belt). Reuses `pixel_light` FeatureBudget (no new id).

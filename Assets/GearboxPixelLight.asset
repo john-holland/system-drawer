@@ -1,0 +1,686 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7657182582697470905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06343518d0c044f4387ccddb7c605331, type: 3}
+  m_Name: GearboxPixelLight_1_3_0
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightPatternAsset
+  gridWidth: 8
+  gridHeight: 8
+  stepMs: 1000
+  composite: 0
+  layers:
+  - layerId: solid
+    frames:
+    - rows:
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '    #   '
+      - '        '
+    weight01: 1
+--- !u!114 &-7603957378586227889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06343518d0c044f4387ccddb7c605331, type: 3}
+  m_Name: GearboxPixelLight_4_3_0
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightPatternAsset
+  gridWidth: 8
+  gridHeight: 8
+  stepMs: 1000
+  composite: 0
+  layers:
+  - layerId: solid
+    frames:
+    - rows:
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+    weight01: 1
+--- !u!114 &-2922828629488337445
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06343518d0c044f4387ccddb7c605331, type: 3}
+  m_Name: GearboxPixelLight_5_3_0
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightPatternAsset
+  gridWidth: 8
+  gridHeight: 8
+  stepMs: 1000
+  composite: 0
+  layers:
+  - layerId: solid
+    frames:
+    - rows:
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+    weight01: 1
+--- !u!114 &-807638982418939155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06343518d0c044f4387ccddb7c605331, type: 3}
+  m_Name: GearboxPixelLight_2_3_0
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightPatternAsset
+  gridWidth: 8
+  gridHeight: 8
+  stepMs: 1000
+  composite: 0
+  layers:
+  - layerId: solid
+    frames:
+    - rows:
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+    weight01: 1
+--- !u!114 &-293371114017579883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06343518d0c044f4387ccddb7c605331, type: 3}
+  m_Name: GearboxPixelLight_0_3_0
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightPatternAsset
+  gridWidth: 8
+  gridHeight: 8
+  stepMs: 1000
+  composite: 0
+  layers:
+  - layerId: solid
+    frames:
+    - rows:
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+    weight01: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43d3652460a43254b863a2e316a39ad4, type: 3}
+  m_Name: GearboxPixelLight
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightMultiSlotCatalog
+  viewScopeSettings:
+  - view: 1
+    scope: 3
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    minigridW: 1
+    minigridH: 1
+    nestedMinigridW: 1
+    nestedMinigridH: 1
+    recursiveBlock: 0
+    centroidCellX: 0
+    centroidCellY: 0
+    radialSide: 0
+    radialBuild:
+      centerPostId: 
+      centerPostPosition: {x: 0, y: 0, z: 0}
+      axis: {x: 0, y: 1, z: 0}
+      count: 4
+      startAngleDeg: 0
+      wrapAngleDeg: 0
+      radius: 0
+      side: 0
+      useCustomSide: 0
+      customSide:
+        origin: {x: 0, y: 0, z: 0}
+        normal: {x: 0, y: 0, z: 0}
+        tangent: {x: 0, y: 0, z: 0}
+        jointMiddle:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        flyAway:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        customAngle: 0
+        hasCustomAngleObject: 0
+        customAngleObjectWorld: {x: 0, y: 0, z: 0}
+      yawToCenter: 1
+      joinKind: 0
+      joinOffset: 0
+      jointId: 
+      solvedConfigIndex: -1
+      minigridW: 1
+      minigridH: 1
+      centroidCellX: 0
+      centroidCellY: 0
+    customRadialSide: {fileID: 0}
+    previewConfigIndex: -1
+    radialHost: {fileID: 0}
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: -7657182582697470905}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  - view: 1
+    scope: 2
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    minigridW: 1
+    minigridH: 1
+    nestedMinigridW: 1
+    nestedMinigridH: 1
+    recursiveBlock: 0
+    centroidCellX: 0
+    centroidCellY: 0
+    radialSide: 0
+    radialBuild:
+      centerPostId: 
+      centerPostPosition: {x: 0, y: 0, z: 0}
+      axis: {x: 0, y: 1, z: 0}
+      count: 4
+      startAngleDeg: 0
+      wrapAngleDeg: 0
+      radius: 0
+      side: 0
+      useCustomSide: 0
+      customSide:
+        origin: {x: 0, y: 0, z: 0}
+        normal: {x: 0, y: 0, z: 0}
+        tangent: {x: 0, y: 0, z: 0}
+        jointMiddle:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        flyAway:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        customAngle: 0
+        hasCustomAngleObject: 0
+        customAngleObjectWorld: {x: 0, y: 0, z: 0}
+      yawToCenter: 1
+      joinKind: 0
+      joinOffset: 0
+      jointId: 
+      solvedConfigIndex: -1
+      minigridW: 1
+      minigridH: 1
+      centroidCellX: 0
+      centroidCellY: 0
+    customRadialSide: {fileID: 0}
+    previewConfigIndex: -1
+    radialHost: {fileID: 0}
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: 7328848159024906401}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  - view: 3
+    scope: 3
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    minigridW: 1
+    minigridH: 1
+    nestedMinigridW: 1
+    nestedMinigridH: 1
+    recursiveBlock: 0
+    centroidCellX: 0
+    centroidCellY: 0
+    radialSide: 0
+    radialBuild:
+      centerPostId: 
+      centerPostPosition: {x: 0, y: 0, z: 0}
+      axis: {x: 0, y: 1, z: 0}
+      count: 4
+      startAngleDeg: 0
+      wrapAngleDeg: 0
+      radius: 0
+      side: 0
+      useCustomSide: 0
+      customSide:
+        origin: {x: 0, y: 0, z: 0}
+        normal: {x: 0, y: 0, z: 0}
+        tangent: {x: 0, y: 0, z: 0}
+        jointMiddle:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        flyAway:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        customAngle: 0
+        hasCustomAngleObject: 0
+        customAngleObjectWorld: {x: 0, y: 0, z: 0}
+      yawToCenter: 1
+      joinKind: 0
+      joinOffset: 0
+      jointId: 
+      solvedConfigIndex: -1
+      minigridW: 1
+      minigridH: 1
+      centroidCellX: 0
+      centroidCellY: 0
+    customRadialSide: {fileID: 0}
+    previewConfigIndex: -1
+    radialHost: {fileID: 0}
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: 6774924886199339366}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  - view: 0
+    scope: 3
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    minigridW: 1
+    minigridH: 1
+    nestedMinigridW: 1
+    nestedMinigridH: 1
+    recursiveBlock: 0
+    centroidCellX: 0
+    centroidCellY: 0
+    radialSide: 0
+    radialBuild:
+      centerPostId: 
+      centerPostPosition: {x: 0, y: 0, z: 0}
+      axis: {x: 0, y: 1, z: 0}
+      count: 4
+      startAngleDeg: 0
+      wrapAngleDeg: 0
+      radius: 0
+      side: 0
+      useCustomSide: 0
+      customSide:
+        origin: {x: 0, y: 0, z: 0}
+        normal: {x: 0, y: 0, z: 0}
+        tangent: {x: 0, y: 0, z: 0}
+        jointMiddle:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        flyAway:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        customAngle: 0
+        hasCustomAngleObject: 0
+        customAngleObjectWorld: {x: 0, y: 0, z: 0}
+      yawToCenter: 1
+      joinKind: 0
+      joinOffset: 0
+      jointId: 
+      solvedConfigIndex: -1
+      minigridW: 1
+      minigridH: 1
+      centroidCellX: 0
+      centroidCellY: 0
+    customRadialSide: {fileID: 0}
+    previewConfigIndex: -1
+    radialHost: {fileID: 0}
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: -293371114017579883}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  - view: 2
+    scope: 3
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    minigridW: 1
+    minigridH: 1
+    nestedMinigridW: 1
+    nestedMinigridH: 1
+    recursiveBlock: 0
+    centroidCellX: 0
+    centroidCellY: 0
+    radialSide: 0
+    radialBuild:
+      centerPostId: 
+      centerPostPosition: {x: 0, y: 0, z: 0}
+      axis: {x: 0, y: 1, z: 0}
+      count: 4
+      startAngleDeg: 0
+      wrapAngleDeg: 0
+      radius: 0
+      side: 0
+      useCustomSide: 0
+      customSide:
+        origin: {x: 0, y: 0, z: 0}
+        normal: {x: 0, y: 0, z: 0}
+        tangent: {x: 0, y: 0, z: 0}
+        jointMiddle:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        flyAway:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        customAngle: 0
+        hasCustomAngleObject: 0
+        customAngleObjectWorld: {x: 0, y: 0, z: 0}
+      yawToCenter: 1
+      joinKind: 0
+      joinOffset: 0
+      jointId: 
+      solvedConfigIndex: -1
+      minigridW: 1
+      minigridH: 1
+      centroidCellX: 0
+      centroidCellY: 0
+    customRadialSide: {fileID: 0}
+    previewConfigIndex: -1
+    radialHost: {fileID: 0}
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: -807638982418939155}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  - view: 4
+    scope: 3
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    minigridW: 1
+    minigridH: 1
+    nestedMinigridW: 1
+    nestedMinigridH: 1
+    recursiveBlock: 0
+    centroidCellX: 0
+    centroidCellY: 0
+    radialSide: 0
+    radialBuild:
+      centerPostId: 
+      centerPostPosition: {x: 0, y: 0, z: 0}
+      axis: {x: 0, y: 1, z: 0}
+      count: 4
+      startAngleDeg: 0
+      wrapAngleDeg: 0
+      radius: 0
+      side: 0
+      useCustomSide: 0
+      customSide:
+        origin: {x: 0, y: 0, z: 0}
+        normal: {x: 0, y: 0, z: 0}
+        tangent: {x: 0, y: 0, z: 0}
+        jointMiddle:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        flyAway:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        customAngle: 0
+        hasCustomAngleObject: 0
+        customAngleObjectWorld: {x: 0, y: 0, z: 0}
+      yawToCenter: 1
+      joinKind: 0
+      joinOffset: 0
+      jointId: 
+      solvedConfigIndex: -1
+      minigridW: 1
+      minigridH: 1
+      centroidCellX: 0
+      centroidCellY: 0
+    customRadialSide: {fileID: 0}
+    previewConfigIndex: -1
+    radialHost: {fileID: 0}
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: -7603957378586227889}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  - view: 5
+    scope: 3
+    magnetoIndex: 0
+    slotId: 
+    gridWidth: 8
+    gridHeight: 8
+    cellSize: 0.25
+    mountCellX: 0
+    mountCellY: 0
+    minigridW: 1
+    minigridH: 1
+    nestedMinigridW: 1
+    nestedMinigridH: 1
+    recursiveBlock: 0
+    centroidCellX: 0
+    centroidCellY: 0
+    radialSide: 0
+    radialBuild:
+      centerPostId: 
+      centerPostPosition: {x: 0, y: 0, z: 0}
+      axis: {x: 0, y: 1, z: 0}
+      count: 4
+      startAngleDeg: 0
+      wrapAngleDeg: 0
+      radius: 0
+      side: 0
+      useCustomSide: 0
+      customSide:
+        origin: {x: 0, y: 0, z: 0}
+        normal: {x: 0, y: 0, z: 0}
+        tangent: {x: 0, y: 0, z: 0}
+        jointMiddle:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        flyAway:
+          m_Center: {x: 0, y: 0, z: 0}
+          m_Extent: {x: 0, y: 0, z: 0}
+        customAngle: 0
+        hasCustomAngleObject: 0
+        customAngleObjectWorld: {x: 0, y: 0, z: 0}
+      yawToCenter: 1
+      joinKind: 0
+      joinOffset: 0
+      jointId: 
+      solvedConfigIndex: -1
+      minigridW: 1
+      minigridH: 1
+      centroidCellX: 0
+      centroidCellY: 0
+    customRadialSide: {fileID: 0}
+    previewConfigIndex: -1
+    radialHost: {fileID: 0}
+    fineOffset: {x: 0, y: 0, z: 0}
+    snapToBake: 1
+    onlyActivateLightSource: 0
+    pattern: {fileID: -2922828629488337445}
+    colors: {fileID: 0}
+    paintLayer: 0
+    paintFrame: 0
+    brushKind: 0
+    rigGridWidth: 8
+    rigGridHeight: 4
+    stepMs: 100
+    brightness01: 1
+  gridSlots:
+  - slotId: 652f5366
+    label: Slot 1
+    cellX: 0
+    cellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  - slotId: 29068e33
+    label: Slot 2
+    cellX: 0
+    cellY: 0
+    fineOffset: {x: 0, y: 0, z: 0}
+    contents: 0
+    mount: {fileID: 0}
+    heliSlot: {fileID: 0}
+    accordionExpanded: 1
+  maxRecommendedSlots: 16
+--- !u!114 &6774924886199339366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06343518d0c044f4387ccddb7c605331, type: 3}
+  m_Name: GearboxPixelLight_3_3_0
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightPatternAsset
+  gridWidth: 8
+  gridHeight: 8
+  stepMs: 1000
+  composite: 0
+  layers:
+  - layerId: solid
+    frames:
+    - rows:
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+    weight01: 1
+--- !u!114 &7328848159024906401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06343518d0c044f4387ccddb7c605331, type: 3}
+  m_Name: GearboxPixelLight_1_2_0
+  m_EditorClassIdentifier: Locomotion.Runtime::PixelLightPatternAsset
+  gridWidth: 8
+  gridHeight: 8
+  stepMs: 1000
+  composite: 0
+  layers:
+  - layerId: solid
+    frames:
+    - rows:
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+      - '        '
+    weight01: 1

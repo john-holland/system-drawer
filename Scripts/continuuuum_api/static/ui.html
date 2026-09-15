@@ -142,9 +142,11 @@ stage:root|condition:soil|description:Root develops"></textarea></label>
   <script src="/static/shared/continuuuum-nav/continuuuum-nav.js"></script>
   <script>
     const API = '/api';
-    const scriptOutputBase = (typeof window !== 'undefined' && window.location.port === '5050')
-      ? (window.location.origin + '/script-output')
-      : (window.location.origin.replace(/:\d+$/, ':5174'));
+    const _port = typeof window !== 'undefined' ? window.location.port : '';
+    const _vite = _port === '5173' || _port === '5174' || _port === '5175';
+    const scriptOutputBase = _vite
+      ? window.location.origin.replace(/:\d+$/, ':5174')
+      : (window.location.origin + '/script-output');
 
     ContinuuuumNav.mount({
       app: 'hub',

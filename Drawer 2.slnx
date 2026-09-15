@@ -25,6 +25,7 @@
   <Project Path="Locomotion.Open.Editor.csproj" />
   <Project Path="Locomotion.Audio.Editor.csproj" />
   <Project Path="Locomotion.Narrative.Runtime.csproj" />
+  <Project Path="Locomotion.Open.Tests.csproj" />
   <Project Path="Locomotion.Narrative.Inference.csproj" />
   <Project Path="Locomotion.Open.Runtime.csproj" />
   <Project Path="Roads.Runtime.csproj" />
@@ -38,7 +39,6 @@
   <Project Path="SystemDrawer.Networking.Editor.csproj" />
   <Project Path="SystemDrawer.Networking.csproj" />
   <Project Path="Locomotion.Narrative.Editor.csproj" />
-  <Project Path="Locomotion.Open.Tests.csproj" />
   <Project Path="Continuuuum.Library.Runtime.csproj" />
   <Project Path="Locomotion.Liquid.Runtime.csproj" />
   <Project Path="Continuuuum.Society.csproj" />

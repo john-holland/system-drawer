@@ -14,7 +14,7 @@ public sealed class GarageDoorDesignerWindow : EditorWindow
     public static void Open()
     {
         var w = GetWindow<GarageDoorDesignerWindow>("Garage Door");
-        w.minSize = new Vector2(460, 540);
+        w.minSize = new Vector2(460, 640);
     }
 
     void OnGUI()
@@ -82,7 +82,7 @@ public sealed class GarageDoorDesignerWindow : EditorWindow
                 Selection.activeGameObject = entry.mount.gameObject;
                 _mount = entry.mount;
             }
-        });
+        }, 0f);
 
         if (GUILayout.Button("Apply grid to mount") && _mount != null)
         {

@@ -64,3 +64,42 @@ public class FactoryLineCard : TravelAgentCard
         return c;
     }
 }
+
+[Serializable]
+public class FactoryLoadZoneCard : FactoryLineCard
+{
+    public static FactoryLoadZoneCard GenerateLoad(DispatchRequest request, FactoryRuntime factory = null)
+    {
+        var c = new FactoryLoadZoneCard();
+        c.factory = factory;
+        c.sectionName = "factory_load_zone";
+        c.description = "Factory load zone";
+        c.isTravelAgentGoal = true;
+        c.isCivilGoal = true;
+        c.goalWorld = request != null ? request.worldTarget : Vector3.zero;
+        c.physicalPathingTag = "factory_load";
+        return c;
+    }
+
+    public FactoryTruckUnloadCard ToTruckUnload(DispatchRequest request)
+    {
+        return FactoryTruckUnloadCard.GenerateUnload(request, factory);
+    }
+}
+
+[Serializable]
+public class FactoryTruckUnloadCard : FactoryLineCard
+{
+    public static FactoryTruckUnloadCard GenerateUnload(DispatchRequest request, FactoryRuntime factory = null)
+    {
+        var c = new FactoryTruckUnloadCard();
+        c.factory = factory;
+        c.sectionName = "factory_truck_unload";
+        c.description = "Factory truck unload";
+        c.isTravelAgentGoal = true;
+        c.isCivilGoal = true;
+        c.goalWorld = request != null ? request.worldTarget : Vector3.zero;
+        c.physicalPathingTag = "factory_unload";
+        return c;
+    }
+}

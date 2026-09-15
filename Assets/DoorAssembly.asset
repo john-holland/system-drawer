@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ce211cbe07ac2649a874378e34dae66, type: 3}
+  m_Name: DoorAssembly
+  m_EditorClassIdentifier: Locomotion.Runtime::DoorAssemblySpec
+  openingSize: {x: 2.4, y: 2.1}
+  sectionCount: 4
+  railThickness: 0.045
+  stileWidth: 0.09
+  mullionWidth: 0.06
+  panelThickness: 0.028
+  topRail: 1
+  bottomRail: 1
+  lockStiles: 1
+  middleRail: 1
+  friezeRail: 0
+  mullion: 1
+  moulding: 1
+  mouldingSides: 4
+  autoFitPixelLightGrid: 1
+  pixelLightGridW: 9
+  pixelLightGridH: 6
+  pixelLightCellSize: 0.08
+  lemmaPackFragment: pack=3d,placement=uniform,pad=0.04,sides=4

@@ -3888,6 +3888,7 @@ MonoBehaviour:
   comfortWeight: 0.3
   feasibilityWeight: 0.7
   onlyAllowAmbulationExtentsForWalkingField: 1
+  skipAmbulationWalkingFilter: 0
   ambulationDoNotPathRegions: []
   ambulationIncludeSceneDoNotPathRegions: 1
   placementCardKeywords:
@@ -7308,12 +7309,14 @@ MonoBehaviour:
     isLoveMakingGoal: 0
     isCombatGoal: 0
     isChefGoal: 0
+    isScribeGoal: 0
     isThreatGoal: 0
     isJusticeGoal: 0
     isCivicGoal: 0
     isCivilGoal: 0
     isTravelAgentGoal: 0
     isPlumbingGoal: 0
+    isVoteGoal: 0
   attenuationCurve:
     serializedVersion: 2
     m_Curve:

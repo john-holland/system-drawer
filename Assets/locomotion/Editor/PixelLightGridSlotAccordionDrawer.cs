@@ -43,7 +43,9 @@ public static class PixelLightGridSlotAccordionDrawer
                 $"Slot count {catalog.gridSlots.Count} exceeds recommended max {catalog.maxRecommendedSlots} (Feature Budget: pixel_light).",
                 MessageType.Warning);
 
-        scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MaxHeight(maxHeight));
+        bool wrapInScroll = maxHeight > 0f;
+        if (wrapInScroll)
+            scroll = EditorGUILayout.BeginScrollView(scroll, GUILayout.MaxHeight(maxHeight));
         for (int i = 0; i < catalog.gridSlots.Count; i++)
         {
             var entry = catalog.gridSlots[i];
@@ -99,7 +101,8 @@ public static class PixelLightGridSlotAccordionDrawer
             }
             EditorGUILayout.EndVertical();
         }
-        EditorGUILayout.EndScrollView();
+        if (wrapInScroll)
+            EditorGUILayout.EndScrollView();
     }
 
     public static void DrawMountList(

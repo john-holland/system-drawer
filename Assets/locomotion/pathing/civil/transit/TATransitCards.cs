@@ -293,6 +293,25 @@ public class TAVehicleSchedulingCard : TATransitCard
     }
 }
 
+[Serializable]
+public class TAVehicleDeliveryCard : TAVehicleSchedulingCard
+{
+    public string mechanism = "vehicle";
+
+    public static TAVehicleDeliveryCard Generate(
+        DispatchRequest request,
+        string mechanism = "vehicle",
+        TAVehicleRoute route = null)
+    {
+        var c = new TAVehicleDeliveryCard();
+        Fill(c, request, "ta_vehicle_delivery");
+        c.route = route;
+        c.mechanism = string.IsNullOrEmpty(mechanism) ? "vehicle" : mechanism;
+        c.narrativeActionId = "ta_vehicle_delivery";
+        return c;
+    }
+}
+
 /// <summary>Ground-crew baggage load/unload for transit vehicles.</summary>
 [Serializable]
 public class TSAGroundCrewCard : TATransitCard

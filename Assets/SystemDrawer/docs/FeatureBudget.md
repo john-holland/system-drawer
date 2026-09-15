@@ -73,6 +73,7 @@ Budget-governed fields (horizon, SDF, weather shell, lava/mantle) default to loc
 | House utility | `FeatureBudgetIds.HouseUtility` (`house_utility`) rank 38 — UtilityBioRhythm, CircuitBreaker, RecoupWheel, SumpPump |
 | Water mains | `FeatureBudgetIds.WaterMains` (`water_mains`) rank 39 — WaterGraph |
 | Basement flood | `FeatureBudgetIds.BasementFlood` (`basement_flood`) rank 40 — HouseBasementFloodCache, RollingSphereFloodSimulator |
+| Clothing / tayloring | `FeatureBudgetIds.Clothing` (`clothing`) rank 41 — ClothingStore, TayloringTravelAgent, TextileMill, ClothBolt, SewingMachine, Serger |
 
 ### PixelLight / grid slots budget
 

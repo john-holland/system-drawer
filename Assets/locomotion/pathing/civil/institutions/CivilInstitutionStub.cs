@@ -56,9 +56,18 @@ public sealed class CivilInstitutionStub : MonoBehaviour
             gameObject.AddComponent<ParkBootstrap>();
         else if (kind == CivilSystemKind.SanitationFacility && GetComponent<SanitationBootstrap>() == null)
             gameObject.AddComponent<SanitationBootstrap>();
-        else if (kind == CivilSystemKind.Factory && GetComponent<FactoryBootstrap>() == null
-                 && GetComponent<SanitationFacilityRuntime>() == null)
-            gameObject.AddComponent<FactoryBootstrap>();
+        else if (kind == CivilSystemKind.ClothingStore && GetComponent<ClothingStoreBootstrap>() == null)
+            gameObject.AddComponent<ClothingStoreBootstrap>();
+        else if (kind == CivilSystemKind.Factory && GetComponent<SanitationFacilityRuntime>() == null)
+        {
+            string typeId = (buildingTypeId ?? "").ToLowerInvariant();
+            bool textile = typeId.Contains("textile") || typeId.Contains("weaving") || typeId.Contains("loom");
+            if (textile && GetComponent<TextileMillBootstrap>() == null)
+                gameObject.AddComponent<TextileMillBootstrap>();
+            else if (!textile && GetComponent<FactoryBootstrap>() == null
+                     && GetComponent<TextileMillBootstrap>() == null)
+                gameObject.AddComponent<FactoryBootstrap>();
+        }
         else if (IsHospitalityOrSecurityKind(kind) && GetComponent<HospitalityInstitutionBootstrap>() == null)
             gameObject.AddComponent<HospitalityInstitutionBootstrap>();
     }

@@ -88,4 +88,6 @@ See [SdfMaxComposition.md](../../SdfMax/docs/SdfMaxComposition.md).
 
 `HouseConstructionTravelAgent. `GoalType.Construction` → `ConstructionPhaseCard`. Site open/close on `siteRoot`. Open/close BT is baked in Open.Runtime (`HouseConstructionOpenCloseBt`) so Locomotion.Runtime does not cycle with Open.Runtime. Utility install stops use `UtilityInstallationOpenCloseBt` the same way. Power diamond axes: commodities, resources, vehicle reach, blockage.
 
+`GerPowerBus` sits next to `HousePowerBus` on `HousingBuildingRagdoll` (space-canal GER gate). Dark GER stamps `PowerLinesDown`. Canal ribbons reuse this travel-agent + diamond pattern (`CannalTravelAgent`). See [Canals.md](Canals.md) and [LumberYard.md](LumberYard.md).
+
 `PlanRtsFromFenceRun` / `PlanRtsFromLotOrder` (garage pad/door only after a valid driveway outlet).

@@ -78,3 +78,5 @@ On the piece, two unit-cube bounds parent to the loop frame:
 ## Prefab
 
 **Save Prefab…** writes meshes, copied materials/textures, and a prefab under `Assets/locomotion/Prefabs/SkinnedLoopPieces/<name>/` (or the folder you pick). Children are named `Piece_<loopOrComponent>`. The prefab **root** has `SkinnedMeshLoopSection.sectionAsset` pointing at the same picker asset. Each child has `SkinnedMeshLoopSectionPiece` with `sectionAsset`, `loopIds`, and `splitMode`. The source instance is left in the scene; the save connects a new prefab instance.
+
+Clothing join: `ClothBoltSpec` / Cloth Pattern Designer bind two subsequent loops (`joinLoopIdA` / `joinLoopIdB`) plus a stitch spline. See [ClothingTayloring.md](ClothingTayloring.md).

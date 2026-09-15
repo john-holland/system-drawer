@@ -22,6 +22,7 @@ public sealed class CivilSystemLattice
         CivilSystemKind.Library,
         CivilSystemKind.Mall,
         CivilSystemKind.Factory,
+        CivilSystemKind.ClothingStore,
         CivilSystemKind.Gym,
         CivilSystemKind.TownHall,
         CivilSystemKind.GasStation,
@@ -143,6 +144,11 @@ public sealed class CivilSystemLattice
         if (id.Contains("sanitation") || id.Contains("waste_water") || id.Contains("transfer_station")
             || id.Contains("sewage") || id.Contains("recycling_plant"))
             return CivilSystemKind.SanitationFacility;
+        if (id.Contains("clothing") || id.Contains("tailor") || id.Contains("boutique")
+            || id.Contains("tayloring"))
+            return CivilSystemKind.ClothingStore;
+        if (id.Contains("textile") || id.Contains("weaving") || id.Contains("loom"))
+            return CivilSystemKind.Factory;
         if (id.Contains("factory")) return CivilSystemKind.Factory;
         if (id.Contains("gym")) return CivilSystemKind.Gym;
         if (id.Contains("voting") || id.Contains("polling")) return CivilSystemKind.VotingPlace;

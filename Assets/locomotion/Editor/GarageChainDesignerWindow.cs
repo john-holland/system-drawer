@@ -9,13 +9,16 @@ public sealed class GarageChainDesignerWindow : EditorWindow
     PixelLightGridMountGameObject _linkMount;
     GarageChainLinkKind _kind = GarageChainLinkKind.Chain;
     Vector2 _scroll;
+    readonly SdfMaxCompositionPreviewDrawer _preview = new SdfMaxCompositionPreviewDrawer();
 
     [MenuItem("Locomotion/Garage Chain Designer")]
     public static void Open()
     {
         var w = GetWindow<GarageChainDesignerWindow>("Garage Chain");
-        w.minSize = new Vector2(440, 520);
+        w.minSize = new Vector2(440, 560);
     }
+
+    void OnDisable() => _preview.Dispose();
 
     void OnGUI()
     {
@@ -100,6 +103,21 @@ public sealed class GarageChainDesignerWindow : EditorWindow
         if (_assembly != null && _assembly.pullField != null)
             EditorGUILayout.LabelField("SPH bins", _assembly.pullField.BinCount.ToString());
 
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Bake link SDF"))
+        {
+            var existing = _spec.DefFor(_kind).linkSdf;
+            _spec.BakeLinkSdf(_kind, existing);
+            EditorUtility.SetDirty(_spec);
+            if (existing != null)
+                EditorUtility.SetDirty(existing);
+            _preview.Invalidate();
+        }
+        if (GUILayout.Button("Open Chain Link Designer"))
+            GarageChainLinkDesignerWindow.Open(_spec);
+        EditorGUILayout.EndHorizontal();
+        _preview.Draw(_spec.DefFor(_kind).linkSdf);
+
         if (GUI.changed)
             EditorUtility.SetDirty(_spec);
         EditorGUILayout.EndScrollView();
@@ -114,6 +132,8 @@ public sealed class GarageChainDesignerWindow : EditorWindow
         def.joinOffset = EditorGUILayout.FloatField("Join offset", def.joinOffset);
         def.pieceCurve = (CustomRadialSideAsset)EditorGUILayout.ObjectField(
             "Piece curve", def.pieceCurve, typeof(CustomRadialSideAsset), false);
+        def.linkSdf = (SdfMax.SdfMaxCompositionAsset)EditorGUILayout.ObjectField(
+            "Link SDF", def.linkSdf, typeof(SdfMax.SdfMaxCompositionAsset), false);
         def.prefab = (GameObject)EditorGUILayout.ObjectField("Prefab", def.prefab, typeof(GameObject), false);
     }
 }

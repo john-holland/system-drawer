@@ -52,35 +52,38 @@
       .replace(/"/g, '&quot;');
   }
 
-  function swapPort(origin, port) {
-    try {
-      var u = new URL(origin);
-      u.port = String(port);
-      return u.origin;
-    } catch (_) {
-      return origin;
-    }
-  }
-
   function sameOriginLibraryBase(origin) {
     return String(origin || location.origin).replace(/\/$/, '') + '/library';
   }
 
-  /** Migrate deprecated dual-server base (library on :5051) to same-origin /library. */
+  function originsMatch(a, b) {
+    try {
+      return new URL(a).origin === new URL(b).origin;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function queryOverride(name) {
+    try {
+      return !!(new URLSearchParams(location.search).get(name));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /** Prefer the page origin so Flask can run on :5050, :5051, or any other port. */
   function normalizeLibraryBase(stored, origin) {
     var fallback = sameOriginLibraryBase(origin);
     if (!stored) return fallback;
     stored = String(stored).replace(/\/$/, '');
     try {
-      var absolute = stored.indexOf('://') >= 0 ? stored : sameOriginLibraryBase(origin);
+      var absolute = stored.indexOf('://') >= 0 ? stored : fallback;
       var u = new URL(absolute);
       var page = new URL(origin || location.origin);
-      if (u.port === '5051' && page.port !== '5051') {
-        localStorage.setItem('continuuuumLibraryBase', fallback);
-        return fallback;
-      }
-      if (u.origin !== page.origin && page.pathname.indexOf('/library') >= 0) {
-        localStorage.setItem('continuuuumLibraryBase', fallback);
+      var keepCrossOrigin = queryOverride('libraryBase') || isViteDevOrigin(page.origin);
+      if (!keepCrossOrigin && u.origin !== page.origin) {
+        try { localStorage.setItem('continuuuumLibraryBase', fallback); } catch (_) {}
         return fallback;
       }
       if (absolute.indexOf('/library') < 0) {
@@ -116,22 +119,17 @@
 
   function resolveAppUrls() {
     persistFromQuery();
+    var origin = location.origin;
     var lemmaBase = (localStorage.getItem('lemmaApiBase') || '').replace(/\/$/, '');
     var libraryBase = normalizeLibraryBase(localStorage.getItem('continuuuumLibraryBase') || '', origin);
-    var origin = location.origin;
-    var path = location.pathname || '';
 
-    // Vite dev servers proxy /api — ignore stale lemmaApiBase pointing at :5050.
+    // Vite proxies /api. Flask may listen on any port — do not rewrite to :5050.
     if (isViteDevOrigin(origin)) {
       lemmaBase = origin;
-    }
-
-    if (!lemmaBase) {
-      if (path.indexOf('/lemma-library') >= 0 || path.indexOf('/ui') >= 0 || isViteDevOrigin(origin)) {
-        lemmaBase = origin;
-      } else {
-        lemmaBase = swapPort(origin, 5050);
-      }
+    } else if (!queryOverride('lemmaApiBase') && (!lemmaBase || !originsMatch(lemmaBase, origin))) {
+      lemmaBase = origin;
+    } else if (!lemmaBase) {
+      lemmaBase = origin;
     }
     if (!libraryBase) {
       libraryBase = sameOriginLibraryBase(origin);

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: WoodPile
+  m_EditorClassIdentifier: Locomotion.Runtime::WoodPileSpec
+  slots: []
+  pack:
+    dimension: 1
+    placement: 1
+    paddingMeters: 0.04
+    mouldingSides: 4
+    lemmaId: pack-panels
+    slotPriority:
+    - place-stile
+    - place-rail
+    - pack-panels
+    - wrap-moulding
+  brushMount: {fileID: 0}
+  depthLayers: 3
+  moveLogIkModeId: move_log

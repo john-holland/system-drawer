@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aeaa993b5256df142901024d628ad0d3, type: 3}
+  m_Name: PaintingIkTrainingCatalog
+  m_EditorClassIdentifier: Locomotion.Runtime::PaintingIkTrainingCatalog
+  collisionEnabledCarryMode: 0
+  entries:
+  - id: brush_stroke
+    displayName: Brush stroke
+    category: 1
+    suggestedClipFolder: Assets/locomotion/painting/Animations/BrushStroke
+    collisionEnabledCarryMode: 0
+    notes: Tip follows canvas stroke path
+  - id: palette_hold
+    displayName: Palette hold
+    category: 8
+    suggestedClipFolder: Assets/locomotion/painting/Animations/PaletteHold
+    collisionEnabledCarryMode: 0
+    notes: Non-dominant holds palette (two-hand limb list)
+  - id: tube_dispense
+    displayName: Tube dispense
+    category: 1
+    suggestedClipFolder: Assets/locomotion/painting/Animations/TubeDispense
+    collisionEnabledCarryMode: 0
+    notes: 'TwoHands: hold + finger squeeze'
+  - id: spray_can
+    displayName: Spray can
+    category: 1
+    suggestedClipFolder: Assets/locomotion/painting/Animations/SprayCan
+    collisionEnabledCarryMode: 0
+    notes: Conical sealant aim
+  - id: lean_inspect
+    displayName: Lean inspect
+    category: 9
+    suggestedClipFolder: Assets/locomotion/painting/Animations/LeanInspect
+    collisionEnabledCarryMode: 0
+    notes: Lean back, eye to canvas
+  - id: pick_up_painting
+    displayName: Pick up painting
+    category: 5
+    suggestedClipFolder: Assets/locomotion/painting/Animations/PickUpPainting
+    collisionEnabledCarryMode: 0
+    notes: Pick then Carry; tilt for specular
+  - id: collision_enabled_carry
+    displayName: Collision-enabled carry
+    category: 8
+    suggestedClipFolder: Assets/locomotion/painting/Animations/CollisionCarry
+    collisionEnabledCarryMode: 1
+    notes: Frame grips only; fail if wet paint would smudge. Developer opt-in.
+  - id: pen_dip
+    displayName: Pen dip
+    category: 16
+    suggestedClipFolder: Assets/locomotion/painting/Animations/PenDip
+    collisionEnabledCarryMode: 0
+    notes: Nib tip to wet film / pile / drink stream
+  - id: ink_stroke
+    displayName: Ink stroke
+    category: 1
+    suggestedClipFolder: Assets/locomotion/painting/Animations/InkStroke
+    collisionEnabledCarryMode: 0
+    notes: Nib follows drawing-target SDF
+  - id: cap_open
+    displayName: Cap open
+    category: 17
+    suggestedClipFolder: Assets/locomotion/painting/Animations/CapOpen
+    collisionEnabledCarryMode: 0
+    notes: Open pen cap
+  - id: cap_close
+    displayName: Cap close
+    category: 18
+    suggestedClipFolder: Assets/locomotion/painting/Animations/CapClose
+    collisionEnabledCarryMode: 0
+    notes: Close pen cap
+  - id: blot_dry
+    displayName: Blot dry
+    category: 1
+    suggestedClipFolder: Assets/locomotion/painting/Animations/BlotDry
+    collisionEnabledCarryMode: 0
+    notes: Towel / canvas blot

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 071b9a13393211f4db14f35934cc19c4, type: 3}
+  m_Name: Gearbox
+  m_EditorClassIdentifier: Locomotion.Runtime::GearboxSpec
+  catalog: {fileID: 11400000, guid: 057ced26557c05d44abe66fa79a92c9a, type: 2}
+  connections:
+  - label: pair
+    kind: 2
+    drivingTeeth: 12
+    drivenTeeth: 24
+    drivingPulleyM: 0.08
+    drivenPulleyM: 0.16
+    chainBelt: {fileID: 0}
+    drivingCellX: 0
+    drivingCellY: 0
+    drivenCellX: 0
+    drivenCellY: 0
+  - label: pair
+    kind: 0
+    drivingTeeth: 12
+    drivenTeeth: 24
+    drivingPulleyM: 0.08
+    drivenPulleyM: 0.16
+    chainBelt: {fileID: 0}
+    drivingCellX: 0
+    drivingCellY: 0
+    drivenCellX: 0
+    drivenCellY: 0

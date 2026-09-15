@@ -92,7 +92,7 @@ def _generate_stub(
     ffmpeg_exe = _find_ffmpeg(ffmpeg_path)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    duration = float(config.get("duration_sec", 5.0))
+    duration = float(config.get("duration_sec") or 5.0)
     log.info("Generating stub (black placeholder) video, %.1fs — resultant will be black; diff will be ~100%% of original", duration)
     cmd = [
         ffmpeg_exe, "-y",
