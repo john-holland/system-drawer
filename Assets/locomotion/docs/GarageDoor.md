@@ -41,7 +41,7 @@ Steel limits: `GarageSteelLimits` (7850 kg/m³). Applied to `RopeConfig` (Spool 
 
 `GarageDoorNode.ConfigureRepeat` sets per-parent limits (2 stiles, N−1 mullions, N moulding sides). SDF: box union + opening subtract (`GarageDoorSdfBuiltins.BuildDoorShell`).
 
-Lemmas: `DoorCarpentryLemmaPropertyKeys` and Continuuuum nouns (`top-rail`, `lock-stile`, `frieze-rail`, `mullion`, `moulding`). Pack fragment `pack=3d,placement=uniform,pad=0.04,sides=4` → `GarageDoorSgPackSettings`. Angular defaults: stile ⊥ rail 90°, mullion ∥ stile 0°.
+Lemmas: `DoorCarpentryLemmaPropertyKeys` and Continuuuum nouns (`top-rail`, `lock-stile`, `frieze-rail`, `mullion`, `moulding`). Machine / PixelLight doors also use `frame-id`, `door-id`, and `hinge-label` (`FrameShellInclusionLemmaPropertyKeys`). Pack fragment `pack=3d,placement=uniform,pad=0.04,sides=4` → `GarageDoorSgPackSettings`. Angular defaults: stile ⊥ rail 90°, mullion ∥ stile 0°.
 
 ## Tracks + drive
 

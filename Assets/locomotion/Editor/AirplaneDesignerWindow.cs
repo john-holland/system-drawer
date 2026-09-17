@@ -309,6 +309,7 @@ public sealed class AirplaneDesignerWindow : EditorWindow
             if (mount != null)
             {
                 PixelLightRadialBrushDrawer.DrawOnMount(mount);
+                GearboxLathePixelLightDrawer.DrawMountPatternGrid(mount, _plane.pixelLightCatalog);
                 if (GUILayout.Button("Ensure rig"))
                 {
                     mount.EnsureRig();

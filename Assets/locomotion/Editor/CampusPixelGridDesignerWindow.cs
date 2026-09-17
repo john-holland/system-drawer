@@ -119,6 +119,13 @@ public sealed class CampusPixelGridDesignerWindow : EditorWindow
             r.pixelLightSlots = (PixelLightMultiSlotCatalog)EditorGUILayout.ObjectField(
                 "PixelLight Catalog", r.pixelLightSlots, typeof(PixelLightMultiSlotCatalog), false);
             r.pixelLightSlotId = EditorGUILayout.TextField("PixelLight Slot", r.pixelLightSlotId ?? "");
+            if (r.pixelLightSlots != null
+                && r.pixelLightSlots.viewScopeSettings != null
+                && r.pixelLightSlots.viewScopeSettings.Count > 0)
+            {
+                GearboxLathePixelLightDrawer.DrawInspectorGrid(
+                    r.pixelLightSlots.viewScopeSettings[0], r.pixelLightSlots);
+            }
             r.sg4dPrompt = EditorGUILayout.TextField("SG4D Prompt", r.sg4dPrompt ?? "");
             r.inpaintPrompt = EditorGUILayout.TextField("In-paint Prompt", r.inpaintPrompt ?? "");
             r.worldPosition = EditorGUILayout.Vector3Field("World", r.worldPosition);

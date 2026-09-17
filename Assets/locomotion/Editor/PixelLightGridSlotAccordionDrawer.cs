@@ -26,6 +26,22 @@ public static class PixelLightGridSlotAccordionDrawer
             catalog.AddSlot();
             EditorUtility.SetDirty(catalog);
         }
+        if (GUILayout.Button("Add hollow"))
+        {
+            var e = catalog.AddSlot(catalog.NextIncrementingLabel("Hollow"));
+            e.kind = PixelLightGridSlotKind.HollowSubtract;
+            e.contents = HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+            EditorUtility.SetDirty(catalog);
+        }
+        if (GUILayout.Button("Add door"))
+        {
+            var e = catalog.AddSlot(catalog.NextIncrementingLabel("Door"));
+            e.kind = PixelLightGridSlotKind.Door;
+            e.doorId = e.slotId;
+            e.hingeLabel = "left";
+            e.contents = HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+            EditorUtility.SetDirty(catalog);
+        }
         if (heli != null && GUILayout.Button("Sync from heli children"))
         {
             catalog.SyncSlotsFromHeli(heli);
@@ -60,6 +76,13 @@ public static class PixelLightGridSlotAccordionDrawer
                 EditorGUI.BeginChangeCheck();
                 entry.label = EditorGUILayout.TextField("Label", entry.label);
                 entry.slotId = EditorGUILayout.TextField("Slot id", entry.slotId);
+                entry.kind = (PixelLightGridSlotKind)EditorGUILayout.EnumPopup("Kind", entry.kind);
+                entry.zIndex = EditorGUILayout.IntField("Z index", entry.zIndex);
+                entry.frameId = EditorGUILayout.TextField("Frame id", entry.frameId ?? "");
+                entry.doorId = EditorGUILayout.TextField("Door id", entry.doorId ?? "");
+                entry.hingeLabel = EditorGUILayout.TextField("Hinge label", entry.hingeLabel ?? "");
+                entry.inclusion = (Bounds4SdfInclusionKind)EditorGUILayout.EnumPopup("Inclusion", entry.inclusion);
+                entry.hollowRadius = EditorGUILayout.FloatField("Hollow radius", entry.hollowRadius);
                 entry.cellX = EditorGUILayout.IntField("Cell X", entry.cellX);
                 entry.cellY = EditorGUILayout.IntField("Cell Y", entry.cellY);
                 entry.fineOffset = EditorGUILayout.Vector3Field("Fine offset", entry.fineOffset);
@@ -68,7 +91,10 @@ public static class PixelLightGridSlotAccordionDrawer
                 entry.mount = (PixelLightGridMountGameObject)EditorGUILayout.ObjectField(
                     "Mount", entry.mount, typeof(PixelLightGridMountGameObject), true);
                 if (entry.mount != null)
+                {
                     PixelLightRadialBrushDrawer.DrawOnMount(entry.mount);
+                    GearboxLathePixelLightDrawer.DrawMountPatternGrid(entry.mount, catalog);
+                }
                 entry.heliSlot = (HelicoptorGridSlotGameObject)EditorGUILayout.ObjectField(
                     "Heli grid slot", entry.heliSlot, typeof(HelicoptorGridSlotGameObject), true);
 
@@ -84,8 +110,16 @@ public static class PixelLightGridSlotAccordionDrawer
                     EditorUtility.SetDirty(catalog);
 
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Select") && onSelect != null)
-                    onSelect(entry);
+                if (GUILayout.Button("Select"))
+                {
+                    PixelLightSlotSelection.SelectedIds.Clear();
+                    PixelLightSlotSelection.SelectedIds.Add(entry.slotId);
+                    PixelLightSlotSelection.FocusedSlotId = entry.slotId;
+                    PixelLightSlotSelection.LastCellX = entry.cellX;
+                    PixelLightSlotSelection.LastCellY = entry.cellY;
+                    if (onSelect != null)
+                        onSelect(entry);
+                }
                 if (GUILayout.Button("Remove"))
                 {
                     // Remove catalog row + destroy scene HelicoptorGridSlot so PixelLight G clears.

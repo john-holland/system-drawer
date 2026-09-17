@@ -50,7 +50,7 @@ public sealed class GearboxDesignerWindow : EditorWindow
         {
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Selector / tumbler / back-gear slots", EditorStyles.boldLabel);
-            PixelLightGridSlotAccordionDrawer.Draw(_spec.catalog, ref _slotScroll, null, null, 0f);
+            PixelLightGridSlotAccordionDrawer.Draw(_spec.catalog, ref _slotScroll, null, null, 220f);
         }
 
         EditorGUILayout.Space();

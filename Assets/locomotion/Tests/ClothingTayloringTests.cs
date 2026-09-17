@@ -238,4 +238,169 @@ public sealed class ClothingTayloringTests
             UnityEngine.Object.DestroyImmediate(go);
         }
     }
+
+    [Test]
+    public void LockstitchProgram_HasLeftThenRightWithEntryExit()
+    {
+        var program = SewingStitchProgram.DefaultLockstitch();
+        Assert.AreEqual(SewingStitchClass.Lockstitch, program.stitchClass);
+        Assert.AreEqual(2, program.steps.Count);
+        Assert.AreEqual(SewingFeedDirection.Left, program.steps[0].direction);
+        Assert.AreEqual(SewingFeedDirection.Right, program.steps[1].direction);
+        Assert.AreEqual(0, program.steps[0].index);
+        Assert.AreEqual(1, program.steps[1].index);
+        Assert.Greater(program.steps[0].entryAngleDeg, 0f);
+        Assert.Greater(program.steps[0].exitAngleDeg, 0f);
+        Assert.AreEqual(ClothThreadSide.Top, program.steps[0].clothSide);
+        Assert.AreEqual(ClothThreadSide.Bottom, program.steps[1].clothSide);
+    }
+
+    [Test]
+    public void OverlockProgram_HasNeedleAndLooperConnecting()
+    {
+        var spec = ScriptableObject.CreateInstance<SergerSpec>();
+        spec.stitchProgram = SewingStitchProgram.DefaultOverlock();
+        spec.needlePhase01 = 0.8f;
+        spec.looperPhase01 = 0.2f;
+        Assert.AreEqual(SewingStitchClass.Overlock, spec.stitchProgram.stitchClass);
+        Assert.AreEqual(3, spec.stitchProgram.steps.Count);
+        Assert.IsTrue(spec.stitchProgram.steps.Exists(s => s.connectingStrand));
+        Assert.Greater(spec.DifferentialFeed(), 0f);
+        UnityEngine.Object.DestroyImmediate(spec);
+    }
+
+    [Test]
+    public void ToRopeConfig_ScalesWithGaugeAndConnectingSpan()
+    {
+        var sew = ScriptableObject.CreateInstance<SewingMachineSpec>();
+        sew.stitchProgram = SewingStitchProgram.DefaultLockstitch();
+        var thin = sew.ToRopeConfig(0.1f);
+        var thick = sew.ToRopeConfig(0.9f);
+        Assert.Greater(thick.ropeRadiusM, thin.ropeRadiusM);
+        Assert.AreEqual(RopeMode.Spool, thick.mode);
+        var serger = ScriptableObject.CreateInstance<SergerSpec>();
+        serger.stitchProgram = SewingStitchProgram.DefaultOverlock();
+        var over = serger.ToRopeConfig(0.5f);
+        Assert.Greater(over.totalLengthM, 0.05f);
+        Assert.Greater(over.ropeRadiusM, thin.ropeRadiusM * 0.5f);
+        UnityEngine.Object.DestroyImmediate(sew);
+        UnityEngine.Object.DestroyImmediate(serger);
+    }
+
+    [Test]
+    public void HemBake_MarksStitchStepComplete()
+    {
+        var bolt = ScriptableObject.CreateInstance<ClothBoltSpec>();
+        bolt.widthM = 1f;
+        bolt.lengthM = 1f;
+        var path = bolt.AddPath(ClothSplineKind.Hem);
+        path.applyMode = HemSeamApplyMode.Bake;
+        path.gauge01 = 0.6f;
+        var step = new TayloringStep { kind = TayloringStepKind.Stitch };
+        Assert.IsTrue(ClothHemSeamBake.ApplyToStep(step, bolt, path));
+        Assert.IsTrue(step.bakeComplete);
+        Assert.IsNotNull(step.bakedMesh);
+        UnityEngine.Object.DestroyImmediate(step.bakedMesh);
+        UnityEngine.Object.DestroyImmediate(bolt);
+    }
+
+    [Test]
+    public void SewingSdf_HasRoot()
+    {
+        var sewn = SewingMachineSdfBuiltins.BuildSewing();
+        Assert.GreaterOrEqual(sewn.nodes.Count, 1);
+        Assert.GreaterOrEqual(sewn.ResolveRootIndex(), 0);
+        var serge = SewingMachineSdfBuiltins.BuildSerger();
+        Assert.GreaterOrEqual(serge.ResolveRootIndex(), 0);
+        UnityEngine.Object.DestroyImmediate(sewn);
+        UnityEngine.Object.DestroyImmediate(serge);
+    }
+
+    [Test]
+    public void EnsureSewingAndLatheSlots_HaveHollowsAndDoors()
+    {
+        var catalog = ScriptableObject.CreateInstance<PixelLightMultiSlotCatalog>();
+        try
+        {
+            catalog.EnsureSewingMachineSlots();
+            string needleThroat = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.NeedleThroat);
+            Assert.IsNotNull(catalog.FindSlot(needleThroat));
+            Assert.AreEqual(
+                PixelLightGridSlotKind.HollowSubtract,
+                catalog.FindSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.BobbinRace)).kind);
+            var bobbinDoor = catalog.FindSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorBobbin));
+            Assert.AreEqual(PixelLightGridSlotKind.Door, bobbinDoor.kind);
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.SewingShell), bobbinDoor.frameId);
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorBobbin), bobbinDoor.doorId);
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.HingeLeft, bobbinDoor.hingeLabel);
+            Assert.AreEqual(Bounds4SdfInclusionKind.Shell, bobbinDoor.inclusion);
+            Assert.AreEqual(
+                SewingLemmaPropertyKeys.NeedleThroat,
+                FrameShellInclusionLemmaPropertyKeys.FromSlotId(needleThroat));
+            catalog.EnsureLatheSlots();
+            Assert.AreEqual(
+                PixelLightGridSlotKind.HollowSubtract,
+                catalog.FindSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.SpindleBore)).kind);
+            var head = catalog.FindSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorHeadstock));
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LatheShellCover), head.frameId);
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.HingeLeft, head.hingeLabel);
+            Assert.AreEqual(Bounds4SdfInclusionKind.Frame, Bounds4SdfInclusionLemmas.FromLemma("frame-inclusion"));
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.ShellInclusion,
+                Bounds4SdfInclusionLemmas.ToInclusionLemma(Bounds4SdfInclusionKind.Shell));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(catalog);
+        }
+    }
+
+    [Test]
+    public void SlotsAtCell_AndMoveSlotZ()
+    {
+        var catalog = ScriptableObject.CreateInstance<PixelLightMultiSlotCatalog>();
+        try
+        {
+            var a = catalog.AddSlot("A");
+            a.cellX = 2;
+            a.cellY = 2;
+            var b = catalog.AddSlot("B");
+            b.cellX = 2;
+            b.cellY = 2;
+            var at = catalog.SlotsAtCell(2, 2);
+            Assert.AreEqual(2, at.Count);
+            int zA = a.zIndex;
+            int zB = b.zIndex;
+            Assert.Greater(zB, zA);
+            Assert.IsTrue(catalog.MoveSlotZ(b.slotId, -1));
+            Assert.Less(b.zIndex, a.zIndex);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(catalog);
+        }
+    }
+
+    [Test]
+    public void StackPreview_OffsetsIncreaseWithZ_IdentityWhenOff()
+    {
+        var off0 = PixelLightStackPreview.CellRect(1, 2, 0, 18f, 6f, 0.2f, false);
+        var off3 = PixelLightStackPreview.CellRect(1, 2, 3, 18f, 6f, 0.2f, false);
+        Assert.AreEqual(off0.x, off3.x, 0.01f);
+        Assert.AreEqual(off0.y, off3.y, 0.01f);
+        var on0 = PixelLightStackPreview.CellRect(1, 2, 0, 18f, 6f, 0.2f, true);
+        var on3 = PixelLightStackPreview.CellRect(1, 2, 3, 18f, 6f, 0.2f, true);
+        Assert.Greater(on3.x, on0.x);
+        Assert.Greater(on3.y, on0.y);
+    }
+
+    [Test]
+    public void ThreadBinder_CopiesRopeConfig()
+    {
+        var dest = new RopeConfig { ropeRadiusM = 0.01f, totalLengthM = 1f };
+        var src = new RopeConfig { ropeRadiusM = 0.002f, totalLengthM = 0.3f, mode = RopeMode.Spool };
+        SewingThreadStrandBinder.CopyConfig(dest, src);
+        Assert.AreEqual(0.002f, dest.ropeRadiusM, 1e-5f);
+        Assert.AreEqual(0.3f, dest.totalLengthM, 1e-5f);
+        Assert.AreEqual(RopeMode.Spool, dest.mode);
+    }
 }

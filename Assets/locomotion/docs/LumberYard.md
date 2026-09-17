@@ -29,7 +29,7 @@ Log plank cut / section is the Lathe **PixelLight mill-kerf grid** (`MillKerfCut
 
 **Locomotion → Station Conveyer Travel Agent** — Size / Weight clamp. Belt UV shader `Locomotion/ConveyorScroll` driven by `RopeSystem.WindRateMps` (`ConveyorScrollUvDriver`). Anchor pattern matches `SanitationSortingStation.conveyorAnchor`.
 
-**Locomotion → Lathe Designer** (`LatheSpec`): carriage, bedways, saddle, cross-slide, compound rest, tool post, apron lemma, half-nut, lead screw, headstock/tailstock/knurl. Headstock and quick-change gearboxes use **Locomotion → Gearbox Designer**. Cutter is rotating `CutToolComponent` (`CutToolKind.Lathe`) + SDF Subtract. Mill PixelLight kerfs use odd cut count + center line (`MillKerfCuts`).
+**Locomotion → Lathe Designer** (`LatheSpec`): carriage, bedways, saddle, cross-slide, compound rest, tool post, apron lemma, half-nut, lead screw, headstock/tailstock/knurl. Headstock and quick-change gearboxes use **Locomotion → Gearbox Designer**. Cutter is rotating `CutToolComponent` (`CutToolKind.Lathe`) + SDF Subtract. Mill PixelLight kerfs use odd cut count + center line (`MillKerfCuts`). Frame/Shell catalogs get **Ensure lathe hollows/doors** (`spindle_bore`, `tailstock_quill`, `chip_chute`, `door_headstock` / `door_gearbox` / `door_chip_pan` with `frameId` + `hingeLabel`). Hollow and door slots subtract from Frame/Shell SDF in `zIndex` order. **Show stacks** on the PixelLight grid pads overlapping slots. Builtins: `lathe`, `frame-inclusion` / `shell-inclusion`, `door-headstock` (`SewingLemmaPropertyKeys` / `FrameShellInclusionLemmaPropertyKeys`).
 
 Debark: `LumberJackingDebarkCard` from TreeHealth bark/phloem layers. Chipper: `ChipperStation` SPH infeed + Subtract.
 

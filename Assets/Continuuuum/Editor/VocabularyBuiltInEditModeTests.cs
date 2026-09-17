@@ -127,6 +127,50 @@ public class VocabularyBuiltInEditModeTests
     }
 
     [Test]
+    public void VocabularyBuiltInRegistry_Includes_FrameShellInclusionLemmas()
+    {
+        foreach (var term in FrameShellInclusionLemmaPropertyKeys.LemmaPlaceholders)
+            Assert.IsTrue(VocabularyBuiltInLookup.TryGetByLemma(term, out _), term);
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "frame-inclusion")));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "shell-inclusion")));
+        Assert.AreEqual("frame-inclusion", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "frame", "inclusion" }));
+        Assert.AreEqual("shell-inclusion", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "shell", "inclusion" }));
+        Assert.AreEqual("frame-id", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "frame", "id" }));
+        Assert.AreEqual("door-id", BuiltInSynonyms.CanonicalizeToken("doorId"));
+        Assert.AreEqual("hinge-label", BuiltInSynonyms.CanonicalizeToken("hinge_label"));
+        Assert.AreEqual("z-index", BuiltInSynonyms.CanonicalizeToken("zIndex"));
+        Assert.AreEqual("needle-throat", FrameShellInclusionLemmaPropertyKeys.FromSlotId("needle_throat"));
+        Assert.AreEqual("needle_throat", FrameShellInclusionLemmaPropertyKeys.ToSlotId("needle-throat"));
+        var records = LocalizationPropertySpecCatalog.BuildFrameShellInclusionPropertyRecords();
+        Assert.IsTrue(System.Array.Exists(records, r => r.key == FrameShellInclusionLemmaPropertyKeys.Inclusion));
+        Assert.IsTrue(System.Array.Exists(records, r => r.key == FrameShellInclusionLemmaPropertyKeys.HingeLabel));
+    }
+
+    [Test]
+    public void VocabularyBuiltInRegistry_Includes_SewingAndLatheLemmas()
+    {
+        foreach (var term in SewingLemmaPropertyKeys.LemmaPlaceholders)
+            Assert.IsTrue(VocabularyBuiltInLookup.TryGetByLemma(term, out _), term);
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "sewing-machine")));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "sew")));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "verb", "serge")));
+        Assert.IsNotNull(VocabularyBuiltInRegistry.TryGetById(
+            VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "lathe")));
+        Assert.AreEqual("sewing-machine", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "sewing", "machine" }));
+        Assert.AreEqual("needle-throat", BuiltInSynonyms.CanonicalizeToken("needle_throat"));
+        Assert.AreEqual("door-bobbin", BuiltInSynonyms.TryCanonicalizeMultiWordPhrase(new[] { "door", "bobbin" }));
+        Assert.AreEqual("lathe-shell-cover", BuiltInSynonyms.CanonicalizeToken("lathe_shell_cover"));
+        var records = LocalizationPropertySpecCatalog.BuildSewingPropertyRecords();
+        Assert.IsTrue(System.Array.Exists(records, r => r.key == SewingLemmaPropertyKeys.SewingMachine));
+        Assert.IsTrue(System.Array.Exists(records, r => r.key == SewingLemmaPropertyKeys.DoorHeadstock));
+    }
+
+    [Test]
     public void VocabularyBuiltInRegistry_Includes_CivilAndLifeSystemLemmas()
     {
         string factory = VocabularyLanguageEncoding.FormatBuiltInUrn("en", "noun", "factory");

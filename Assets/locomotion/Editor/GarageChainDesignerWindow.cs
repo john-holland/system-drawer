@@ -75,7 +75,10 @@ public sealed class GarageChainDesignerWindow : EditorWindow
         if (_linkMount == null && _assembly != null)
             _linkMount = _assembly.axleMount;
         if (_linkMount != null)
+        {
             PixelLightRadialBrushDrawer.DrawOnMount(_linkMount);
+            GearboxLathePixelLightDrawer.DrawMountPatternGrid(_linkMount);
+        }
 
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Ensure axle + host") && _assembly != null)

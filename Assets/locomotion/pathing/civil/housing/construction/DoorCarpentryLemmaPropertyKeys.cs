@@ -19,12 +19,16 @@ public static class DoorCarpentryLemmaPropertyKeys
     public const string LemmaPlaceRail = "place-rail";
     public const string LemmaPackPanels = "pack-panels";
     public const string LemmaWrapMoulding = "wrap-moulding";
+    public const string FrameId = FrameShellInclusionLemmaPropertyKeys.FrameId;
+    public const string DoorId = FrameShellInclusionLemmaPropertyKeys.DoorId;
+    public const string HingeLabel = FrameShellInclusionLemmaPropertyKeys.HingeLabel;
 
     public static readonly string[] AllKeys =
     {
         TopRail, BottomRail, LockStile, MiddleRail, FriezeRail, LockRail, Mullion, Moulding,
         MouldingSides, StilePerpRailDeg, MullionParallelStileDeg, SlideMeters, OpenAngleDeg,
-        LemmaPlaceStile, LemmaPlaceRail, LemmaPackPanels, LemmaWrapMoulding
+        LemmaPlaceStile, LemmaPlaceRail, LemmaPackPanels, LemmaWrapMoulding,
+        FrameId, DoorId, HingeLabel
     };
 
     public const float DefaultStilePerpRailDeg = 90f;

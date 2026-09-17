@@ -16,13 +16,16 @@ Assigned on:
 - `MagnetoHelicopterConfigurationAsset.pixelLightCatalog`
 - `AirplaneVehicleRagdoll.pixelLightCatalog`
 - Airport Pixel Light Designer catalog field
-- Sewing machine / serger Frame/Shell (`SewingMachineSpec`, `SergerSpec`) — needle bar, hook, bobbin. See [ClothingTayloring.md](ClothingTayloring.md).
+- Sewing machine / serger Frame/Shell (`SewingMachineSpec`, `SergerSpec`) — needle bar, hook, bobbin, stitch program bag (`Front|Shell|1`), hollows/doors. See [ClothingTayloring.md](ClothingTayloring.md).
+- Lathe Frame/Shell (`LatheSpec`) — bed/ways + cover, mill-kerf bag, lathe hollows/doors. See [LumberYard.md](LumberYard.md).
 
 ## Multi grid slots
 
 `PixelLightMultiSlotCatalog.gridSlots` lists `PixelLightGridSlotEntry` rows (heli `HelicoptorGridSlotGameObject` and/or `PixelLightGridMountGameObject`).
 
-**Placement** tab (heli) and **Airport Pixel Light Designer** show a **scrollable accordion** of slots (`PixelLightGridSlotAccordionDrawer`).
+Kinds: **Light**, **HollowSubtract**, **Door**. Doors carry `frameId`, `doorId`, and `hingeLabel`. Hollows and door openings subtract from the matching Frame/Shell volume in **zIndex** order (`BakeHardwareSubtract(catalog)`). Inclusion lemmas are `frame` / `shell` / `frame-inclusion` / `shell-inclusion`; slot ids hyphenate to `SewingLemmaPropertyKeys` (`needle_throat` → `needle-throat`). `{P:sewing-machine|inclusion=shell|frame-id=sewing_shell|door-id=door_bobbin|hinge-label=left}`.
+
+**Placement** tab (heli) and **Airport Pixel Light Designer** show a **scrollable accordion** of slots (`PixelLightGridSlotAccordionDrawer`). Gearbox / lathe / sewing Frame-Shell grids add **Add hollow** / **Add door**, a **slot selection listbox** (Z Up/Down/Front/Back), and **Show stacks** (EditorPrefs `PixelLight.ShowStacks`) which pads and skews overlapping cells via `PixelLightStackPreview`. **GridSlot** brush click selects all slots at that cell (Ctrl toggles, Shift adds the stack).
 
 ## Feature Budget
 
@@ -44,7 +47,7 @@ See [`FeatureBudget.md`](../../SystemDrawer/docs/FeatureBudget.md).
 - **Recursive block** — one nested minigrid around each outer cell
 - CenterPost / Create Anchor Objects / `customAngle` / `customAngleObject` via `RadialBuildHost`
 
-Heli PixelLight tab, Airplane PixelLight tab, and Airport accordion (`PixelLightGridSlotAccordionDrawer`) all draw `PixelLightRadialBrushDrawer`. No new Feature Budget id — still `pixel_light`.
+Heli PixelLight tab, Airplane PixelLight tab, and Airport accordion (`PixelLightGridSlotAccordionDrawer`) all draw `PixelLightRadialBrushDrawer`. Selecting `PixelLightGridMountGameObject` / `PixelLightRig` in the inspector draws the same paint grid (`PixelLightGridMountEditor`). Accordion rows, airplane / garage door / garage chain / window designers, Cloth Pattern stitch/hem paths, and campus room catalogs also show `DrawMountPatternGrid` / `DrawPatternAssetGrid`. No new Feature Budget id — still `pixel_light`.
 
 **Garage door / chain:** `GarageChainDesignerWindow` and `GarageDoorDesignerWindow` reuse the same brush for link faces, axle placement, sprocket teeth, and door-piece mounts. See [GarageDoor.md](GarageDoor.md).
 
@@ -6017,6 +6020,6 @@ UnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)
 - **Shell** — closed outer volume; stamp cells whose 4-bounds sit inside the envelope. Subtract hardware from the interior.
 - **Frame** — open members (tube/girder); stamp cells on the member, not in the cavity.
 
-Optional `SdfMaxCompositionAsset composition` and **Convert from mesh** (`SdfMaxMeshAutoSetup`) override the curve. Priority: assigned composition → converted mesh → curve. Hardware Subtract unions axle/pin/sprocket/lathe spindle SDFs (`SdfMaxOp.Subtract`).
+Optional `SdfMaxCompositionAsset composition` and **Convert from mesh** (`SdfMaxMeshAutoSetup`) override the curve. Priority: assigned composition → converted mesh → curve. Hardware Subtract copies listed composition graphs (`SdfMaxOp.Subtract`). Catalog hollow/door slots at cell positions are subtracted in zIndex order (low first). **Show stacks** on the shared Frame/Shell grid explodes overlapping slots.
 
 `GearboxSpec` ratios: gear–gear `drivenTeeth / drivingTeeth`; belt from pulley diameters; chain-link belt binds `GarageChainSpec` (path length differs from V-belt). Reuses `pixel_light` FeatureBudget (no new id).

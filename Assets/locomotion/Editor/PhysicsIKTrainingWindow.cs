@@ -328,6 +328,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
         running = true;
         if (treeToUse != null && runAsset != null)
             runAsset.animationTree = treeToUse;
+        EditorApplication.update -= OnTrainingUpdate;
         EditorApplication.update += OnTrainingUpdate;
     }
 
@@ -465,7 +466,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
             if (Application.isPlaying)
                 SceneManager.UnloadSceneAsync(previewScene);
             else
-                EditorSceneManager.CloseScene(previewScene, true);
+                TryCloseAdditiveEditorScene(previewScene);
         }
         previewScene = default;
         previewCamera = null;
@@ -600,7 +601,7 @@ public class PhysicsIKTrainingWindow : EditorWindow
             if (Application.isPlaying)
                 SceneManager.UnloadSceneAsync(previewScene);
             else
-                EditorSceneManager.CloseScene(previewScene, true);
+                TryCloseAdditiveEditorScene(previewScene);
         }
         previewScene = default;
         previewCamera = null;
@@ -1042,8 +1043,17 @@ public class PhysicsIKTrainingWindow : EditorWindow
             return;
         if (runAsset.loadMeasurementSceneAdditive && !string.IsNullOrEmpty(runAsset.measurementScenePath))
         {
-            openedMeasurementScene = EditorSceneManager.OpenScene(runAsset.measurementScenePath, OpenSceneMode.Additive);
-            openedMeasurementSceneFlag = openedMeasurementScene.IsValid();
+            Scene already = SceneManager.GetSceneByPath(runAsset.measurementScenePath);
+            if (already.IsValid() && already.isLoaded)
+            {
+                openedMeasurementScene = default;
+                openedMeasurementSceneFlag = false;
+            }
+            else
+            {
+                openedMeasurementScene = EditorSceneManager.OpenScene(runAsset.measurementScenePath, OpenSceneMode.Additive);
+                openedMeasurementSceneFlag = openedMeasurementScene.IsValid();
+            }
         }
         bool activate = runAsset.activateTrainingObjectsInEditor;
         if (!activate && (!string.IsNullOrEmpty(runAsset.measurementScenePath)
@@ -1065,10 +1075,29 @@ public class PhysicsIKTrainingWindow : EditorWindow
     {
         IkTrainingLiveScore.RestoreActiveFlags(activatedObjectFlags);
         activatedObjectFlags.Clear();
-        if (openedMeasurementSceneFlag && openedMeasurementScene.IsValid())
-            EditorSceneManager.CloseScene(openedMeasurementScene, true);
+        if (openedMeasurementSceneFlag)
+            TryCloseAdditiveEditorScene(openedMeasurementScene);
         openedMeasurementSceneFlag = false;
         openedMeasurementScene = default;
+    }
+
+    /// <summary>
+    /// Close an additive editor scene only when we still have another loaded scene.
+    /// Unity rejects CloseScene on the last remaining scene (e.g. measurement path is the open Scene2).
+    /// </summary>
+    static bool TryCloseAdditiveEditorScene(Scene scene)
+    {
+        if (!scene.IsValid() || !scene.isLoaded)
+            return false;
+        int loaded = 0;
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            if (SceneManager.GetSceneAt(i).isLoaded)
+                loaded++;
+        }
+        if (loaded <= 1)
+            return false;
+        return EditorSceneManager.CloseScene(scene, true);
     }
 
     void OnEditorContactUpdate()
@@ -1101,7 +1130,14 @@ public class PhysicsIKTrainingWindow : EditorWindow
 
     private void OnTrainingUpdate()
     {
-        if (!running || sweepResults == null || powerSteps == null)
+        if (!running)
+        {
+            EditorApplication.update -= OnTrainingUpdate;
+            previewing = false;
+            Repaint();
+            return;
+        }
+        if (sweepResults == null || powerSteps == null)
         {
             EditorApplication.update -= OnTrainingUpdate;
             running = false;

@@ -36,7 +36,7 @@ While this window is open and webcam or a VideoPlayer is playing, **Live mirror*
 
 ## Optional IK training (editor)
 
-Assign a `PhysicsIKTrainingRunAsset` and optional measurement `SceneAsset`. **Activate training objects in editor** (default on when a scene or object-weight list is set) `SetActive(true)` listed props without Play Mode and restores them when the sweep ends. Additive `measurementScenePath` opens on Start Training and closes after.
+Assign a `PhysicsIKTrainingRunAsset` and optional measurement `SceneAsset`. **Activate training objects in editor** (default on when a scene or object-weight list is set) `SetActive(true)` listed props without Play Mode and restores them when the sweep ends. Additive `measurementScenePath` opens on Start Training only if that scene is not already loaded, and closes after only when another scene remains.
 
 Object weights (`hierarchyPath`, `weight`) and limb weights (`Human:RightHand`, `weight`) score as `1 / (1 + sum(limbW * objectW * distance))` in edit mode when a BoneMap and at least one object resolve. Solver coefficient sweeps stay as they are.
 

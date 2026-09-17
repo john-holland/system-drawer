@@ -187,6 +187,12 @@ def test_seed_marks_builtin_vocabulary_implemented(app_client):
         "road-lane",
         "hanging-shoes",
         "street-light",
+        "sewing-machine",
+        "frame-inclusion",
+        "shell-inclusion",
+        "hinge-label",
+        "door-bobbin",
+        "lathe",
     ):
         row = conn.execute(
             "SELECT is_builtin, is_implemented FROM lemma_completion WHERE lower(term) = ?",

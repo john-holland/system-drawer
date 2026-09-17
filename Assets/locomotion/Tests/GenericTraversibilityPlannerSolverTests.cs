@@ -21,14 +21,27 @@ public class GenericTraversibilityPlannerSolverTests
         }
     }
 
+    static HierarchicalPathingSolver CreateIsolatedSolver(string name, Bounds bounds, float cellSize)
+    {
+        var go = new GameObject(name);
+        go.SetActive(false);
+        var solver = go.AddComponent<HierarchicalPathingSolver>();
+        solver.autoFindMarkers = false;
+        solver.obstacleMask = 0;
+        solver.worldBounds = bounds;
+        solver.cellSize = cellSize;
+        go.SetActive(true);
+        return solver;
+    }
+
     [Test]
     public void BuildPlan_WalkAvailable_ReturnsWalkSegment()
     {
-        var go = new GameObject("solver_walk");
-        var solver = go.AddComponent<HierarchicalPathingSolver>();
-        solver.worldBounds = new Bounds(Vector3.zero, new Vector3(50f, 10f, 50f));
-        solver.cellSize = 1f;
-        solver.autoFindMarkers = false;
+        var solver = CreateIsolatedSolver(
+            "solver_walk",
+            new Bounds(Vector3.zero, new Vector3(50f, 10f, 50f)),
+            1f);
+        var go = solver.gameObject;
 
         Vector3 start = Vector3.zero;
         Vector3 goal = new Vector3(5f, 0f, 0f);
@@ -62,11 +75,11 @@ public class GenericTraversibilityPlannerSolverTests
 
         try
         {
-            var go = new GameObject("solver_air");
-            var solver = go.AddComponent<HierarchicalPathingSolver>();
-            solver.worldBounds = new Bounds(Vector3.zero, new Vector3(20f, 10f, 20f));
-            solver.cellSize = 1f;
-            solver.autoFindMarkers = false;
+            var solver = CreateIsolatedSolver(
+                "solver_air",
+                new Bounds(Vector3.zero, new Vector3(20f, 10f, 20f)),
+                1f);
+            var go = solver.gameObject;
 
             Vector3 start = Vector3.zero;
             Vector3 goal = new Vector3(100f, 0f, 0f);

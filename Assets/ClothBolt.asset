@@ -18,7 +18,19 @@ MonoBehaviour:
   weaveUv: {x: 1, y: 1}
   commodityKey: bolt
   paths:
-  - kind: 1
+  - kind: 0
+    pathId: cut_0
+    controlPoints: []
+    grabbers: []
+    joinLoopIdA: 
+    joinLoopIdB: 
+    program:
+      stitchClass: 0
+      defaultGauge01: 0.4
+      steps: []
+    gauge01: 0.4
+    applyMode: 0
+  - kind: 0
     pathId: svg_cut
     controlPoints:
     - {x: 0, y: 0, z: 0}
@@ -28,7 +40,14 @@ MonoBehaviour:
     grabbers: []
     joinLoopIdA: 
     joinLoopIdB: 
+    program:
+      stitchClass: 0
+      defaultGauge01: 0.4
+      steps: []
+    gauge01: 0.4
+    applyMode: 0
   joinLoopIdA: 
   joinLoopIdB: 
   loopSection: {fileID: 0}
   dyeCanvas: {fileID: 0}
+  pixelLightCatalog: {fileID: 0}

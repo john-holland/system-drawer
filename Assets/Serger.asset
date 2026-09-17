@@ -14,6 +14,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: Locomotion.Runtime::SergerSpec
   pixelLightCatalog: {fileID: 0}
   ikCatalog: {fileID: 0}
+  frameMount: {fileID: 0}
+  shellMount: {fileID: 0}
+  stitchProgram:
+    stitchClass: 1
+    defaultGauge01: 0.45
+    steps:
+    - index: 0
+      cellX: 2
+      cellY: 2
+      direction: 0
+      clothSide: 0
+      entryAngleDeg: 85
+      exitAngleDeg: 95
+      gauge01: 0.45
+      connectingStrand: 0
+    - index: 1
+      cellX: 3
+      cellY: 2
+      direction: 1
+      clothSide: 1
+      entryAngleDeg: 70
+      exitAngleDeg: 110
+      gauge01: 0.45
+      connectingStrand: 1
+    - index: 2
+      cellX: 3
+      cellY: 3
+      direction: 1
+      clothSide: 1
+      entryAngleDeg: 110
+      exitAngleDeg: 70
+      gauge01: 0.45
+      connectingStrand: 1
   needlePhase01: 0
   looperPhase01: 0
   differentialFeed01: 0.5

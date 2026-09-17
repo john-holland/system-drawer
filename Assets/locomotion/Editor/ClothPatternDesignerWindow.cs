@@ -9,6 +9,7 @@ public sealed class ClothPatternDesignerWindow : EditorWindow
     int _pathIndex;
     string _svg = "M 0 0 L 1 0 L 1 1 L 0 1 Z";
     Vector2 _scroll;
+    PixelLightGridMountGameObject _stitchMount;
 
     [MenuItem("Locomotion/Cloth Pattern Designer")]
     public static void Open() => Open(null);
@@ -56,7 +57,7 @@ public sealed class ClothPatternDesignerWindow : EditorWindow
             EditorApplication.ExecuteMenuItem("Window/System Drawer/Mesh/Skinned Loop Section");
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Spline ribbons (cut / fold / stitch)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Spline ribbons (cut / fold / stitch / hem)", EditorStyles.boldLabel);
         _kind = (ClothSplineKind)EditorGUILayout.EnumPopup("New path kind", _kind);
         if (GUILayout.Button("Add path"))
             _bolt.AddPath(_kind);
@@ -74,6 +75,17 @@ public sealed class ClothPatternDesignerWindow : EditorWindow
                 path.controlPoints.Add(new Vector3(_bolt.widthM * 0.5f, 0f, _bolt.lengthM * 0.5f));
             EditorGUILayout.LabelField("Points / grabbers", path.controlPoints.Count + " / " + path.grabbers.Count);
             EditorGUILayout.LabelField("Pleats", ClothPleatBaker.PleatCount(ClothPleatBaker.PathLength(path), 0.08f).ToString());
+            if (path.kind == ClothSplineKind.Stitch || path.kind == ClothSplineKind.Hem)
+            {
+                path.gauge01 = EditorGUILayout.Slider("Gauge", path.gauge01, 0f, 1f);
+                path.applyMode = (HemSeamApplyMode)EditorGUILayout.EnumPopup("Hem/seam apply", path.applyMode);
+                if (path.program == null)
+                    path.program = SewingStitchProgram.DefaultLockstitch();
+                _bolt.pixelLightCatalog = GearboxLathePixelLightDrawer.DrawCatalogField(
+                    _bolt.pixelLightCatalog, "ClothPixelLight");
+                GearboxLathePixelLightDrawer.DrawSewingStitchProgram(
+                    _bolt.pixelLightCatalog, path.program, ref _stitchMount);
+            }
         }
 
         EditorGUILayout.Space();
@@ -100,7 +112,9 @@ public sealed class ClothPatternDesignerWindow : EditorWindow
             ? Color.red
             : path.kind == ClothSplineKind.Fold
                 ? Color.cyan
-                : Color.yellow;
+                : path.kind == ClothSplineKind.Hem
+                    ? new Color(0.85f, 0.4f, 0.75f)
+                    : Color.yellow;
         for (int i = 0; i < path.controlPoints.Count; i++)
         {
             EditorGUI.BeginChangeCheck();

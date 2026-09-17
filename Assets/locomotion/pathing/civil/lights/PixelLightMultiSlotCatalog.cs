@@ -139,7 +139,7 @@ public sealed class PixelLightViewScopeSettings
     }
 }
 
-/// <summary>One grid slot entry for Placement accordion (heli / airplane / airport).</summary>
+/// <summary>One grid slot entry for Placement accordion (heli / airplane / airport / Frame-Shell).</summary>
 [Serializable]
 public sealed class PixelLightGridSlotEntry
 {
@@ -152,6 +152,20 @@ public sealed class PixelLightGridSlotEntry
     public PixelLightGridMountGameObject mount;
     public HelicoptorGridSlotGameObject heliSlot;
     public bool accordionExpanded = true;
+    public PixelLightGridSlotKind kind = PixelLightGridSlotKind.Light;
+    public string frameId;
+    public string doorId;
+    public string hingeLabel;
+    public Bounds4SdfInclusionKind inclusion = Bounds4SdfInclusionKind.Shell;
+    public float hollowRadius;
+    public int zIndex;
+}
+
+public enum PixelLightGridSlotKind
+{
+    Light = 0,
+    HollowSubtract = 1,
+    Door = 2
 }
 
 /// <summary>
@@ -206,11 +220,14 @@ public sealed class PixelLightMultiSlotCatalog : ScriptableObject
 
     public PixelLightGridSlotEntry AddSlot(string label = null)
     {
+        if (gridSlots == null)
+            gridSlots = new List<PixelLightGridSlotEntry>();
         var e = new PixelLightGridSlotEntry
         {
             slotId = Guid.NewGuid().ToString("N").Substring(0, 8),
             label = string.IsNullOrEmpty(label) ? NextIncrementingLabel("Mount") : label,
-            accordionExpanded = true
+            accordionExpanded = true,
+            zIndex = NextZIndex()
         };
         gridSlots.Add(e);
         return e;
@@ -228,13 +245,249 @@ public sealed class PixelLightMultiSlotCatalog : ScriptableObject
         EnsureLabeledSlot("court_bar", "Bar");
     }
 
-    void EnsureLabeledSlot(string slotId, string label)
+    public PixelLightGridSlotEntry EnsureLabeledSlot(string slotId, string label)
     {
+        if (gridSlots == null)
+            gridSlots = new List<PixelLightGridSlotEntry>();
         for (int i = 0; i < gridSlots.Count; i++)
+        {
             if (gridSlots[i] != null && gridSlots[i].slotId == slotId)
-                return;
+                return gridSlots[i];
+        }
         var e = AddSlot(label);
         e.slotId = slotId;
+        return e;
+    }
+
+    public void EnsureSewingMachineSlots()
+    {
+        string sewingShell = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.SewingShell);
+        string sewingFrame = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.SewingFrame);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.NeedleThroat),
+            "Needle throat", sewingShell, Bounds4SdfInclusionKind.Shell, 4, 3, 0.02f);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.BobbinRace),
+            "Bobbin race", sewingShell, Bounds4SdfInclusionKind.Shell, 4, 4, 0.018f);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.ThreadPath),
+            "Thread path", sewingFrame, Bounds4SdfInclusionKind.Frame, 2, 3, 0.01f);
+        string doorBobbin = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorBobbin);
+        EnsureDoor(doorBobbin, "Bobbin door", sewingShell, doorBobbin,
+            FrameShellInclusionLemmaPropertyKeys.HingeLeft, Bounds4SdfInclusionKind.Shell, 6, 4, 0.03f);
+        string doorBed = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorBed);
+        EnsureDoor(doorBed, "Bed door", sewingFrame, doorBed,
+            FrameShellInclusionLemmaPropertyKeys.HingeRear, Bounds4SdfInclusionKind.Frame, 1, 6, 0.04f);
+        EnsureLabeledSlot(SewingLemmaPropertyKeys.Needle, "Needle").contents =
+            HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+        EnsureLabeledSlot(SewingLemmaPropertyKeys.Hook, "Hook").contents =
+            HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+        EnsureLabeledSlot(SewingLemmaPropertyKeys.Bobbin, "Bobbin").contents =
+            HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+        EnsureLabeledSlot(SewingLemmaPropertyKeys.Presser, "Presser").contents =
+            HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+    }
+
+    public void EnsureSergerSlots()
+    {
+        string sergerShell = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.SergerShell);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.NeedleThroat),
+            "Needle throat", sergerShell, Bounds4SdfInclusionKind.Shell, 4, 3, 0.018f);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperRace),
+            "Looper race", sergerShell, Bounds4SdfInclusionKind.Shell, 5, 3, 0.02f);
+        string doorLooper = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorLooper);
+        EnsureDoor(doorLooper, "Looper door", sergerShell, doorLooper,
+            FrameShellInclusionLemmaPropertyKeys.HingeFront, Bounds4SdfInclusionKind.Shell, 6, 2, 0.035f);
+        EnsureLabeledSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperUpper),
+            "Upper looper");
+        EnsureLabeledSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperLower),
+            "Lower looper");
+        EnsureLabeledSlot(SewingLemmaPropertyKeys.Differential, "Differential");
+    }
+
+    public void EnsureLatheSlots()
+    {
+        string latheBed = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LatheFrameBed);
+        string latheCover = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LatheShellCover);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.SpindleBore),
+            "Spindle bore", latheBed, Bounds4SdfInclusionKind.Frame, 4, 4, 0.03f);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.TailstockQuill),
+            "Tailstock quill", latheBed, Bounds4SdfInclusionKind.Frame, 7, 4, 0.02f);
+        EnsureHollow(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.ChipChute),
+            "Chip chute", latheCover, Bounds4SdfInclusionKind.Shell, 4, 1, 0.04f);
+        string doorHead = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorHeadstock);
+        EnsureDoor(doorHead, "Headstock door", latheCover, doorHead,
+            FrameShellInclusionLemmaPropertyKeys.HingeLeft, Bounds4SdfInclusionKind.Shell, 1, 4, 0.05f);
+        string doorGear = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorGearbox);
+        EnsureDoor(doorGear, "Gearbox door", latheBed, doorGear,
+            FrameShellInclusionLemmaPropertyKeys.HingeFront, Bounds4SdfInclusionKind.Frame, 2, 2, 0.045f);
+        string doorPan = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorChipPan);
+        EnsureDoor(doorPan, "Chip pan", latheBed, doorPan,
+            FrameShellInclusionLemmaPropertyKeys.HingeBottom, Bounds4SdfInclusionKind.Frame, 4, 0, 0.05f);
+    }
+
+    public PixelLightGridSlotEntry EnsureHollow(
+        string slotId, string label, string frameId, Bounds4SdfInclusionKind inclusion,
+        int cellX, int cellY, float hollowRadius)
+    {
+        var e = EnsureLabeledSlot(slotId, label);
+        e.kind = PixelLightGridSlotKind.HollowSubtract;
+        e.frameId = frameId;
+        e.inclusion = inclusion;
+        e.cellX = cellX;
+        e.cellY = cellY;
+        e.hollowRadius = hollowRadius;
+        e.contents = HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+        return e;
+    }
+
+    public PixelLightGridSlotEntry EnsureDoor(
+        string slotId, string label, string frameId, string doorId, string hingeLabel,
+        Bounds4SdfInclusionKind inclusion, int cellX, int cellY, float hollowRadius)
+    {
+        var e = EnsureLabeledSlot(slotId, label);
+        e.kind = PixelLightGridSlotKind.Door;
+        e.frameId = frameId;
+        e.doorId = doorId;
+        e.hingeLabel = hingeLabel;
+        e.inclusion = inclusion;
+        e.cellX = cellX;
+        e.cellY = cellY;
+        e.hollowRadius = hollowRadius;
+        e.contents = HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+        return e;
+    }
+
+    public int NextZIndex()
+    {
+        int max = -1;
+        if (gridSlots == null) return 0;
+        for (int i = 0; i < gridSlots.Count; i++)
+        {
+            if (gridSlots[i] != null)
+                max = Mathf.Max(max, gridSlots[i].zIndex);
+        }
+        return max + 1;
+    }
+
+    public List<PixelLightGridSlotEntry> SlotsAtCell(int cellX, int cellY)
+    {
+        var list = new List<PixelLightGridSlotEntry>();
+        if (gridSlots == null) return list;
+        for (int i = 0; i < gridSlots.Count; i++)
+        {
+            var e = gridSlots[i];
+            if (e != null && e.cellX == cellX && e.cellY == cellY)
+                list.Add(e);
+        }
+        list.Sort((a, b) => a.zIndex.CompareTo(b.zIndex));
+        return list;
+    }
+
+    public PixelLightGridSlotEntry FindSlot(string slotId)
+    {
+        if (gridSlots == null || string.IsNullOrEmpty(slotId)) return null;
+        for (int i = 0; i < gridSlots.Count; i++)
+        {
+            if (gridSlots[i] != null && gridSlots[i].slotId == slotId)
+                return gridSlots[i];
+        }
+        return null;
+    }
+
+    public bool MoveSlotZ(string slotId, int delta)
+    {
+        var entry = FindSlot(slotId);
+        if (entry == null) return false;
+        int from = entry.zIndex;
+        int to = from + delta;
+        PixelLightGridSlotEntry swap = null;
+        int best = delta > 0 ? int.MaxValue : int.MinValue;
+        for (int i = 0; i < gridSlots.Count; i++)
+        {
+            var e = gridSlots[i];
+            if (e == null || e == entry) continue;
+            if (delta > 0 && e.zIndex > from && e.zIndex < best)
+            {
+                best = e.zIndex;
+                swap = e;
+            }
+            else if (delta < 0 && e.zIndex < from && e.zIndex > best)
+            {
+                best = e.zIndex;
+                swap = e;
+            }
+        }
+        if (swap != null)
+        {
+            int tmp = entry.zIndex;
+            entry.zIndex = swap.zIndex;
+            swap.zIndex = tmp;
+        }
+        else
+            entry.zIndex = Mathf.Max(0, to);
+        SortSlotsByZ();
+        return true;
+    }
+
+    public void MoveSlotZToEdge(string slotId, bool front)
+    {
+        var entry = FindSlot(slotId);
+        if (entry == null) return;
+        if (front)
+            entry.zIndex = NextZIndex();
+        else
+        {
+            int min = int.MaxValue;
+            for (int i = 0; i < gridSlots.Count; i++)
+            {
+                if (gridSlots[i] != null && gridSlots[i] != entry)
+                    min = Mathf.Min(min, gridSlots[i].zIndex);
+            }
+            entry.zIndex = min == int.MaxValue ? 0 : min - 1;
+        }
+        SortSlotsByZ();
+    }
+
+    public void SortSlotsByZ()
+    {
+        if (gridSlots == null) return;
+        gridSlots.Sort((a, b) =>
+        {
+            int az = a != null ? a.zIndex : 0;
+            int bz = b != null ? b.zIndex : 0;
+            int c = az.CompareTo(bz);
+            if (c != 0) return c;
+            string al = a != null ? a.slotId : "";
+            string bl = b != null ? b.slotId : "";
+            return string.CompareOrdinal(al, bl);
+        });
+    }
+
+    public List<PixelLightGridSlotEntry> SubtractSlotsFor(Bounds4SdfInclusionKind inclusion)
+    {
+        var list = new List<PixelLightGridSlotEntry>();
+        if (gridSlots == null) return list;
+        for (int i = 0; i < gridSlots.Count; i++)
+        {
+            var e = gridSlots[i];
+            if (e == null) continue;
+            if (e.kind != PixelLightGridSlotKind.HollowSubtract && e.kind != PixelLightGridSlotKind.Door)
+                continue;
+            if (e.inclusion != inclusion) continue;
+            list.Add(e);
+        }
+        list.Sort((a, b) => a.zIndex.CompareTo(b.zIndex));
+        return list;
+    }
+
+    public int MaxZIndex()
+    {
+        int max = 0;
+        if (gridSlots == null) return 0;
+        for (int i = 0; i < gridSlots.Count; i++)
+        {
+            if (gridSlots[i] != null)
+                max = Mathf.Max(max, gridSlots[i].zIndex);
+        }
+        return max;
     }
 
     public void SyncSlotsFromHeli(HelicopterVehicleRagdoll heli)

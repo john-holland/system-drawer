@@ -102,6 +102,37 @@ namespace Locomotion.Narrative
             BuiltInSynonyms.RegisterAlias("sump pump", "sump-pump");
             BuiltInSynonyms.RegisterAlias("imitirrrr__", "imitirrrr");
             BuiltInSynonyms.RegisterAlias("recoup wheel", "recoup");
+            BuiltInSynonyms.RegisterAlias("frame inclusion", "frame-inclusion");
+            BuiltInSynonyms.RegisterAlias("shell inclusion", "shell-inclusion");
+            BuiltInSynonyms.RegisterAlias("hollow subtract", "hollow-subtract");
+            BuiltInSynonyms.RegisterAlias("frame id", "frame-id");
+            BuiltInSynonyms.RegisterAlias("door id", "door-id");
+            BuiltInSynonyms.RegisterAlias("hinge label", "hinge-label");
+            BuiltInSynonyms.RegisterAlias("slot kind", "slot-kind");
+            BuiltInSynonyms.RegisterAlias("z index", "z-index");
+            BuiltInSynonyms.RegisterAlias("hollow radius", "hollow-radius");
+            BuiltInSynonyms.RegisterAlias("sewing machine", "sewing-machine");
+            BuiltInSynonyms.RegisterAlias("stitch program", "stitch-program");
+            BuiltInSynonyms.RegisterAlias("needle throat", "needle-throat");
+            BuiltInSynonyms.RegisterAlias("bobbin race", "bobbin-race");
+            BuiltInSynonyms.RegisterAlias("thread path", "thread-path");
+            BuiltInSynonyms.RegisterAlias("looper race", "looper-race");
+            BuiltInSynonyms.RegisterAlias("door bobbin", "door-bobbin");
+            BuiltInSynonyms.RegisterAlias("door bed", "door-bed");
+            BuiltInSynonyms.RegisterAlias("door looper", "door-looper");
+            BuiltInSynonyms.RegisterAlias("sewing shell", "sewing-shell");
+            BuiltInSynonyms.RegisterAlias("sewing frame", "sewing-frame");
+            BuiltInSynonyms.RegisterAlias("serger shell", "serger-shell");
+            BuiltInSynonyms.RegisterAlias("looper upper", "looper-upper");
+            BuiltInSynonyms.RegisterAlias("looper lower", "looper-lower");
+            BuiltInSynonyms.RegisterAlias("spindle bore", "spindle-bore");
+            BuiltInSynonyms.RegisterAlias("tailstock quill", "tailstock-quill");
+            BuiltInSynonyms.RegisterAlias("chip chute", "chip-chute");
+            BuiltInSynonyms.RegisterAlias("door headstock", "door-headstock");
+            BuiltInSynonyms.RegisterAlias("door gearbox", "door-gearbox");
+            BuiltInSynonyms.RegisterAlias("door chip pan", "door-chip-pan");
+            BuiltInSynonyms.RegisterAlias("lathe frame bed", "lathe-frame-bed");
+            BuiltInSynonyms.RegisterAlias("lathe shell cover", "lathe-shell-cover");
         }
 
         public static string CanonicalizeDeictic(string token)

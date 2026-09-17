@@ -131,6 +131,7 @@ public sealed class LatheDesignerWindow : EditorWindow
     PixelLightDesignerView _view = PixelLightDesignerView.Front;
     Bounds4SdfInclusionKind _inclusion = Bounds4SdfInclusionKind.Frame;
     Vector2 _scroll;
+    Vector2 _slotScroll;
 
     [MenuItem("Locomotion/Lathe Designer")]
     public static void Open()
@@ -192,6 +193,18 @@ public sealed class LatheDesignerWindow : EditorWindow
         else
             _spec.shellMount = activeMount;
 
+        if (_spec.pixelLightCatalog != null)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Frame / shell hollows and doors", EditorStyles.boldLabel);
+            if (GUILayout.Button("Ensure lathe hollows/doors"))
+            {
+                _spec.pixelLightCatalog.EnsureLatheSlots();
+                EditorUtility.SetDirty(_spec.pixelLightCatalog);
+            }
+            PixelLightGridSlotAccordionDrawer.Draw(_spec.pixelLightCatalog, ref _slotScroll, null, null, 220f);
+        }
+
         EditorGUILayout.Space();
         _spec.millKerfMount = (PixelLightGridMountGameObject)EditorGUILayout.ObjectField(
             "Mill kerf mount", _spec.millKerfMount, typeof(PixelLightGridMountGameObject), true);
@@ -251,7 +264,10 @@ public sealed class WoodPileDesignerWindow : EditorWindow
         _spec.brushMount = (PixelLightGridMountGameObject)EditorGUILayout.ObjectField(
             "PixelLight brush", _spec.brushMount, typeof(PixelLightGridMountGameObject), true);
         if (_spec.brushMount != null)
+        {
             PixelLightRadialBrushDrawer.DrawOnMount(_spec.brushMount);
+            GearboxLathePixelLightDrawer.DrawMountPatternGrid(_spec.brushMount);
+        }
         _depth = EditorGUILayout.IntField("Depth index", _depth);
         if (GUILayout.Button("Add quadtree bucket"))
             _spec.AddQuadtreeBucket(_depth, Vector3.zero);

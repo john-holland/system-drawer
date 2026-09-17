@@ -71,7 +71,10 @@ public sealed class GarageDoorDesignerWindow : EditorWindow
         EditorGUILayout.LabelField("Fitted grid", $"{_spec.pixelLightGridW}×{_spec.pixelLightGridH}");
 
         if (_mount != null)
+        {
             PixelLightRadialBrushDrawer.DrawOnMount(_mount);
+            GearboxLathePixelLightDrawer.DrawMountPatternGrid(_mount, _catalog);
+        }
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Door pieces (PixelLight accordion)", EditorStyles.boldLabel);

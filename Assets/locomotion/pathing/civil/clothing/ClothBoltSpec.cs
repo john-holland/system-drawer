@@ -6,7 +6,8 @@ public enum ClothSplineKind
 {
     Cut = 0,
     Fold = 1,
-    Stitch = 2
+    Stitch = 2,
+    Hem = 3
 }
 
 [Serializable]
@@ -26,6 +27,9 @@ public sealed class ClothSplinePath
     public List<ClothGrabberPin> grabbers = new List<ClothGrabberPin>();
     public string joinLoopIdA;
     public string joinLoopIdB;
+    public SewingStitchProgram program;
+    [Range(0f, 1f)] public float gauge01 = 0.4f;
+    public HemSeamApplyMode applyMode = HemSeamApplyMode.Decal;
 }
 
 [CreateAssetMenu(fileName = "ClothBolt", menuName = "Locomotion/Civil/Cloth Bolt")]
@@ -41,6 +45,7 @@ public sealed class ClothBoltSpec : ScriptableObject
     public string joinLoopIdB;
     public SkinnedMeshLoopSectionAsset loopSection;
     public PaintCanvas dyeCanvas;
+    public PixelLightMultiSlotCatalog pixelLightCatalog;
 
     public Rect BoltRect => new Rect(0f, 0f, Mathf.Max(0.01f, widthM), Mathf.Max(0.01f, lengthM));
 

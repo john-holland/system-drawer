@@ -176,6 +176,10 @@ public sealed class GarageDoorChainTests
         Assert.AreEqual(90f, DoorCarpentryLemmaPropertyKeys.DefaultStilePerpRailDeg, 0.01f);
         Assert.AreEqual(0f, DoorCarpentryLemmaPropertyKeys.DefaultMullionParallelStileDeg, 0.01f);
         Assert.Contains(DoorCarpentryLemmaPropertyKeys.LemmaWrapMoulding, DoorCarpentryLemmaPropertyKeys.AllKeys);
+        Assert.Contains(DoorCarpentryLemmaPropertyKeys.FrameId, DoorCarpentryLemmaPropertyKeys.AllKeys);
+        Assert.Contains(DoorCarpentryLemmaPropertyKeys.DoorId, DoorCarpentryLemmaPropertyKeys.AllKeys);
+        Assert.Contains(DoorCarpentryLemmaPropertyKeys.HingeLabel, DoorCarpentryLemmaPropertyKeys.AllKeys);
+        Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.HingeLabel, DoorCarpentryLemmaPropertyKeys.HingeLabel);
     }
 
     [Test]

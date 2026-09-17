@@ -68,6 +68,9 @@ public sealed class AirportPixelLightDesignerWindow : EditorWindow
                 if (airplane != null) airplane.pixelLightCatalog = c;
             }
         }
+        if (pattern != null)
+            GearboxLathePixelLightDrawer.DrawPatternAssetGrid(pattern, catalog);
+
         PixelLightGridSlotAccordionDrawer.Draw(catalog, ref _slotsScroll, null, entry =>
         {
             if (entry?.heliSlot != null)

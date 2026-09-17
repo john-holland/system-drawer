@@ -84,8 +84,53 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         list.AddRange(BuildVotePropertyRecords());
         list.AddRange(BuildGameSessionPropertyRecords());
         list.AddRange(BuildUtilityPropertyRecords());
+        list.AddRange(BuildFrameShellInclusionPropertyRecords());
+        list.AddRange(BuildSewingPropertyRecords());
         return list.ToArray();
     }
+
+    public static LocalizationPropertySpecRecord[] BuildFrameShellInclusionPropertyRecords() => new[]
+    {
+        Spec(FrameShellInclusionLemmaPropertyKeys.Inclusion, "String", "shell",
+            "{P:sewing-machine|inclusion=shell} Bounds4 inclusion: frame|shell"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.FrameInclusion, "String", "frame",
+            "Frame member-tube inclusion"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.ShellInclusion, "String", "shell",
+            "Shell filled-cavity inclusion"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.FrameId, "String", "",
+            "PixelLight / door frame id (alias: frameId)"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.DoorId, "String", "",
+            "Hinged door id (alias: doorId)"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.HingeLabel, "String", "left",
+            "Hinge side: left|right|front|rear|bottom (alias: hingeLabel)"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.Hollow, "String", "",
+            "Hollow subtract slot id"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.HollowSubtract, "String", "",
+            "PixelLightGridSlotKind.HollowSubtract"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.SlotKind, "String", "light",
+            "light|hollow-subtract|door"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.ZIndex, "Integer", "0",
+            "Subtract / stack order (alias: zIndex)"),
+        Spec(FrameShellInclusionLemmaPropertyKeys.HollowRadius, "Float", "0.02",
+            "Hollow / door opening radius meters"),
+    };
+
+    public static LocalizationPropertySpecRecord[] BuildSewingPropertyRecords() => new[]
+    {
+        Spec(SewingLemmaPropertyKeys.SewingMachine, "String", "", "Sewing machine Frame/Shell spec"),
+        Spec(SewingLemmaPropertyKeys.Serger, "String", "", "Serger Frame/Shell spec"),
+        Spec(SewingLemmaPropertyKeys.Lathe, "String", "", "Lathe Frame/Shell spec"),
+        Spec(SewingLemmaPropertyKeys.StitchProgram, "String", "lockstitch", "lockstitch|overlock stitch program"),
+        Spec(SewingLemmaPropertyKeys.Lockstitch, "String", "", "Sewing lockstitch program"),
+        Spec(SewingLemmaPropertyKeys.Overlock, "String", "", "Serger overlock program"),
+        Spec(SewingLemmaPropertyKeys.Hem, "String", "", "ClothSplineKind.Hem path"),
+        Spec(SewingLemmaPropertyKeys.NeedleThroat, "String", "", "Needle throat hollow"),
+        Spec(SewingLemmaPropertyKeys.BobbinRace, "String", "", "Bobbin race hollow"),
+        Spec(SewingLemmaPropertyKeys.DoorBobbin, "String", "", "Bobbin door id"),
+        Spec(SewingLemmaPropertyKeys.DoorLooper, "String", "", "Serger looper door id"),
+        Spec(SewingLemmaPropertyKeys.DoorHeadstock, "String", "", "Lathe headstock door id"),
+        Spec(SewingLemmaPropertyKeys.SpindleBore, "String", "", "Lathe spindle bore hollow"),
+    };
 
     public static LocalizationPropertySpecRecord[] BuildUtilityPropertyRecords() => new[]
     {

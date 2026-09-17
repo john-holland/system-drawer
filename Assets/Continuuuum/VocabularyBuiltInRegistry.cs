@@ -202,6 +202,39 @@ public static class VocabularyBuiltInRegistry
         foreach (var w in new[] { "place-stile", "place-rail", "pack-panels", "wrap-moulding" })
             Add("verb", w, "verb", VocabularyBuiltInCategory.Action, carpentryTags);
 
+        string[] inclusionTags = { "civil", "sdf", "inclusion" };
+        foreach (var w in new[]
+                 {
+                     "frame", "shell", "inclusion", "frame-inclusion", "shell-inclusion",
+                     "hollow", "hollow-subtract", "frame-id", "door-id", "hinge-label",
+                     "slot-kind", "z-index", "hollow-radius"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, inclusionTags);
+
+        string[] sewingTags = { "civil", "clothing", "sewing" };
+        foreach (var w in new[]
+                 {
+                     "sewing-machine", "serger", "stitch", "stitch-program", "lockstitch", "overlock",
+                     "hem", "seam", "needle", "bobbin", "looper", "presser", "hook",
+                     "needle-throat", "bobbin-race", "thread-path", "looper-race",
+                     "door-bobbin", "door-bed", "door-looper",
+                     "sewing-shell", "sewing-frame", "serger-shell",
+                     "looper-upper", "looper-lower", "differential"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, sewingTags);
+        foreach (var w in new[] { "sew", "serge" })
+            Add("verb", w, "verb", VocabularyBuiltInCategory.Action, sewingTags);
+
+        string[] latheTags = { "civil", "mill", "lathe" };
+        foreach (var w in new[]
+                 {
+                     "lathe", "headstock", "tailstock",
+                     "spindle-bore", "tailstock-quill", "chip-chute",
+                     "door-headstock", "door-gearbox", "door-chip-pan",
+                     "lathe-frame-bed", "lathe-shell-cover"
+                 })
+            Add("noun", w, "noun", VocabularyBuiltInCategory.Subject, latheTags);
+
         string[] roadTags = { "civil", "road" };
         foreach (var w in new[]
                  {

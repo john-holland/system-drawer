@@ -38,6 +38,14 @@ def _parse_tags(tags_raw: str | None) -> list[str]:
         return ["spatial"]
     if tags_raw.strip() == "playerControllerTags":
         return ["controller", "spatial", "player"]
+    if tags_raw.strip() == "inclusionTags":
+        return ["civil", "sdf", "inclusion"]
+    if tags_raw.strip() == "sewingTags":
+        return ["civil", "clothing", "sewing"]
+    if tags_raw.strip() == "latheTags":
+        return ["civil", "mill", "lathe"]
+    if tags_raw.strip() == "carpentryTags":
+        return ["civil", "carpentry", "door"]
     return re.findall(r'"([^"]+)"', tags_raw)
 
 
