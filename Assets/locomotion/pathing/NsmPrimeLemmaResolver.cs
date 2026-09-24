@@ -267,6 +267,10 @@ public static class NsmPrimeLemmaResolver
         return "life " + props.term + " (no sheet)";
     }
 
+    /// <summary>Dispatches {P:stat|...} for prompt pipelines that already hold NSM context.</summary>
+    public static string ExecuteStat(IReadOnlyList<PromptSegment> segments, IStatisticalRetinueDao dao = null) =>
+        StatLemmaResolver.Execute(StatLemmaResolver.ResolveFromSegments(segments), dao);
+
     static string HandleTime(NsmPrimeLemmaProperties props, ExecutionContext ctx)
     {
         ctx.Flags["time:" + props.term] = "1";

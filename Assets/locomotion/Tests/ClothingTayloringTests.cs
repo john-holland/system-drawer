@@ -270,6 +270,90 @@ public sealed class ClothingTayloringTests
     }
 
     [Test]
+    public void OverlockProgram_AngledStartAndStopSteps()
+    {
+        var program = SewingStitchProgram.DefaultOverlock();
+        var start = program.StartStep;
+        var stop = program.StopStep;
+        Assert.IsNotNull(start);
+        Assert.IsNotNull(stop);
+        Assert.IsFalse(ReferenceEquals(start, stop));
+        Assert.AreEqual(0, start.index);
+        Assert.AreEqual(program.steps.Count - 1, stop.index);
+        Assert.AreEqual(SewingNeedlePhase.Entry, start.phase);
+        Assert.AreEqual(SewingNeedlePhase.Exit, stop.phase);
+        Assert.IsTrue(start.IsAngled, "serger start step should use angled entry/exit");
+        Assert.IsTrue(stop.IsAngled, "serger stop step should use angled entry/exit");
+        Assert.Greater(Mathf.Abs(start.entryAngleDeg - 90f), 10f);
+        Assert.Greater(Mathf.Abs(stop.exitAngleDeg - 90f), 10f);
+        Assert.IsTrue(program.StepAt(start.cellX, start.cellY) == start);
+        Assert.IsTrue(program.StepAt(stop.cellX, stop.cellY) == stop);
+    }
+
+    [Test]
+    public void EnsureSergerSlots_HaveHollowsDoorsAndPixelLightComponents()
+    {
+        var catalog = ScriptableObject.CreateInstance<PixelLightMultiSlotCatalog>();
+        try
+        {
+            catalog.EnsureSergerSlots();
+            string sergerShell = FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.SergerShell);
+            var throat = catalog.FindSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.NeedleThroat));
+            Assert.IsNotNull(throat);
+            Assert.AreEqual(PixelLightGridSlotKind.HollowSubtract, throat.kind);
+            Assert.AreEqual(sergerShell, throat.frameId);
+            Assert.AreEqual(HelicoptorGridSlotGameObject.SlotContents.PixelLight, throat.contents);
+
+            var looperRace = catalog.FindSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperRace));
+            Assert.AreEqual(PixelLightGridSlotKind.HollowSubtract, looperRace.kind);
+
+            var door = catalog.FindSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorLooper));
+            Assert.AreEqual(PixelLightGridSlotKind.Door, door.kind);
+            Assert.AreEqual(sergerShell, door.frameId);
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.DoorLooper), door.doorId);
+            Assert.AreEqual(FrameShellInclusionLemmaPropertyKeys.HingeFront, door.hingeLabel);
+            Assert.AreEqual(HelicoptorGridSlotGameObject.SlotContents.PixelLight, door.contents);
+
+            void AssertPixelLightComponent(string slotId)
+            {
+                var e = catalog.FindSlot(slotId);
+                Assert.IsNotNull(e, slotId);
+                Assert.AreEqual(HelicoptorGridSlotGameObject.SlotContents.PixelLight, e.contents, slotId);
+            }
+
+            AssertPixelLightComponent(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperUpper));
+            AssertPixelLightComponent(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperLower));
+            AssertPixelLightComponent(SewingLemmaPropertyKeys.Differential);
+            AssertPixelLightComponent(SewingLemmaPropertyKeys.Needle);
+
+            var bag = catalog.GetOrCreate(PixelLightDesignerView.Front, PixelLightDesignerScope.Shell, 1);
+            Assert.AreEqual(PixelLightDesignerView.Front, bag.view);
+            Assert.AreEqual(PixelLightDesignerScope.Shell, bag.scope);
+            Assert.AreEqual(1, bag.magnetoIndex);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(catalog);
+        }
+    }
+
+    [Test]
+    public void SergerStitchProgram_CellsCoverStartStopOnGrid()
+    {
+        var program = SewingStitchProgram.DefaultOverlock();
+        var cells = new System.Collections.Generic.HashSet<string>();
+        for (int i = 0; i < program.steps.Count; i++)
+        {
+            var s = program.steps[i];
+            cells.Add(s.cellX + "," + s.cellY);
+            Assert.IsNotNull(program.StepAt(s.cellX, s.cellY));
+        }
+        Assert.IsTrue(cells.Contains(program.StartStep.cellX + "," + program.StartStep.cellY));
+        Assert.IsTrue(cells.Contains(program.StopStep.cellX + "," + program.StopStep.cellY));
+        Assert.GreaterOrEqual(cells.Count, 2);
+    }
+
+    [Test]
     public void ToRopeConfig_ScalesWithGaugeAndConnectingSpan()
     {
         var sew = ScriptableObject.CreateInstance<SewingMachineSpec>();

@@ -1598,6 +1598,26 @@ namespace Locomotion.EditorTools
             }
         }
     }
+
+    /// <summary>AssetDB-host stub until RagdollFromScratchReplicatorWindow.cs is reimported.</summary>
+    public sealed class RagdollFromScratchReplicatorWindow : EditorWindow
+    {
+        [MenuItem("Window/System Drawer/Ragdoll/From-Scratch Replicator")]
+        public static void ShowWindow()
+        {
+            var w = GetWindow<RagdollFromScratchReplicatorWindow>("From-Scratch Replicator");
+            w.minSize = new Vector2(420, 480);
+            w.Show();
+        }
+
+        void OnGUI()
+        {
+            EditorGUILayout.HelpBox(
+                "From-Scratch Replicator pending AssetDB reimport.",
+                MessageType.Info);
+        }
+    }
+
 }
 #endif
 

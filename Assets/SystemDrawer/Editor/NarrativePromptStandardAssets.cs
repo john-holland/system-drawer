@@ -82,6 +82,59 @@ internal static class NarrativePromptStandardAssets
             EditorUtility.SetDirty(interp);
         }
 
+        // Health inpaint event catalog + runner (collated with LSTM Standard Assets)
+        var catalog = AssetDatabase.LoadAssetAtPath<HealthInpaintEventCatalog>(
+            WizardStandardAssetsPaths.Stat.DefaultHealthInpaintEventCatalog);
+        if (catalog == null)
+        {
+            WizardStandardAssetsCore.EnsureFolder(WizardStandardAssetsPaths.Stat.Folder);
+            catalog = ScriptableObject.CreateInstance<HealthInpaintEventCatalog>();
+            var runtime = HealthInpaintEventCatalog.CreateDefaultRuntime();
+            catalog.events = runtime.events;
+            AssetDatabase.CreateAsset(catalog, WizardStandardAssetsPaths.Stat.DefaultHealthInpaintEventCatalog);
+            report.Created.Add("DefaultHealthInpaintEventCatalog");
+        }
+        else
+            report.Skipped.Add("DefaultHealthInpaintEventCatalog");
+
+        var sceneRoot = GameObject.Find("_StandardScene");
+        if (sceneRoot == null)
+        {
+            sceneRoot = new GameObject("_StandardScene");
+            Undo.RegisterCreatedObjectUndo(sceneRoot, "Create _StandardScene");
+            report.Created.Add("_StandardScene");
+        }
+        var runnerGo = sceneRoot.transform.Find("HealthInpaintEventRunner");
+        HealthInpaintEventRunner runner;
+        if (runnerGo == null)
+        {
+            var go = new GameObject("HealthInpaintEventRunner");
+            Undo.RegisterCreatedObjectUndo(go, "Create HealthInpaintEventRunner");
+            go.transform.SetParent(sceneRoot.transform, false);
+            runner = Undo.AddComponent<HealthInpaintEventRunner>(go);
+            report.Created.Add("HealthInpaintEventRunner");
+        }
+        else
+        {
+            runner = runnerGo.GetComponent<HealthInpaintEventRunner>();
+            if (runner == null)
+                runner = Undo.AddComponent<HealthInpaintEventRunner>(runnerGo.gameObject);
+            report.Skipped.Add("HealthInpaintEventRunner");
+        }
+        if (runner.catalog != catalog)
+        {
+            Undo.RecordObject(runner, "Assign health inpaint catalog");
+            runner.catalog = catalog;
+            report.Linked.Add("HealthInpaintEventRunner.catalog");
+        }
+        if (runner.interpreter != interp)
+        {
+            Undo.RecordObject(runner, "Assign LSTM interpreter");
+            runner.interpreter = interp;
+            report.Linked.Add("HealthInpaintEventRunner.interpreter");
+        }
+        EditorUtility.SetDirty(runner);
+
         EditorUtility.SetDirty(wizard);
         EditorUtility.SetDirty(ui);
         return report;

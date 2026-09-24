@@ -14,6 +14,10 @@ public enum ClothThreadSide
     Bottom = 1
 }
 
+/// <summary>
+/// Needle step role in a stitch program. Serger/overlock start = <see cref="Entry"/>,
+/// finish / stop = <see cref="Exit"/> (angled entry/exit degrees still apply per step).
+/// </summary>
 public enum SewingNeedlePhase
 {
     Entry = 0,
@@ -34,12 +38,16 @@ public sealed class SewingNeedleStep
     public int cellY;
     public SewingFeedDirection direction;
     public ClothThreadSide clothSide;
+    public SewingNeedlePhase phase = SewingNeedlePhase.Entry;
     public float entryAngleDeg = 90f;
     public float exitAngleDeg = 90f;
     [Range(0f, 1f)] public float gauge01 = 0.4f;
     public bool connectingStrand;
 
     public float PitchM() => 0.04f + Mathf.Clamp01(gauge01) * 0.04f;
+
+    /// <summary>True when entry and exit angles differ (non-orthogonal / angled needle path).</summary>
+    public bool IsAngled => Mathf.Abs(entryAngleDeg - exitAngleDeg) > 0.5f;
 }
 
 [Serializable]
@@ -63,6 +71,7 @@ public sealed class SewingStitchProgram
             cellY = 3,
             direction = SewingFeedDirection.Left,
             clothSide = ClothThreadSide.Top,
+            phase = SewingNeedlePhase.Entry,
             entryAngleDeg = 80f,
             exitAngleDeg = 100f,
             gauge01 = 0.4f
@@ -74,6 +83,7 @@ public sealed class SewingStitchProgram
             cellY = 3,
             direction = SewingFeedDirection.Right,
             clothSide = ClothThreadSide.Bottom,
+            phase = SewingNeedlePhase.Exit,
             entryAngleDeg = 100f,
             exitAngleDeg = 80f,
             gauge01 = 0.4f
@@ -88,6 +98,7 @@ public sealed class SewingStitchProgram
             stitchClass = SewingStitchClass.Overlock,
             defaultGauge01 = 0.45f
         };
+        // Start: angled needle entry into the edge.
         p.steps.Add(new SewingNeedleStep
         {
             index = 0,
@@ -95,10 +106,12 @@ public sealed class SewingStitchProgram
             cellY = 2,
             direction = SewingFeedDirection.Left,
             clothSide = ClothThreadSide.Top,
-            entryAngleDeg = 85f,
-            exitAngleDeg = 95f,
+            phase = SewingNeedlePhase.Entry,
+            entryAngleDeg = 55f,
+            exitAngleDeg = 100f,
             gauge01 = 0.45f
         });
+        // Mid: looper connecting strand (angled).
         p.steps.Add(new SewingNeedleStep
         {
             index = 1,
@@ -106,11 +119,13 @@ public sealed class SewingStitchProgram
             cellY = 2,
             direction = SewingFeedDirection.Right,
             clothSide = ClothThreadSide.Bottom,
+            phase = SewingNeedlePhase.Entry,
             entryAngleDeg = 70f,
             exitAngleDeg = 110f,
             gauge01 = 0.45f,
             connectingStrand = true
         });
+        // Stop: angled exit / finish of the overlock chain.
         p.steps.Add(new SewingNeedleStep
         {
             index = 2,
@@ -118,13 +133,20 @@ public sealed class SewingStitchProgram
             cellY = 3,
             direction = SewingFeedDirection.Right,
             clothSide = ClothThreadSide.Bottom,
-            entryAngleDeg = 110f,
-            exitAngleDeg = 70f,
+            phase = SewingNeedlePhase.Exit,
+            entryAngleDeg = 115f,
+            exitAngleDeg = 50f,
             gauge01 = 0.45f,
             connectingStrand = true
         });
         return p;
     }
+
+    public SewingNeedleStep StartStep =>
+        steps != null && steps.Count > 0 ? steps[0] : null;
+
+    public SewingNeedleStep StopStep =>
+        steps != null && steps.Count > 0 ? steps[steps.Count - 1] : null;
 
     public void Reindex()
     {
@@ -132,8 +154,14 @@ public sealed class SewingStitchProgram
             steps = new List<SewingNeedleStep>();
         for (int i = 0; i < steps.Count; i++)
         {
-            if (steps[i] != null)
-                steps[i].index = i;
+            if (steps[i] == null) continue;
+            steps[i].index = i;
+            if (steps.Count == 1)
+                steps[i].phase = SewingNeedlePhase.Entry;
+            else if (i == 0)
+                steps[i].phase = SewingNeedlePhase.Entry;
+            else if (i == steps.Count - 1)
+                steps[i].phase = SewingNeedlePhase.Exit;
         }
     }
 
@@ -158,7 +186,8 @@ public sealed class SewingStitchProgram
             gauge01 = defaultGauge01
         };
         steps.Add(step);
-        return step;
+        Reindex();
+        return steps[steps.Count - 1];
     }
 
     public bool RemoveAtCell(int cellX, int cellY)

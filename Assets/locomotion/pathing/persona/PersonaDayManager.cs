@@ -112,6 +112,7 @@ public sealed class PersonaDayManager : MonoBehaviour
                 }
                 wouldHaveBeen.NoteBioTick(true);
                 TickVenueBio(venue, dt);
+                TickVenueEconomy(venue, dt);
                 wouldHaveBeen.NoteBtTick(tier == CivilLodTier.FullSim);
                 wouldHaveBeen.NoteReplan(tier == CivilLodTier.FullSim && driveTravelAgentOnWake);
             }
@@ -148,6 +149,12 @@ public sealed class PersonaDayManager : MonoBehaviour
     {
         if (bundle == null || string.IsNullOrEmpty(bundle.personaKey)) return;
         _bundleCache[bundle.personaKey] = bundle;
+        var dao = StatisticalRetinueDao.Resolve(this);
+        if (dao != null)
+        {
+            dao.cityId = cityId;
+            dao.CacheBundle(bundle);
+        }
     }
 
     float ResolvePlayerSpeed()
@@ -208,7 +215,15 @@ public sealed class PersonaDayManager : MonoBehaviour
             if (e?.actor == null) continue;
             var sheet = e.actor.GetComponent<LifeSystemsSheet>() ?? e.actor.AddComponent<LifeSystemsSheet>();
             sheet.EnsureDefaults();
-            LifeSystemsGovGloveBias.ApplyBaselineBias(sheet, bundle.societyFeatures, bundle.needSatisfied01);
+            var dao = StatisticalRetinueDao.Resolve(this);
+            if (dao != null)
+            {
+                dao.cityId = cityId;
+                dao.CacheBundle(bundle);
+                dao.ApplyGovGloveBias(sheet, bundle);
+            }
+            else
+                LifeSystemsGovGloveBias.ApplyBaselineBias(sheet, bundle.societyFeatures, bundle.needSatisfied01);
             sheet.bioRhythm?.ApplyAmplitudeDelta((bundle.biorhythmAmplitudeSeed - 0.5f) * 0.1f);
             // Phase seed reserved for bio oscillators (stored on schedule if present).
             var sched = e.actor.GetComponent<PersonalSchedule>();
@@ -389,6 +404,21 @@ public sealed class PersonaDayManager : MonoBehaviour
         }
         if (venue.kind == CivilSystemKind.ClothingStore && venue.contextOwner != null)
             venue.contextOwner.GetComponent<TayloringBioRhythm>()?.Tick(DateTime.UtcNow, dt);
+    }
+
+    void TickVenueEconomy(CivilVenueNode venue, float dt)
+    {
+        var dao = StatisticalRetinueDao.Resolve(this);
+        if (dao == null || venue == null) return;
+        dao.cityId = cityId;
+        string retinueId = !string.IsNullOrEmpty(venue.stableId) ? venue.stableId : venue.kind.ToString();
+        var company = venue.contextOwner != null ? venue.contextOwner.GetComponent<CompanyRegistration>() : null;
+        var store = venue.contextOwner != null ? venue.contextOwner.GetComponent<StoreBase>() : null;
+        if (company != null)
+            dao.EnsureEconomicOverlayFromCompany(company, store);
+        else
+            dao.EnsureEconomicOverlay(retinueId, new StatSeed { cityId = cityId, retinueId = retinueId });
+        dao.TickEconomy(company != null ? company.companyId : retinueId, Mathf.Max(0.001f, dt / 3600f));
     }
 
     void TickCivilianSchedules(CivilVenueNode venue, DateTime utcNow)

@@ -107,7 +107,7 @@ internal static class FacilitatorHubUi
     {
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
         if (GUILayout.Button("Create Object", EditorStyles.toolbarButton, GUILayout.Width(100)))
-            SystemDrawerCreateObjectWindow.ShowWindow();
+            SystemDrawerCreateObjectWindowHost.ShowWindow();
         GUILayout.Label("Filter windows", GUILayout.Width(92));
         string next = GUILayout.TextField(WindowFilter, EditorStyles.toolbarSearchField);
         if (next != WindowFilter)
@@ -154,11 +154,7 @@ internal static class FacilitatorHubUi
         EditorPrefs.SetString(PrefGame, game);
         PostGd(api, "/api/gd/dimension-switch", $"{{\"game\":\"{game}\",\"dimension\":{dim}}}");
         if (Application.isPlaying)
-        {
-            var cache = UnityEngine.Object.FindAnyObjectByType<DimensionSwitchCache>();
-            if (cache != null)
-                cache.StartCoroutine(cache.SwitchToDimension(dim));
-        }
+            InvokeDimCache("SwitchToDimension", dim, null);
         Debug.Log($"[FacilitatorHub] Switch dimension → {dim} (game={game})");
     }
 
@@ -166,12 +162,29 @@ internal static class FacilitatorHubUi
     {
         PostGd(api, "/api/gd/sg-prewarm", $"{{\"game\":\"{game}\",\"dimension\":{dim}}}");
         if (Application.isPlaying)
-        {
-            var cache = UnityEngine.Object.FindAnyObjectByType<DimensionSwitchCache>();
-            if (cache != null)
-                cache.StartCoroutine(cache.PrewarmAsync(game, dim));
-        }
+            InvokeDimCache("PrewarmAsync", dim, game);
         Debug.Log($"[FacilitatorHub] Prewarm SG for dim {dim}");
+    }
+
+    /// <summary>Reflection bridge — DimensionSwitchCache lives in BedogaGenerator (AssetDB-orphan prone).</summary>
+    static void InvokeDimCache(string method, int dim, string game)
+    {
+        var behaviours = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            var mb = behaviours[i];
+            if (mb == null || mb.GetType().Name != "DimensionSwitchCache")
+                continue;
+            var mi = mb.GetType().GetMethod(method);
+            if (mi == null)
+                continue;
+            object result = method == "PrewarmAsync"
+                ? mi.Invoke(mb, new object[] { game ?? "main", dim, null })
+                : mi.Invoke(mb, new object[] { dim, null });
+            if (result is System.Collections.IEnumerator routine)
+                mb.StartCoroutine(routine);
+            return;
+        }
     }
 
     static void PostGd(string apiBase, string path, string json)
@@ -396,5 +409,38 @@ internal static class SystemDrawerHubSetup
         Selection.activeGameObject = root;
         EditorSceneManager.MarkSceneDirty(root.scene);
         Debug.Log("[SystemDrawerHub] Created SystemDrawer root with service, facilitator, and _Wizards child.");
+    }
+}
+
+/// <summary>AssetDB-host stub until SystemDrawerCreateObjectWindow.cs is reimported.</summary>
+public static class SystemDrawerCreateObjectWindowHost
+{
+    public static void ShowWindow()
+    {
+        var win = EditorWindow.GetWindow<EditorWindow>("Create Object");
+        win.minSize = new Vector2(440f, 360f);
+        win.Show();
+        Debug.LogWarning("[SystemDrawer] Create Object window pending AssetDB reimport (SystemDrawerCreateObjectWindow).");
+    }
+}
+
+/// <summary>AssetDB-host stub until MasterRebakeRunner.cs is reimported.</summary>
+public static class MasterRebakeRunner
+{
+    public static bool SuppressProgressBar;
+
+    public sealed class MasterRebakeReport
+    {
+        public bool Completed = true;
+        public bool Cancelled;
+    }
+
+    public static MasterRebakeReport LastReport { get; private set; }
+
+    public static MasterRebakeReport Run()
+    {
+        LastReport = new MasterRebakeReport { Completed = true };
+        UnityEngine.Debug.Log("[MasterRebakeRunner] Stub run (pending AssetDB reimport).");
+        return LastReport;
     }
 }

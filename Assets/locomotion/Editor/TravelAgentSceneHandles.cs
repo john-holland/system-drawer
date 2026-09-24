@@ -1,3 +1,4 @@
+using Locomotion.Rig;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -163,5 +164,108 @@ public static class TravelAgentSceneHandles
 
         Handles.Label(anchor + Vector3.up * 0.25f,
             TravelPathReverseLimits.FormatDistanceLabel(agent.ReverseBudgetMeters, agent.TotalPathLengthMeters));
+    }
+}
+
+
+namespace Locomotion.EditorTools
+{
+    public sealed class SkeletonFitPair
+    {
+        public string sourceId;
+        public string targetTraitId;
+        public float confidence;
+        public bool inferred;
+    }
+
+    public sealed class SkeletonFitResult
+    {
+        public readonly System.Collections.Generic.List<SkeletonFitPair> pairs = new System.Collections.Generic.List<SkeletonFitPair>();
+        public readonly System.Collections.Generic.List<string> unmatchedSource = new System.Collections.Generic.List<string>();
+        public readonly System.Collections.Generic.List<string> unmatchedTarget = new System.Collections.Generic.List<string>();
+        public readonly System.Collections.Generic.List<string> offeredAnimalRows = new System.Collections.Generic.List<string>();
+
+        public System.Collections.Generic.Dictionary<string, string> ToRemap()
+        {
+            var map = new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.Ordinal);
+            for (int i = 0; i < pairs.Count; i++)
+            {
+                var p = pairs[i];
+                if (p == null || string.IsNullOrEmpty(p.sourceId) || string.IsNullOrEmpty(p.targetTraitId))
+                    continue;
+                map[p.sourceId] = p.targetTraitId;
+            }
+            return map;
+        }
+    }
+}
+
+
+public static class PoseTrackPlayer
+{
+    public static int Apply(PoseTrack track, BoneMap map, float timeMs) => 0;
+}
+
+public static class PoseTrackClipBaker
+{
+    public static int BakeAndAddSet(RagdollIKAnimationManager ik, PoseTrack track, BoneMap map, UnityEngine.Transform root, string name) => -1;
+}
+
+public static class BvhPoseTrackImporter
+{
+    public sealed class Joint { public string name; public int parent = -1; }
+    public static void CollectJoints(string bvh, System.Collections.Generic.List<Joint> joints) { }
+    public static PoseTrack FromFile(string path, string modelSpec) => new PoseTrack { modelSpec = modelSpec };
+}
+
+public static class ContinuuuumRemotePoseAnimationDetector
+{
+    public static PoseTrack TryLoadJson(string path)
+    {
+        if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) return null;
+        return PoseTrack.FromJson(System.IO.File.ReadAllText(path));
+    }
+}
+
+
+namespace Locomotion.EditorTools
+{
+    public static class ArbitrarySkeletonFitter
+    {
+        public static SkeletonFitResult FitToBoneMap(
+            System.Collections.Generic.IList<string> sourceIds,
+            System.Collections.Generic.IList<int> sourceParents,
+            BoneMap map,
+            string unmatchedPrefix = "Animal")
+        {
+            var result = new SkeletonFitResult();
+            if (sourceIds == null) return result;
+            for (int i = 0; i < sourceIds.Count; i++)
+            {
+                string id = sourceIds[i];
+                if (string.IsNullOrEmpty(id)) continue;
+                result.pairs.Add(new SkeletonFitPair { sourceId = id, targetTraitId = id, confidence = 0.5f });
+            }
+            _ = sourceParents;
+            _ = map;
+            _ = unmatchedPrefix;
+            return result;
+        }
+    }
+}
+
+public static class WebcamAnimTimelineFields
+{
+    public static float DrawPlayheadMs(string label, float value, float maxMs)
+    {
+        return UnityEditor.EditorGUILayout.Slider(label, value, 0f, UnityEngine.Mathf.Max(0.001f, maxMs));
+    }
+
+    public static float PlayheadMaxMs(WebcamAnimRecordingAsset recording, PoseTrack track)
+    {
+        if (track != null && track.Count > 0)
+            return UnityEngine.Mathf.Max(1f, track.LatestTimeMs());
+        _ = recording;
+        return 1000f;
     }
 }

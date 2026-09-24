@@ -373,10 +373,19 @@ public static class GearboxLathePixelLightDrawer
         if (step == null) return;
         EditorGUILayout.LabelField("Index", step.index.ToString());
         EditorGUILayout.LabelField("Cell", step.cellX + ", " + step.cellY);
+        bool isStart = program.StartStep == step;
+        bool isStop = program.StopStep == step;
+        if (isStart || isStop)
+            EditorGUILayout.LabelField(
+                isStart && isStop ? "Role: start + stop" : isStart ? "Role: start" : "Role: stop",
+                EditorStyles.miniLabel);
+        step.phase = (SewingNeedlePhase)EditorGUILayout.EnumPopup("Needle phase", step.phase);
         step.direction = (SewingFeedDirection)EditorGUILayout.EnumPopup("Feed direction", step.direction);
         step.clothSide = (ClothThreadSide)EditorGUILayout.EnumPopup("Thread cloth side", step.clothSide);
         step.entryAngleDeg = EditorGUILayout.FloatField("Needle entry deg", step.entryAngleDeg);
         step.exitAngleDeg = EditorGUILayout.FloatField("Needle exit deg", step.exitAngleDeg);
+        if (step.IsAngled)
+            EditorGUILayout.LabelField("Angled path", EditorStyles.miniLabel);
         step.gauge01 = EditorGUILayout.Slider("Gauge", step.gauge01, 0f, 1f);
         step.connectingStrand = EditorGUILayout.Toggle("Connecting strand", step.connectingStrand);
         EditorGUILayout.LabelField("Connecting span m", program.ConnectingSpanM().ToString("0.000"));
