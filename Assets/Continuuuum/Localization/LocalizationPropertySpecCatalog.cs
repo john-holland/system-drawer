@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -454,4 +455,796 @@ public sealed class LocalizationPropertySpecCatalog : ScriptableObject
         catalog.specs.Add(spec);
         return catalog;
     }
+}
+
+// <auto-merged-lemma-keys>
+// Merged because Unity AssetDatabase omitted these scripts after pull.
+
+// ---- from Assets/Continuuuum/Localization/ChatLemmaPropertyKeys.cs ----
+/// <summary>Property keys for {P:chat|op=open} / {P:open-chat} / {P:close-chat} spans.</summary>
+public static class ChatLemmaPropertyKeys
+{
+    public const string Op = "chat-op";
+    public const string AliasOp = "op";
+    public const string AliasAction = "action";
+    public const string ProductId = "product-id";
+    public const string AliasProduct = "product";
+    public const string SessionId = "session-id";
+    public const string AliasSession = "session";
+    public const string ComposeMode = "compose-mode";
+    public const string Surface = "chat-surface";
+    public const string AliasSurface = "surface";
+    public const string AutoCloseOnExit = "auto-close-on-exit";
+    public const string RequireEntitlement = "require-entitlement";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "chat", "open-chat", "close-chat", "dismiss"
+    };
+
+    public static readonly string[] AllKeys =
+    {
+        Op, ProductId, SessionId, ComposeMode, Surface, AutoCloseOnExit, RequireEntitlement
+    };
+}
+
+public enum ChatLemmaOp
+{
+    Open,
+    Close,
+    Toggle
+}
+
+[Serializable]
+public struct ChatLemmaProperties
+{
+    public ChatLemmaOp op;
+    public string productId;
+    public string sessionId;
+    public string composeMode;
+    public string surface;
+    public bool autoCloseOnExit;
+    public bool requireEntitlement;
+    public string lemmaHint;
+
+    public static ChatLemmaProperties Defaults => new ChatLemmaProperties
+    {
+        op = ChatLemmaOp.Open,
+        productId = "",
+        sessionId = "",
+        composeMode = "",
+        surface = "unity-mp-text",
+        autoCloseOnExit = false,
+        requireEntitlement = true,
+        lemmaHint = "chat"
+    };
+
+    public static bool IsChatLemma(string placeholderName)
+    {
+        if (string.IsNullOrEmpty(placeholderName))
+            return false;
+        string n = NormalizeName(placeholderName);
+        for (int i = 0; i < ChatLemmaPropertyKeys.LemmaPlaceholders.Length; i++)
+        {
+            if (n == ChatLemmaPropertyKeys.LemmaPlaceholders[i])
+                return true;
+        }
+        return false;
+    }
+
+    public static ChatLemmaProperties ResolveFromParams(
+        Dictionary<string, string> parameters,
+        string placeholderName = "chat")
+    {
+        var p = Defaults;
+        p.lemmaHint = placeholderName ?? "chat";
+        p.op = InferOp(placeholderName);
+        if (parameters == null)
+            return p;
+
+        if (Try(parameters, ChatLemmaPropertyKeys.Op, out var op) ||
+            Try(parameters, ChatLemmaPropertyKeys.AliasOp, out op) ||
+            Try(parameters, ChatLemmaPropertyKeys.AliasAction, out op))
+            p.op = ParseOp(op, p.op);
+
+        if (Try(parameters, ChatLemmaPropertyKeys.ProductId, out var pid) ||
+            Try(parameters, ChatLemmaPropertyKeys.AliasProduct, out pid))
+            p.productId = pid;
+
+        if (Try(parameters, ChatLemmaPropertyKeys.SessionId, out var sid) ||
+            Try(parameters, ChatLemmaPropertyKeys.AliasSession, out sid))
+            p.sessionId = sid;
+
+        if (Try(parameters, ChatLemmaPropertyKeys.ComposeMode, out var mode))
+            p.composeMode = mode;
+
+        if (Try(parameters, ChatLemmaPropertyKeys.Surface, out var surface) ||
+            Try(parameters, ChatLemmaPropertyKeys.AliasSurface, out surface))
+            p.surface = surface;
+
+        if (Try(parameters, ChatLemmaPropertyKeys.AutoCloseOnExit, out var autoClose))
+            p.autoCloseOnExit = ParseBool(autoClose);
+
+        if (Try(parameters, ChatLemmaPropertyKeys.RequireEntitlement, out var req))
+            p.requireEntitlement = ParseBool(req);
+
+        return p;
+    }
+
+    public static ChatLemmaOp InferOp(string placeholderName)
+    {
+        string n = NormalizeName(placeholderName);
+        if (n == "close-chat" || n == "dismiss")
+            return ChatLemmaOp.Close;
+        if (n == "open-chat")
+            return ChatLemmaOp.Open;
+        return ChatLemmaOp.Open;
+    }
+
+    // todo: review: add send, and refine open to use join as a separate lemma
+    public static ChatLemmaOp ParseOp(string raw, ChatLemmaOp fallback = ChatLemmaOp.Open)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return fallback;
+        string n = NormalizeName(raw);
+        switch (n)
+        {
+            case "close":
+            case "dismiss":
+            case "leave":
+            case "hang-up":
+                return ChatLemmaOp.Close;
+            case "toggle":
+            case "flip":
+                return ChatLemmaOp.Toggle;
+            case "open":
+            case "join":
+            case "show":
+                return ChatLemmaOp.Open;
+            default:
+                return fallback;
+        }
+    }
+
+    static string NormalizeName(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return "";
+        return raw.Trim().ToLowerInvariant().Replace('_', '-').Replace(' ', '-');
+    }
+
+    static bool ParseBool(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+        return raw == "1" ||
+               string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(raw, "yes", StringComparison.OrdinalIgnoreCase);
+    }
+
+    static bool Try(Dictionary<string, string> p, string key, out string v)
+    {
+        v = null;
+        foreach (var kv in p)
+        {
+            if (string.Equals(kv.Key, key, StringComparison.OrdinalIgnoreCase))
+            {
+                v = kv.Value;
+                return !string.IsNullOrEmpty(v);
+            }
+        }
+        return false;
+    }
+}
+
+
+// ---- from Assets/Continuuuum/Localization/ChefLemmaPropertyKeys.cs ----
+/// <summary>Property keys for {P:chef|...} / {P:cook|...} lemma painting.</summary>
+public static class ChefLemmaPropertyKeys
+{
+    public const string PlaceholderName = "chef";
+    public const string CookPlaceholderName = "cook";
+    public const string Op = "op";
+    public const string Activity = "activity";
+    public const string Mode = "mode";
+    public const string Station = "station";
+    public const string Item = "item";
+    public const string Order = "order";
+
+    public const string SpecOp = "chef-op";
+    public const string SpecActivity = "chef-activity";
+    public const string SpecMode = "chef-mode";
+    public const string SpecStation = "chef-station";
+    public const string SpecItem = "chef-item";
+    public const string SpecOrder = "chef-order";
+
+    public static readonly string[] AllKeys = { Op, Activity, Mode, Station, Item, Order };
+}
+
+public enum ChefLemmaOp
+{
+    None,
+    Duty,
+    Activity,
+    Wash,
+    Ticket
+}
+
+[Serializable]
+public struct ChefLemmaProperties
+{
+    public ChefLemmaOp op;
+    public string activity;
+    public string mode;
+    public string station;
+    public string item;
+    public string orderId;
+
+    public static ChefLemmaProperties ResolveFromParams(System.Collections.Generic.IReadOnlyDictionary<string, string> p)
+    {
+        var props = new ChefLemmaProperties();
+        if (p == null) return props;
+        if (p.TryGetValue(ChefLemmaPropertyKeys.Op, out var op))
+        {
+            if (string.Equals(op, "duty", StringComparison.OrdinalIgnoreCase)) props.op = ChefLemmaOp.Duty;
+            else if (string.Equals(op, "activity", StringComparison.OrdinalIgnoreCase)) props.op = ChefLemmaOp.Activity;
+            else if (string.Equals(op, "wash", StringComparison.OrdinalIgnoreCase)) props.op = ChefLemmaOp.Wash;
+            else if (string.Equals(op, "ticket", StringComparison.OrdinalIgnoreCase)) props.op = ChefLemmaOp.Ticket;
+        }
+        p.TryGetValue(ChefLemmaPropertyKeys.Activity, out props.activity);
+        p.TryGetValue(ChefLemmaPropertyKeys.Mode, out props.mode);
+        p.TryGetValue(ChefLemmaPropertyKeys.Station, out props.station);
+        p.TryGetValue(ChefLemmaPropertyKeys.Item, out props.item);
+        p.TryGetValue(ChefLemmaPropertyKeys.Order, out props.orderId);
+        return props;
+    }
+}
+
+
+// ---- from Assets/Continuuuum/Localization/FrameShellInclusionLemmaPropertyKeys.cs ----
+/// <summary>
+/// Canonical lemmas for Bounds4 Frame/Shell inclusion and PixelLight hollow/door slot identity.
+/// Slot catalog ids use underscores; <see cref="ToSlotId"/> / <see cref="FromSlotId"/> convert.
+/// </summary>
+public static class FrameShellInclusionLemmaPropertyKeys
+{
+    public const string Frame = "frame";
+    public const string Shell = "shell";
+    public const string Inclusion = "inclusion";
+    public const string FrameInclusion = "frame-inclusion";
+    public const string ShellInclusion = "shell-inclusion";
+    public const string Hollow = "hollow";
+    public const string HollowSubtract = "hollow-subtract";
+    public const string FrameId = "frame-id";
+    public const string DoorId = "door-id";
+    public const string HingeLabel = "hinge-label";
+    public const string SlotKind = "slot-kind";
+    public const string ZIndex = "z-index";
+    public const string HollowRadius = "hollow-radius";
+
+    public const string HingeLeft = "left";
+    public const string HingeRight = "right";
+    public const string HingeFront = "front";
+    public const string HingeRear = "rear";
+    public const string HingeBottom = "bottom";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        Frame, Shell, Inclusion, FrameInclusion, ShellInclusion, Hollow, HollowSubtract,
+        FrameId, DoorId, HingeLabel, SlotKind, ZIndex, HollowRadius
+    };
+
+    public static string ToSlotId(string lemma)
+    {
+        if (string.IsNullOrEmpty(lemma)) return lemma;
+        return lemma.Replace('-', '_');
+    }
+
+    public static string FromSlotId(string slotId)
+    {
+        if (string.IsNullOrEmpty(slotId)) return slotId;
+        return slotId.Replace('_', '-');
+    }
+
+    public static bool IsFrameInclusion(string lemma)
+    {
+        string t = BuiltInSynonyms.CanonicalizeToken(lemma ?? "");
+        return t == Frame || t == FrameInclusion;
+    }
+
+    public static bool IsShellInclusion(string lemma)
+    {
+        string t = BuiltInSynonyms.CanonicalizeToken(lemma ?? "");
+        return t == Shell || t == ShellInclusion || t == Inclusion;
+    }
+}
+
+
+// ---- from Assets/Continuuuum/Localization/GameSessionLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for GameSession save/load and local server structure.</summary>
+public static class GameSessionLemmaPropertyKeys
+{
+    public const string GameSession = "game-session";
+    public const string Saving = "saving";
+    public const string Loading = "loading";
+    public const string LocalSave = "local-save";
+    public const string SaveServerToLocal = "save-server-to-local";
+    public const string LocalServer = "local-server";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "game-session", "saving", "loading", "local-save", "save-server-to-local", "local-server"
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/HousingLemmaPropertyKeys.cs ----
+/// <summary>Property keys for {P:house|...} architecture / size lemma painting.</summary>
+public static class HousingLemmaPropertyKeys
+{
+    public const string PlaceholderName = "house";
+    public const string Size = "size";
+    public const string Style = "style";
+    public const string SpecSize = "house-size";
+    public const string SpecStyle = "house-style";
+
+    public static readonly string[] SizeTokens =
+    {
+        "quaint", "good_size", "mc_mansion", "mansion", "cabin", "cottage", "townhome"
+    };
+
+    public static readonly string[] AllKeys = { Size, Style };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/LegalLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for court, constitution, scripture, and chambers.</summary>
+public static class LegalLemmaPropertyKeys
+{
+    public const string Court = "court";
+    public const string Constitution = "constitution";
+    public const string Scripture = "scripture";
+    public const string Chamber = "chamber";
+    public const string Rights = "rights";
+    public const string Law = "law";
+    public const string Junta = "junta";
+    public const string GenevaConventions = "geneva-conventions";
+    public const string Torture = "torture";
+    public const string RespectsGenevaConventions = "respects-geneva-conventions";
+    public const string Announce = "announce";
+    public const string Returned = "returned";
+    public const string RightsReturned = "rights-returned";
+    public const string AnnounceRightsReturned = "announce-rights-returned";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "court", "constitution", "scripture", "chamber", "rights", "law", "junta",
+        "geneva-conventions", "torture", "respects-geneva-conventions",
+        "announce", "returned", "rights-returned", "announce-rights-returned"
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/PenInkLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for pen, quill, nib, ink, and cap open/close.</summary>
+public static class PenInkLemmaPropertyKeys
+{
+    public const string Pen = "pen";
+    public const string Quill = "quill";
+    public const string Nib = "nib";
+    public const string Ink = "ink";
+    public const string Write = "write";
+    public const string Dip = "dip";
+    public const string Cap = "cap";
+    public const string Open = "open";
+    public const string Close = "close";
+    public const string Wet = "wet";
+    public const string Dry = "dry";
+    public const string Paint = "paint";
+    public const string Towel = "towel";
+    public const string Whiteboard = "whiteboard";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "pen", "quill", "nib", "ink", "write", "dip", "cap",
+        "open", "close", "wet", "dry", "paint", "towel", "whiteboard"
+    };
+
+    public const string Paintlike = "paintlike";
+    public const string Dilution = "dilution";
+    public const string SingleLayerMix = "single-layer-mix";
+    public const string MaxBendDeg = "max-bend-deg";
+    public const string SeeThroughSec = "see-through-sec";
+    public const string Aperture = "aperture";
+    public const string CapOpen = "cap-open";
+}
+
+
+// ---- from Assets/Continuuuum/Localization/RelationshipLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for relationship stage / consent / doctrine / subjects.</summary>
+public static class RelationshipLemmaPropertyKeys
+{
+    public const string Stage = "stage";
+    public const string Consent = "consent";
+    public const string Doctrine = "doctrine";
+    public const string Subjects = "subjects";
+    public const string Affection = "affection";
+    public const string Romance = "romance";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "stage", "consent", "doctrine", "subjects", "affection", "romance"
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/RoadLaneLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for road lanes, sidewalks, wires, signs, emergency bars.</summary>
+public static class RoadLaneLemmaPropertyKeys
+{
+    public const string RoadLane = "road_lane";
+    public const string Sidewalk = "sidewalk";
+    public const string Crosswalk = "crosswalk";
+    public const string Curb = "curb";
+    public const string GrassStrip = "grass_strip";
+    public const string PhonePole = "phone_pole";
+    public const string StreetWire = "street_wire";
+    public const string WireEnd = "wire_end";
+    public const string HangingShoes = "hanging_shoes";
+    public const string WalkButton = "walk_button";
+    public const string Intersection = "intersection";
+    public const string RoadSign = "road_sign";
+    public const string JerseyBarrier = "jersey_barrier";
+    public const string GuardRail = "guard_rail";
+    public const string EmergencyBar = "emergency_bar";
+    public const string StreetLuminaire = "street_luminaire";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "road-lane", "sidewalk", "crosswalk", "curb", "grass-strip",
+        "phone-pole", "street-wire", "wire-end", "hanging-shoes", "walk-button",
+        "intersection", "road-sign", "jersey-barrier", "guard-rail",
+        "emergency-bar", "street-luminaire", "street-light", "traffic-signal"
+    };
+
+    public const string LaneIndex = "lane-index";
+    public const string Grid = "grid";
+    public const string FollowTime = "follow-time";
+    public const string Disabled = "disabled";
+    public const string Open = "open";
+    public const string Padded = "padded";
+    public const string Matting = "matting";
+    public const string WalkAcross = "walk-across";
+    public const string Hold = "hold";
+    public const string Width = "width";
+    public const string Dapple = "dapple";
+    public const string Span = "span";
+    public const string Occupied = "occupied";
+    public const string PoleId = "pole-id";
+    public const string WireId = "wire-id";
+    public const string Tension = "tension";
+    public const string Down = "down";
+    public const string Kind = "kind";
+    public const string Stuck = "stuck";
+    public const string Draped = "draped";
+    public const string KnotLength = "knot-length";
+    public const string Snapped = "snapped";
+    public const string Pressed = "pressed";
+    public const string Held = "held";
+    public const string Approach = "approach";
+    public const string Yield = "yield";
+    public const string StopPotential = "stop-potential";
+    public const string Read = "read";
+    public const string BendWithRoad = "bend-with-road";
+    public const string LaneDisabled = "lane-disabled";
+    public const string On = "on";
+    public const string Blink = "blink";
+    public const string Color = "color";
+    public const string Hear = "hear";
+    public const string See = "see";
+    public const string Tracked = "tracked";
+}
+
+
+// ---- from Assets/Continuuuum/Localization/ScribeLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for scribe documents / pages / anchors.</summary>
+public static class ScribeLemmaPropertyKeys
+{
+    public const string ScribeSet = "scribe-set";
+    public const string Page = "page";
+    public const string Anchor = "anchor";
+    public const string Format = "format";
+    public const string PeckingOrder = "pecking-order";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "scribe-set", "page", "anchor", "format", "pecking-order"
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/SewingLemmaPropertyKeys.cs ----
+/// <summary>
+/// Lemma keys for sewing machine, serger, and lathe Frame/Shell PixelLight machines.
+/// Catalog slot ids are underscore forms of these hyphenated lemmas.
+/// </summary>
+public static class SewingLemmaPropertyKeys
+{
+    public const string SewingMachine = "sewing-machine";
+    public const string Serger = "serger";
+    public const string Lathe = "lathe";
+    public const string Stitch = "stitch";
+    public const string StitchProgram = "stitch-program";
+    public const string Lockstitch = "lockstitch";
+    public const string Overlock = "overlock";
+    public const string Hem = "hem";
+    public const string Seam = "seam";
+    public const string Needle = "needle";
+    public const string Bobbin = "bobbin";
+    public const string Looper = "looper";
+    public const string Presser = "presser";
+    public const string Hook = "hook";
+    public const string NeedleThroat = "needle-throat";
+    public const string BobbinRace = "bobbin-race";
+    public const string ThreadPath = "thread-path";
+    public const string LooperRace = "looper-race";
+    public const string DoorBobbin = "door-bobbin";
+    public const string DoorBed = "door-bed";
+    public const string DoorLooper = "door-looper";
+    public const string SewingShell = "sewing-shell";
+    public const string SewingFrame = "sewing-frame";
+    public const string SergerShell = "serger-shell";
+    public const string LooperUpper = "looper-upper";
+    public const string LooperLower = "looper-lower";
+    public const string Differential = "differential";
+    public const string SpindleBore = "spindle-bore";
+    public const string TailstockQuill = "tailstock-quill";
+    public const string ChipChute = "chip-chute";
+    public const string DoorHeadstock = "door-headstock";
+    public const string DoorGearbox = "door-gearbox";
+    public const string DoorChipPan = "door-chip-pan";
+    public const string LatheFrameBed = "lathe-frame-bed";
+    public const string LatheShellCover = "lathe-shell-cover";
+    public const string Headstock = "headstock";
+    public const string Tailstock = "tailstock";
+    public const string Sew = "sew";
+    public const string Serge = "serge";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        SewingMachine, Serger, Lathe, Stitch, StitchProgram, Lockstitch, Overlock,
+        Hem, Seam, Needle, Bobbin, Looper, Presser, Hook,
+        NeedleThroat, BobbinRace, ThreadPath, LooperRace,
+        DoorBobbin, DoorBed, DoorLooper,
+        SewingShell, SewingFrame, SergerShell,
+        LooperUpper, LooperLower, Differential,
+        SpindleBore, TailstockQuill, ChipChute,
+        DoorHeadstock, DoorGearbox, DoorChipPan,
+        LatheFrameBed, LatheShellCover, Headstock, Tailstock,
+        Sew, Serge
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/StreetLightLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for describing / controlling street &amp; traffic lights.</summary>
+public static class StreetLightLemmaPropertyKeys
+{
+    public const string PlaceholderName = "street_light";
+    public const string TrafficSignal = "traffic_signal";
+
+    public const string ChangedTo = "changed-to";
+    public const string Red = "red";
+    public const string Green = "green";
+    public const string Yellow = "yellow";
+    public const string Amber = "amber";
+
+    public const string SpecChangedTo = "street-light-changed-to";
+    public const string SpecRed = "street-light-red";
+    public const string SpecGreen = "street-light-green";
+    public const string SpecYellow = "street-light-yellow";
+
+    public static readonly string[] AllKeys =
+    {
+        ChangedTo, Red, Green, Yellow, Amber
+    };
+}
+
+public enum StreetLightLemmaOp
+{
+    None,
+    ChangedTo,
+    SetRed,
+    SetGreen,
+    SetYellow
+}
+
+[Serializable]
+public struct StreetLightLemmaProperties
+{
+    public StreetLightLemmaOp op;
+    public string color;
+
+    public static StreetLightLemmaProperties Defaults => new StreetLightLemmaProperties
+    {
+        op = StreetLightLemmaOp.None,
+        color = "red"
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/TasteNotesLemmaPropertyKeys.cs ----
+/// <summary>Property keys for {P:taste|notes=sour,spicy|intensity=0.5} lemma painting.</summary>
+public static class TasteNotesLemmaPropertyKeys
+{
+    public const string PlaceholderName = "taste";
+    public const string Notes = "notes";
+    public const string Intensity = "intensity";
+
+    public const string SpecNotes = "taste-notes";
+    public const string SpecIntensity = "taste-intensity";
+
+    public static readonly string[] AllKeys = { Notes, Intensity };
+}
+
+[Serializable]
+public struct TasteNotesLemmaProperties
+{
+    public string notesCsv;
+    public float intensity01;
+
+    public static TasteNotesLemmaProperties Defaults => new TasteNotesLemmaProperties
+    {
+        notesCsv = "",
+        intensity01 = 0.5f
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/ThreatLemmaPropertyKeys.cs ----
+/// <summary>Property keys for {P:threat|...} alertness lemmas.</summary>
+public static class ThreatLemmaPropertyKeys
+{
+    public const string PlaceholderName = "threat";
+    public const string Op = "op";
+    public const string Level = "level";
+    public const string Alert = "alert";
+    public const string Agency = "agency";
+    public const string Kind = "kind";
+    public const string Lemma = "lemma";
+
+    public const string SpecOp = "threat-op";
+    public const string SpecLevel = "threat-level";
+    public const string SpecAlert = "threat-alert";
+    public const string SpecAgency = "threat-agency";
+    public const string SpecKind = "threat-kind";
+    public const string SpecLemma = "threat-lemma";
+
+    public static readonly string[] LemmaTags =
+    {
+        "on-edge", "all-clear", "under-attack", "potential-intruders", "advisory", "elevated"
+    };
+
+    public static readonly string[] AllKeys = { Op, Level, Alert, Agency, Kind, Lemma };
+}
+
+public enum ThreatLemmaOp
+{
+    None,
+    Raise,
+    Clear,
+    Query,
+    Dialog
+}
+
+[Serializable]
+public struct ThreatLemmaProperties
+{
+    public ThreatLemmaOp op;
+    public string level;
+    public string alert;
+    public string agency;
+    public string kind;
+    public string lemma;
+
+    public static ThreatLemmaProperties ResolveFromParams(System.Collections.Generic.IReadOnlyDictionary<string, string> p)
+    {
+        var props = new ThreatLemmaProperties();
+        if (p == null) return props;
+        if (p.TryGetValue(ThreatLemmaPropertyKeys.Op, out var op))
+        {
+            if (string.Equals(op, "raise", StringComparison.OrdinalIgnoreCase)) props.op = ThreatLemmaOp.Raise;
+            else if (string.Equals(op, "clear", StringComparison.OrdinalIgnoreCase)) props.op = ThreatLemmaOp.Clear;
+            else if (string.Equals(op, "query", StringComparison.OrdinalIgnoreCase)) props.op = ThreatLemmaOp.Query;
+            else if (string.Equals(op, "dialog", StringComparison.OrdinalIgnoreCase)) props.op = ThreatLemmaOp.Dialog;
+        }
+        p.TryGetValue(ThreatLemmaPropertyKeys.Level, out props.level);
+        p.TryGetValue(ThreatLemmaPropertyKeys.Alert, out props.alert);
+        p.TryGetValue(ThreatLemmaPropertyKeys.Agency, out props.agency);
+        p.TryGetValue(ThreatLemmaPropertyKeys.Kind, out props.kind);
+        p.TryGetValue(ThreatLemmaPropertyKeys.Lemma, out props.lemma);
+        return props;
+    }
+}
+
+
+// ---- from Assets/Continuuuum/Localization/UniversityLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for university / boarding campus.</summary>
+public static class UniversityLemmaPropertyKeys
+{
+    public const string Campus = "campus";
+    public const string Curriculum = "curriculum";
+    public const string Headmaster = "headmaster";
+    public const string Dean = "dean";
+    public const string Dorm = "dorm";
+    public const string CourseLoad = "course-load";
+    public const string AgeBracket = "age-bracket";
+    public const string Teacher = "teacher";
+    public const string Assistant = "assistant";
+    public const string Enroll = "enroll";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "campus", "curriculum", "headmaster", "dean", "dorm",
+        "course-load", "age-bracket", "teacher", "assistant", "enroll"
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/UtilityLemmaPropertyKeys.cs ----
+/// <summary>Canonical lemma keys for basement utility / water / flood vocabulary.</summary>
+public static class UtilityLemmaPropertyKeys
+{
+    public const string Furnace = "furnace";
+    public const string WaterHeater = "water-heater";
+    public const string WaterMain = "water-main";
+    public const string Shutoff = "shutoff";
+    public const string WaterFilter = "water-filter";
+    public const string Hvac = "hvac";
+    public const string Utility = "utility";
+    public const string CircuitBreaker = "circuit-breaker";
+    public const string WallPlug = "wall-plug";
+    public const string JacobsLadder = "jacobs-ladder";
+    public const string Recoup = "recoup";
+    public const string Imitirrrr = "imitirrrr";
+    public const string ImitirrrrId = "imitirrrr__";
+    public const string Flood = "flood";
+    public const string Gunk = "gunk";
+    public const string SumpPump = "sump-pump";
+    public const string Drain = "drain";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        Furnace, WaterHeater, WaterMain, Shutoff, WaterFilter, Hvac, Utility,
+        CircuitBreaker, WallPlug, JacobsLadder, Recoup, Imitirrrr, Flood, Gunk,
+        SumpPump, Drain
+    };
+}
+
+
+// ---- from Assets/Continuuuum/Localization/VoteLemmaPropertyKeys.cs ----
+/// <summary>Lemma keys for ballots, tallies, recounts, and queue-by-address in-paint.</summary>
+public static class VoteLemmaPropertyKeys
+{
+    public const string Vote = "vote";
+    public const string Ballot = "ballot";
+    public const string Recount = "recount";
+    public const string Tally = "tally";
+    public const string Queue = "queue";
+    public const string Queued = "queued";
+    public const string Address = "address";
+    public const string HomeAddress = "home-address";
+    public const string Randomly = "randomly";
+    public const string Happily = "happily";
+    public const string IfSo = "if-so";
+    public const string Property = "property";
+
+    /// <summary>Default developer in-paint on the local voting-place SG node. <c>if</c> is prefix / infix / postfix / circumfix; anaphor <c>if so</c> after an adverb postfixes.</summary>
+    public const string DefaultInpaintPrompt = "queued by address, or randomly, if so";
+
+    public static readonly string[] LemmaPlaceholders =
+    {
+        "vote", "ballot", "recount", "tally",
+        "queue", "queued", "address", "home-address", "randomly", "happily", "if-so", "property"
+    };
 }

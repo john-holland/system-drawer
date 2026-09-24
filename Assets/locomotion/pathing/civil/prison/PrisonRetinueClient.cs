@@ -24,12 +24,17 @@ public sealed class PrisonRetinueClient : MonoBehaviour
         venue.kind = CivilSystemKind.Prison;
         if (venue.retinue == null)
             venue.retinue = new List<RetinuePeckingEntry>();
+        var dao = StatisticalRetinueDao.Resolve(this);
+        dao?.CacheBundle(bundle);
         for (int i = 0; i < venue.retinue.Count; i++)
         {
             var actor = venue.retinue[i]?.actor;
             if (actor == null) continue;
             var sheet = actor.GetComponent<LifeSystemsSheet>();
-            LifeSystemsGovGloveBias.ApplyBaselineBias(sheet, bundle.societyFeatures, bundle.needSatisfied01);
+            if (dao != null)
+                dao.ApplyGovGloveBias(sheet, bundle);
+            else
+                LifeSystemsGovGloveBias.ApplyBaselineBias(sheet, bundle.societyFeatures, bundle.needSatisfied01);
         }
     }
 

@@ -95,6 +95,12 @@ public sealed class NarrativeTradeAction : NarrativeActionSpec
                     return Locomotion.Narrative.BehaviorTreeStatus.Failure;
                 if (!_transferred)
                 {
+                    if (!TradeEdgeAllows(self, other))
+                    {
+                        phase = TradeNarrativePhase.Rejected;
+                        Emit(ctx, "trade.edge_denied");
+                        return Locomotion.Narrative.BehaviorTreeStatus.Failure;
+                    }
                     TransferOffers(self, other);
                     _transferred = true;
                     Emit(ctx, "trade.complete");
@@ -153,6 +159,28 @@ public sealed class NarrativeTradeAction : NarrativeActionSpec
                 mgr.NoteScriptMention(otherOfferItemNames[i]);
                 mgr.TryPossessiveOrTransfer(otherOfferItemNames[i], otherId, selfId, requireMention: true);
             }
+    }
+
+    static bool TradeEdgeAllows(GameObject self, GameObject other)
+    {
+        var dao = StatisticalRetinueDao.Instance;
+        if (dao == null && self != null)
+            dao = self.GetComponentInParent<StatisticalRetinueDao>();
+        if (dao == null) return true;
+        var trade = dao.GetTradeDemographics();
+        if (trade?.edges == null || trade.edges.Count == 0) return true;
+        string fromId = self != null ? self.name : "";
+        string toId = other != null ? other.name : "";
+        var company = self != null ? self.GetComponentInParent<CompanyRegistration>() : null;
+        if (company != null) fromId = company.companyId;
+        var otherCo = other != null ? other.GetComponentInParent<CompanyRegistration>() : null;
+        if (otherCo != null) toId = otherCo.companyId;
+        return dao.TryResolveTrade(new TradeDealRequest
+        {
+            fromRetinueId = fromId,
+            toRetinueId = toId,
+            utcNow = DateTime.UtcNow
+        }, out _);
     }
 
     void FaceEachOther(GameObject a, GameObject b)

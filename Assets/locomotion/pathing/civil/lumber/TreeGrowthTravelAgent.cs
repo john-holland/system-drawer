@@ -145,4 +145,13 @@ public class TreeGrowthTravelAgent : TravelAgent
                || s.sun01 < s.limitSun01 - 1e-4f
                || s.minerals01 < s.limitMinerals01 - 1e-4f;
     }
+
+    /// <summary>Publish a growth empowerment into StatisticalRetinueDao (fungus/plant empower bus).</summary>
+    public void PublishGrowthEmpower(float mult = 1.25f, float hours = 1f)
+    {
+        GrowthEventBus.Publish(
+            StatisticalRetinueDao.Resolve(this),
+            GrowthEvent.EmpowerFungus("tree_growth_" + (SelectedStep != null ? SelectedStep.kind.ToString() : "step"),
+                mult, hours));
+    }
 }

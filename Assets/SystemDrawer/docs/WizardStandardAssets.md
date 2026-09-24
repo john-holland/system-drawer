@@ -18,13 +18,15 @@ One-click **Setup Standard Assets** on System Drawer service wizards creates ver
 | Dream Cycle | `StandardAssets/DreamCycle/DefaultNeedAspectRegistry.asset` |
 | Networking | `StandardAssets/Networking/DefaultNetworkSettings.asset` |
 | Quest | `StandardAssets/Quest/DefaultQuestBehaviorTreeBundle.asset` |
+| Narrative | `StandardAssets/Narrative/StarterNarrativePrompt.asset` |
+| Stat / health inpaint | `StandardAssets/Stat/DefaultHealthInpaintEventCatalog.asset` |
 
 ## Per-wizard buttons
 
 | Wizard | Inspector location | What setup does |
 |--------|-------------------|-------------------|
 | Calendar | `_Wizards` → Calendar Service Wizard | `NarrativeCalendar` GO + starter events |
-| Narrative Prompt | `_Wizards` → Narrative Prompt Service Wizard | LSTM rig + calendar wiring |
+| Narrative Prompt | `_Wizards` → Narrative Prompt Service Wizard | LSTM rig + calendar wiring + DefaultHealthInpaintEventCatalog + `_StandardScene` HealthInpaintEventRunner |
 | USC Build | `_Wizards` → USC Build Service Wizard | Default manifest JSON TextAsset |
 | Planet | `_Wizards` → Planet Service Wizard | `PlanetSystem` + Little Prince preset |
 | Feature Budget | SystemDrawer root → Feature Budget Runtime | Default profile + planet ratio sync |

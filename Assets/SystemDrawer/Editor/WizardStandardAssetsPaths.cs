@@ -37,4 +37,10 @@ internal static class WizardStandardAssetsPaths
     {
         internal const string StarterPrompt = Root + "/Narrative/StarterNarrativePrompt.asset";
     }
+
+    internal static class Stat
+    {
+        internal const string Folder = Root + "/Stat";
+        internal const string DefaultHealthInpaintEventCatalog = Folder + "/DefaultHealthInpaintEventCatalog.asset";
+    }
 }

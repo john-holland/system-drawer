@@ -296,10 +296,13 @@ public sealed class PixelLightMultiSlotCatalog : ScriptableObject
         EnsureDoor(doorLooper, "Looper door", sergerShell, doorLooper,
             FrameShellInclusionLemmaPropertyKeys.HingeFront, Bounds4SdfInclusionKind.Shell, 6, 2, 0.035f);
         EnsureLabeledSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperUpper),
-            "Upper looper");
+            "Upper looper").contents = HelicoptorGridSlotGameObject.SlotContents.PixelLight;
         EnsureLabeledSlot(FrameShellInclusionLemmaPropertyKeys.ToSlotId(SewingLemmaPropertyKeys.LooperLower),
-            "Lower looper");
-        EnsureLabeledSlot(SewingLemmaPropertyKeys.Differential, "Differential");
+            "Lower looper").contents = HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+        EnsureLabeledSlot(SewingLemmaPropertyKeys.Differential, "Differential").contents =
+            HelicoptorGridSlotGameObject.SlotContents.PixelLight;
+        EnsureLabeledSlot(SewingLemmaPropertyKeys.Needle, "Needle").contents =
+            HelicoptorGridSlotGameObject.SlotContents.PixelLight;
     }
 
     public void EnsureLatheSlots()
