@@ -275,7 +275,24 @@ public sealed class GameSessionHost : MonoBehaviour
         return true;
     }
 
-    public void SaveToLocalClient(string id = null) { _ = id; }
+    public GameSession FindSession(string id)
+    {
+        if (sessions == null || string.IsNullOrEmpty(id)) return null;
+        for (int i = 0; i < sessions.Count; i++)
+            if (sessions[i] != null && sessions[i].id == id)
+                return sessions[i];
+        return null;
+    }
+
+    public void SaveToLocalClient(string id = null)
+    {
+        GameSession session = null;
+        if (!string.IsNullOrEmpty(id))
+            session = FindSession(id);
+        if (session == null) session = Active;
+        if (session == null) return;
+        GameSessionLocalSave.Save(session, prefab);
+    }
 }
 
 
@@ -293,6 +310,52 @@ public sealed class StructuredChatRagdoll : MenuRagdollBase
 {
     public ChatComposeDeltaPayload LastStreamed;
     public void OnRemoteCommitted(string text, string[] tokens, string clientId) { _ = text; _ = tokens; _ = clientId; }
+}
+
+
+public static class GameSessionLocalSave
+{
+    public static string RootOverride;
+
+    public static string RootDir()
+    {
+        if (!string.IsNullOrEmpty(RootOverride))
+            return RootOverride;
+        return System.IO.Path.Combine(UnityEngine.Application.persistentDataPath, "game-sessions");
+    }
+
+    public static string SessionPath(string lobbySessionName, string gameSessionId, string playerId = null)
+    {
+        string lobby = Sanitize(lobbySessionName ?? "local");
+        string id = Sanitize(gameSessionId ?? "session");
+        string file = string.IsNullOrEmpty(playerId) ? id + ".json" : id + "." + Sanitize(playerId) + ".json";
+        return System.IO.Path.Combine(RootDir(), lobby, file);
+    }
+
+    public static void Save(GameSession session, LobbyPrefabParameters prefab = null, string playerId = null)
+    {
+        if (session == null) return;
+        if (prefab != null)
+            session.prefab = prefab.Clone();
+        string path = SessionPath(session.lobbySessionName, session.id, playerId);
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path) ?? RootDir());
+        System.IO.File.WriteAllText(path, UnityEngine.JsonUtility.ToJson(session, true));
+    }
+
+    public static GameSession Load(string lobbySessionName, string gameSessionId)
+    {
+        string path = SessionPath(lobbySessionName, gameSessionId);
+        if (!System.IO.File.Exists(path)) return null;
+        return UnityEngine.JsonUtility.FromJson<GameSession>(System.IO.File.ReadAllText(path));
+    }
+
+    static string Sanitize(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "default";
+        foreach (var c in System.IO.Path.GetInvalidFileNameChars())
+            s = s.Replace(c, '_');
+        return s;
+    }
 }
 
 public static class GameLobbyContinuuuumClient

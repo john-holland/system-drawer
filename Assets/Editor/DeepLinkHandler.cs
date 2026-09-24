@@ -118,17 +118,17 @@ public static class DeepLinkHandler
             if (window.IndexOf("Explorer", StringComparison.OrdinalIgnoreCase) >= 0 || !string.IsNullOrEmpty(episodeId))
             {
                 // todo: review: We should add a double depth WARNING, DANGER! prompt to run sql statements
-                var dbPath = ContinuumSettings.GetDbPath();
-                var py = ContinuumSettings.GetPythonPath();
-                var tenant = ContinuumSettings.GetTenant();
+                var dbPath = ContinuuuumSettings.GetDbPath();
+                var py = ContinuuuumSettings.GetPythonPath();
+                var tenant = ContinuuuumSettings.GetTenant();
                 var sql = string.IsNullOrEmpty(episodeId)
                     ? "SELECT * FROM episodes LIMIT 100"
                     : $"SELECT * FROM work_orders WHERE episode_id = '{episodeId.Replace("'", "''")}' LIMIT 50";
-                ContinuumExplorerWindow.ShowAndRunQuery(dbPath, py, tenant, sql);
+                ContinuuuumExplorerWindow.ShowAndRunQuery(dbPath, py, tenant, sql);
             }
             else if (window.IndexOf("Episodes", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                ContinuumEpisodesWindow.ShowWindow();
+                ContinuuuumEpisodesWindow.ShowWindow();
             }
         }
         catch (Exception ex)

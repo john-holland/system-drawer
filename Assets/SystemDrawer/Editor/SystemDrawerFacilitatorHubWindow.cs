@@ -423,3 +423,24 @@ public static class SystemDrawerCreateObjectWindowHost
         Debug.LogWarning("[SystemDrawer] Create Object window pending AssetDB reimport (SystemDrawerCreateObjectWindow).");
     }
 }
+
+/// <summary>AssetDB-host stub until MasterRebakeRunner.cs is reimported.</summary>
+public static class MasterRebakeRunner
+{
+    public static bool SuppressProgressBar;
+
+    public sealed class MasterRebakeReport
+    {
+        public bool Completed = true;
+        public bool Cancelled;
+    }
+
+    public static MasterRebakeReport LastReport { get; private set; }
+
+    public static MasterRebakeReport Run()
+    {
+        LastReport = new MasterRebakeReport { Completed = true };
+        UnityEngine.Debug.Log("[MasterRebakeRunner] Stub run (pending AssetDB reimport).");
+        return LastReport;
+    }
+}
