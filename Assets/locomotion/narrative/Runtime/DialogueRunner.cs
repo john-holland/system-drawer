@@ -316,4 +316,20 @@ namespace Locomotion.Narrative
         public string key;
         public bool value;
     }
+
+    /// <summary>
+    /// Holds a table-read / Whisper-matched voice line: actor id, script offsets, USC audio id.
+    /// DialogueRunner plays via ActorSpeechPlayback using audioRef / uscAudioId.
+    /// (Co-located with DialogueRunner so Unity AssetDatabase always includes it.)
+    /// </summary>
+    public sealed class VoiceActorLineComponent : MonoBehaviour
+    {
+        public string dialogActorId;
+        public int charStart;
+        public int charEnd;
+        public string uscAudioId;
+        public string quoteText;
+
+        public string AudioRef => uscAudioId;
+    }
 }

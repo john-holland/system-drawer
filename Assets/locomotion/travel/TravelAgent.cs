@@ -945,3 +945,464 @@ public class RoadTravelBinding : MonoBehaviour
             segment.waypoints[segment.waypoints.Count - 1] = pad;
     }
 }
+
+// <auto-merged-travel-orphan-types>
+// CityPixelCrowdHint (from CityPixelGrid.cs)
+public enum CityPixelCrowdHint
+{
+    None = 0,
+    Flock = 1,
+    Congregate = 2,
+    Commute = 3
+}
+
+// ---- from RoadLaneLayout.cs ----
+public enum TravelLanePolicy
+{
+    StayInLanes = 0,
+    IgnoreLaneGrid = 1,
+    AlignGridIgnoreLanes = 2
+}
+
+[Serializable]
+public sealed class RoadLaneGridSettings
+{
+    [Min(0.1f)] public float followTimeSec = 3f;
+    [Min(0)] public float gridCarLengths = 1f;
+    [Range(0f, 1f)] public float occupancy01 = 0.85f;
+    [Min(0.5f)] public float carLengthM = 4.5f;
+
+    public float CellLengthM(float currentSpeedMps, float aggressiveness01 = 0.5f)
+    {
+        float temporal = followTimeSec * Mathf.Max(0f, currentSpeedMps);
+        if (gridCarLengths <= 1e-4f)
+            return Mathf.Max(0.05f, temporal);
+        float spatial = gridCarLengths * carLengthM;
+        return Mathf.Max(spatial, temporal);
+    }
+
+    /// <summary>When gridCarLengths is 0, high aggressiveness shrinks bumper gap toward 0.</summary>
+    public float MinSeparationM(float currentSpeedMps, float aggressiveness01 = 0.5f)
+    {
+        float cell = CellLengthM(currentSpeedMps, aggressiveness01);
+        if (gridCarLengths <= 1e-4f)
+            return cell * Mathf.Lerp(1f, 0.05f, Mathf.Clamp01(aggressiveness01));
+        return cell;
+    }
+}
+
+[Serializable]
+public sealed class RoadLaneLayout
+{
+    [Min(1)] public int laneCount = 2;
+    [Min(0.5f)] public float laneWidthM = 3.5f;
+    public int[] directionSign = { 1, -1 };
+
+    public float LaneCenterOffset(int laneIndex)
+    {
+        int n = Mathf.Max(1, laneCount);
+        int i = Mathf.Clamp(laneIndex, 0, n - 1);
+        return (i - (n - 1) * 0.5f) * laneWidthM;
+    }
+
+    public int LaneFromLateral(float lateralOffset)
+    {
+        int n = Mathf.Max(1, laneCount);
+        float half = (n - 1) * 0.5f;
+        int i = Mathf.RoundToInt(lateralOffset / Mathf.Max(0.1f, laneWidthM) + half);
+        return Mathf.Clamp(i, 0, n - 1);
+    }
+
+    public int DirectionSign(int laneIndex)
+    {
+        if (directionSign == null || directionSign.Length == 0)
+            return 1;
+        int i = Mathf.Clamp(laneIndex, 0, directionSign.Length - 1);
+        return directionSign[i] == 0 ? 0 : (directionSign[i] > 0 ? 1 : -1);
+    }
+
+    public bool LaneEnabled(int laneIndex) => DirectionSign(laneIndex) != 0;
+}
+
+/// <summary>Live occupancy slots on a road ribbon.</summary>
+public sealed class RoadLaneOccupancy
+{
+    readonly System.Collections.Generic.Dictionary<string, TravelAgent> _slots =
+        new System.Collections.Generic.Dictionary<string, TravelAgent>();
+
+    public int OccupiedCount => _slots.Count;
+
+    public static string SlotKey(string roadSegmentId, int laneIndex, int cellIndex) =>
+        (roadSegmentId ?? "") + ":" + laneIndex + ":" + cellIndex;
+
+    public int Cap(RoadLaneLayout layout, RoadLaneGridSettings grid, float roadLengthM)
+    {
+        if (layout == null || grid == null) return 0;
+        float cell = Mathf.Max(0.5f, grid.CellLengthM(10f));
+        int cellsAlong = Mathf.Max(1, Mathf.FloorToInt(roadLengthM / cell));
+        return Mathf.Max(1, Mathf.RoundToInt(grid.occupancy01 * layout.laneCount * cellsAlong));
+    }
+
+    public bool TryOccupy(string key, TravelAgent agent)
+    {
+        if (string.IsNullOrEmpty(key) || agent == null) return false;
+        if (_slots.TryGetValue(key, out var occ) && occ != null && occ != agent)
+            return false;
+        _slots[key] = agent;
+        return true;
+    }
+
+    public void Release(string key)
+    {
+        if (!string.IsNullOrEmpty(key))
+            _slots.Remove(key);
+    }
+
+    public TravelAgent Get(string key)
+    {
+        if (string.IsNullOrEmpty(key)) return null;
+        _slots.TryGetValue(key, out var a);
+        return a;
+    }
+}
+
+// ---- from TASanitationRequestCards.cs ----
+/// <summary>TA maintenance request with repair BT hook for sanitation / road assets.</summary>
+[Serializable]
+public class TAMaintenanceRequest : TravelAgentCard
+{
+    public DispatchRequest request;
+    public string repairBtActionId = "ta_maintenance_repair";
+    public float integrityTarget01 = 0.85f;
+    public GameObject repairTarget;
+
+    public TAMaintenanceRequest()
+    {
+        isTravelAgentGoal = true;
+        isCivilGoal = true;
+        physicalPathingTag = "ta_maintenance_request";
+        traversabilityTag = "maintenance";
+    }
+
+    public static TAMaintenanceRequest Generate(DispatchRequest request)
+    {
+        var c = new TAMaintenanceRequest();
+        c.request = request;
+        c.sectionName = "ta_maintenance_request";
+        c.description = request != null ? request.kind : "ta_maintenance_request";
+        c.goalWorld = request != null ? request.worldTarget : Vector3.zero;
+        if (!string.IsNullOrEmpty(request?.notes))
+            c.repairBtActionId = request.notes;
+        return c;
+    }
+
+    public void ApplyRepair(VehicleRagdoll vehicle)
+    {
+        if (vehicle != null)
+            vehicle.integrity01 = Mathf.Max(vehicle.integrity01, integrityTarget01);
+        SendMessageSafe(repairTarget != null ? repairTarget : vehicle != null ? vehicle.gameObject : null);
+    }
+
+    void SendMessageSafe(GameObject go)
+    {
+        if (go == null) return;
+        go.SendMessage("OnNarrativeSchedulerAction", repairBtActionId, SendMessageOptions.DontRequireReceiver);
+    }
+}
+
+[Serializable]
+public class TARoadWorkDetourLeg
+{
+    public string routeTag = "suggested-detour";
+    public Vector3 detourGoalWorld;
+    public bool ignorable = true;
+    public string roadSegmentId;
+}
+
+/// <summary>Road work request — repair BT + suggested-detour legs (ignorable for AI/planner).</summary>
+[Serializable]
+public class TARoadWorkRequest : TravelAgentCard
+{
+    public DispatchRequest request;
+    public string repairBtActionId = "ta_road_work_repair";
+    public List<TARoadWorkDetourLeg> detours = new List<TARoadWorkDetourLeg>();
+
+    public TARoadWorkRequest()
+    {
+        isTravelAgentGoal = true;
+        isCivilGoal = true;
+        physicalPathingTag = "ta_road_work";
+        traversabilityTag = "road_work";
+        waypointGroup = "suggested-detour";
+    }
+
+    public static TARoadWorkRequest Generate(DispatchRequest request)
+    {
+        var c = new TARoadWorkRequest();
+        c.request = request;
+        c.sectionName = "ta_road_work_request";
+        c.description = "road_work";
+        c.goalWorld = request != null ? request.worldTarget : Vector3.zero;
+        c.detours.Add(new TARoadWorkDetourLeg
+        {
+            routeTag = "suggested-detour",
+            detourGoalWorld = c.goalWorld,
+            ignorable = ParseIgnorable(request?.notes)
+        });
+        return c;
+    }
+
+    static bool ParseIgnorable(string notes)
+    {
+        if (string.IsNullOrEmpty(notes)) return true;
+        if (notes.IndexOf("ignorable=false", StringComparison.OrdinalIgnoreCase) >= 0) return false;
+        if (notes.IndexOf("ignorable=0", StringComparison.OrdinalIgnoreCase) >= 0) return false;
+        return true;
+    }
+
+    public void RegisterWithTrafficAvoid(TrafficWarden warden)
+    {
+        if (warden == null) return;
+        for (int i = 0; i < detours.Count; i++)
+        {
+            var d = detours[i];
+            if (d == null || d.ignorable) continue;
+            warden.SendMessage("OnSuggestedDetour", d.detourGoalWorld, SendMessageOptions.DontRequireReceiver);
+        }
+    }
+
+    public bool ShouldPlannerIgnoreDetour(int index)
+    {
+        if (index < 0 || index >= detours.Count || detours[index] == null) return true;
+        return detours[index].ignorable;
+    }
+}
+
+
+
+// ---- AssetDB compile hosts (VehicleRagdoll / TravelAgentCard / Dispatch / TrafficWarden) ----
+
+[Serializable]
+public sealed class VehicleInventoryItem
+{
+    public string itemId;
+    public string label;
+    public int count = 1;
+}
+
+[Serializable]
+public sealed class VehicleInventorySection
+{
+    public string sectionName = "cabin";
+    public float capacity = 20f;
+    public List<VehicleInventoryItem> items = new List<VehicleInventoryItem>();
+}
+
+[DisallowMultipleComponent]
+public class VehicleRagdoll : MonoBehaviour
+{
+    public string vehicleId;
+    public string displayName;
+    [Range(0f, 1f)] public float integrity01 = 1f;
+    public List<VehicleInventorySection> interiors = new List<VehicleInventorySection>();
+    public bool available = true;
+    public float totalInteriorSize;
+
+    protected virtual void Awake()
+    {
+        if (string.IsNullOrEmpty(vehicleId)) vehicleId = gameObject.name;
+        if (string.IsNullOrEmpty(displayName)) displayName = vehicleId;
+    }
+}
+
+[Serializable]
+public class TravelAgentCard : GoodSection
+{
+    public Vector3 goalWorld;
+    public GameObject goalTarget;
+    public string waypointGroup;
+    public bool preferFlee;
+    public bool useSocialDeescalate;
+    [Range(0f, 1f)] public float stayInLanes01 = 1f;
+    [Min(0.1f)] public float followTimeSec = 3f;
+    [Min(0f)] public float gridCarLengths = 1f;
+
+    public TravelAgentCard()
+    {
+        isTravelAgentGoal = true;
+        physicalPathingTag = "travel_agent";
+    }
+
+    public static TravelAgentCard GenerateDefault(GameObject target)
+    {
+        return new TravelAgentCard
+        {
+            sectionName = "travel_agent_default",
+            description = "TravelAgent",
+            isTravelAgentGoal = true,
+            goalTarget = target,
+            preferFlee = true,
+            physicalPathingTag = "travel_agent"
+        };
+    }
+}
+
+[Serializable]
+public sealed class DispatchRequest
+{
+    public string requestId;
+    public string fromServiceId;
+    public string toServiceId;
+    public string kind = "route";
+    public Vector3 worldTarget;
+    public string personaKey;
+    public string notes;
+    public float priority01 = 0.5f;
+}
+
+[DisallowMultipleComponent]
+public sealed class TrafficWarden : MonoBehaviour
+{
+    public static TrafficWarden Instance { get; private set; }
+    public readonly List<Transform> avoidSources = new List<Transform>();
+
+    void Awake() { Instance = this; }
+    void OnDestroy() { if (Instance == this) Instance = null; }
+
+    public void OnSuggestedDetour(Vector3 worldPos)
+    {
+        // Stub: full TrafficWarden lives in _PendingAssetDbImport until AssetDB import recovers.
+    }
+}
+
+// TrainVehicleRagdoll stub (fields needed by CompositeMultiModalPathNode / TravelMultibodyPathAdjuster)
+public enum TrainDriveKind { Wheels = 0, Maglev = 1 }
+
+public sealed class TrainVehicleRagdoll : VehicleRagdoll
+{
+    public string craftName = "Train";
+    public string callsign = "CUU-T1";
+    public string consistId = "consist_1";
+    public string formationGroupId = "train_snake";
+    public List<TrainVehicleRagdoll> cars = new List<TrainVehicleRagdoll>();
+    public bool linkedSegmentMultibody = true;
+    public float nominalCouplerSpacingM = 1.2f;
+    public int carIndexInConsist;
+    public TrainVehicleRagdoll headTrain;
+    public TrainDriveKind driveKind = TrainDriveKind.Wheels;
+    public string railSegmentId;
+}
+
+
+// ---- more travel/road orphan compile hosts ----
+public static class AmbulationPathCache
+{
+    public static bool TryReuse(TravelAgent agent, out GenericMultiModalPathPlan plan)
+    {
+        plan = null;
+        return false;
+    }
+
+    public static void Remember(TravelAgent agent, GenericMultiModalPathPlan plan) { }
+}
+
+public static class RoadLaneSnap
+{
+    public delegate void SampleAt(float distanceAlong, out Vector3 position, out Vector3 binormal);
+
+    public static List<Vector3> SnapList(
+        List<Vector3> waypoints, List<float> distances, List<float> laterals,
+        TravelLanePolicy policy, float stayInLanes01, RoadLaneLayout layout, float cell, SampleAt sampleAt)
+    {
+        return waypoints ?? new List<Vector3>();
+    }
+}
+
+public sealed class RoadLaneSplineBinding : MonoBehaviour
+{
+    public RoadLaneLayout ResolveLayout() => new RoadLaneLayout();
+    public RoadLaneGridSettings ResolveGrid() => new RoadLaneGridSettings();
+}
+
+public static class PlayerVehicleTravelSlowOverride
+{
+    public static bool ShouldApplyTravelSlow(TravelAgent agent) => false;
+}
+
+public class RoadLot : MonoBehaviour
+{
+    public string lotId;
+    public RoadLotBoundarySpline boundary;
+    public List<PlanarSplinePathLocomotion> pathRibbons = new List<PlanarSplinePathLocomotion>();
+    static readonly List<RoadLot> Registry = new List<RoadLot>();
+    void OnEnable() { if (!Registry.Contains(this)) Registry.Add(this); }
+    void OnDisable() { Registry.Remove(this); }
+    public Vector3 ArrivalWorld => transform.position;
+    public float SampleHeight(Vector3 world) => world.y;
+    public bool ContainsXZ(Vector3 world)
+    {
+        Vector3 d = world - transform.position;
+        d.y = 0f;
+        return d.sqrMagnitude < 100f;
+    }
+    public static RoadLot FindNearest(Vector3 world, float maxDist = 200f)
+    {
+        RoadLot best = null; float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Registry.Count; i++)
+        {
+            var lot = Registry[i];
+            if (lot == null) continue;
+            float sq = (lot.ArrivalWorld - world).sqrMagnitude;
+            if (sq < bestSq) { bestSq = sq; best = lot; }
+        }
+        return best;
+    }
+    public static RoadLot FindConnectedToRoad(string roadSegmentId, Vector3 near) => FindNearest(near, 200f);
+}
+
+/// <summary>Stub until PlanarSplinePathLocomotion.cs is AssetDB-imported.</summary>
+public sealed class PlanarSplinePathLocomotion : MonoBehaviour
+{
+    public List<Vector3> controlPoints = new List<Vector3>();
+}
+
+public class IntersectionLot : MonoBehaviour
+{
+    public string lotId;
+    static readonly List<IntersectionLot> Registry = new List<IntersectionLot>();
+    void OnEnable() { if (!Registry.Contains(this)) Registry.Add(this); }
+    void OnDisable() { Registry.Remove(this); }
+    public bool ContainsWaypoint(Vector3 world) => false;
+    public bool TrySnapDriveOutlet(string roadSegmentId, Vector3 end, out Vector3 outlet)
+    {
+        outlet = end;
+        return false;
+    }
+    public static IntersectionLot FindNearest(Vector3 world, float maxDist = 200f) => null;
+}
+
+public class SidewalkRibbon : MonoBehaviour
+{
+    public string roadLotId;
+    static readonly List<SidewalkRibbon> Registry = new List<SidewalkRibbon>();
+    void OnEnable() { if (!Registry.Contains(this)) Registry.Add(this); }
+    void OnDisable() { Registry.Remove(this); }
+
+    public bool TrySampleWalk(Vector3 world, out Vector3 walkPt)
+    {
+        walkPt = world;
+        return false;
+    }
+
+    public static SidewalkRibbon FindNearest(Vector3 world, float maxDist = 200f) => null;
+}
+
+public static class SidewalkRibbonUtil
+{
+    public static bool TryProject(Vector3 world, out Vector3 projected)
+    {
+        projected = world;
+        return false;
+    }
+}
+

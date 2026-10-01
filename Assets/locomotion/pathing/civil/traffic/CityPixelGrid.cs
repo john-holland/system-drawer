@@ -49,13 +49,7 @@ public enum CityPixelLayerKind
     Apartment = 41
 }
 
-public enum CityPixelCrowdHint
-{
-    None = 0,
-    Flock = 1,
-    Congregate = 2,
-    Commute = 3
-}
+// CityPixelCrowdHint lives in TravelAgent.cs until AssetDatabase reimports traffic scripts.
 
 public enum CityPixelBrushKind
 {

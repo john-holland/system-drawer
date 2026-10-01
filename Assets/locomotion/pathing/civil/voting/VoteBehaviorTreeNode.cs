@@ -82,11 +82,24 @@ public sealed class VoteBehaviorTreeNode : BehaviorTreeNode
         if (demo != null)
         {
             int seed = (tree != null ? tree.gameObject.GetInstanceID() : GetInstanceID()) ^ spec.ballotId.GetHashCode();
+            bool actorPinned = voter != null && voter.hasChosen && !string.IsNullOrEmpty(voter.chosenOptionId);
             slice = demo.Sample(seed);
             if (voter != null && slice != null)
                 voter.demographicSliceId = slice.sliceId;
             if (spec.kind != BallotKind.Candidate)
+            {
+                var dao = StatisticalRetinueDao.Resolve(this);
+                if (dao != null && actorPinned)
+                    return demo.TiltYesNo(slice, true, voter.chosenOptionId, seed + 11);
+                if (dao != null)
+                {
+                    var ctx = new StatContext { Dao = dao, ActorPinned = actorPinned };
+                    if (dao.Predicate("actor_not_pinned")(ctx))
+                        return demo.TiltYesNo(slice, false, null, seed + 11);
+                    return demo.TiltYesNo(slice, true, voter != null ? voter.chosenOptionId : null, seed + 11);
+                }
                 return demo.TiltYesNo(slice, false, null, seed + 11);
+            }
         }
         if (spec.options != null && spec.options.Count > 0 && spec.options[0] != null)
             return spec.options[0].optionId;
