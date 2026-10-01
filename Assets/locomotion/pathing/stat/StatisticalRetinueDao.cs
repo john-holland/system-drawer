@@ -228,10 +228,25 @@ public sealed class StatisticalRetinueDao : MonoBehaviour, IStatisticalRetinueDa
                 rel.allergenOrBondKey = edge.allergenOrBondKey;
             rel.irreversible = edge.irreversible;
             rel.volumeShare01 = edge.volumeShare01 > 0 ? edge.volumeShare01 : rel.volumeShare01;
+            CopyEdgeTerms(edge, rel);
             return rel;
         }
-        return trade.BetweenRetinues(edge.fromRetinueId, edge.toRetinueId, edge.commodityKey,
+        var stored = trade.BetweenRetinues(edge.fromRetinueId, edge.toRetinueId, edge.commodityKey,
             edge.volumeShare01, edge.affinity01);
+        CopyEdgeTerms(edge, stored);
+        return stored;
+    }
+
+    static void CopyEdgeTerms(TradeEdge src, TradeEdge dst)
+    {
+        dst.settlement = src.settlement;
+        dst.openCron = src.openCron;
+        dst.unitPrice = src.unitPrice;
+        dst.bidirectional = src.bidirectional;
+        dst.brokerPersonaKey = src.brokerPersonaKey;
+        dst.minPeckingOrder = src.minPeckingOrder;
+        if (!string.IsNullOrEmpty(src.metaboliteKey))
+            dst.metaboliteKey = src.metaboliteKey;
     }
 
     public bool TryResolveTrade(in TradeDealRequest req, out TradeDealResult result)

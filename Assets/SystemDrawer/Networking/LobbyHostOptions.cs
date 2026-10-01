@@ -235,42 +235,178 @@ public sealed class GameSessionHost : MonoBehaviour
     {
         if (sessions == null) sessions = new List<GameSession>();
         var session = GameSession.Create(lobbySessionName, 0f, displayName);
+        var parent = Active;
+        session.parentId = parent != null ? parent.id : "";
+        session.peckingOrder = NextSiblingPecking(session.parentId);
         if (prefab != null)
             session.prefab = prefab.Clone();
         sessions.Add(session);
+        SetDormant(parent, true);
         activeIndex = sessions.Count - 1;
-        if (session != null) session.active = true;
+        session.active = true;
+        if (lockstep != null) lockstep.ActiveGameSessionId = session.id;
         SessionsChanged?.Invoke();
         return session;
     }
 
-    public bool SwitchActiveById(string id)
+    int NextSiblingPecking(string parentId)
     {
-        if (sessions == null || string.IsNullOrEmpty(id)) return false;
+        int max = -1;
         for (int i = 0; i < sessions.Count; i++)
         {
-            if (sessions[i] != null && sessions[i].id == id)
-            {
-                activeIndex = i;
-                SessionsChanged?.Invoke();
-                return true;
-            }
+            var s = sessions[i];
+            if (s != null && (s.parentId ?? "") == (parentId ?? "") && s.peckingOrder > max)
+                max = s.peckingOrder;
         }
-        return false;
+        return max + 1;
+    }
+
+    int IndexOfSession(string id)
+    {
+        if (sessions == null || string.IsNullOrEmpty(id)) return -1;
+        for (int i = 0; i < sessions.Count; i++)
+            if (sessions[i] != null && sessions[i].id == id)
+                return i;
+        return -1;
+    }
+
+    void CollectDescendants(string id, List<string> ids)
+    {
+        ids.Add(id);
+        for (int i = 0; i < sessions.Count; i++)
+        {
+            var s = sessions[i];
+            if (s != null && s.parentId == id && !ids.Contains(s.id))
+                CollectDescendants(s.id, ids);
+        }
+    }
+
+    readonly Dictionary<int, GameObject> _alive = new Dictionary<int, GameObject>();
+    readonly Dictionary<string, List<int>> _sessionSpawns = new Dictionary<string, List<int>>();
+
+    public GameSessionIndexEntry TrackSpawn(
+        GameObject go,
+        string treeId = null,
+        string prefabKey = null,
+        bool isBt = false)
+    {
+        var session = Active;
+        if (session == null || go == null) return null;
+        int id = go.GetInstanceID();
+        _alive[id] = go;
+        if (!_sessionSpawns.TryGetValue(session.id, out var list))
+        {
+            list = new List<int>();
+            _sessionSpawns[session.id] = list;
+        }
+        list.Add(id);
+        session.spawnedInstanceIds.Add(id);
+        if (!string.IsNullOrEmpty(treeId))
+            session.treeIds.Add(treeId);
+        return session.index.Add(go, treeId, prefabKey, session.createdNarrativeTime, isBt);
+    }
+
+    void SetDormant(GameSession session, bool dormant)
+    {
+        if (session == null) return;
+        session.active = !dormant;
+        if (_sessionSpawns.TryGetValue(session.id, out var ids))
+        {
+            for (int i = 0; i < ids.Count; i++)
+                if (_alive.TryGetValue(ids[i], out var go) && go != null)
+                    go.SetActive(!dormant);
+        }
+        if (treeRegistry == null || session.treeIds == null) return;
+        for (int i = 0; i < session.treeIds.Count; i++)
+        {
+            if (!treeRegistry.TryGet(session.treeIds[i], out var d) || d == null) continue;
+            d.TransmitPolicy = dormant ? TreeTransmitPolicy.LocalOnly : TreeTransmitPolicy.PeerTransferable;
+            d.GameSessionId = session.id;
+            treeRegistry.Register(d);
+        }
+    }
+
+    void CleanupForSessionClose(GameSession session)
+    {
+        if (session == null) return;
+        if (_sessionSpawns.TryGetValue(session.id, out var spawnIds))
+        {
+            for (int i = 0; i < spawnIds.Count; i++)
+            {
+                if (_alive.TryGetValue(spawnIds[i], out var go) && go != null)
+                {
+                    if (Application.isPlaying) Destroy(go);
+                    else DestroyImmediate(go);
+                }
+                _alive.Remove(spawnIds[i]);
+            }
+            _sessionSpawns.Remove(session.id);
+        }
+        if (treeRegistry != null && session.treeIds != null)
+        {
+            for (int i = 0; i < session.treeIds.Count; i++)
+                treeRegistry.Remove(session.treeIds[i]);
+        }
+        session.active = false;
+        session.spawnedInstanceIds?.Clear();
+        session.treeIds?.Clear();
+        session.index?.entries?.Clear();
+    }
+
+    public bool SwitchActiveById(string id)
+    {
+        int index = IndexOfSession(id);
+        if (index < 0) return false;
+        if (index != activeIndex)
+        {
+            SetDormant(Active, true);
+            activeIndex = index;
+        }
+        SetDormant(Active, false);
+        if (lockstep != null) lockstep.ActiveGameSessionId = ActiveId;
+        SessionsChanged?.Invoke();
+        return true;
     }
 
     public bool CloseSession(string id) => CloseSession(id, GameSessionCloseMode.AdoptToHigher);
 
     public bool CloseSession(string id, GameSessionCloseMode mode)
     {
-        if (sessions == null || string.IsNullOrEmpty(id)) return false;
-        int idx = -1;
-        for (int i = 0; i < sessions.Count; i++)
-            if (sessions[i] != null && sessions[i].id == id) { idx = i; break; }
-        if (idx < 0) return false;
-        sessions.RemoveAt(idx);
-        if (activeIndex >= sessions.Count) activeIndex = sessions.Count - 1;
-        _ = mode;
+        var closed = FindSession(id);
+        if (closed == null) return false;
+
+        string survivingActiveId = ActiveId;
+        string closedParentId = closed.parentId ?? "";
+
+        if (mode == GameSessionCloseMode.Umbrella)
+        {
+            var ids = new List<string>();
+            CollectDescendants(id, ids);
+            if (ids.Contains(survivingActiveId))
+                survivingActiveId = closedParentId;
+            for (int i = ids.Count - 1; i >= 0; i--)
+                CleanupForSessionClose(FindSession(ids[i]));
+            sessions.RemoveAll(s => s != null && ids.Contains(s.id));
+        }
+        else
+        {
+            if (survivingActiveId == id)
+                survivingActiveId = closedParentId;
+            for (int i = 0; i < sessions.Count; i++)
+            {
+                var s = sessions[i];
+                if (s != null && s.parentId == closed.id)
+                    s.parentId = closedParentId;
+            }
+            CleanupForSessionClose(closed);
+            sessions.RemoveAll(s => s != null && s.id == id);
+        }
+
+        activeIndex = IndexOfSession(survivingActiveId);
+        if (activeIndex < 0 && sessions.Count > 0)
+            activeIndex = 0;
+        SetDormant(Active, false);
+        if (lockstep != null) lockstep.ActiveGameSessionId = ActiveId;
         SessionsChanged?.Invoke();
         return true;
     }
