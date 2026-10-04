@@ -846,3 +846,28 @@ public class Spatial4DInGameUI : MonoBehaviour
             Destroy(reticleInstance);
     }
 }
+
+
+/// <summary>AssetDB-host stub until DimensionSwitchCache.cs is reimported.</summary>
+public sealed class DimensionSwitchCache : UnityEngine.MonoBehaviour
+{
+    public int ActiveDimIndex { get; private set; }
+    public string ActiveGameSlug { get; private set; } = "main";
+    public string LastStatus { get; private set; } = "";
+
+    public System.Collections.IEnumerator SwitchToDimension(int dim, System.Action<bool> done = null)
+    {
+        ActiveDimIndex = dim;
+        LastStatus = $"Switched to dimension {dim}";
+        done?.Invoke(true);
+        yield break;
+    }
+
+    public System.Collections.IEnumerator PrewarmAsync(string game, int dim, System.Action<bool> done = null)
+    {
+        ActiveGameSlug = game ?? "main";
+        LastStatus = $"Prewarmed dim {dim}";
+        done?.Invoke(true);
+        yield break;
+    }
+}

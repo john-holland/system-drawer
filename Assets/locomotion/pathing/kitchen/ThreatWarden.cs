@@ -231,12 +231,4 @@ public sealed class ThreatWarden : MonoBehaviour
     static float ThreatToScore(ThreatLevel t) => Mathf.Clamp01((int)t / 4f);
 }
 
-[Serializable]
-public sealed class RetinuePeckingEntry
-{
-    public string personaKey;
-    public string role;
-    public int peckingOrder = 100;
-    public GameObject actor;
-    public string agencyAffinity;
-}
+// RetinuePeckingEntry hosted in StatCore.cs (AssetDB compile host)

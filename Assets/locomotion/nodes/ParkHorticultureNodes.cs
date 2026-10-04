@@ -74,6 +74,7 @@ public sealed class ParkHandSeedSowNode : ParkHorticultureNode
             grass.growth01 = Mathf.Max(grass.growth01, 0.05f);
             grass.nextSectionSpawnChance = Mathf.Clamp01(grass.nextSectionSpawnChance + 0.1f);
         }
+        GrowthEventBus.PublishFungusEmpower(StatisticalRetinueDao.Instance, "park_hand_seed", 1.2f, 1f);
         SendMessage("OnNarrativeSchedulerAction", "park_hand_seed_sow", SendMessageOptions.DontRequireReceiver);
     }
 }
