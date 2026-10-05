@@ -99,6 +99,8 @@ public static class FeatureBudgetDefaults
                 new[] { "HouseBasementFloodCache", "RollingSphereFloodSimulator" }, null, true),
             Entry(FeatureBudgetIds.Clothing, "Clothing / Tayloring", 41,
                 new[] { "ClothingStore", "Tayloring", "TextileMill", "ClothBolt", "SewingMachine", "Serger" }, null, true),
+            Entry(FeatureBudgetIds.Flowers, "Flowers / Plants", 42,
+                new[] { "FlowerTravel", "FlowerRetinue", "PlantOrganism", "TailoredFlower", "SdfSealedCloth" }, null, true),
         };
     }
 

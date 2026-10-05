@@ -31,6 +31,7 @@ public sealed class TreeGrowthTravelAgentWindow : EditorWindow
             "Plant def", _agent.plantDef, typeof(LotGrassPlantDef), false);
         _agent.selectedStepIndex = EditorGUILayout.IntSlider(
             "Step", _agent.selectedStepIndex, 0, Mathf.Max(0, _agent.steps.Count - 1));
+        BranchEditorShortcuts.Draw(_agent);
         _agent.enforceNaturalGrowthFromPhysicsManifolds = EditorGUILayout.Toggle(
             "Enforce natural growth", _agent.enforceNaturalGrowthFromPhysicsManifolds);
         if (GUILayout.Button("Complete selected (success)"))

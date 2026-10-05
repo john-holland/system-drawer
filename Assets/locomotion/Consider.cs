@@ -89,6 +89,10 @@ public class Consider : MonoBehaviour
     private Dictionary<GameObject, List<PlacementPlane>> placementSurfaces = new Dictionary<GameObject, List<PlacementPlane>>();
     private Dictionary<GameObject, EnclosureFeasibility> enclosureFeasibilities = new Dictionary<GameObject, EnclosureFeasibility>();
 
+    [Header("Grab prebake")]
+    [Tooltip("Prebaked grab poses and the harvest IK clip that writes inventory.")]
+    public List<ConsiderGrabPrebake> grabPrebakes = new List<ConsiderGrabPrebake>();
+
     // References
     private NervousSystem nervousSystem;
     private RagdollSystem ragdollSystem;
@@ -1205,6 +1209,39 @@ public class Consider : MonoBehaviour
     private Hand GetDefaultHand()
     {
         return ragdollSystem.GetHand(HandType.Right);
+    }
+
+    /// <summary>Store a grab at the branch grabber, including the harvest IK clip and its inventory save.</summary>
+    public ConsiderGrabPrebake PrebakeGrab(BranchPathBake path, PlantBranchDef branch, Hand hand, HarvestIkAnimation animation)
+    {
+        if (hand == null)
+        {
+            hand = new Hand
+            {
+                maxFingerSpread = 90f,
+                maxGripStrength = 100f,
+                hemisphereRadius = 0.12f
+            };
+        }
+        var baked = ConsiderGrabPrebake.Bake(path, branch, hand, animation);
+        if (grabPrebakes == null)
+            grabPrebakes = new List<ConsiderGrabPrebake>();
+        grabPrebakes.Add(baked);
+        return baked;
+    }
+
+    /// <summary>Run the prebaked harvest IK to the close pose and write the rolled item into inventory.</summary>
+    public InventoryItem ProduceInventory(ConsiderGrabPrebake prebake, int seed, InventoryManager inventory)
+    {
+        if (prebake == null || !prebake.canGrab || prebake.animation == null)
+            return null;
+        float twist = prebake.grabberRotationDeg;
+        prebake.endPose = prebake.animation.Evaluate(1f);
+        prebake.endPose.wristTwistDeg = twist;
+        InventoryItem item = prebake.animation.Produce(seed);
+        if (inventory != null && item != null)
+            inventory.UpsertLocal(item);
+        return item;
     }
 }
 
