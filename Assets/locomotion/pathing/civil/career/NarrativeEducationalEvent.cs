@@ -19,6 +19,39 @@ public enum CareerPlanEffect
     Fire = 4
 }
 
+[Serializable]
+public sealed class EducationalStep
+{
+    public LearningStationKind station = LearningStationKind.Desk;
+    public EducationalTimingMode timing = EducationalTimingMode.Specific;
+    public CareerPlanEffect effect = CareerPlanEffect.None;
+    public string targetRoleId;
+    public string eventId;
+    public string enablesEventId;
+    public NarrativeDateTime startDateTime = new NarrativeDateTime(2025, 1, 1, 9, 0, 0);
+    public float minSeconds = 60f;
+    public float maxSeconds = 300f;
+    public float durationSeconds = 3600f;
+    public string credentialId;
+    public string courseId;
+    [Range(0f, 1f)] public float[] expected01 = { 0.5f, 0.5f, 0.5f, 0.4f };
+    [Range(0f, 1f)] public float[] fireLimit01 = { 0.9f, 0.9f, 0.9f, 0.85f };
+    public Vector3 predictedWorld;
+    public Vector3 inpaintWorld;
+    public bool hasInpaint;
+    public Bounds4? spatiotemporalVolume;
+
+    public float[] Expected01() => CivilianPaperDoll.Pad4(expected01, 0.5f);
+    public float[] FireLimit01() => CivilianPaperDoll.Pad4(fireLimit01, 0.9f);
+
+    public float DurationSeconds()
+    {
+        if (timing == EducationalTimingMode.RngRange)
+            return Mathf.Max(1f, (minSeconds + maxSeconds) * 0.5f);
+        return durationSeconds > 0f ? durationSeconds : 3600f;
+    }
+}
+
 /// <summary>Thin wrapper around NarrativeCalendarEvent for educational prebake timing.</summary>
 [Serializable]
 public sealed class NarrativeEducationalEvent

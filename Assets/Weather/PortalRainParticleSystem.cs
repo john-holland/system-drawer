@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Weather
 {
@@ -54,7 +55,8 @@ namespace Weather
 
         [Header("Particle System Settings")]
         [Tooltip("Particle system component (auto-found if null)")]
-        public new ParticleSystem particleSystem;
+        [FormerlySerializedAs("particleSystem")]
+        public ParticleSystem particles;
 
         [Tooltip("Number of segments in accordion-like system")]
         [Range(2, 20)]
@@ -131,9 +133,9 @@ namespace Weather
         private void Awake()
         {
             // Auto-find particle system
-            if (particleSystem == null)
+            if (particles == null)
             {
-                particleSystem = GetComponent<ParticleSystem>();
+                particles = GetComponent<ParticleSystem>();
             }
 
             // Auto-find portal if not assigned

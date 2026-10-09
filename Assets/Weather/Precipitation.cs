@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Weather
 {
@@ -50,7 +51,8 @@ namespace Weather
 
         [Header("Particle System")]
         [Tooltip("Particle system for visual effects (optional)")]
-        public new ParticleSystem particleSystem;
+        [FormerlySerializedAs("particleSystem")]
+        public ParticleSystem particles;
 
         [Tooltip("Auto-configure particle system from precipitation parameters")]
         public bool autoConfigureParticleSystem = true;
@@ -92,7 +94,7 @@ namespace Weather
             UpdateAccumulation(deltaTime);
 
             // Update particle system if configured
-            if (autoConfigureParticleSystem && particleSystem != null)
+            if (autoConfigureParticleSystem && particles != null)
             {
                 UpdateParticleSystem();
             }
@@ -156,11 +158,11 @@ namespace Weather
         /// </summary>
         private void UpdateParticleSystem()
         {
-            if (particleSystem == null)
+            if (particles == null)
                 return;
 
-            var emission = particleSystem.emission;
-            var main = particleSystem.main;
+            var emission = particles.emission;
+            var main = particles.main;
 
             // Set emission rate based on intensity
             float emissionRate = 0f;

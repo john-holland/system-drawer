@@ -105,9 +105,3 @@ public enum GrabBarShape
     T = 2,
     CustomMesh = 3
 }
-
-public enum PilotGpsHudMode
-{
-    BakedRoute = 0,
-    RealtimeIsometric = 1
-}

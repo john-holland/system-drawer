@@ -231,6 +231,8 @@ public sealed class GameSessionHost : MonoBehaviour
 
     public string ActiveId => Active != null ? Active.id : "";
 
+    public void BindVoteNodes() { }
+
     public GameSession CreateSession(string displayName = null)
     {
         if (sessions == null) sessions = new List<GameSession>();
@@ -368,6 +370,20 @@ public sealed class GameSessionHost : MonoBehaviour
         return true;
     }
 
+    public void SwitchActive(int index)
+    {
+        if (sessions == null || index < 0 || index >= sessions.Count) return;
+        SwitchActiveById(sessions[index] != null ? sessions[index].id : null);
+    }
+
+    public void SaveAllToLocalClient()
+    {
+        if (sessions == null) return;
+        for (int i = 0; i < sessions.Count; i++)
+            if (sessions[i] != null)
+                GameSessionLocalSave.Save(sessions[i], prefab);
+    }
+
     public bool CloseSession(string id) => CloseSession(id, GameSessionCloseMode.AdoptToHigher);
 
     public bool CloseSession(string id, GameSessionCloseMode mode)
@@ -444,7 +460,58 @@ public sealed class ChatComposeDeltaPayload
 
 public sealed class StructuredChatRagdoll : MenuRagdollBase
 {
+    public string productId;
+    public string sessionId;
+    public ChatLexiconWord[] LexiconWords = System.Array.Empty<ChatLexiconWord>();
+    public bool autoCloseOnExit = true;
+    public string LastDenyCode;
+    public StructuredChatChannel Channel = new StructuredChatChannel();
+    public bool IsOpen { get; private set; }
+    public bool SentFlashVisible { get; private set; }
+    public StructuredChatComposer Composer { get; } = new StructuredChatComposer();
     public ChatComposeDeltaPayload LastStreamed;
+
+    public void SetOpen(bool open) => IsOpen = open;
+
+    public void ApplyLexicon(ChatLexiconWord[] words, string composeMode)
+    {
+        LexiconWords = words ?? System.Array.Empty<ChatLexiconWord>();
+        Composer.ComposeMode = string.IsNullOrEmpty(composeMode) ? "preview" : composeMode;
+        Composer.SetAllowedWords(LexiconWords);
+    }
+
+    public bool AppendWord(string word)
+    {
+        if (!Composer.TryAppend(word, out string deny))
+        {
+            LastDenyCode = deny;
+            return false;
+        }
+        if (Composer.StreamOnAppend)
+            LastStreamed = Composer.BuildDelta(false);
+        return true;
+    }
+
+    public bool Commit()
+    {
+        if (Composer.Tokens.Count == 0) return false;
+        LastStreamed = Composer.BuildDelta(true);
+        Composer.ClearAfterSend();
+        SentFlashVisible = true;
+        return true;
+    }
+
+    public override bool HandleBubble(MenuRagdollEvent e)
+    {
+        if (e.Name == "chat.word")
+        {
+            AppendWord(e.Payload as string);
+            Composer.ClearAfterSend();
+            return true;
+        }
+        return base.HandleBubble(e);
+    }
+
     public void OnRemoteCommitted(string text, string[] tokens, string clientId) { _ = text; _ = tokens; _ = clientId; }
 }
 
@@ -510,7 +577,34 @@ public static class GameLobbyContinuuuumClient
     public static string GetConfig(string configId) { _ = configId; return ""; }
     public static bool TryApplyConfigJson(string json, NetworkSettings settings, ServerOrchestrator server) => false;
     public static bool TryApplyLobbyJson(string json, NetworkSettings settings, ServerOrchestrator server) => false;
-    public static object BuildHeartbeat(ServerOrchestrator server) { _ = server; return null; }
+    public static GameLobbyHeartbeatDto BuildHeartbeat(ServerOrchestrator server)
+    {
+        var host = server != null ? server.GameSessions : null;
+        var sessions = new System.Collections.Generic.List<GameLobbyHeartbeatSession>();
+        if (host != null && host.sessions != null)
+        {
+            for (int i = 0; i < host.sessions.Count; i++)
+            {
+                var s = host.sessions[i];
+                if (s == null) continue;
+                sessions.Add(new GameLobbyHeartbeatSession { id = s.id, peckingOrder = s.peckingOrder });
+            }
+        }
+        string name = server != null && server.Settings != null ? server.Settings.lobbySessionName : "";
+        return new GameLobbyHeartbeatDto { name = name, sessions = sessions.ToArray() };
+    }
+}
+
+public sealed class GameLobbyHeartbeatSession
+{
+    public string id;
+    public int peckingOrder;
+}
+
+public sealed class GameLobbyHeartbeatDto
+{
+    public string name;
+    public GameLobbyHeartbeatSession[] sessions = System.Array.Empty<GameLobbyHeartbeatSession>();
 }
 
 /// <summary>Host-side lobby configuration passed to ServerOrchestrator.</summary>

@@ -52,13 +52,6 @@ public static class DeepLinkHandler
         }
     }
 
-    [MenuItem("Locomotion/Force Import Orphan Scripts")]
-    static void MenuForceImportOrphans()
-    {
-        SessionState.SetBool(OrphanImportKey + Application.dataPath, false);
-        ForceImportOrphansOnce();
-    }
-
     private static string GetDeeplinkPath()
     {
         var env = Environment.GetEnvironmentVariable("CONTINUUM_DEEPLINK_PATH");

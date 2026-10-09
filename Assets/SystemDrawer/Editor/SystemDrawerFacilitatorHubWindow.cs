@@ -283,9 +283,29 @@ internal static class FacilitatorHubUi
             }
         }
 
+        if (GUILayout.Button("Rebake plant wind", GUILayout.Height(24)))
+            RebakePlantWind();
+
         EditorGUILayout.HelpBox(
             "Push overlaps each wizard OnEnable registrations; safe for fill-in when service order is uncertain.",
             MessageType.None);
+    }
+
+    static void RebakePlantWind()
+    {
+        var services = UnityEngine.Object.FindObjectsByType<WindAdvectionPlantRadialCachingService>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        int plants = 0;
+        for (int i = 0; i < services.Length; i++)
+        {
+            WindAdvectionPlantRadialCachingService service = services[i];
+            if (service == null)
+                continue;
+            service.RebakeAll(service.turbulenceSeed);
+            plants += service.copse != null ? service.copse.Count : 0;
+            EditorUtility.SetDirty(service);
+        }
+        Debug.Log($"[FacilitatorHub] Rebaked plant wind on {services.Length} service(s), {plants} plant(s).");
     }
 
     private static void DrawMenuCatalog(ref string adHocMenuPath, bool drawFilter)
@@ -433,14 +453,30 @@ public static class MasterRebakeRunner
     {
         public bool Completed = true;
         public bool Cancelled;
+        readonly System.Collections.Generic.Dictionary<string, int> _attempted =
+            new System.Collections.Generic.Dictionary<string, int>();
+
+        public int Attempted(string typeName) =>
+            typeName != null && _attempted.TryGetValue(typeName, out int n) ? n : 0;
+
+        internal void Note(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName)) return;
+            _attempted.TryGetValue(typeName, out int n);
+            _attempted[typeName] = n + 1;
+        }
     }
 
     public static MasterRebakeReport LastReport { get; private set; }
 
     public static MasterRebakeReport Run()
     {
-        LastReport = new MasterRebakeReport { Completed = true };
-        UnityEngine.Debug.Log("[MasterRebakeRunner] Stub run (pending AssetDB reimport).");
-        return LastReport;
+        var report = new MasterRebakeReport { Completed = true };
+        var found = UnityEngine.Object.FindObjectsByType<UnityEngine.MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < found.Length; i++)
+            if (found[i] != null)
+                report.Note(found[i].GetType().Name);
+        LastReport = report;
+        return report;
     }
 }

@@ -90,6 +90,19 @@ public sealed class PaintCanvasLayerStack : ScriptableObject
         else
             layer.albedo = Color.Lerp(layer.albedo, incoming, t * 0.35f);
     }
+
+    public void Stamp(Vector2 uv, Color sample, float radiusUv)
+    {
+        var layer = TopWetLayer();
+        if (layer == null)
+        {
+            EnsureBaseLayer();
+            layer = TopWetLayer();
+        }
+        if (layer == null) return;
+        float t = Mathf.Clamp01(radiusUv > 0f ? 0.35f + radiusUv : 0.35f);
+        layer.albedo = Color.Lerp(layer.albedo, sample, t);
+    }
 }
 
 /// <summary>Planar viscosity / dry cache on canvas UV.</summary>

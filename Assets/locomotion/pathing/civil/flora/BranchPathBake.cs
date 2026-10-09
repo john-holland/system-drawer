@@ -10,6 +10,7 @@ public sealed class BranchPathBake
     public Vector3[] tangents = Array.Empty<Vector3>();
     public string[] hierarchicalPlaneIds = Array.Empty<string>();
     public float length;
+    public bool broken;
 
     public static float SampleLength(PlantBranchDef branch, int seed)
     {
@@ -25,6 +26,7 @@ public sealed class BranchPathBake
     {
         var result = new BranchPathBake();
         if (branch == null) return result;
+        result.broken = branch.broken;
         float target = Mathf.Max(0.01f, SampleLength(branch, seed));
         var shape = branch.curvePoints != null && branch.curvePoints.Count >= 2
             ? branch.curvePoints

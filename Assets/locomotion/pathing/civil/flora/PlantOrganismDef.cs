@@ -39,6 +39,8 @@ public sealed class PlantBranchDef
     public HarvestIkKind harvest = HarvestIkKind.Pick;
     public HarvestInventorySave harvestSave = new HarvestInventorySave();
     public List<Vector3> curvePoints = new List<Vector3>();
+    public PlantPartWindLimit windLimit = new PlantPartWindLimit { impulseCap = 4f, bendCap = 1f };
+    public bool broken;
 }
 
 [Serializable]
