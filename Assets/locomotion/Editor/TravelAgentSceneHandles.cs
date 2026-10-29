@@ -201,29 +201,23 @@ namespace Locomotion.EditorTools
 }
 
 
-public static class PoseTrackPlayer
-{
-    public static int Apply(PoseTrack track, BoneMap map, float timeMs) => 0;
-}
-
 public static class PoseTrackClipBaker
 {
-    public static int BakeAndAddSet(RagdollIKAnimationManager ik, PoseTrack track, BoneMap map, UnityEngine.Transform root, string name) => -1;
-}
-
-public static class BvhPoseTrackImporter
-{
-    public sealed class Joint { public string name; public int parent = -1; }
-    public static void CollectJoints(string bvh, System.Collections.Generic.List<Joint> joints) { }
-    public static PoseTrack FromFile(string path, string modelSpec) => new PoseTrack { modelSpec = modelSpec };
-}
-
-public static class ContinuuuumRemotePoseAnimationDetector
-{
-    public static PoseTrack TryLoadJson(string path)
+    public static int BakeAndAddSet(
+        RagdollIKAnimationManager ik,
+        PoseTrack track,
+        BoneMap map,
+        UnityEngine.Transform root,
+        string name,
+        bool syncSelection = true)
     {
-        if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) return null;
-        return PoseTrack.FromJson(System.IO.File.ReadAllText(path));
+        _ = ik;
+        _ = track;
+        _ = map;
+        _ = root;
+        _ = name;
+        _ = syncSelection;
+        return -1;
     }
 }
 
@@ -232,40 +226,118 @@ namespace Locomotion.EditorTools
 {
     public static class ArbitrarySkeletonFitter
     {
+        public static SkeletonFitResult Fit(
+            System.Collections.Generic.IList<string> sourceIds,
+            System.Collections.Generic.IList<int> sourceParents,
+            System.Collections.Generic.IList<string> targetTraitIds,
+            string unmatchedPrefix = "Animal")
+        {
+            var result = new SkeletonFitResult();
+            if (sourceIds == null) return result;
+            var used = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
+            for (int i = 0; i < sourceIds.Count; i++)
+            {
+                string id = sourceIds[i];
+                if (string.IsNullOrEmpty(id)) continue;
+                string hit = null;
+                if (targetTraitIds != null)
+                {
+                    for (int t = 0; t < targetTraitIds.Count; t++)
+                    {
+                        string cand = targetTraitIds[t];
+                        if (string.IsNullOrEmpty(cand) || used.Contains(cand)) continue;
+                        if (BonesMatch(id, cand))
+                        {
+                            hit = cand;
+                            break;
+                        }
+                    }
+                }
+                if (hit != null)
+                {
+                    used.Add(hit);
+                    result.pairs.Add(new SkeletonFitPair { sourceId = id, targetTraitId = hit, confidence = 1f });
+                }
+                else
+                {
+                    result.unmatchedSource.Add(id);
+                    string offered = string.IsNullOrEmpty(unmatchedPrefix) ? id : unmatchedPrefix + ":" + id;
+                    result.offeredAnimalRows.Add(offered);
+                    result.pairs.Add(new SkeletonFitPair { sourceId = id, targetTraitId = offered, confidence = 0.2f, inferred = true });
+                }
+            }
+            _ = sourceParents;
+            return result;
+        }
+
         public static SkeletonFitResult FitToBoneMap(
             System.Collections.Generic.IList<string> sourceIds,
             System.Collections.Generic.IList<int> sourceParents,
             BoneMap map,
             string unmatchedPrefix = "Animal")
         {
-            var result = new SkeletonFitResult();
-            if (sourceIds == null) return result;
-            for (int i = 0; i < sourceIds.Count; i++)
+            var targets = new System.Collections.Generic.List<string>();
+            if (map != null && map.entries != null)
             {
-                string id = sourceIds[i];
-                if (string.IsNullOrEmpty(id)) continue;
-                result.pairs.Add(new SkeletonFitPair { sourceId = id, targetTraitId = id, confidence = 0.5f });
+                for (int i = 0; i < map.entries.Count; i++)
+                {
+                    if (map.entries[i] != null && !string.IsNullOrEmpty(map.entries[i].traitId))
+                        targets.Add(map.entries[i].traitId);
+                }
             }
-            _ = sourceParents;
-            _ = map;
-            _ = unmatchedPrefix;
-            return result;
+            return Fit(sourceIds, sourceParents, targets, unmatchedPrefix);
         }
-    }
-}
 
-public static class WebcamAnimTimelineFields
-{
-    public static float DrawPlayheadMs(string label, float value, float maxMs)
-    {
-        return UnityEditor.EditorGUILayout.Slider(label, value, 0f, UnityEngine.Mathf.Max(0.001f, maxMs));
-    }
+        public static string InferLaterality(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "";
+            string n = name.ToLowerInvariant();
+            if (n.Contains("left")) return "Left";
+            if (n.Contains("right")) return "Right";
+            bool limb = n.Contains("thigh") || n.Contains("arm") || n.Contains("leg") || n.Contains("hand")
+                || n.Contains("foot") || n.Contains("wing") || n.Contains("shin");
+            if (limb && n.StartsWith("l")) return "Left";
+            if (limb && n.StartsWith("r") && !n.StartsWith("root") && !n.StartsWith("rib")) return "Right";
+            return "";
+        }
 
-    public static float PlayheadMaxMs(WebcamAnimRecordingAsset recording, PoseTrack track)
-    {
-        if (track != null && track.Count > 0)
-            return UnityEngine.Mathf.Max(1f, track.LatestTimeMs());
-        _ = recording;
-        return 1000f;
+        static bool BonesMatch(string source, string target)
+        {
+            if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target)) return false;
+            if (string.Equals(source, target, System.StringComparison.OrdinalIgnoreCase)) return true;
+            if (target.EndsWith(":" + source, System.StringComparison.OrdinalIgnoreCase)) return true;
+            string latS = InferLaterality(source);
+            string latT = InferLaterality(target);
+            if (latS.Length > 0 && latT.Length > 0 && !string.Equals(latS, latT, System.StringComparison.OrdinalIgnoreCase))
+                return false;
+            string s = source.ToLowerInvariant();
+            string t = target.ToLowerInvariant();
+            int colon = t.LastIndexOf(':');
+            if (colon >= 0) t = t.Substring(colon + 1);
+            if (s == t) return true;
+            bool sThigh = s.Contains("thigh") || s.Contains("upperleg");
+            bool tThigh = t.Contains("thigh") || t.Contains("upperleg");
+            return sThigh && tThigh;
+        }
+
+        public static void ApplyOfferedRows(BoneMap map, SkeletonFitResult fit)
+        {
+            if (map == null || fit == null) return;
+            for (int i = 0; i < fit.offeredAnimalRows.Count; i++)
+            {
+                string id = fit.offeredAnimalRows[i];
+                if (string.IsNullOrEmpty(id) || map.TryGet(id, out _)) continue;
+                Transform parent = map.transform;
+                Transform slot = parent != null ? parent.Find(id) : null;
+                if (slot == null && parent != null)
+                {
+                    var go = new UnityEngine.GameObject(id);
+                    go.transform.SetParent(parent, false);
+                    slot = go.transform;
+                }
+                if (slot != null)
+                    map.Set(id, slot);
+            }
+        }
     }
 }

@@ -1213,16 +1213,49 @@ public class VehicleRagdoll : MonoBehaviour
         if (string.IsNullOrEmpty(vehicleId)) vehicleId = gameObject.name;
         if (string.IsNullOrEmpty(displayName)) displayName = vehicleId;
     }
+
+    public float ComputeInteriorSizeSum()
+    {
+        float sum = 0f;
+        if (interiors != null)
+            for (int i = 0; i < interiors.Count; i++)
+                if (interiors[i] != null) sum += interiors[i].capacity;
+        return sum;
+    }
+
+    public void RecalculateTotalInteriorSize()
+    {
+        float sum = ComputeInteriorSizeSum();
+        if (totalInteriorSize <= 0f) totalInteriorSize = sum;
+        else totalInteriorSize = Mathf.Max(totalInteriorSize, sum);
+    }
+
+    public Dictionary<string, object> ToDto()
+    {
+        RecalculateTotalInteriorSize();
+        return new Dictionary<string, object>
+        {
+            ["vehicleId"] = vehicleId ?? "",
+            ["displayName"] = displayName ?? "",
+            ["integrity01"] = integrity01,
+            ["totalSize"] = totalInteriorSize,
+            ["available"] = available
+        };
+    }
 }
 
-[Serializable]
+[System.Serializable]
 public class TravelAgentCard : GoodSection
 {
+    [Header("TravelAgent")]
+    public JusticeCard justice;
     public Vector3 goalWorld;
     public GameObject goalTarget;
     public string waypointGroup;
     public bool preferFlee;
     public bool useSocialDeescalate;
+    [Header("Lane policy")]
+    public TravelLanePolicy lanePolicy = TravelLanePolicy.StayInLanes;
     [Range(0f, 1f)] public float stayInLanes01 = 1f;
     [Min(0.1f)] public float followTimeSec = 3f;
     [Min(0f)] public float gridCarLengths = 1f;
@@ -1231,6 +1264,8 @@ public class TravelAgentCard : GoodSection
     {
         isTravelAgentGoal = true;
         physicalPathingTag = "travel_agent";
+        traversabilityMode = TraversabilityMode.Custom;
+        traversabilityTag = "travel";
     }
 
     public static TravelAgentCard GenerateDefault(GameObject target)
@@ -1238,12 +1273,74 @@ public class TravelAgentCard : GoodSection
         return new TravelAgentCard
         {
             sectionName = "travel_agent_default",
-            description = "TravelAgent",
+            description = "TravelAgent + Justice",
             isTravelAgentGoal = true,
             goalTarget = target,
+            justice = JusticeCard.Generate(JusticeAction.SecureArea, target),
             preferFlee = true,
             physicalPathingTag = "travel_agent"
         };
+    }
+
+    public static TravelAgentCard GeneratePatrol(Vector3 goal, JusticeAction action = JusticeAction.SecureArea)
+    {
+        return new TravelAgentCard
+        {
+            sectionName = "travel_agent_patrol",
+            description = "Patrol",
+            isTravelAgentGoal = true,
+            goalWorld = goal,
+            justice = JusticeCard.Generate(action, null),
+            preferFlee = false,
+            physicalPathingTag = "travel_agent_patrol"
+        };
+    }
+
+    /// <summary>Apply to actor: flee or justice path via TravelAgent.</summary>
+    public virtual void ApplyToActor(GameObject actor, float threat01, SocialSkills social = null)
+    {
+        if (actor == null) return;
+        var ta = actor.GetComponent<TravelAgent>();
+        Vector3 goal = goalTarget != null ? goalTarget.transform.position : goalWorld;
+        bool flee = preferFlee;
+        if (justice != null)
+            flee = !justice.ShouldRespondPhysically(actor, threat01);
+
+        if (flee)
+        {
+            Vector3 away = actor.transform.position + (actor.transform.position - goal).normalized * 8f;
+            if (ta != null)
+            {
+                ApplyLanePolicy(ta);
+                ta.previewGoalWorld = away;
+                ta.RebuildCachedPlan();
+            }
+            var sched = actor.GetComponent<PersonalSchedule>();
+            sched?.ForceFlee();
+            return;
+        }
+
+        if (useSocialDeescalate && social != null)
+        {
+            var r = social.Interpret(SocialRequestChannel.Local, "calm down", goal);
+            social.Apply(r);
+        }
+
+        if (ta != null)
+        {
+            ApplyLanePolicy(ta);
+            ta.previewGoalWorld = goal;
+            ta.RebuildCachedPlan();
+        }
+    }
+
+    public void ApplyLanePolicy(TravelAgent ta)
+    {
+        if (ta == null) return;
+        ta.lanePolicy = lanePolicy;
+        ta.stayInLanes01 = lanePolicy == TravelLanePolicy.StayInLanes ? stayInLanes01 : 0f;
+        ta.followTimeSec = followTimeSec;
+        ta.gridCarLengths = gridCarLengths;
     }
 }
 
@@ -1261,54 +1358,818 @@ public sealed class DispatchRequest
 }
 
 [DisallowMultipleComponent]
+[AddComponentMenu("Locomotion/Civil/Traffic Warden")]
 public sealed class TrafficWarden : MonoBehaviour
 {
     public static TrafficWarden Instance { get; private set; }
+
+    [Tooltip("Optional CityPixelGrid — when bakedCaches exist for the active frame, prefer bake for enqueue backbone.")]
+    public CityPixelGrid cityGrid;
+
+    [Tooltip("When set with cityGrid, prefer baked MST over live sampling when available.")]
+    public bool preferCityGridBake = true;
+
+    public CityPixelGridRuntime cityGridRuntime;
+
+    public CentralDispatchHub hub;
+    public TrafficDispatchBioRhythm trafficBio;
+    public HierarchicalPathingSolver pathingSolver;
+    public float rebuildIntervalSec = 2f;
+    public float corridorCellSize = 4f;
+    public float congestionDemandThreshold = 8f;
+    public bool narrativeLeaseActive;
+
+    public readonly TrafficCorridorGraph corridorGraph = new TrafficCorridorGraph();
+    public readonly TrafficCarEnqueue carEnqueue = new TrafficCarEnqueue();
+    public readonly TrafficWardenStateMachine stateMachine = new TrafficWardenStateMachine();
+    public readonly List<TrafficLightController> lights = new List<TrafficLightController>();
     public readonly List<Transform> avoidSources = new List<Transform>();
+    public List<TrafficCorridorEdge> backboneEdges = new List<TrafficCorridorEdge>();
 
-    void Awake() { Instance = this; }
-    void OnDestroy() { if (Instance == this) Instance = null; }
+    float _rebuildT;
+    public float MaxEdgeDemand { get; private set; }
 
-    public void OnSuggestedDetour(Vector3 worldPos)
+    void Awake()
     {
-        // Stub: full TrafficWarden lives in _PendingAssetDbImport until AssetDB import recovers.
+        Instance = this;
+        stateMachine.Bind(this);
+        stateMachine.congestedDemandThreshold = congestionDemandThreshold;
+        if (hub == null)
+            hub = CentralDispatchHub.Instance ?? FindFirstObjectByType<CentralDispatchHub>();
+        if (trafficBio == null)
+            trafficBio = GetComponent<TrafficDispatchBioRhythm>()
+                         ?? gameObject.AddComponent<TrafficDispatchBioRhythm>();
+        trafficBio.warden = this;
+        if (pathingSolver == null)
+            SceneServiceLookup.TryResolve("pathing.hierarchical", out pathingSolver);
+        RefreshLights();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    void Update()
+    {
+        Tick(Time.deltaTime);
+    }
+
+    public void Tick(float dt)
+    {
+        _rebuildT += dt;
+        if (_rebuildT >= rebuildIntervalSec)
+        {
+            _rebuildT = 0f;
+            RebuildCorridorMst();
+        }
+
+        stateMachine.Tick(dt, MaxEdgeDemand, narrativeLeaseActive);
+        ApplyLightPolicy(dt);
+        carEnqueue.ReleaseAlongBackbone(backboneEdges, corridorGraph, lights);
+    }
+
+    public void RefreshLights()
+    {
+        lights.Clear();
+        lights.AddRange(FindObjectsByType<TrafficLightController>(FindObjectsSortMode.None));
+    }
+
+    public void RebuildCorridorMst()
+    {
+        if (preferCityGridBake && TryApplyCityGridBake())
+        {
+            MaxEdgeDemand = 0f;
+            for (int i = 0; i < backboneEdges.Count; i++)
+                MaxEdgeDemand = Mathf.Max(MaxEdgeDemand, backboneEdges[i].demand);
+            // Merge live demand for dirty tracking.
+            corridorGraph.IngestTravelAgentPlans(TravelAgentRegistry.All, driveLegsPreferred: true);
+            return;
+        }
+
+        corridorGraph.Clear();
+        corridorGraph.cellSize = corridorCellSize > 0.01f
+            ? corridorCellSize
+            : (pathingSolver != null ? pathingSolver.cellSize : 4f);
+        corridorGraph.IngestTravelAgentPlans(TravelAgentRegistry.All, driveLegsPreferred: true);
+        backboneEdges = TrafficMstBuilder.Build(corridorGraph);
+        MaxEdgeDemand = 0f;
+        for (int i = 0; i < corridorGraph.edges.Count; i++)
+            MaxEdgeDemand = Mathf.Max(MaxEdgeDemand, corridorGraph.edges[i].demand);
+    }
+
+    bool TryApplyCityGridBake()
+    {
+        if (cityGrid == null) return false;
+        int frame = 0;
+        if (cityGridRuntime == null)
+            cityGridRuntime = FindFirstObjectByType<CityPixelGridRuntime>();
+        if (cityGridRuntime != null && cityGridRuntime.grid == cityGrid)
+            frame = cityGridRuntime.ActiveFrameIndex;
+        var bake = cityGrid.FindBake(frame);
+        if (bake == null || bake.mstEdges == null || bake.mstEdges.Count == 0)
+            return false;
+        CityPixelGridBaker.ApplyBakeToWarden(cityGrid, frame, this);
+        return backboneEdges != null && backboneEdges.Count > 0;
+    }
+
+    public void EnqueueCar(TravelAgent agent) => carEnqueue.Enqueue(agent);
+
+    public void SeedFromParkingLots(float radiusM = 40f)
+    {
+        var lots = FindObjectsByType<ParkingLot>(FindObjectsSortMode.None);
+        for (int i = 0; i < lots.Length; i++)
+        {
+            var lot = lots[i];
+            if (lot == null) continue;
+            lot.SeedTravelAgents(radiusM);
+            var agents = FindObjectsByType<TravelAgent>(FindObjectsSortMode.None);
+            Vector3 goal = lot.ArrivalWorld;
+            for (int a = 0; a < agents.Length; a++)
+            {
+                var ta = agents[a];
+                if (ta == null) continue;
+                if ((ta.transform.position - goal).sqrMagnitude > radiusM * radiusM) continue;
+                EnqueueCar(ta);
+            }
+        }
+    }
+
+    public Vector3 SuggestFlowGoal(Vector3 from)
+    {
+        if (backboneEdges == null || backboneEdges.Count == 0 || corridorGraph.nodes.Count == 0)
+            return from + Vector3.forward * 8f;
+        float best = float.PositiveInfinity;
+        Vector3 goal = from;
+        for (int i = 0; i < backboneEdges.Count; i++)
+        {
+            var e = backboneEdges[i];
+            if (!corridorGraph.nodes.TryGetValue(e.b, out var nb)) continue;
+            float d = (nb.world - from).sqrMagnitude;
+            if (d < best)
+            {
+                best = d;
+                goal = nb.world;
+            }
+        }
+        return goal;
+    }
+
+    /// <summary>Non-ignorable suggested-detour from TARoadWorkRequest — register as avoid point.</summary>
+    public void OnSuggestedDetour(Vector3 world)
+    {
+        var go = new GameObject("suggested_detour_" + avoidSources.Count);
+        go.transform.position = world;
+        RegisterAvoidSource(go.transform);
+    }
+
+    public void RegisterAvoidSource(Transform t)
+    {
+        if (t == null || avoidSources.Contains(t)) return;
+        avoidSources.Add(t);
+    }
+
+    public void UnregisterAvoidSource(Transform t)
+    {
+        if (t == null) return;
+        avoidSources.Remove(t);
+    }
+
+    public void RegisterAvoidSource(PoliceCarVehicleRagdoll cruiser)
+    {
+        if (cruiser == null) return;
+        RegisterAvoidSource(cruiser.transform);
+    }
+
+    public void ClearAvoidSources() => avoidSources.Clear();
+
+    public void CopyAvoidPoints(List<Vector3> into)
+    {
+        into.Clear();
+        for (int i = 0; i < avoidSources.Count; i++)
+        {
+            if (avoidSources[i] != null)
+                into.Add(avoidSources[i].position);
+        }
+    }
+
+    public void OnStateEntered(TrafficWardenMode mode)
+    {
+        if (mode == TrafficWardenMode.PoliceDetailActive || mode == TrafficWardenMode.EmergencyPreempt)
+            RequestPoliceTrafficDetail(stateMachine.detailTargetWorld);
+    }
+
+    public void BeginPoliceDetail(Vector3 worldTarget)
+    {
+        stateMachine.BeginPoliceDetail(worldTarget);
+    }
+
+    public bool RequestPoliceTrafficDetail(Vector3 worldTarget)
+    {
+        var request = new DispatchRequest
+        {
+            kind = "traffic_detail",
+            worldTarget = worldTarget,
+            notes = "traffic_detail",
+            priority01 = 0.75f
+        };
+        if (hub == null)
+            hub = CentralDispatchHub.Instance;
+        return hub != null && hub.RequestCrossDispatch("traffic_warden", "police", request);
+    }
+
+    void ApplyLightPolicy(float dt)
+    {
+        if (lights.Count == 0) return;
+        switch (stateMachine.Mode)
+        {
+            case TrafficWardenMode.CongestedHold:
+                for (int i = 0; i < lights.Count; i++)
+                {
+                    var l = lights[i];
+                    if (l == null) continue;
+                    if (l.Phase != TrafficSignalPhase.AllRed)
+                        l.Enter(TrafficSignalPhase.AllRed);
+                }
+                break;
+            case TrafficWardenMode.EmergencyPreempt:
+            case TrafficWardenMode.PoliceDetailActive:
+                PreemptToward(stateMachine.detailTargetWorld);
+                break;
+            case TrafficWardenMode.NarrativeLease:
+                // Soft hold — same as congested for MVP.
+                goto case TrafficWardenMode.CongestedHold;
+        }
+    }
+
+    void PreemptToward(Vector3 target)
+    {
+        TrafficLightController closest = null;
+        float best = float.PositiveInfinity;
+        for (int i = 0; i < lights.Count; i++)
+        {
+            var l = lights[i];
+            if (l == null) continue;
+            float d = (l.transform.position - target).sqrMagnitude;
+            if (d < best)
+            {
+                best = d;
+                closest = l;
+            }
+        }
+
+        if (closest != null && !closest.MainProceed)
+            closest.Enter(TrafficSignalPhase.MainGreen);
+    }
+
+    public void OnTrafficLightPhase(TrafficLightController ctrl)
+    {
+        // Hook for sensors / tests; lights already registered.
     }
 }
 
 // TrainVehicleRagdoll stub (fields needed by CompositeMultiModalPathNode / TravelMultibodyPathAdjuster)
 public enum TrainDriveKind { Wheels = 0, Maglev = 1 }
 
+[DisallowMultipleComponent]
+[AddComponentMenu("Locomotion/Civil/Rail/Train Vehicle Ragdoll")]
 public sealed class TrainVehicleRagdoll : VehicleRagdoll
 {
+    [Header("Identity")]
     public string craftName = "Train";
     public string callsign = "CUU-T1";
     public string consistId = "consist_1";
     public string formationGroupId = "train_snake";
+
+    [Header("Consist (this unit is head when cars populated)")]
     public List<TrainVehicleRagdoll> cars = new List<TrainVehicleRagdoll>();
     public bool linkedSegmentMultibody = true;
     public float nominalCouplerSpacingM = 1.2f;
     public int carIndexInConsist;
     public TrainVehicleRagdoll headTrain;
+
+    [Header("Train type")]
     public TrainDriveKind driveKind = TrainDriveKind.Wheels;
+    public Transform wheelBarAnchor;
+    public float gaugeM = 1.435f;
+    public float enginePowerKw = 4000f;
+    public float brakePowerKw = 5000f;
+    public float startupSec = 8f;
+    public float shutdownSec = 6f;
+    public bool engineRunning;
+
+    [Header("Coupling")]
+    public TrainCouplingRuntime coupling;
+    public Transform frontCoupler;
+    public Transform rearCoupler;
+
+    [Header("Composition")]
+    public List<TrainCarAmbulationLimb> limbs = new List<TrainCarAmbulationLimb>();
+    public List<TrainCarContainmentBay> containmentBays = new List<TrainCarContainmentBay>();
+    public CargoLashRuntime lashRuntime;
+    public CargoStabilityBakeAsset defaultBake;
+    public CargoStabilityMode defaultStabilityMode = CargoStabilityMode.Nominal;
+
+    [Header("Cabin / pathing")]
+    public VehicleSeating seating;
+    public List<Transform> seatAnchors = new List<Transform>();
+    public string doorOpenCloseTopologyId = "train_door";
+    public BehaviorTree doorOpenCloseBt;
+    public PlanarSplinePathLocomotion aislePath;
+    public PlanarSplinePathLocomotion doorBridgePath;
+    public PlanarSplinePathLocomotion caboosePorchPath;
+    public PlanarSplinePathLocomotion engineCabinPath;
+    public List<VehicleGrabHold> grabHolds = new List<VehicleGrabHold>();
+    public List<VehicleStrapHold> strapHolds = new List<VehicleStrapHold>();
+
+    [Header("Telecom")]
+    public Component engineerTelecomBridge;
+    public bool engineerWebtopMapEnabled = true;
+    public Component attendantIntercom;
+    public Component passengerWalkie;
+    public string cabinMusicTrackId;
+    public bool cabinMusicPlaying;
+
+    [Header("Travel")]
     public string railSegmentId;
+    public float speedLimitMs = 40f;
+    public float currentSpeedMs;
+
+    [Header("Fuel")]
+    [Range(0f, 1f)] public float fuel01 = 1f;
+    public Transform fuelPort;
+    public string fuelPortTopologyId = "fuel01";
+
+    [Header("Seat ticket")]
+    public TrainSeatTicketConfig seatTicket;
+
+    TrainCarResultantApi _resultants;
+    public TrainCarResultantApi Resultants => _resultants ??= new TrainCarResultantApi(this);
+
+    public float LastLashStable01 => lashRuntime != null ? lashRuntime.LashStable01 : 1f;
+    public bool LastFoldFailed { get; set; }
+    public TrainVehicleRagdoll Head => cars != null && cars.Count > 0 ? cars[0] : this;
+    public TrainVehicleRagdoll Tail => cars != null && cars.Count > 0 ? cars[cars.Count - 1] : this;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        if (interiors.Find(s => s != null && s.sectionName == "cargo") == null)
+            interiors.Add(new VehicleInventorySection { sectionName = "cargo", capacity = 120f });
+        if (interiors.Find(s => s != null && s.sectionName == "baggage") == null)
+            interiors.Add(new VehicleInventorySection { sectionName = "baggage", capacity = 80f });
+        if (coupling == null)
+            coupling = GetComponent<TrainCouplingRuntime>() ?? gameObject.AddComponent<TrainCouplingRuntime>();
+        coupling.car = this;
+        if (lashRuntime == null)
+            lashRuntime = GetComponent<CargoLashRuntime>() ?? gameObject.AddComponent<CargoLashRuntime>();
+        lashRuntime.bake = defaultBake;
+        lashRuntime.mode = defaultStabilityMode;
+        if (seating == null)
+            seating = GetComponent<VehicleSeating>() ?? GetComponentInChildren<VehicleSeating>();
+        if (engineerTelecomBridge == null)
+            engineerTelecomBridge = GetComponent("TelecomUnityBridge");
+        if (string.IsNullOrEmpty(consistId))
+            consistId = gameObject.name;
+        EnsureDefaultLimb();
+        EnsureDefaultBay();
+        EnsureSharedHolds();
+        if (cars.Count == 0)
+            RebuildCarsFromChildren();
+        IndexCars();
+        seatTicket?.ApplyTo(this);
+    }
+
+    public void EnsureSharedHolds()
+    {
+        if (grabHolds == null) grabHolds = new List<VehicleGrabHold>();
+        if (strapHolds == null) strapHolds = new List<VehicleStrapHold>();
+        grabHolds.Clear();
+        strapHolds.Clear();
+        grabHolds.AddRange(GetComponentsInChildren<VehicleGrabHold>(true));
+        strapHolds.AddRange(GetComponentsInChildren<VehicleStrapHold>(true));
+        for (int i = 0; i < grabHolds.Count; i++)
+            grabHolds[i]?.EnsureCollider();
+        for (int i = 0; i < strapHolds.Count; i++)
+            strapHolds[i]?.EnsureRope();
+    }
+
+    void EnsureDefaultLimb()
+    {
+        if (limbs.Count > 0) return;
+        limbs.Add(new TrainCarAmbulationLimb
+        {
+            limbId = "main_crane",
+            role = TrainCarLimbRole.Crane,
+            openCloseTopologyId = "train_limb_crane"
+        });
+    }
+
+    void EnsureDefaultBay()
+    {
+        if (containmentBays.Count > 0) return;
+        containmentBays.Add(new TrainCarContainmentBay
+        {
+            bayId = "deck",
+            kind = TrainCarBayKind.Vehicle,
+            capacity = 2,
+            parkAnchor = transform,
+            deckRoot = transform
+        });
+    }
+
+    public void RebuildCarsFromChildren()
+    {
+        cars.Clear();
+        cars.Add(this);
+        var found = GetComponentsInChildren<TrainVehicleRagdoll>(true);
+        for (int i = 0; i < found.Length; i++)
+        {
+            if (found[i] != null && found[i] != this && !cars.Contains(found[i]))
+                cars.Add(found[i]);
+        }
+        IndexCars();
+    }
+
+    public void RebuildCarsFromCouplers() => RebuildFromCouplers(this);
+
+    /// <summary>Rebuild this host's car list by walking couplers from <paramref name="seed"/>.</summary>
+    public void RebuildFromCouplers(TrainVehicleRagdoll seed)
+    {
+        cars.Clear();
+        var head = WalkToHead(seed != null ? seed : this);
+        var cur = head;
+        var guard = 0;
+        while (cur != null && guard++ < 256)
+        {
+            if (!cars.Contains(cur)) cars.Add(cur);
+            cur = cur.coupling != null && cur.coupling.rearConnected != null
+                ? cur.coupling.rearConnected.car
+                : null;
+        }
+        IndexCars();
+    }
+
+    static TrainVehicleRagdoll WalkToHead(TrainVehicleRagdoll seed)
+    {
+        var cur = seed;
+        var guard = 0;
+        while (cur?.coupling?.frontConnected?.car != null && guard++ < 256)
+            cur = cur.coupling.frontConnected.car;
+        return cur;
+    }
+
+    public void IndexCars()
+    {
+        for (int i = 0; i < cars.Count; i++)
+        {
+            if (cars[i] == null) continue;
+            cars[i].carIndexInConsist = i;
+            cars[i].consistId = consistId;
+            cars[i].headTrain = this;
+        }
+    }
+
+    public void AddCar(TrainVehicleRagdoll car)
+    {
+        if (car == null || cars.Contains(car)) return;
+        cars.Add(car);
+        IndexCars();
+    }
+
+    public bool RemoveCar(TrainVehicleRagdoll car)
+    {
+        if (car == null || car == this) return false;
+        bool ok = cars.Remove(car);
+        if (ok)
+        {
+            car.coupling?.DecoupleFront();
+            car.coupling?.DecoupleRear();
+            car.headTrain = null;
+            IndexCars();
+        }
+        return ok;
+    }
+
+    public bool ReplaceCar(int index, TrainVehicleRagdoll replacement)
+    {
+        if (replacement == null || index < 0 || index >= cars.Count) return false;
+        var old = cars[index];
+        cars[index] = replacement;
+        if (old != null && old != replacement)
+        {
+            old.coupling?.DecoupleFront();
+            old.coupling?.DecoupleRear();
+            old.headTrain = null;
+        }
+        IndexCars();
+        return true;
+    }
+
+    public void InsertCar(int index, TrainVehicleRagdoll car)
+    {
+        if (car == null) return;
+        index = Mathf.Clamp(index, 0, cars.Count);
+        if (!cars.Contains(car))
+            cars.Insert(index, car);
+        IndexCars();
+    }
+
+    public void CopySnakeWorldPositions(IReadOnlyList<Vector3> samples)
+    {
+        if (samples == null || cars == null) return;
+        int n = Mathf.Min(cars.Count, samples.Count);
+        for (int i = 0; i < n; i++)
+        {
+            if (cars[i] == null) continue;
+            var p = samples[i];
+            cars[i].transform.position = new Vector3(p.x, cars[i].transform.position.y, p.z);
+            if (i + 1 < n)
+            {
+                Vector3 dir = samples[i + 1] - samples[i];
+                dir.y = 0f;
+                if (dir.sqrMagnitude > 1e-4f)
+                    cars[i].transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
+            }
+        }
+    }
+
+    public TrainCarAmbulationLimb FindLimb(string limbId)
+    {
+        for (int i = 0; i < limbs.Count; i++)
+            if (limbs[i] != null && limbs[i].limbId == limbId)
+                return limbs[i];
+        return null;
+    }
+
+    public TrainCarContainmentBay FindBay(string bayId)
+    {
+        for (int i = 0; i < containmentBays.Count; i++)
+            if (containmentBays[i] != null && containmentBays[i].bayId == bayId)
+                return containmentBays[i];
+        return containmentBays.Count > 0 ? containmentBays[0] : null;
+    }
+
+    public bool TryUnfoldLimb(string limbId)
+    {
+        var limb = FindLimb(limbId) ?? (limbs.Count > 0 ? limbs[0] : null);
+        if (limb == null) return false;
+        limb.state = TrainCarLimbState.Unfolded;
+        LastFoldFailed = false;
+        Notify(TrainCarNarrativeActionIds.UnfoldLimb);
+        ApplyLimbLash(limb);
+        return true;
+    }
+
+    public bool TryRefoldLimb(string limbId)
+    {
+        var limb = FindLimb(limbId) ?? (limbs.Count > 0 ? limbs[0] : null);
+        if (limb == null) return false;
+        limb.state = TrainCarLimbState.Folded;
+        LastFoldFailed = false;
+        Notify(TrainCarNarrativeActionIds.RefoldLimb);
+        ApplyLimbLash(limb);
+        return true;
+    }
+
+    public void MarkFoldFailed(string limbOrBayId)
+    {
+        LastFoldFailed = true;
+        var limb = FindLimb(limbOrBayId);
+        if (limb != null) limb.state = TrainCarLimbState.Failed;
+        Notify(TrainCarNarrativeActionIds.FoldFailed);
+    }
+
+    public bool TryParkVehicle(VehicleRagdoll vehicle, string bayId = null)
+    {
+        var bay = FindBay(bayId);
+        if (bay == null || vehicle == null || !bay.HasRoom) return false;
+        if (!bay.containedVehicles.Contains(vehicle))
+            bay.containedVehicles.Add(vehicle);
+        if (bay.parkAnchor != null)
+        {
+            vehicle.transform.SetParent(bay.parkAnchor, true);
+            vehicle.transform.localPosition = Vector3.zero;
+            vehicle.transform.localRotation = Quaternion.identity;
+        }
+        var rb = vehicle.GetComponent<Rigidbody>();
+        if (rb != null) rb.isKinematic = true;
+        ApplyBayLash(bay, vehicle);
+        Notify(TrainCarNarrativeActionIds.ParkVehicle);
+        return true;
+    }
+
+    public bool TryUnloadVehicle(VehicleRagdoll vehicle, string bayId = null)
+    {
+        var bay = FindBay(bayId);
+        if (bay == null || vehicle == null) return false;
+        bay.containedVehicles.Remove(vehicle);
+        bay.rampUnfolded = true;
+        vehicle.transform.SetParent(null, true);
+        var rb = vehicle.GetComponent<Rigidbody>();
+        if (rb != null) rb.isKinematic = false;
+        Notify(TrainCarNarrativeActionIds.UnloadBay);
+        return true;
+    }
+
+    public void SetBayRampUnfolded(string bayId, bool unfolded)
+    {
+        var bay = FindBay(bayId);
+        if (bay != null) bay.rampUnfolded = unfolded;
+    }
+
+    public void SetEngineRunning(bool running)
+    {
+        engineRunning = running;
+        Notify(running ? TrainDispatchNarrativeIds.EngineStart : TrainDispatchNarrativeIds.EngineStop);
+    }
+
+    public void SetCabinMusic(string trackId, bool play)
+    {
+        cabinMusicTrackId = trackId;
+        cabinMusicPlaying = play;
+    }
+
+    public void SetCabinLocked(bool locked)
+    {
+        Notify(locked ? TrainDispatchNarrativeIds.CabinLock : TrainDispatchNarrativeIds.CabinUnlock);
+    }
+
+    public void RebuildPlanarPaths()
+    {
+        aislePath?.Rebuild();
+        doorBridgePath?.Rebuild();
+        caboosePorchPath?.Rebuild();
+        engineCabinPath?.Rebuild();
+    }
+
+    void ApplyLimbLash(TrainCarAmbulationLimb limb)
+    {
+        if (lashRuntime == null || limb == null) return;
+        lashRuntime.deckRoot = limb.limbRoot != null ? limb.limbRoot : transform;
+        lashRuntime.mode = limb.stabilityMode;
+        lashRuntime.ApplyProfile(limb.lashProfile, limb.stabilityMode);
+        lashRuntime.TickEvaluate(Vector3.zero);
+    }
+
+    void ApplyBayLash(TrainCarContainmentBay bay, VehicleRagdoll vehicle)
+    {
+        if (lashRuntime == null || bay == null) return;
+        lashRuntime.deckRoot = bay.deckRoot != null ? bay.deckRoot : transform;
+        lashRuntime.cargoBody = vehicle != null ? vehicle.GetComponent<Rigidbody>() : null;
+        lashRuntime.mode = bay.stabilityMode;
+        lashRuntime.bake = defaultBake;
+        lashRuntime.ApplyProfile(bay.lashProfile, bay.stabilityMode);
+        lashRuntime.TickEvaluate(Vector3.zero);
+    }
+
+    void Notify(string id) =>
+        SendMessage("OnNarrativeSchedulerAction", id ?? "", SendMessageOptions.DontRequireReceiver);
+
+    public Dictionary<string, object> LemmaSnapshot()
+    {
+        var limb = limbs.Count > 0 ? limbs[0] : null;
+        var bay = containmentBays.Count > 0 ? containmentBays[0] : null;
+        return new Dictionary<string, object>
+        {
+            [TrainCarLemmaPropertyKeys.ConsistId] = consistId ?? "",
+            [TrainCarLemmaPropertyKeys.LimbState] = limb != null ? limb.state.ToString() : "",
+            [TrainCarLemmaPropertyKeys.LimbRole] = limb != null ? limb.role.ToString() : "",
+            [TrainCarLemmaPropertyKeys.BayId] = bay != null ? bay.bayId : "",
+            [TrainCarLemmaPropertyKeys.ContainedVehicle] =
+                bay != null && bay.containedVehicles.Count > 0 && bay.containedVehicles[0] != null
+                    ? bay.containedVehicles[0].vehicleId
+                    : "",
+            [TrainCarLemmaPropertyKeys.LashStable01] = LastLashStable01,
+            [TrainCarLemmaPropertyKeys.ImpossibleKeepStable] =
+                defaultStabilityMode == CargoStabilityMode.ImpossibleKeepStable,
+            [TrainCarLemmaPropertyKeys.StabilityMode] = defaultStabilityMode.ToString(),
+            [TrainCarLemmaPropertyKeys.FoldFailed] = LastFoldFailed
+        };
+    }
 }
 
+public static class TrainDispatchNarrativeIds
+{
+    public const string EngineStart = "train_engine_start";
+    public const string EngineStop = "train_engine_stop";
+    public const string CabinLock = "train_cabin_lock";
+    public const string CabinUnlock = "train_cabin_unlock";
+    public const string SpeedAdjust = "train_speed_adjust";
+    public const string Plow = "train_plow";
+    public const string FollowTrain = "train_follow";
+    public const string Turnstile = "train_turnstile";
+}
 
 // ---- more travel/road orphan compile hosts ----
 public static class AmbulationPathCache
 {
+    public const float HumanLikelihood01 = 0.35f;
+    public const float NonHumanLikelihood01 = 0.85f;
+
+    struct Entry
+    {
+        public Vector3 start;
+        public Vector3 goal;
+        public int fingerprint;
+        public GenericMultiModalPathPlan plan;
+        public float toleranceM;
+    }
+
+    static readonly Dictionary<string, Entry> s_byKey = new Dictionary<string, Entry>();
+
+    public static void Clear() => s_byKey.Clear();
+
+    public static float DefaultLikelihood01(BaseAmbulatingActor actor)
+    {
+        if (actor is VehicleActor || actor is AnimalAmbulatingActor)
+            return NonHumanLikelihood01;
+        return HumanLikelihood01;
+    }
+
     public static bool TryReuse(TravelAgent agent, out GenericMultiModalPathPlan plan)
     {
         plan = null;
-        return false;
+        if (agent == null) return false;
+        float tol = agent.cacheToleranceM > 0f ? agent.cacheToleranceM : 1.5f;
+        if (!s_byKey.TryGetValue(agent.ambulationCacheKey ?? "", out var e)) return false;
+        if ((e.start - agent.previewStartWorld).sqrMagnitude > tol * tol) return false;
+        if ((e.goal - agent.previewGoalWorld).sqrMagnitude > tol * tol) return false;
+        plan = e.plan != null ? e.plan.Clone() : null;
+        return plan != null && !plan.IsEmpty;
     }
 
-    public static void Remember(TravelAgent agent, GenericMultiModalPathPlan plan) { }
+    public static void Remember(TravelAgent agent, GenericMultiModalPathPlan plan)
+    {
+        if (agent == null || plan == null || plan.IsEmpty) return;
+        float tol = agent.cacheToleranceM > 0f ? agent.cacheToleranceM : 1.5f;
+        s_byKey[agent.ambulationCacheKey ?? ""] = new Entry
+        {
+            start = agent.previewStartWorld,
+            goal = agent.previewGoalWorld,
+            plan = plan.Clone(),
+            toleranceM = tol
+        };
+    }
+
+    public static void Put(string key, Vector3 start, Vector3 goal, int fingerprint, GenericMultiModalPathPlan plan, float toleranceM)
+    {
+        s_byKey[key] = new Entry
+        {
+            start = start,
+            goal = goal,
+            fingerprint = fingerprint,
+            plan = plan,
+            toleranceM = toleranceM
+        };
+    }
+
+    public static bool TryGet(string key, Vector3 start, Vector3 goal, int fingerprint, float toleranceM, out GenericMultiModalPathPlan plan)
+    {
+        plan = null;
+        if (!s_byKey.TryGetValue(key, out var e)) return false;
+        float t = Mathf.Max(0.01f, toleranceM);
+        if (e.fingerprint != fingerprint) return false;
+        if ((e.start - start).sqrMagnitude > t * t) return false;
+        if ((e.goal - goal).sqrMagnitude > t * t) return false;
+        plan = e.plan;
+        return plan != null;
+    }
 }
 
 public static class RoadLaneSnap
 {
     public delegate void SampleAt(float distanceAlong, out Vector3 position, out Vector3 binormal);
+
+    public static float SnapS(float distanceAlong, float cellLengthM)
+    {
+        float cell = Mathf.Max(0.25f, cellLengthM);
+        return Mathf.Round(distanceAlong / cell) * cell;
+    }
+
+    public static Vector3 ApplyPolicy(
+        Vector3 world,
+        float distanceAlong,
+        float lateralOffset,
+        TravelLanePolicy policy,
+        float stayInLanes01,
+        RoadLaneLayout layout,
+        float cellLengthM,
+        SampleAt sample)
+    {
+        if (sample == null) return world;
+        float s = distanceAlong;
+        if (policy != TravelLanePolicy.IgnoreLaneGrid)
+            s = SnapS(distanceAlong, cellLengthM);
+        sample(s, out Vector3 pos, out Vector3 bin);
+        if (policy == TravelLanePolicy.IgnoreLaneGrid)
+            return pos;
+        if (policy == TravelLanePolicy.AlignGridIgnoreLanes)
+            return pos + bin * lateralOffset;
+        float laneCenter = layout != null ? layout.LaneCenterOffset(layout.LaneFromLateral(lateralOffset)) : 0f;
+        float lat = Mathf.Lerp(lateralOffset, laneCenter, Mathf.Clamp01(stayInLanes01));
+        return pos + bin * lat;
+    }
 
     public static List<Vector3> SnapList(
         List<Vector3> waypoints, List<float> distances, List<float> laterals,
@@ -1320,34 +2181,205 @@ public static class RoadLaneSnap
 
 public sealed class RoadLaneSplineBinding : MonoBehaviour
 {
-    public RoadLaneLayout ResolveLayout() => new RoadLaneLayout();
-    public RoadLaneGridSettings ResolveGrid() => new RoadLaneGridSettings();
+    public RoadLaneConfigAsset config;
+    public RoadLaneLayout layout = new RoadLaneLayout();
+    public RoadLaneGridSettings grid = new RoadLaneGridSettings();
+    public RoadLaneLayout ResolveLayout() => layout ?? new RoadLaneLayout();
+    public RoadLaneGridSettings ResolveGrid() => grid ?? new RoadLaneGridSettings();
 }
 
 public static class PlayerVehicleTravelSlowOverride
 {
-    public static bool ShouldApplyTravelSlow(TravelAgent agent) => false;
+    public static bool ShouldApplyTravelSlow(TravelAgent agent)
+    {
+        if (agent == null) return true;
+        var vehicle = agent.GetComponent<VehicleRagdoll>()
+                      ?? agent.GetComponentInParent<VehicleRagdoll>()
+                      ?? agent.GetComponentInChildren<VehicleRagdoll>();
+        return ShouldApplyTravelSlow(vehicle);
+    }
+
+    public static bool ShouldApplyTravelSlow(VehicleRagdoll vehicle)
+    {
+        if (vehicle == null) return true;
+        var buf = vehicle.GetComponent<RagdollPlayerInputBuffer>()
+                  ?? vehicle.GetComponentInChildren<RagdollPlayerInputBuffer>();
+        if (buf == null || buf.options == null || !buf.options.overrideTravelAgentSlow)
+            return true;
+        return buf.State.selfDriving || buf.State.brake01 > 0.01f;
+    }
 }
 
-public class RoadLot : MonoBehaviour
+public enum RoadLotGradeMode
+{
+    Flat = 0,
+    GradedHeightMap = 1,
+    TerrainConform = 2
+}
+
+[Serializable]
+public sealed class RoadLotOutlet
+{
+    public string roadSegmentId;
+    [Range(0f, 1f)] public float distanceAlong01 = 0.5f;
+    public float distanceAlongMeters = -1f;
+    public float lateralSide = 1f;
+    public float curbWidth = 2f;
+}
+
+public enum RoadLotKind
+{
+    Pad = 0,
+    Driveway = 1,
+    Garage = 2,
+    Intersection = 3
+}
+
+[DisallowMultipleComponent]
+[AddComponentMenu("Locomotion/Civil/Roads/Road Lot")]
+public sealed class RoadLot : MonoBehaviour
 {
     public string lotId;
+    public string displayName;
+    public RoadLotKind lotKind = RoadLotKind.Pad;
+    public RoadLotGradeMode gradeMode = RoadLotGradeMode.Flat;
+    public Vector3 padSize = new Vector3(40f, 2f, 40f);
+    public Texture2D heightMap;
+    public float heightMapAmplitude = 4f;
+    public Terrain terrainRef;
+    public List<RoadLotOutlet> roadOutlets = new List<RoadLotOutlet>();
     public RoadLotBoundarySpline boundary;
+    public LotGrassGrowthController grass;
+    public bool registerCorridorOnAwake = true;
+
+    [Header("Walk path ribbons")]
     public List<PlanarSplinePathLocomotion> pathRibbons = new List<PlanarSplinePathLocomotion>();
+    public bool autoBuildOutletRibbons = true;
+
     static readonly List<RoadLot> Registry = new List<RoadLot>();
-    void OnEnable() { if (!Registry.Contains(this)) Registry.Add(this); }
-    void OnDisable() { Registry.Remove(this); }
-    public Vector3 ArrivalWorld => transform.position;
-    public float SampleHeight(Vector3 world) => world.y;
+
+    public static IReadOnlyList<RoadLot> All => Registry;
+
+    void Awake()
+    {
+        if (string.IsNullOrEmpty(lotId))
+            lotId = gameObject.name;
+        if (string.IsNullOrEmpty(displayName))
+            displayName = lotId;
+        if (boundary == null)
+            boundary = GetComponent<RoadLotBoundarySpline>() ?? gameObject.AddComponent<RoadLotBoundarySpline>();
+        boundary.EnsureClosedLoopDefault();
+        if (pathRibbons.Count == 0)
+            pathRibbons.AddRange(GetComponentsInChildren<PlanarSplinePathLocomotion>(true));
+        if (autoBuildOutletRibbons)
+            EnsureOutletPathRibbons();
+        if (!Registry.Contains(this))
+            Registry.Add(this);
+    }
+
+    /// <summary>Ensure a planar spline ribbon from arrival pad toward each road outlet.</summary>
+    public void EnsureOutletPathRibbons()
+    {
+        if (roadOutlets == null) return;
+        for (int i = 0; i < roadOutlets.Count; i++)
+        {
+            var outlet = roadOutlets[i];
+            if (outlet == null || string.IsNullOrEmpty(outlet.roadSegmentId)) continue;
+            string ribbonName = "path_ribbon_" + outlet.roadSegmentId;
+            PlanarSplinePathLocomotion ribbon = null;
+            for (int r = 0; r < pathRibbons.Count; r++)
+            {
+                if (pathRibbons[r] != null && pathRibbons[r].name == ribbonName)
+                {
+                    ribbon = pathRibbons[r];
+                    break;
+                }
+            }
+            if (ribbon == null)
+            {
+                var go = new GameObject(ribbonName);
+                go.transform.SetParent(transform, false);
+                ribbon = go.AddComponent<PlanarSplinePathLocomotion>();
+                pathRibbons.Add(ribbon);
+            }
+            Vector3 pad = transform.InverseTransformPoint(ArrivalWorld);
+            Vector3 outLocal = pad + new Vector3(outlet.lateralSide * outlet.curbWidth, 0f, 8f + i * 2f);
+            if (ribbon.controlPoints == null || ribbon.controlPoints.Count < 2)
+            {
+                ribbon.controlPoints = new List<Vector3> { pad, outLocal };
+                ribbon.Rebuild();
+            }
+        }
+    }
+
+    void OnDestroy() => Registry.Remove(this);
+
+    public Bounds GetWorldBounds()
+    {
+        Vector3 size = Vector3.Scale(padSize, transform.lossyScale);
+        return new Bounds(transform.position, size);
+    }
+
+    public float SampleHeight(Vector3 world)
+    {
+        switch (gradeMode)
+        {
+            case RoadLotGradeMode.TerrainConform:
+                if (terrainRef != null)
+                    return terrainRef.SampleHeight(world) + terrainRef.transform.position.y;
+                break;
+            case RoadLotGradeMode.GradedHeightMap:
+                if (heightMap != null)
+                {
+                    Bounds b = GetWorldBounds();
+                    float u = Mathf.InverseLerp(b.min.x, b.max.x, world.x);
+                    float v = Mathf.InverseLerp(b.min.z, b.max.z, world.z);
+                    Color c = heightMap.GetPixelBilinear(u, v);
+                    return transform.position.y + c.r * heightMapAmplitude;
+                }
+                break;
+        }
+        return transform.position.y;
+    }
+
     public bool ContainsXZ(Vector3 world)
     {
-        Vector3 d = world - transform.position;
-        d.y = 0f;
-        return d.sqrMagnitude < 100f;
+        Bounds b = GetWorldBounds();
+        return world.x >= b.min.x && world.x <= b.max.x && world.z >= b.min.z && world.z <= b.max.z;
     }
+
+    public bool HasOutletTo(string roadSegmentId)
+    {
+        if (string.IsNullOrEmpty(roadSegmentId) || roadOutlets == null) return false;
+        for (int i = 0; i < roadOutlets.Count; i++)
+            if (roadOutlets[i] != null && roadOutlets[i].roadSegmentId == roadSegmentId)
+                return true;
+        return false;
+    }
+
+    public Vector3 ArrivalWorld
+    {
+        get
+        {
+            if (boundary != null && boundary.controlPoints != null && boundary.controlPoints.Count > 0)
+                return transform.TransformPoint(boundary.CentroidLocal());
+            return transform.position;
+        }
+    }
+
+    public static RoadLot FindById(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        for (int i = 0; i < Registry.Count; i++)
+            if (Registry[i] != null && Registry[i].lotId == id)
+                return Registry[i];
+        return null;
+    }
+
     public static RoadLot FindNearest(Vector3 world, float maxDist = 200f)
     {
-        RoadLot best = null; float bestSq = maxDist * maxDist;
+        RoadLot best = null;
+        float bestSq = maxDist * maxDist;
         for (int i = 0; i < Registry.Count; i++)
         {
             var lot = Registry[i];
@@ -1357,44 +2389,537 @@ public class RoadLot : MonoBehaviour
         }
         return best;
     }
-    public static RoadLot FindConnectedToRoad(string roadSegmentId, Vector3 near) => FindNearest(near, 200f);
+
+    public static RoadLot FindConnectedToRoad(string roadSegmentId, Vector3 near)
+    {
+        RoadLot best = null;
+        float bestSq = float.MaxValue;
+        for (int i = 0; i < Registry.Count; i++)
+        {
+            var lot = Registry[i];
+            if (lot == null || !lot.HasOutletTo(roadSegmentId)) continue;
+            float sq = (lot.ArrivalWorld - near).sqrMagnitude;
+            if (sq < bestSq) { bestSq = sq; best = lot; }
+        }
+        return best;
+    }
 }
 
 /// <summary>Stub until PlanarSplinePathLocomotion.cs is AssetDB-imported.</summary>
+public enum PlanarSplineGranularityMode
+{
+    Division = 0,
+    PerLength = 1
+}
+
+[Serializable]
+public sealed class PlanarSplinePathPlane
+{
+    public float tStart;
+    public float tEnd;
+    public float halfWidth = 0.5f;
+    public string hierarchicalPlaneId;
+    public Vector3 center;
+    public Vector3 normal = Vector3.up;
+    public Vector3 tangent = Vector3.forward;
+    public Vector3 binormal = Vector3.right;
+
+    public float MidT01 => (tStart + tEnd) * 0.5f;
+    public float Length01 => Mathf.Max(0f, tEnd - tStart);
+}
+
+[Serializable]
+public sealed class PlanarSplineCustomSection
+{
+    [Range(0f, 1f)] public float startT01;
+    [Range(0f, 1f)] public float endT01 = 0.1f;
+    public float width = 1f;
+    public string hierarchicalPlaneId;
+    public Vector3 gizmoLocalPosition;
+    public Vector3 gizmoLocalEuler;
+    public Vector3 gizmoLocalScale = Vector3.one;
+    [NonSerialized] public Transform gizmoTransform;
+}
+
+/// <summary>Walkable ribbon of planes along a Catmull-Rom spline — aisles, branches, ledges.</summary>
+[DisallowMultipleComponent]
+[AddComponentMenu("Locomotion/Pathing/Planar Spline Path Locomotion")]
 public sealed class PlanarSplinePathLocomotion : MonoBehaviour
 {
+    public const string RebuildNarrativeAction = "planar_spline_rebuild";
+
     public List<Vector3> controlPoints = new List<Vector3>();
+    public float defaultWidth = 1.2f;
+    public PlanarSplineGranularityMode granularity = PlanarSplineGranularityMode.Division;
+    [Min(1)] public int divisionStopCount = 8;
+    [Min(0.1f)] public float perLengthMeters = 2f;
+    public List<PlanarSplineCustomSection> customSections = new List<PlanarSplineCustomSection>();
+    public bool blockFallUnlessJump;
+    public float jumpWallHeight;
+    public float wallThickness = 0.08f;
+    public List<PlanarSplinePathPlane> planes = new List<PlanarSplinePathPlane>();
+
+    readonly List<BoxCollider> _ledgeWalls = new List<BoxCollider>();
+    float[] _cumulativeLengths;
+    float _totalLength;
+
+    void Awake() => Rebuild();
+
+    public void Rebuild()
+    {
+        RebuildLengthTable();
+        if (planes == null) planes = new List<PlanarSplinePathPlane>();
+        planes.Clear();
+        if (controlPoints == null || controlPoints.Count < 2 || _totalLength <= 1e-4f)
+        {
+            SyncLedgeWalls();
+            return;
+        }
+
+        planes.AddRange(MergeCustomOverAuto(BuildAutoPlanes()));
+        SyncLedgeWalls();
+    }
+
+    List<PlanarSplinePathPlane> BuildAutoPlanes()
+    {
+        var list = new List<PlanarSplinePathPlane>();
+        int count = granularity == PlanarSplineGranularityMode.Division
+            ? Mathf.Max(1, divisionStopCount)
+            : Mathf.Max(1, Mathf.CeilToInt(_totalLength / perLengthMeters));
+        for (int i = 0; i < count; i++)
+        {
+            float t0 = i / (float)count;
+            float t1 = (i + 1) / (float)count;
+            list.Add(MakePlane(t0, t1, defaultWidth, "auto_" + i));
+        }
+        return list;
+    }
+
+    List<PlanarSplinePathPlane> MergeCustomOverAuto(List<PlanarSplinePathPlane> auto)
+    {
+        if (customSections == null || customSections.Count == 0)
+            return auto;
+
+        var result = new List<PlanarSplinePathPlane>();
+        for (int i = 0; i < auto.Count; i++)
+        {
+            var a = auto[i];
+            bool covered = false;
+            for (int c = 0; c < customSections.Count; c++)
+            {
+                var cs = customSections[c];
+                if (cs == null) continue;
+                float s = Mathf.Min(cs.startT01, cs.endT01);
+                float e = Mathf.Max(cs.startT01, cs.endT01);
+                if (a.MidT01 >= s && a.MidT01 <= e)
+                {
+                    covered = true;
+                    break;
+                }
+            }
+            if (!covered)
+                result.Add(a);
+        }
+
+        for (int c = 0; c < customSections.Count; c++)
+        {
+            var cs = customSections[c];
+            if (cs == null) continue;
+            float s = Mathf.Clamp01(Mathf.Min(cs.startT01, cs.endT01));
+            float e = Mathf.Clamp01(Mathf.Max(cs.startT01, cs.endT01));
+            if (e - s < 1e-4f) e = Mathf.Min(1f, s + 0.01f);
+            float width = cs.width > 1e-3f ? cs.width : defaultWidth;
+            if (Mathf.Abs(cs.gizmoLocalScale.x - 1f) > 1e-3f && cs.gizmoLocalScale.x > 1e-3f)
+                width = Mathf.Abs(cs.gizmoLocalScale.x) * defaultWidth;
+            var plane = MakePlane(s, e, width, string.IsNullOrEmpty(cs.hierarchicalPlaneId) ? "custom_" + c : cs.hierarchicalPlaneId);
+            if (cs.gizmoLocalEuler.sqrMagnitude > 1e-6f)
+            {
+                Quaternion q = Quaternion.Euler(cs.gizmoLocalEuler);
+                plane.normal = q * plane.normal;
+                plane.tangent = q * plane.tangent;
+                plane.binormal = Vector3.Cross(plane.normal, plane.tangent).normalized;
+            }
+            if (cs.gizmoLocalPosition.sqrMagnitude > 1e-8f)
+                plane.center += transform.TransformVector(cs.gizmoLocalPosition);
+            result.Add(plane);
+        }
+
+        result.Sort((a, b) => a.tStart.CompareTo(b.tStart));
+        return result;
+    }
+
+    PlanarSplinePathPlane MakePlane(float t0, float t1, float width, string id)
+    {
+        float mid = (t0 + t1) * 0.5f;
+        Vector3 tan = EvaluateTangent(mid);
+        Vector3 bin = Vector3.Cross(Vector3.up, tan);
+        if (bin.sqrMagnitude < 1e-6f) bin = Vector3.right;
+        else bin.Normalize();
+        Vector3 nrm = Vector3.Cross(tan, bin).normalized;
+        return new PlanarSplinePathPlane
+        {
+            tStart = t0,
+            tEnd = t1,
+            halfWidth = Mathf.Max(0.05f, width * 0.5f),
+            hierarchicalPlaneId = id,
+            center = Evaluate(mid),
+            normal = nrm,
+            tangent = tan,
+            binormal = bin
+        };
+    }
+
+    public bool TryProject(Vector3 worldPoint, out Vector3 onPlane, out PlanarSplinePathPlane plane)
+    {
+        onPlane = worldPoint;
+        plane = null;
+        if (planes == null || planes.Count == 0) return false;
+        float best = float.MaxValue;
+        for (int i = 0; i < planes.Count; i++)
+        {
+            var p = planes[i];
+            if (p == null) continue;
+            Vector3 local = worldPoint - p.center;
+            float along = Vector3.Dot(local, p.tangent);
+            float side = Vector3.Dot(local, p.binormal);
+            float halfLen = Mathf.Max(0.05f, p.Length01 * GetTotalLength() * 0.5f);
+            along = Mathf.Clamp(along, -halfLen, halfLen);
+            side = Mathf.Clamp(side, -p.halfWidth, p.halfWidth);
+            Vector3 candidate = p.center + p.tangent * along + p.binormal * side;
+            float d = (candidate - worldPoint).sqrMagnitude;
+            if (d < best)
+            {
+                best = d;
+                onPlane = candidate;
+                plane = p;
+            }
+        }
+        return plane != null;
+    }
+
+    public Vector3 ClampToPath(Vector3 worldPoint) =>
+        TryProject(worldPoint, out var on, out _) ? on : worldPoint;
+
+    public float GetTotalLength()
+    {
+        if (_cumulativeLengths == null) RebuildLengthTable();
+        return _totalLength;
+    }
+
+    void SyncLedgeWalls()
+    {
+        for (int i = 0; i < _ledgeWalls.Count; i++)
+            if (_ledgeWalls[i] != null)
+            {
+                if (Application.isPlaying) Destroy(_ledgeWalls[i].gameObject);
+                else DestroyImmediate(_ledgeWalls[i].gameObject);
+            }
+        _ledgeWalls.Clear();
+        if (!blockFallUnlessJump || jumpWallHeight <= 1e-4f || planes == null) return;
+        for (int i = 0; i < planes.Count; i++)
+        {
+            var p = planes[i];
+            if (p == null) continue;
+            float len = Mathf.Max(0.2f, p.Length01 * GetTotalLength());
+            SpawnWall(p, 1, len);
+            SpawnWall(p, -1, len);
+        }
+    }
+
+    void SpawnWall(PlanarSplinePathPlane p, int sideSign, float length)
+    {
+        var go = new GameObject("LedgeWall_" + p.hierarchicalPlaneId + "_" + (sideSign > 0 ? "R" : "L"));
+        go.transform.SetParent(transform, false);
+        go.transform.position = p.center + p.binormal * (p.halfWidth * sideSign) + p.normal * (jumpWallHeight * 0.5f);
+        go.transform.rotation = Quaternion.LookRotation(p.tangent, p.normal);
+        var box = go.AddComponent<BoxCollider>();
+        box.size = new Vector3(wallThickness, jumpWallHeight, length);
+        _ledgeWalls.Add(box);
+    }
+
+    void RebuildLengthTable()
+    {
+        if (controlPoints == null || controlPoints.Count < 2)
+        {
+            _cumulativeLengths = null;
+            _totalLength = 0f;
+            return;
+        }
+        int sampleCount = Mathf.Max(8, controlPoints.Count * 8);
+        _cumulativeLengths = new float[sampleCount];
+        Vector3 prev = EvaluateCatmull(0f);
+        for (int i = 1; i < sampleCount; i++)
+        {
+            float t = i / (float)(sampleCount - 1);
+            Vector3 p = EvaluateCatmull(t);
+            _cumulativeLengths[i] = _cumulativeLengths[i - 1] + Vector3.Distance(prev, p);
+            prev = p;
+        }
+        _totalLength = _cumulativeLengths[sampleCount - 1];
+    }
+
+    public Vector3 Evaluate(float normalizedT) => EvaluateCatmull(Mathf.Clamp01(normalizedT));
+
+    public Vector3 EvaluateTangent(float normalizedT)
+    {
+        const float dt = 0.001f;
+        Vector3 a = EvaluateCatmull(Mathf.Clamp01(normalizedT - dt));
+        Vector3 b = EvaluateCatmull(Mathf.Clamp01(normalizedT + dt));
+        Vector3 t = b - a;
+        return t.sqrMagnitude > 1e-8f ? t.normalized : transform.forward;
+    }
+
+    Vector3 EvaluateCatmull(float normalizedT)
+    {
+        if (controlPoints == null || controlPoints.Count == 0)
+            return transform.position;
+        if (controlPoints.Count == 1)
+            return transform.TransformPoint(controlPoints[0]);
+        float t = Mathf.Clamp01(normalizedT);
+        int segmentCount = controlPoints.Count - 1;
+        float scaled = t * segmentCount;
+        int seg = Mathf.Min(Mathf.FloorToInt(scaled), segmentCount - 1);
+        float localT = scaled - seg;
+        Vector3 p0 = controlPoints[Mathf.Max(seg - 1, 0)];
+        Vector3 p1 = controlPoints[seg];
+        Vector3 p2 = controlPoints[Mathf.Min(seg + 1, controlPoints.Count - 1)];
+        Vector3 p3 = controlPoints[Mathf.Min(seg + 2, controlPoints.Count - 1)];
+        float t2 = localT * localT;
+        float t3 = t2 * localT;
+        Vector3 local = 0.5f * (
+            (2f * p1) +
+            (-p0 + p2) * localT +
+            (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
+            (-p0 + 3f * p1 - 3f * p2 + p3) * t3);
+        return transform.TransformPoint(local);
+    }
+
+    public void ApplyGizmoSave(int sectionIndex)
+    {
+        if (customSections == null || sectionIndex < 0 || sectionIndex >= customSections.Count) return;
+        var cs = customSections[sectionIndex];
+        if (cs?.gizmoTransform == null) return;
+        cs.gizmoLocalPosition = cs.gizmoTransform.localPosition;
+        cs.gizmoLocalEuler = cs.gizmoTransform.localEulerAngles;
+        cs.gizmoLocalScale = cs.gizmoTransform.localScale;
+        Rebuild();
+    }
+
+    public void ApplyGizmoRevert(int sectionIndex, Vector3 pos, Vector3 euler, Vector3 scale)
+    {
+        if (customSections == null || sectionIndex < 0 || sectionIndex >= customSections.Count) return;
+        var cs = customSections[sectionIndex];
+        if (cs == null) return;
+        cs.gizmoLocalPosition = pos;
+        cs.gizmoLocalEuler = euler;
+        cs.gizmoLocalScale = scale;
+        if (cs.gizmoTransform != null)
+        {
+            cs.gizmoTransform.localPosition = pos;
+            cs.gizmoTransform.localEulerAngles = euler;
+            cs.gizmoTransform.localScale = scale;
+        }
+        Rebuild();
+    }
 }
 
-public class IntersectionLot : MonoBehaviour
+[DisallowMultipleComponent]
+[RequireComponent(typeof(RoadLot))]
+[AddComponentMenu("Locomotion/Civil/Roads/Intersection Lot")]
+[Serializable]
+public sealed class IntersectionLotLeg
+{
+    public string roadSegmentId;
+    public string approachId = "main";
+    public float headingYaw;
+    public RoadLaneLayout laneLayout;
+    public RoadLotOutlet outlet;
+}
+
+public sealed class IntersectionLot : MonoBehaviour
 {
     public string lotId;
+    public RoadLot pad;
+    public TAIntersectionCard intersectionCard;
+    public TrafficLightController lights;
+    public List<IntersectionLotLeg> legs = new List<IntersectionLotLeg>();
+    public List<StreetWireEnd> wireEnds = new List<StreetWireEnd>();
+
     static readonly List<IntersectionLot> Registry = new List<IntersectionLot>();
-    void OnEnable() { if (!Registry.Contains(this)) Registry.Add(this); }
-    void OnDisable() { Registry.Remove(this); }
-    public bool ContainsWaypoint(Vector3 world) => false;
-    public bool TrySnapDriveOutlet(string roadSegmentId, Vector3 end, out Vector3 outlet)
+    public static IReadOnlyList<IntersectionLot> All => Registry;
+
+    void Awake()
     {
-        outlet = end;
-        return false;
+        if (pad == null)
+            pad = GetComponent<RoadLot>() ?? gameObject.AddComponent<RoadLot>();
+        pad.lotKind = RoadLotKind.Intersection;
+        if (string.IsNullOrEmpty(lotId))
+            lotId = string.IsNullOrEmpty(pad.lotId) ? gameObject.name : pad.lotId;
+        pad.lotId = lotId;
+        if (!Registry.Contains(this))
+            Registry.Add(this);
+        if (intersectionCard == null)
+            intersectionCard = TAIntersectionCard.Generate(transform.position);
+        intersectionCard.BindLot(this);
     }
-    public static IntersectionLot FindNearest(Vector3 world, float maxDist = 200f) => null;
+
+    void OnDestroy() => Registry.Remove(this);
+
+    public bool ContainsWaypoint(Vector3 world) => pad != null && pad.ContainsXZ(world);
+
+    public bool TrySnapDriveOutlet(string roadSegmentId, Vector3 from, out Vector3 world)
+    {
+        world = pad != null ? pad.ArrivalWorld : transform.position;
+        IntersectionLotLeg match = null;
+        for (int i = 0; i < legs.Count; i++)
+        {
+            var leg = legs[i];
+            if (leg == null) continue;
+            if (!string.IsNullOrEmpty(roadSegmentId) && leg.roadSegmentId == roadSegmentId)
+            {
+                match = leg;
+                break;
+            }
+        }
+        if (match == null && legs.Count > 0)
+            match = NearestLeg(from);
+        if (match?.outlet == null) return pad != null;
+        world = OutletWorld(match);
+        if (pad != null)
+            world.y = pad.SampleHeight(world);
+        return true;
+    }
+
+    public Vector3 OutletWorld(IntersectionLotLeg leg)
+    {
+        if (leg?.outlet == null)
+            return pad != null ? pad.ArrivalWorld : transform.position;
+        Vector3 padPos = pad != null ? pad.ArrivalWorld : transform.position;
+        Vector3 dir = Quaternion.Euler(0f, leg.headingYaw, 0f) * Vector3.forward;
+        float along = leg.outlet.distanceAlongMeters > 0f ? leg.outlet.distanceAlongMeters : 8f;
+        return padPos + dir * along + Vector3.right * (leg.outlet.lateralSide * leg.outlet.curbWidth);
+    }
+
+    IntersectionLotLeg NearestLeg(Vector3 from)
+    {
+        IntersectionLotLeg best = null;
+        float bestSq = float.MaxValue;
+        for (int i = 0; i < legs.Count; i++)
+        {
+            var leg = legs[i];
+            if (leg == null) continue;
+            float sq = (OutletWorld(leg) - from).sqrMagnitude;
+            if (sq < bestSq)
+            {
+                bestSq = sq;
+                best = leg;
+            }
+        }
+        return best;
+    }
+
+    public static IntersectionLot FindById(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        for (int i = 0; i < Registry.Count; i++)
+            if (Registry[i] != null && Registry[i].lotId == id)
+                return Registry[i];
+        return null;
+    }
+
+    public static IntersectionLot FindNearest(Vector3 world, float maxDist = 40f)
+    {
+        IntersectionLot best = null;
+        float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Registry.Count; i++)
+        {
+            var lot = Registry[i];
+            if (lot == null) continue;
+            Vector3 p = lot.pad != null ? lot.pad.ArrivalWorld : lot.transform.position;
+            float sq = (p - world).sqrMagnitude;
+            if (sq < bestSq)
+            {
+                bestSq = sq;
+                best = lot;
+            }
+        }
+        return best;
+    }
+
+    public void EnsureFourLegs(string[] segmentIds)
+    {
+        legs.Clear();
+        float[] yaws = { 0f, 90f, 180f, 270f };
+        int n = segmentIds != null ? Mathf.Min(4, segmentIds.Length) : 4;
+        for (int i = 0; i < n; i++)
+        {
+            string id = segmentIds != null && i < segmentIds.Length ? segmentIds[i] : "leg_" + i;
+            legs.Add(new IntersectionLotLeg
+            {
+                roadSegmentId = id,
+                approachId = i % 2 == 0 ? "main" : "side",
+                headingYaw = yaws[i],
+                outlet = new RoadLotOutlet { roadSegmentId = id, curbWidth = 3f, lateralSide = 1f, distanceAlongMeters = 8f }
+            });
+        }
+    }
 }
 
-public class SidewalkRibbon : MonoBehaviour
+[DisallowMultipleComponent]
+[AddComponentMenu("Locomotion/Civil/Roads/Sidewalk Ribbon")]
+public sealed class SidewalkRibbon : MonoBehaviour
 {
     public string roadLotId;
-    static readonly List<SidewalkRibbon> Registry = new List<SidewalkRibbon>();
-    void OnEnable() { if (!Registry.Contains(this)) Registry.Add(this); }
-    void OnDisable() { Registry.Remove(this); }
+    public float widthM = 1.8f;
+    public float paddingM = 0.2f;
+    [Range(0f, 1f)] public float mattingWidth01;
+    public bool walkOpen = true;
+    public Vector3 along = Vector3.forward;
 
-    public bool TrySampleWalk(Vector3 world, out Vector3 walkPt)
+    static readonly System.Collections.Generic.List<SidewalkRibbon> Registry = new System.Collections.Generic.List<SidewalkRibbon>();
+    public static System.Collections.Generic.IReadOnlyList<SidewalkRibbon> All => Registry;
+
+    public float WalkableWidthM => Mathf.Max(0.1f, widthM - 2f * paddingM);
+    public bool HasMatting => mattingWidth01 > 1e-4f;
+
+    void OnEnable()
     {
-        walkPt = world;
-        return false;
+        if (!Registry.Contains(this)) Registry.Add(this);
     }
 
-    public static SidewalkRibbon FindNearest(Vector3 world, float maxDist = 200f) => null;
+    void OnDisable() => Registry.Remove(this);
+
+    public bool TrySampleWalk(Vector3 near, out Vector3 world)
+    {
+        world = transform.position;
+        if (!walkOpen) return false;
+        Vector3 a = Vector3.ProjectOnPlane(near - transform.position, Vector3.up);
+        Vector3 dir = Vector3.ProjectOnPlane(along, Vector3.up);
+        if (dir.sqrMagnitude < 1e-4f) dir = transform.forward;
+        dir.Normalize();
+        float t = Vector3.Dot(a, dir);
+        world = transform.position + dir * t;
+        world.y = transform.position.y;
+        return true;
+    }
+
+    public static SidewalkRibbon FindNearest(Vector3 world, float maxDist)
+    {
+        SidewalkRibbon best = null;
+        float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Registry.Count; i++)
+        {
+            var r = Registry[i];
+            if (r == null || !r.walkOpen) continue;
+            float sq = (r.transform.position - world).sqrMagnitude;
+            if (sq < bestSq)
+            {
+                bestSq = sq;
+                best = r;
+            }
+        }
+        return best;
+    }
 }
 
 public static class SidewalkRibbonUtil

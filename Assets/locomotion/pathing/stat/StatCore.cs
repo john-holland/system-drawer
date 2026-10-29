@@ -324,13 +324,30 @@ public sealed class CivilVenueNode
     public string buildingTypeId;
     public GameObject contextOwner;
     [CronExpr] public string hoursCron = "* 8-20 * * *";
+    public string troupeId;
+    public int developerPriority = 100;
+    public float minCausalDepth;
     public List<RetinuePeckingEntry> retinue = new List<RetinuePeckingEntry>();
+    public RestaurantVenueRuntime kitchenRuntime;
+    public CivilVenueBioRhythmService venueBio;
+    public KitchenBioRhythmService kitchenBio;
+    public WaypointPlannerInput waypointPlanner;
     public CivilLodTier currentTier = CivilLodTier.Culled;
     public bool isOpen;
     public PersonaRequestBundle lastBundle;
 
     public Vector3 WorldPosition =>
         contextOwner != null ? contextOwner.transform.position : Vector3.zero;
+
+    public int CountWokenActors()
+    {
+        int n = 0;
+        if (retinue == null) return 0;
+        for (int i = 0; i < retinue.Count; i++)
+            if (retinue[i]?.actor != null && retinue[i].actor.activeInHierarchy)
+                n++;
+        return n;
+    }
 }
 
 public interface ICompanyHost
@@ -347,6 +364,7 @@ public sealed class CompanyFundingSource
 }
 
 [DisallowMultipleComponent]
+[AddComponentMenu("Locomotion/Civil/Company Registration")]
 public sealed class CompanyRegistration : MonoBehaviour, ICompanyHost
 {
     public string companyId;
@@ -354,12 +372,84 @@ public sealed class CompanyRegistration : MonoBehaviour, ICompanyHost
     public string parentCompanyId;
     public List<CompanyFundingSource> fundingSources = new List<CompanyFundingSource>();
     public List<RetinuePeckingEntry> staff = new List<RetinuePeckingEntry>();
+
     public CompanyRegistration Company => this;
+
+    public RetinuePeckingEntry FindStaff(string personaKey)
+    {
+        if (staff == null || string.IsNullOrEmpty(personaKey)) return null;
+        for (int i = 0; i < staff.Count; i++)
+        {
+            var s = staff[i];
+            if (s != null && string.Equals(s.personaKey, personaKey, StringComparison.OrdinalIgnoreCase))
+                return s;
+        }
+        return null;
+    }
+
+    public bool TryHire(string personaKey, string role, int peckingOrder = 20)
+    {
+        if (string.IsNullOrEmpty(personaKey)) return false;
+        if (staff == null) staff = new List<RetinuePeckingEntry>();
+        var existing = FindStaff(personaKey);
+        if (existing != null)
+        {
+            existing.role = role ?? existing.role;
+            existing.peckingOrder = peckingOrder;
+            return true;
+        }
+        staff.Add(new RetinuePeckingEntry
+        {
+            personaKey = personaKey,
+            role = role ?? "",
+            peckingOrder = peckingOrder
+        });
+        return true;
+    }
+
+    public bool TryFire(string personaKey)
+    {
+        if (staff == null || string.IsNullOrEmpty(personaKey)) return false;
+        for (int i = staff.Count - 1; i >= 0; i--)
+        {
+            var s = staff[i];
+            if (s == null || !string.Equals(s.personaKey, personaKey, StringComparison.OrdinalIgnoreCase))
+                continue;
+            staff.RemoveAt(i);
+            return true;
+        }
+        return false;
+    }
 
     void Awake()
     {
-        if (string.IsNullOrEmpty(companyId)) companyId = gameObject.name;
-        if (string.IsNullOrEmpty(displayName)) displayName = companyId;
+        if (string.IsNullOrEmpty(companyId))
+            companyId = gameObject.name;
+        if (string.IsNullOrEmpty(displayName))
+            displayName = companyId;
+    }
+
+    public Dictionary<string, object> ToDto()
+    {
+        var staffDto = new List<object>();
+        for (int i = 0; i < staff.Count; i++)
+        {
+            var s = staff[i];
+            if (s == null) continue;
+            staffDto.Add(new Dictionary<string, object>
+            {
+                ["personaKey"] = s.personaKey ?? "",
+                ["role"] = s.role ?? "",
+                ["peckingOrder"] = s.peckingOrder
+            });
+        }
+        return new Dictionary<string, object>
+        {
+            ["companyId"] = companyId,
+            ["displayName"] = displayName,
+            ["parentCompanyId"] = parentCompanyId ?? "",
+            ["staff"] = staffDto
+        };
     }
 }
 
@@ -375,6 +465,7 @@ public sealed class StoreShelfSlot
 }
 
 [DisallowMultipleComponent]
+[AddComponentMenu("Locomotion/Civil/Store Base")]
 public class StoreBase : MonoBehaviour
 {
     public string storeStableId;
@@ -383,10 +474,117 @@ public class StoreBase : MonoBehaviour
     public bool isOpen;
     public List<StoreShelfSlot> shelves = new List<StoreShelfSlot>();
     public List<RetinuePeckingEntry> staff = new List<RetinuePeckingEntry>();
+    public BuildingRagdoll buildingRagdoll;
+    [TextArea(2, 6)]
+    public string shelfPromptOverride;
+    public string builtinPromptKey;
 
     void Awake()
     {
-        if (string.IsNullOrEmpty(storeStableId)) storeStableId = gameObject.name;
+        if (string.IsNullOrEmpty(storeStableId))
+            storeStableId = gameObject.name;
+        if (buildingRagdoll == null)
+            buildingRagdoll = GetComponent<BuildingRagdoll>();
+    }
+
+    public void SetOpen(bool open)
+    {
+        isOpen = open;
+        buildingRagdoll?.bio?.NotifyOpen();
+        if (!open)
+            buildingRagdoll?.bio?.NotifyClosed();
+        for (int i = 0; i < staff.Count; i++)
+        {
+            var a = staff[i]?.actor;
+            if (a == null) continue;
+            if (open && !a.activeSelf) a.SetActive(true);
+        }
+    }
+
+    public void TickHours(DateTime utcNow)
+    {
+        bool due = CronDue.IsActiveSchedule(hoursCron, utcNow);
+        if (due != isOpen)
+            SetOpen(due);
+    }
+
+    /// <summary>Offline fallback: random spread from commodity keys.</summary>
+    public void FillShelvesFromCatalog(IList<string> commodityKeys, int count = 8)
+    {
+        shelves.Clear();
+        if (commodityKeys == null || commodityKeys.Count == 0) return;
+        int n = Mathf.Clamp(count, 1, 64);
+        for (int i = 0; i < n; i++)
+        {
+            string key = commodityKeys[UnityEngine.Random.Range(0, commodityKeys.Count)];
+            shelves.Add(new StoreShelfSlot
+            {
+                shelfId = $"shelf-{i}",
+                commodityKey = key,
+                displayName = key,
+                quantity = UnityEngine.Random.Range(1f, 12f),
+                price = UnityEngine.Random.Range(1f, 40f),
+                localPosition = new Vector3((i % 4) * 0.5f, (i / 4) * 0.4f, 0f)
+            });
+        }
+    }
+
+    public static string DefaultPromptForStoreType(string storeType)
+    {
+        // todo: once we implement each type, let's update these
+        switch ((storeType ?? "").ToLowerInvariant())
+        {
+            case "liquor":
+            case "liquor_store":
+                return "Layout a liquor store with shelves for beer, wine, spirits, mixers, and snacks.";
+            case "mall_kiosk":
+                return "Layout a mall kiosk with seasonal goods and accessories.";
+            case "convenience_store":
+                return "Layout a convenience store with shelves for snacks, supplies, drinks, and sundries. Refrigerated sections for beer, snacks, and drinks. Coffee and kitchen + supplies.";
+            case "clothing_store":
+            case "tailor":
+            case "tayloring":
+                return "Layout a clothing store with racks, fitting rooms, cutting table, sewing and serger stations, dye bench, stuffing, and stockroom.";
+            default:
+                return "Layout a general retail store with shelves, checkout, and stockroom.";
+        }
+    }
+
+    public string ResolveShelfPrompt()
+    {
+        if (!string.IsNullOrWhiteSpace(shelfPromptOverride))
+            return shelfPromptOverride;
+        return DefaultPromptForStoreType(string.IsNullOrEmpty(builtinPromptKey) ? storeType : builtinPromptKey);
+    }
+
+    public float ShelfQuantity(string commodityKey)
+    {
+        float q = 0f;
+        if (shelves == null || string.IsNullOrEmpty(commodityKey)) return q;
+        for (int i = 0; i < shelves.Count; i++)
+        {
+            var s = shelves[i];
+            if (s != null && s.commodityKey == commodityKey)
+                q += s.quantity;
+        }
+        return q;
+    }
+
+    public bool HasCommodity(string commodityKey, float minQty = 1e-4f)
+        => ShelfQuantity(commodityKey) >= minQty;
+
+    public void DebitCommodity(string commodityKey, float qty)
+    {
+        if (shelves == null || string.IsNullOrEmpty(commodityKey) || qty <= 0f) return;
+        float remain = qty;
+        for (int i = 0; i < shelves.Count && remain > 1e-4f; i++)
+        {
+            var s = shelves[i];
+            if (s == null || s.commodityKey != commodityKey) continue;
+            float take = Mathf.Min(s.quantity, remain);
+            s.quantity -= take;
+            remain -= take;
+        }
     }
 }
 
@@ -433,6 +631,55 @@ public sealed class ElectorateDemographics
         }
         d.Renormalize();
         return d;
+    }
+
+    public float Whole01()
+    {
+        if (slices == null) return 0f;
+        float sum = 0f;
+        for (int i = 0; i < slices.Count; i++)
+            if (slices[i] != null) sum += slices[i].share01;
+        return sum;
+    }
+
+    public void AddSlice(string groupProperty, string groupValue, float share01)
+    {
+        if (slices == null) slices = new List<ElectorateSlice>();
+        slices.Add(new ElectorateSlice
+        {
+            sliceId = groupValue,
+            groupProperty = groupProperty,
+            groupValue = groupValue,
+            share01 = share01
+        });
+        ReconcileChanged(slices.Count - 1);
+    }
+
+    public void ReconcileChanged(int changedIndex)
+    {
+        if (slices == null || slices.Count == 0) return;
+        if (slices.Count == 1)
+        {
+            if (slices[0] != null)
+                slices[0].share01 = 1f;
+            return;
+        }
+        int n = slices.Count;
+        int ci = Mathf.Clamp(changedIndex, 0, n - 1);
+        int changed = Mathf.Clamp(Mathf.RoundToInt((slices[ci] != null ? slices[ci].share01 : 0f) * 100f), 0, 100);
+        int remainder = 100 - changed;
+        int others = n - 1;
+        int even = remainder / others;
+        int extra = remainder - even * others;
+        int lastOther = ci == n - 1 ? n - 2 : n - 1;
+        for (int i = 0; i < n; i++)
+        {
+            if (slices[i] == null) continue;
+            if (i == ci)
+                slices[i].share01 = changed / 100f;
+            else
+                slices[i].share01 = (even + (i == lastOther ? extra : 0)) / 100f;
+        }
     }
 
     public void Renormalize()
@@ -482,15 +729,71 @@ public enum CivilianAgeBand { Child0To17 = 0, Adult18To64 = 1, Senior65Plus = 2 
 public enum CivilianEducationAttainment { None = 0, Certification = 1, Degree = 2 }
 public enum CivilianEmploymentStatus { Unemployed = 0, Employed = 1, Student = 2, Training = 3 }
 
+[CreateAssetMenu(fileName = "CivilianPaperDoll", menuName = "Locomotion/Civil/Civilian Paper Doll")]
 public sealed class CivilianPaperDoll : ScriptableObject
 {
+    public const int AxisCount = 4;
+    public static readonly string[] GradeAxes = { "Skill", "Conduct", "Reliability", "Authority" };
+
     public string personaKey = "civilian";
     public CivilianAgeBand ageBand = CivilianAgeBand.Adult18To64;
     public CivilianEducationAttainment education = CivilianEducationAttainment.None;
     public CivilianEmploymentStatus employment = CivilianEmploymentStatus.Unemployed;
     public string currentRoleId;
     public string employerCompanyId;
+    [Tooltip("Display / gov-glove only. Same hire/train/fire path as private jobs.")]
     public bool isGovernmentJob;
+    [Range(0f, 1f)] public float[] expected01 = { 0.55f, 0.55f, 0.55f, 0.4f };
+    [Range(0f, 1f)] public float[] fireLimit01 = { 0.9f, 0.9f, 0.9f, 0.85f };
+    public EducationalTravelAgent educationalPlan;
+    public int selectedStepIndex;
+    public string[] certificationIds = Array.Empty<string>();
+    public string[] degreeIds = Array.Empty<string>();
+
+    public float[] Expected01() => Pad4(expected01, 0.55f);
+
+    public float[] FireLimit01() => Pad4(fireLimit01, 0.9f);
+
+    public float[] WhiteStep01()
+    {
+        if (educationalPlan == null) return Expected01();
+        educationalPlan.selectedStepIndex = selectedStepIndex;
+        var step = educationalPlan.SelectedStep;
+        return step != null ? step.Expected01() : Expected01();
+    }
+
+    public void CopyLimitsFrom(CareerRoleSpec role)
+    {
+        if (role == null) return;
+        expected01 = Pad4(role.expected01, 0.55f);
+        fireLimit01 = Pad4(role.fireLimit01, 0.9f);
+        isGovernmentJob = role.isGovernment;
+        currentRoleId = role.roleId;
+    }
+
+    public bool HasCredential(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return true;
+        if (ContainsId(certificationIds, id)) return true;
+        return ContainsId(degreeIds, id);
+    }
+
+    public static float[] Pad4(float[] src, float fallback)
+    {
+        var a = new float[AxisCount];
+        for (int i = 0; i < AxisCount; i++)
+            a[i] = src != null && i < src.Length ? Mathf.Clamp01(src[i]) : fallback;
+        return a;
+    }
+
+    static bool ContainsId(string[] ids, string id)
+    {
+        if (ids == null) return false;
+        for (int i = 0; i < ids.Length; i++)
+            if (string.Equals(ids[i], id, StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
+    }
 }
 
 

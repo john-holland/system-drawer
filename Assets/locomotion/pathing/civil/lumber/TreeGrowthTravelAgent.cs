@@ -37,29 +37,16 @@ public sealed class TreeGrowthStep
     public string failureEventId;
 }
 
-[Serializable]
-public sealed class GroundCompositionNarrativeEvent
-{
-    public string compositionId;
-    public bool openCloseComplete;
-    public bool manifoldApplied;
-}
-
 /// <summary>Tree gen stages with weather/water/sun/mineral diamonds. Extends park plant defs.</summary>
 [AddComponentMenu("Locomotion/Travel/Tree Growth Travel Agent")]
-public class TreeGrowthTravelAgent : TravelAgent
+public class TreeGrowthTravelAgent : PlantTravelAgent
 {
     public static readonly string[] DiamondAxes = { "Weather", "Water", "Sun", "Minerals" };
 
     public List<TreeGrowthStep> steps = new List<TreeGrowthStep>();
     public int selectedStepIndex;
     public LotGrassPlantDef plantDef;
-    public bool enforceNaturalGrowthFromPhysicsManifolds;
-    public string[] mineralWhitelist = { "loam", "silt" };
-    public string[] mineralBlacklist = { "salt", "bedrock" };
-    public float waterRequirement01 = 0.4f;
-    public float sunRequirement01 = 0.35f;
-    public GroundCompositionNarrativeEvent groundEvent = new GroundCompositionNarrativeEvent();
+    public TreeGenConfig treeGen;
     public bool replantOnSamePlot = true;
 
     public TreeGrowthStep SelectedStep =>
@@ -90,30 +77,6 @@ public class TreeGrowthTravelAgent : TravelAgent
         if (!success && !s.hasFailureEvent)
             return false;
         return true;
-    }
-
-    public void ApplyGroundCompositionAfterOpenClose()
-    {
-        if (groundEvent == null) return;
-        if (!groundEvent.openCloseComplete) return;
-        groundEvent.manifoldApplied = true;
-    }
-
-    public bool MineralsAllowed(string id)
-    {
-        if (string.IsNullOrEmpty(id)) return false;
-        if (mineralBlacklist != null)
-        {
-            for (int i = 0; i < mineralBlacklist.Length; i++)
-                if (string.Equals(mineralBlacklist[i], id, StringComparison.OrdinalIgnoreCase))
-                    return false;
-        }
-        if (mineralWhitelist == null || mineralWhitelist.Length == 0)
-            return true;
-        for (int i = 0; i < mineralWhitelist.Length; i++)
-            if (string.Equals(mineralWhitelist[i], id, StringComparison.OrdinalIgnoreCase))
-                return true;
-        return false;
     }
 
     public float[] BlueOptimal01()

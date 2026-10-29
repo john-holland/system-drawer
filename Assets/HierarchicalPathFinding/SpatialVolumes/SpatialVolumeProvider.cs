@@ -137,7 +137,10 @@ namespace SpatialVolumes
         {
             Matrix4x4 current = transform.localToWorldMatrix;
             if (_lastLocalToWorld == current)
+            {
+                PathingFrameTrace.NoteFlippedHasChanged("SpatialVolumeProvider");
                 return;
+            }
             _lastLocalToWorld = current;
 
             if (backend == VolumeBackend.MeshConvexTree)

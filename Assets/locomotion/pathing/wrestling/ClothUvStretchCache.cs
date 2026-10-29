@@ -77,6 +77,15 @@ public sealed class ClothUvStretchCache
         _texture.Apply(false, false);
     }
 
+    public Color Sample(Vector2 uv01)
+    {
+        int x = Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp01(uv01.x) * (_width - 1)), 0, _width - 1);
+        int y = Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp01(uv01.y) * (_height - 1)), 0, _height - 1);
+        return _pixels[y * _width + x];
+    }
+
+    public float ContactWeight01(Vector2 uv01) => Sample(uv01).a;
+
     public void BindToMaterial(Material mat, string propertyName = "_ClothStretchTex")
     {
         if (mat != null && _texture != null)

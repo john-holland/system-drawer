@@ -1,5 +1,13 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+
+/// <summary>Wheel-groove width along a rail or garage track. <see cref="head"/> is meters over 0..1.</summary>
+[Serializable]
+public sealed class RailSideCurveParams
+{
+    public AnimationCurve head = AnimationCurve.Constant(0f, 1f, 0.04f);
+}
 
 /// <summary>
 /// Garage door track: road/rail spline installed in a wall plane, perpendicular to the ground.

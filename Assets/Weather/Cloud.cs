@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Weather
 {
@@ -52,7 +53,8 @@ namespace Weather
 
         [Header("Visual")]
         [Tooltip("Particle system for cloud rendering (optional)")]
-        public new ParticleSystem particleSystem;
+        [FormerlySerializedAs("particleSystem")]
+        public ParticleSystem particles;
 
         [Tooltip("Material for cloud rendering (optional)")]
         public Material cloudMaterial;

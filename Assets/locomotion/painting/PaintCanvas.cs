@@ -357,6 +357,25 @@ public static class InkNibBreakAnalyzer
         result.clampedBendDeg = nib.ClampBendDeg(requestedBendDeg);
         result.stress01 = nib.Stress01(requestedBendDeg, contactForceN, Mathf.Max(0.1f, instrument.breakForceN));
         result.breakWorld = instrument.TipWorld;
+        if (result.stress01 >= 1f)
+        {
+            result.broke = true;
+            instrument.nibBroken = true;
+            result.debris = new GameObject("InkNibDebris");
+            result.debris.transform.position = result.breakWorld;
+            instrument.ExpandAperture(Mathf.Max(nib.apertureRadiusM * 3f, 0.004f));
+        }
+        if (splatter && canvas != null)
+        {
+            canvas.EnsureHydro();
+            var hydro = canvas.Hydro;
+            if (hydro != null)
+            {
+                Color pigment = instrument.ink != null ? instrument.ink.defaultInkColor : Color.black;
+                hydro.SeedFromStamp(instrument.TipWorld, pigment, 0.01f, 1f, 4);
+                result.hydroSeeded = hydro.ActiveCount;
+            }
+        }
         return result;
     }
 }

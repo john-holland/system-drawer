@@ -7,6 +7,7 @@ public sealed class InventoryItem
 {
     public string id;
     public string name;
+    [Min(0)] public int count = 1;
     public string iconAsset;
     public string prefabId;
     public bool useTakeoutAnimation;

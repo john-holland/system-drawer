@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 /// <summary>
 /// Pathing mode: Walk = ground/slope/terrain; Fly = 2D grid with Y interpolated along path; Drive = vehicle route preferring road corridor markers.
@@ -118,9 +121,34 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     private HierarchicalPathingOctTree octTreeBuilt;
     private readonly List<DoNotPathRegion> doNotPathMarkers = new List<DoNotPathRegion>(64);
     private int gridVersion = 0;
+    private bool[] _capsuleBlocked;
+    private int _physicsOccupancyKey;
+    private bool _forcePhysicsRefresh;
+
+    private int _capsuleQueriesThisRebuild;
+    private double _capsuleMsThisRebuild;
+    private bool _reusedPhysicsThisRebuild;
+
+    private int _frameRebuilds;
+    private int _frameDeferred;
+    private int _frameCapsuleQueries;
+    private double _frameCapsuleMs;
+    private bool _frameReusedPhysics = true;
+    private string _lastRebuildVia = "-";
+    private int _dirtyMarksThisFrame;
+    private int _ignoredVolumeFlips;
+    private int _pendingFlipped;
+    private int _pendingBoneFlips;
+    private int _pendingBoneMoves;
+    private float _nextQuietLogTime;
+    private readonly List<string> _reasonLabels = new List<string>(8);
+    private readonly List<int> _reasonCounts = new List<int>(8);
 
     public bool IsDirty => dirty;
     public int GridVersion => gridVersion;
+    public int LastRebuildCapsuleQueries { get; private set; }
+    public bool LastRebuildReusedPhysicsCache { get; private set; }
+    public int IgnoredVolumeFlips => _ignoredVolumeFlips;
 
     private void OnEnable()
     {
@@ -136,7 +164,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
             RefreshMarkers();
         }
 
-        MarkDirty();
+        MarkDirty("OnEnable");
     }
 
     private void OnDisable()
@@ -151,23 +179,31 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
 
     void HandleSpatialVolumeProviderChanged(SpatialVolumes.SpatialVolumeProvider provider)
     {
-        if (provider != null && provider.SyncSDFTreeShape)
-            MarkDirty();
+        if (provider == null || !provider.SyncSDFTreeShape)
+            return;
+        // Bone and shape sync broadcast every provider. This grid only samples volumeProviders,
+        // so an unrelated skinned volume must not throw away the capsule cache.
+        if (volumeProviders == null || !volumeProviders.Contains(provider))
+        {
+            _ignoredVolumeFlips++;
+            return;
+        }
+        MarkDirty("SpatialVolume");
     }
 
     private void HandleDoNotPathChanged(DoNotPathRegion _)
     {
-        MarkDirty();
+        MarkDirty("DoNotPath");
     }
 
     private void HandlePhysicsZoneChanged(PhysicsPathingZone _)
     {
-        MarkDirty();
+        MarkDirty("PhysicsZone");
     }
 
     private void HandlePhysicalMediumVolumeChanged(PhysicalMediumVolume _)
     {
-        MarkDirty();
+        MarkDirty("PhysicalMedium");
     }
 
     private void Update()
@@ -181,10 +217,106 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         RebuildNow();
     }
 
-    public void MarkDirty()
+    void LateUpdate()
+    {
+        _pendingFlipped += PathingFrameTrace.TakeFlippedHasChanged();
+        _pendingBoneFlips += SdfMax.SdfMaxShapeSyncStats.FlippedHasChanged;
+        _pendingBoneMoves += SdfMax.SdfMaxShapeSyncStats.ShapeChanges;
+        SdfMax.SdfMaxShapeSyncStats.FlippedHasChanged = 0;
+        SdfMax.SdfMaxShapeSyncStats.ShapeChanges = 0;
+
+        bool rebuilt = _frameRebuilds > 0 || _frameDeferred > 0;
+        bool quiet = _dirtyMarksThisFrame > 0 || _ignoredVolumeFlips > 0 || _pendingFlipped > 0 || _pendingBoneFlips > 0 || _pendingBoneMoves > 0;
+        if (!rebuilt && !quiet)
+            return;
+        if (!rebuilt && Time.unscaledTime < _nextQuietLogTime)
+            return;
+
+        float dtMs = Time.unscaledDeltaTime * 1000f;
+        float fps = Time.unscaledDeltaTime > 1e-6f ? 1f / Time.unscaledDeltaTime : 0f;
+        int gw = grid2D != null ? grid2D.width : 0;
+        int gh = grid2D != null ? grid2D.height : 0;
+        string reused = _frameRebuilds == 0 ? "-" : _frameReusedPhysics.ToString();
+        PathingFrameTrace.Write(
+            "frame=" + Time.frameCount +
+            " dtMs=" + dtMs.ToString("F1") +
+            " fps=" + fps.ToString("F2") +
+            " solver=" + name +
+            " rebuilds=" + _frameRebuilds +
+            " via=" + _lastRebuildVia +
+            " cells=" + gw + "x" + gh +
+            " bounds=" + worldBounds.size.x.ToString("F0") + "x" + worldBounds.size.z.ToString("F0") +
+            " cellSize=" + cellSize.ToString("F3") +
+            " capsules=" + _frameCapsuleQueries +
+            " capsuleMs=" + _frameCapsuleMs.ToString("F1") +
+            " reusedPhysics=" + reused +
+            " deferred=" + _frameDeferred +
+            " dirty=" + _dirtyMarksThisFrame + "(" + FormatReasons() + ")" +
+            " ignoredVolume=" + _ignoredVolumeFlips +
+            " flippedHasChanged=" + _pendingFlipped +
+            " boneFlips=" + _pendingBoneFlips +
+            " boneMoves=" + _pendingBoneMoves);
+
+        if (!rebuilt)
+            _nextQuietLogTime = Time.unscaledTime + 1f;
+
+        _frameRebuilds = 0;
+        _frameDeferred = 0;
+        _frameCapsuleQueries = 0;
+        _frameCapsuleMs = 0;
+        _frameReusedPhysics = true;
+        _dirtyMarksThisFrame = 0;
+        _ignoredVolumeFlips = 0;
+        _pendingFlipped = 0;
+        _pendingBoneFlips = 0;
+        _pendingBoneMoves = 0;
+        _reasonLabels.Clear();
+        _reasonCounts.Clear();
+    }
+
+    public void MarkDirty() => MarkDirty(null);
+
+    public void MarkDirty(string reason)
     {
         dirty = true;
         lastRebuildRequestTime = Time.time;
+        NoteDirtyReason(string.IsNullOrEmpty(reason) ? "MarkDirty" : reason);
+    }
+
+    void NoteDirtyReason(string reason)
+    {
+        _dirtyMarksThisFrame++;
+        for (int i = 0; i < _reasonLabels.Count; i++)
+        {
+            if (_reasonLabels[i] == reason)
+            {
+                _reasonCounts[i]++;
+                return;
+            }
+        }
+        if (_reasonLabels.Count >= 8)
+            return;
+        _reasonLabels.Add(reason);
+        _reasonCounts.Add(1);
+    }
+
+    string FormatReasons()
+    {
+        if (_reasonLabels.Count == 0)
+            return "-";
+        var sb = new StringBuilder();
+        for (int i = 0; i < _reasonLabels.Count; i++)
+        {
+            if (i > 0)
+                sb.Append(',');
+            sb.Append(_reasonLabels[i]);
+            if (_reasonCounts[i] > 1)
+            {
+                sb.Append('x');
+                sb.Append(_reasonCounts[i]);
+            }
+        }
+        return sb.ToString();
     }
 
     /// <summary>Set worldBounds to the union of all fit-to-terrain terrains' world bounds. No-op if fitToTerrains is null or empty.</summary>
@@ -220,7 +352,9 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
     {
         if (autoFindMarkers)
             RefreshMarkers();
-        RebuildPathBackendData();
+        _forcePhysicsRefresh = true;
+        RebuildPathBackendData("RebuildGrid");
+        _forcePhysicsRefresh = false;
         gridVersion++;
         dirty = false;
         Rebuilt?.Invoke();
@@ -231,12 +365,12 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
 
     private void HandleNoPathingChanged(NoPathing np)
     {
-        MarkDirty();
+        MarkDirty("NoPathing");
     }
 
     private void HandleOffLimitsChanged(OffLimitsSpace ol)
     {
-        MarkDirty();
+        MarkDirty("OffLimits");
     }
 
     private void RefreshMarkers()
@@ -256,15 +390,19 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         if (autoFindMarkers)
             RefreshMarkers();
 
-        RebuildPathBackendData();
+        RebuildPathBackendData("Update");
         gridVersion++;
 
         dirty = false;
         Rebuilt?.Invoke();
     }
 
-    void RebuildPathBackendData()
+    void RebuildPathBackendData(string via)
     {
+        _capsuleQueriesThisRebuild = 0;
+        _capsuleMsThisRebuild = 0;
+        _reusedPhysicsThisRebuild = false;
+
         switch (pathingBackend)
         {
             case HierarchicalPathingBackend.Grid2DVolumeXZ:
@@ -275,14 +413,37 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
             case HierarchicalPathingBackend.UniformVolume3D:
                 grid2D = null;
                 octTreeBuilt = null;
-                RebuildOccupancyVolume3D();
+                {
+                    var sw = Stopwatch.StartNew();
+                    RebuildOccupancyVolume3D();
+                    _capsuleMsThisRebuild = sw.Elapsed.TotalMilliseconds;
+                }
                 break;
             case HierarchicalPathingBackend.OctreeLeaves:
                 grid2D = null;
                 grid3D = null;
-                RebuildOctreeLeaves();
+                {
+                    var sw = Stopwatch.StartNew();
+                    RebuildOctreeLeaves();
+                    _capsuleMsThisRebuild = sw.Elapsed.TotalMilliseconds;
+                }
                 break;
         }
+
+        AccountRebuild(via);
+    }
+
+    void AccountRebuild(string via)
+    {
+        LastRebuildCapsuleQueries = _capsuleQueriesThisRebuild;
+        LastRebuildReusedPhysicsCache = _reusedPhysicsThisRebuild;
+        _frameRebuilds++;
+        _lastRebuildVia = via;
+        _frameCapsuleQueries += _capsuleQueriesThisRebuild;
+        _frameCapsuleMs += _capsuleMsThisRebuild;
+        _frameReusedPhysics = _frameRebuilds == 1
+            ? _reusedPhysicsThisRebuild
+            : _frameReusedPhysics && _reusedPhysicsThisRebuild;
     }
 
     bool DoNotPathContains(Vector3 worldCenter)
@@ -358,6 +519,7 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         float capsuleBottomOffset = Mathf.Max(agentRadius, 0.01f);
         Vector3 p1 = center + Vector3.up * (halfH - capsuleBottomOffset);
         Vector3 p2 = center - Vector3.up * (halfH - capsuleBottomOffset);
+        _capsuleQueriesThisRebuild++;
         return Physics.CheckCapsule(p1, p2, agentRadius, obstacleMask, QueryTriggerInteraction.Ignore);
     }
 
@@ -583,112 +745,133 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         if (!dirty && BackendHasValidData())
             return;
 
+        // A query in the same frame as a fresh dirty mark used to rebuild immediately,
+        // ignoring debounce. That second sweep is the frame that dropped under 1 fps.
+        if (BackendHasValidData() && Time.time - lastRebuildRequestTime < rebuildDebounceSeconds)
+        {
+            _frameDeferred++;
+            return;
+        }
+
         if (autoFindMarkers)
             RefreshMarkers();
 
-        RebuildPathBackendData();
+        RebuildPathBackendData("Query");
         gridVersion++;
         dirty = false;
+    }
+
+    int ComputePhysicsOccupancyKey()
+    {
+        unchecked
+        {
+            int h = 17;
+            h = h * 31 + worldBounds.center.GetHashCode();
+            h = h * 31 + worldBounds.size.GetHashCode();
+            h = h * 31 + Mathf.RoundToInt(cellSize * 1000f);
+            h = h * 31 + Mathf.RoundToInt(agentRadius * 1000f);
+            h = h * 31 + Mathf.RoundToInt(agentHeight * 1000f);
+            h = h * 31 + obstacleMask.value;
+            h = h * 31 + (fitToTerrain ? 1 : 0);
+            h = h * 31 + (int)pathingBackend;
+            h = h * 31 + (int)pathingMode;
+            if (fitToTerrains != null)
+            {
+                for (int i = 0; i < fitToTerrains.Count; i++)
+                {
+                    Terrain t = fitToTerrains[i];
+                    h = h * 31 + (t != null ? t.GetInstanceID() : 0);
+                }
+            }
+            return h;
+        }
+    }
+
+    bool SlopeBlocksCell(int x, int z, float defaultY)
+    {
+        float myH = grid2D.GetCellHeight(x, z, defaultY);
+        float maxRise = cellSize * Mathf.Tan(maxWalkableSlopeDegrees * Mathf.Deg2Rad);
+        for (int dz = -1; dz <= 1; dz++)
+        {
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                if (dx == 0 && dz == 0)
+                    continue;
+                int nx = x + dx;
+                int nz = z + dz;
+                if (!grid2D.IsInBounds(nx, nz))
+                    continue;
+                float nh = grid2D.GetCellHeight(nx, nz, defaultY);
+                if (Mathf.Abs(nh - myH) > maxRise)
+                    return true;
+            }
+        }
+        return false;
     }
 
     private void RebuildOccupancyGrid2D()
     {
         bool useTerrainHeights = fitToTerrain && fitToTerrains != null && fitToTerrains.Count > 0;
-        grid2D = new HierarchicalPathingGrid2D(worldBounds, cellSize, storeHeights: useTerrainHeights);
-
-        float halfH = Mathf.Max(0.01f, agentHeight * 0.5f);
-        float capsuleBottomOffset = Mathf.Max(agentRadius, 0.01f);
         float defaultY = worldBounds.center.y;
+        bool flying = pathingMode == PathingMode.Fly;
+        int key = ComputePhysicsOccupancyKey();
+        bool reuse = !_forcePhysicsRefresh
+            && grid2D != null
+            && _capsuleBlocked != null
+            && _physicsOccupancyKey == key
+            && _capsuleBlocked.Length == grid2D.width * grid2D.height;
 
-        // First pass: set cell heights when fit-to-terrain is enabled
-        if (useTerrainHeights)
+        if (!reuse)
         {
+            grid2D = new HierarchicalPathingGrid2D(worldBounds, cellSize, storeHeights: useTerrainHeights);
+            _capsuleBlocked = new bool[grid2D.width * grid2D.height];
+            _physicsOccupancyKey = key;
+
+            if (useTerrainHeights)
+            {
+                Profiler.BeginSample("Pathing.TerrainHeights");
+                for (int z = 0; z < grid2D.height; z++)
+                {
+                    for (int x = 0; x < grid2D.width; x++)
+                    {
+                        Vector3 center = grid2D.CellCenterWorld(x, z, defaultY);
+                        float terrainY = SampleTerrainHeightAt(center.x, center.z, defaultY);
+                        grid2D.SetCellHeight(x, z, terrainY);
+                    }
+                }
+                Profiler.EndSample();
+            }
+
+            Profiler.BeginSample("Pathing.CheckCapsuleSweep");
+            var sw = Stopwatch.StartNew();
             for (int z = 0; z < grid2D.height; z++)
             {
                 for (int x = 0; x < grid2D.width; x++)
                 {
                     Vector3 center = grid2D.CellCenterWorld(x, z, defaultY);
-                    float terrainY = SampleTerrainHeightAt(center.x, center.z, defaultY);
-                    grid2D.SetCellHeight(x, z, terrainY);
+                    _capsuleBlocked[grid2D.Index(x, z)] = EvaluateCapsuleBlocked(center);
                 }
             }
+            sw.Stop();
+            Profiler.EndSample();
+            _capsuleMsThisRebuild = sw.Elapsed.TotalMilliseconds;
         }
 
-        bool flying = pathingMode == PathingMode.Fly;
-        // Mark blocked cells based on:
-        // - physics obstacles (capsule overlap) at cell height
-        // - OffLimitsSpace / NoPathing bounds (unless flying: still respect no-fly zones)
-        // - slope above maxWalkableSlope when fit-to-terrain is on (Walk only; Fly skips slope)
+        _reusedPhysicsThisRebuild = reuse;
+
+        Profiler.BeginSample("Pathing.MarkerSweep");
         for (int z = 0; z < grid2D.height; z++)
         {
             for (int x = 0; x < grid2D.width; x++)
             {
-                float cellY = grid2D.GetCellHeight(x, z, defaultY);
                 Vector3 center = grid2D.CellCenterWorld(x, z, defaultY);
-
-                // Capsule endpoints at cell height (agent stands on terrain)
-                Vector3 p1 = center + Vector3.up * (halfH - capsuleBottomOffset);
-                Vector3 p2 = center - Vector3.up * (halfH - capsuleBottomOffset);
-
-                bool blocked = Physics.CheckCapsule(p1, p2, agentRadius, obstacleMask, QueryTriggerInteraction.Ignore);
-
-                if (!blocked)
-                {
-                    // OffLimitsSpace blocks cells in its bounds
-                    for (int i = 0; i < offLimitsSpaces.Count; i++)
-                    {
-                        OffLimitsSpace ol = offLimitsSpaces[i];
-                        if (ol == null) continue;
-                        if (ol.GetWorldBounds().Contains(center))
-                        {
-                            blocked = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!blocked)
-                {
-                    for (int i = 0; i < noPathingMarkers.Count; i++)
-                    {
-                        NoPathing np = noPathingMarkers[i];
-                        if (np == null) continue;
-                        if (np.GetWorldBounds().Contains(center))
-                        {
-                            blocked = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!blocked && DoNotPathContains(center))
-                    blocked = true;
-
-                // Slope check (Walk only): block cell if rise to any neighbor exceeds max walkable slope
+                bool blocked = _capsuleBlocked[grid2D.Index(x, z)] || EvaluateMarkersBlocked(center);
                 if (!blocked && !flying && useTerrainHeights && maxWalkableSlopeDegrees > 0f)
-                {
-                    float myH = grid2D.GetCellHeight(x, z, defaultY);
-                    float maxRise = cellSize * Mathf.Tan(maxWalkableSlopeDegrees * Mathf.Deg2Rad);
-                    for (int dz = -1; dz <= 1 && !blocked; dz++)
-                    {
-                        for (int dx = -1; dx <= 1 && !blocked; dx++)
-                        {
-                            if (dx == 0 && dz == 0) continue;
-                            int nx = x + dx, nz = z + dz;
-                            if (!grid2D.IsInBounds(nx, nz)) continue;
-                            float nh = grid2D.GetCellHeight(nx, nz, defaultY);
-                            if (Mathf.Abs(nh - myH) > maxRise)
-                            {
-                                blocked = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-
+                    blocked = SlopeBlocksCell(x, z, defaultY);
                 grid2D.SetBlocked(x, z, blocked);
             }
         }
+        Profiler.EndSample();
     }
 
     /// <summary>Sample terrain height at world XZ from registered fit-to-terrain terrains. Returns defaultY if no terrain contains the point.</summary>

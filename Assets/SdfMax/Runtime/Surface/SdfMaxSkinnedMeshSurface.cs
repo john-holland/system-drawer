@@ -23,6 +23,10 @@ namespace SdfMax
         bool _meshDirty = true;
         float _lastMeshRebuildRequest = -999f;
         int _lastSurfaceVersion = int.MinValue;
+        Matrix4x4 _lastRootMatrix;
+        bool _hasLastRoot;
+        Matrix4x4[] _lastBoneMatrices = System.Array.Empty<Matrix4x4>();
+        bool[] _boneMatrixValid = System.Array.Empty<bool>();
 
         public SdfMaxBoneFieldContext BoneContext => _boneContext;
 
@@ -74,21 +78,42 @@ namespace SdfMax
             if (rootBone != null && rootBone.hasChanged)
             {
                 rootBone.hasChanged = false;
-                any = true;
+                if (BoneMatrixMoved(rootBone, ref _lastRootMatrix, ref _hasLastRoot))
+                    any = true;
             }
             if (bones != null)
             {
+                if (_lastBoneMatrices.Length != bones.Length)
+                {
+                    _lastBoneMatrices = new Matrix4x4[bones.Length];
+                    _boneMatrixValid = new bool[bones.Length];
+                }
                 for (int i = 0; i < bones.Length; i++)
                 {
-                    if (bones[i] != null && bones[i].hasChanged)
-                    {
-                        bones[i].hasChanged = false;
+                    if (bones[i] == null || !bones[i].hasChanged)
+                        continue;
+                    bones[i].hasChanged = false;
+                    if (BoneMatrixMoved(bones[i], ref _lastBoneMatrices[i], ref _boneMatrixValid[i]))
                         any = true;
-                    }
                 }
             }
-            if (any)
-                _host.NotifyVolumeChanged();
+            if (!any)
+                return;
+            SdfMaxShapeSyncStats.ShapeChanges++;
+            _host.NotifyVolumeChanged();
+        }
+
+        static bool BoneMatrixMoved(Transform bone, ref Matrix4x4 last, ref bool hasLast)
+        {
+            Matrix4x4 now = bone.localToWorldMatrix;
+            if (hasLast && now == last)
+            {
+                SdfMaxShapeSyncStats.FlippedHasChanged++;
+                return false;
+            }
+            hasLast = true;
+            last = now;
+            return true;
         }
 
         public void MarkMeshDirty()
