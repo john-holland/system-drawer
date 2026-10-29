@@ -357,6 +357,8 @@ public static class InkNibBreakAnalyzer
         result.clampedBendDeg = nib.ClampBendDeg(requestedBendDeg);
         result.stress01 = nib.Stress01(requestedBendDeg, contactForceN, Mathf.Max(0.1f, instrument.breakForceN));
         result.breakWorld = instrument.TipWorld;
+
+        // todo: review: we may want to include a "break nib" that includes a prebake failure apeture and options for splatter
         if (result.stress01 >= 1f)
         {
             result.broke = true;

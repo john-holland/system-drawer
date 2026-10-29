@@ -51,7 +51,7 @@ internal static class SystemDrawerHubMenuCatalog
 
     internal static readonly Entry[] All =
     {
-        new Entry("Create", "Create Object", "Window/System Drawer/Create Object"),
+        new Entry("Create", "Create Object Search", "Window/System Drawer/Create Object Search"),
         new Entry("Narrative", "Quest Map", "Window/System Drawer/Quest Map"),
         new Entry("Narrative", "Dream Cycle", "Window/System Drawer/Dream Cycle"),
         new Entry("Narrative", "Tree Editor", "Window/System Drawer/Narrative/Tree Editor"),

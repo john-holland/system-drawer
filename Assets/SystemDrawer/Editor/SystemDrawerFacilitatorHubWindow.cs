@@ -106,8 +106,8 @@ internal static class FacilitatorHubUi
     internal static void DrawWindowFilterBar()
     {
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        if (GUILayout.Button("Create Object", EditorStyles.toolbarButton, GUILayout.Width(100)))
-            SystemDrawerCreateObjectWindowHost.ShowWindow();
+        if (GUILayout.Button("Create Object Search", EditorStyles.toolbarButton, GUILayout.Width(148)))
+            SystemDrawerCreateObjectSearchWindow.ShowWindow();
         GUILayout.Label("Filter windows", GUILayout.Width(92));
         string next = GUILayout.TextField(WindowFilter, EditorStyles.toolbarSearchField);
         if (next != WindowFilter)
@@ -432,16 +432,10 @@ internal static class SystemDrawerHubSetup
     }
 }
 
-/// <summary>AssetDB-host stub until SystemDrawerCreateObjectWindow.cs is reimported.</summary>
+/// <summary>Opens Create Object Search. Kept so older hub call sites keep compiling.</summary>
 public static class SystemDrawerCreateObjectWindowHost
 {
-    public static void ShowWindow()
-    {
-        var win = EditorWindow.GetWindow<EditorWindow>("Create Object");
-        win.minSize = new Vector2(440f, 360f);
-        win.Show();
-        Debug.LogWarning("[SystemDrawer] Create Object window pending AssetDB reimport (SystemDrawerCreateObjectWindow).");
-    }
+    public static void ShowWindow() => SystemDrawerCreateObjectSearchWindow.ShowWindow();
 }
 
 /// <summary>AssetDB-host stub until MasterRebakeRunner.cs is reimported.</summary>

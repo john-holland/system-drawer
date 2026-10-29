@@ -54,8 +54,13 @@ public static class SystemDrawerCreateObjectCatalog
         "Planetary/",
         "Horizon/",
         "Weather/",
-        "SDF Max/"
+        "SDF Max/",
+        "Generated/",
+        "Bedoga/",
+        "Environment/"
     };
+
+    public const string CreateContextRoot = "Assets/Create/";
 
     static readonly string[] PrefabRoots =
     {
@@ -74,6 +79,7 @@ public static class SystemDrawerCreateObjectCatalog
     };
 
     static List<CreateObjectEntry> _cached;
+    static Dictionary<string, CreateObjectEntry> _createMenuMap;
 
     public static IReadOnlyList<CreateObjectEntry> All()
     {
@@ -82,7 +88,39 @@ public static class SystemDrawerCreateObjectCatalog
         return _cached;
     }
 
-    public static void Invalidate() => _cached = null;
+    public static void Invalidate()
+    {
+        _cached = null;
+        _createMenuMap = null;
+    }
+
+    /// <summary>
+    /// Maps each owned Assets/Create context-menu path to the asset factory behind it.
+    /// Includes <see cref="CreateAssetMenuAttribute"/> types and explicit <c>Assets/Create</c> menu methods.
+    /// </summary>
+    public static IReadOnlyDictionary<string, CreateObjectEntry> MapCreateContextMenu()
+    {
+        if (_createMenuMap == null)
+            _createMenuMap = BuildCreateContextMenuMap();
+        return _createMenuMap;
+    }
+
+    public static string ToCreateContextPath(string menuNameOrPath)
+    {
+        if (string.IsNullOrEmpty(menuNameOrPath))
+            return "";
+        if (menuNameOrPath.StartsWith(CreateContextRoot, StringComparison.Ordinal))
+            return menuNameOrPath;
+        return CreateContextRoot + menuNameOrPath.TrimStart('/');
+    }
+
+    public static bool IsOwnedCreateContextPath(string menuNameOrPath)
+    {
+        string full = ToCreateContextPath(menuNameOrPath);
+        if (!full.StartsWith(CreateContextRoot, StringComparison.Ordinal) || full.Length <= CreateContextRoot.Length)
+            return false;
+        return IsOwnedCreateMenu(full.Substring(CreateContextRoot.Length));
+    }
 
     public static IEnumerable<CreateObjectEntry> Filter(string filter)
     {
@@ -134,6 +172,54 @@ public static class SystemDrawerCreateObjectCatalog
 
     static void CollectAssets(List<CreateObjectEntry> list)
     {
+        foreach (var entry in EnumerateCreateAssetMenus())
+            list.Add(entry);
+    }
+
+    static Dictionary<string, CreateObjectEntry> BuildCreateContextMenuMap()
+    {
+        var map = new Dictionary<string, CreateObjectEntry>(StringComparer.Ordinal);
+        foreach (var entry in EnumerateCreateAssetMenus())
+        {
+            string path = ToCreateContextPath(entry.MenuPath);
+            entry.MenuPath = path;
+            entry.SearchHaystack = entry.SearchHaystack + " " + path;
+            map[path] = entry;
+        }
+
+        var methods = TypeCache.GetMethodsWithAttribute<MenuItem>();
+        for (int i = 0; i < methods.Count; i++)
+        {
+            var attrs = methods[i].GetCustomAttributes(typeof(MenuItem), false);
+            for (int a = 0; a < attrs.Length; a++)
+            {
+                var item = (MenuItem)attrs[a];
+                if (item.validate || string.IsNullOrEmpty(item.menuItem))
+                    continue;
+                if (!item.menuItem.StartsWith(CreateContextRoot, StringComparison.Ordinal))
+                    continue;
+                if (!IsOwnedCreateContextPath(item.menuItem) || map.ContainsKey(item.menuItem))
+                    continue;
+                string label = LastSegment(item.menuItem);
+                string category = FirstSegment(item.menuItem.Substring(CreateContextRoot.Length));
+                map[item.menuItem] = new CreateObjectEntry
+                {
+                    Kind = CreateObjectKind.Asset,
+                    Category = category,
+                    Label = label,
+                    MenuPath = item.menuItem,
+                    SearchHaystack = category + " " + label + " " + item.menuItem,
+                    DefaultFileName = label,
+                    Extension = ".asset"
+                };
+            }
+        }
+
+        return map;
+    }
+
+    static IEnumerable<CreateObjectEntry> EnumerateCreateAssetMenus()
+    {
         var types = TypeCache.GetTypesWithAttribute<CreateAssetMenuAttribute>();
         for (int i = 0; i < types.Count; i++)
         {
@@ -145,7 +231,7 @@ public static class SystemDrawerCreateObjectCatalog
                 continue;
             string fileName = string.IsNullOrEmpty(attr.fileName) ? t.Name : attr.fileName;
             string category = FirstSegment(attr.menuName);
-            list.Add(new CreateObjectEntry
+            yield return new CreateObjectEntry
             {
                 Kind = CreateObjectKind.Asset,
                 Category = category,
@@ -155,7 +241,7 @@ public static class SystemDrawerCreateObjectCatalog
                 AssetType = t,
                 DefaultFileName = fileName,
                 Extension = ".asset"
-            });
+            };
         }
     }
 

@@ -34,6 +34,20 @@ public sealed class SystemDrawerCreateObjectTests
     }
 
     [Test]
+    public void MapCreateContextMenu_KeysOwnedCreatePaths()
+    {
+        var map = SystemDrawerCreateObjectCatalog.MapCreateContextMenu();
+        Assert.IsTrue(map.ContainsKey("Assets/Create/Locomotion/Civil/Lathe"));
+        Assert.IsTrue(map["Assets/Create/Locomotion/Civil/Lathe"].AssetType.Name == "LatheSpec");
+        Assert.IsTrue(map.ContainsKey("Assets/Create/System Drawer/Quest Set Asset"));
+        Assert.IsTrue(map.ContainsKey("Assets/Create/Generated/Default Shader Grammar Index"));
+        Assert.IsFalse(map.ContainsKey("Assets/Create/TextMeshPro/Font Asset"));
+        Assert.AreEqual(
+            "Assets/Create/Locomotion/Civil/Lathe",
+            SystemDrawerCreateObjectCatalog.ToCreateContextPath("Locomotion/Civil/Lathe"));
+    }
+
+    [Test]
     public void PrefixAllowlist_RejectsUnrelatedMenus()
     {
         Assert.IsTrue(SystemDrawerCreateObjectCatalog.IsOwnedCreateMenu("System Drawer/Feature Budget Profile"));
