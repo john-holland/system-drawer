@@ -25,6 +25,9 @@ public class OffLimitsSpace : MonoBehaviour
 
     public static event Action<OffLimitsSpace> Changed;
 
+    Matrix4x4 _lastMatrix;
+    bool _hasLastMatrix;
+
     private void OnEnable()
     {
         NotifyChanged();
@@ -48,6 +51,14 @@ public class OffLimitsSpace : MonoBehaviour
         if (transform.hasChanged)
         {
             transform.hasChanged = false;
+            Matrix4x4 now = transform.localToWorldMatrix;
+            if (_hasLastMatrix && now == _lastMatrix)
+            {
+                PathingFrameTrace.NoteFlippedHasChanged("OffLimitsSpace");
+                return;
+            }
+            _hasLastMatrix = true;
+            _lastMatrix = now;
             NotifyChanged();
         }
     }

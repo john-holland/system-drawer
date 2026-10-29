@@ -27,6 +27,9 @@ public class NoPathing : MonoBehaviour
 
     public static event Action<NoPathing> Changed;
 
+    Matrix4x4 _lastMatrix;
+    bool _hasLastMatrix;
+
     private void OnEnable()
     {
         NotifyChanged();
@@ -50,6 +53,14 @@ public class NoPathing : MonoBehaviour
         if (transform.hasChanged)
         {
             transform.hasChanged = false;
+            Matrix4x4 now = transform.localToWorldMatrix;
+            if (_hasLastMatrix && now == _lastMatrix)
+            {
+                PathingFrameTrace.NoteFlippedHasChanged("NoPathing");
+                return;
+            }
+            _hasLastMatrix = true;
+            _lastMatrix = now;
             NotifyChanged();
         }
     }
