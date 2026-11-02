@@ -1,0 +1,70 @@
+#pragma kernel CSMain
+
+Texture2D<float4> InAlbedo;
+Texture2D<float> InDepth;
+Texture2D<float4> InWorld;
+RWTexture2D<float4> OutColor;
+
+float2 TexelSize;
+float FilterRadius;
+float DepthThreshold;
+float ThatchDensityBias;
+float WaterSurfaceY;
+float3 WaterAbsorption;
+float WaterClarity;
+float RefractionIndexRatio;
+float RefractionStrength;
+float TargetInfluence;
+float4 TargetColor;
+
+static const float GaussianWeights[5] = { 0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216 };
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint2 coord = id.xy;
+    float4 center = InAlbedo.Load(int3(coord, 0));
+    float centerDepth = InDepth.Load(int3(coord, 0));
+    float3 centerWorld = InWorld.Load(int3(coord, 0)).xyz;
+    float centerSub = max(0.0, WaterSurfaceY - centerWorld.y);
+    bool centerWet = centerSub > 0.001;
+
+    float3 accum = center.rgb * GaussianWeights[0];
+    float weight = GaussianWeights[0];
+    float2 centerUv = (float2(coord) + 0.5) * TexelSize;
+    float2 refract = centerWet ? float2(0.02, 0.0) * RefractionIndexRatio * RefractionStrength * min(centerSub, 2.0) : 0.0;
+
+    [unroll]
+    for (int tap = 1; tap < 5; tap++)
+    {
+        float2 stepRight = float2(tap, 0.0) * FilterRadius * TexelSize;
+        float2 stepLeft = float2(-tap, 0.0) * FilterRadius * TexelSize;
+        [unroll]
+        for (int side = 0; side < 2; side++)
+        {
+            float2 step = side == 0 ? stepRight : stepLeft;
+            int2 neighbor = int2((centerUv + refract + step) / max(TexelSize, float2(1e-6, 1e-6)));
+            float4 sampleAlbedo = InAlbedo.Load(int3(neighbor, 0));
+            float sampleDepth = InDepth.Load(int3(neighbor, 0));
+            float3 sampleWorld = InWorld.Load(int3(neighbor, 0)).xyz;
+            float depthDelta = abs(centerDepth - sampleDepth);
+            bool neighborWet = (WaterSurfaceY - sampleWorld.y) > 0.001;
+            float gate = centerWet != neighborWet ? 0.0 : exp(-depthDelta * DepthThreshold);
+            float aquatic = centerWet ? exp(-depthDelta * WaterClarity) : 1.0;
+            float density = pow(max(center.a, 0.0001), ThatchDensityBias);
+            float w = GaussianWeights[tap] * gate * density * aquatic;
+            float3 color = sampleAlbedo.rgb;
+            if (centerWet)
+                color *= exp(-WaterAbsorption * max(0.0, WaterSurfaceY - sampleWorld.y));
+            accum += color * w;
+            weight += w;
+        }
+    }
+
+    float3 pooled = accum / max(weight, 0.0001);
+    float3 resolved = lerp(center.rgb, pooled, 0.85);
+    if (centerWet)
+        resolved *= exp(-WaterAbsorption * centerSub);
+    resolved = lerp(resolved, TargetColor.rgb, saturate(TargetInfluence));
+    OutColor[coord] = float4(resolved, 1.0);
+}

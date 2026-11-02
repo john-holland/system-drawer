@@ -1,0 +1,60 @@
+#pragma kernel CSMain
+
+Texture2D<float4> GrassStructure;
+Texture2D<float4> WindChords;
+SamplerState sampler_GrassStructure;
+SamplerState sampler_WindChords;
+RWTexture2D<float4> OutputColor;
+
+float4x4 InvViewProjection;
+float3 CameraPosition;
+float Time;
+int MaxLayers;
+float2 Resolution;
+float2 MacroScale;
+float2 MicroScale;
+float2 MacroDirection;
+float2 MicroDirection;
+float MacroVelocity;
+float MicroVelocity;
+
+float3 RayDirection(float2 uv)
+{
+    float4 clip = float4(uv * 2.0 - 1.0, 1.0, 1.0);
+    float4 world = mul(InvViewProjection, clip);
+    return normalize(world.xyz / max(world.w, 1e-5) - CameraPosition);
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = id.xy / max(Resolution, float2(1.0, 1.0));
+    float3 ray = RayDirection(uv);
+    float4 accum = float4(0.0, 0.0, 0.0, 0.0);
+    int layers = max(MaxLayers, 1);
+
+    for (int i = layers - 1; i >= 0; i--)
+    {
+        float layerHeight = (float)i / (float)layers;
+        float denom = abs(ray.y) < 1e-4 ? 1e-4 : ray.y;
+        float3 hit = CameraPosition + ray * ((layerHeight - CameraPosition.y) / denom);
+        float2 uvMacro = hit.xz * MacroScale + MacroDirection * Time * MacroVelocity;
+        float2 uvMicro = hit.xz * MicroScale + MicroDirection * Time * MicroVelocity;
+        float4 chord = WindChords.SampleLevel(sampler_WindChords, uvMacro, 0);
+        float strength = chord.r + chord.g * 0.25;
+        float2 warp = (chord.ba * 2.0 - 1.0) * pow(max(strength, 0.0), 2.0) * (layerHeight * layerHeight);
+        float density = GrassStructure.SampleLevel(sampler_GrassStructure, uvMicro + warp, 0).r;
+        if (density > (1.0 - layerHeight))
+        {
+            float3 color = lerp(float3(0.35, 0.24, 0.1), float3(0.32, 0.62, 0.24), layerHeight);
+            float alpha = saturate(density * layerHeight);
+            float keep = 1.0 - accum.a;
+            accum.rgb += color * alpha * keep;
+            accum.a += alpha * keep;
+            if (accum.a >= 0.95)
+                break;
+        }
+    }
+
+    OutputColor[id.xy] = accum;
+}

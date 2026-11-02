@@ -9,6 +9,8 @@ using Locomotion.Narrative;
 public class NarrativeCalendarTimelineWindow : EditorWindow
 {
     private NarrativeCalendarAsset targetCalendar;
+    private NarrativeScheduler scheduler;
+    private GroundCompositionSet composition;
     private NarrativeDateTime startDate = new NarrativeDateTime(2025, 1, 1, 0, 0, 0);
     private NarrativeDateTime endDate = new NarrativeDateTime(2025, 1, 2, 0, 0, 0);
     private NarrativeDateTime currentTime = new NarrativeDateTime(2025, 1, 1, 12, 0, 0);
@@ -31,6 +33,7 @@ public class NarrativeCalendarTimelineWindow : EditorWindow
                 // Advance narrative time
                 double deltaNarrativeTime = deltaRealTime * playbackSpeed;
                 currentTime = currentTime.AddSeconds(deltaNarrativeTime);
+                ApplyClock(currentTime, currentTime);
                 
                 // Check if we've passed the end date
                 if (currentTime > endDate)
@@ -93,6 +96,8 @@ public class NarrativeCalendarTimelineWindow : EditorWindow
     private void DrawDateRangeSelection()
     {
         EditorGUILayout.LabelField("Date Range", EditorStyles.boldLabel);
+        scheduler = (NarrativeScheduler)EditorGUILayout.ObjectField("Scheduler", scheduler, typeof(NarrativeScheduler), true);
+        composition = (GroundCompositionSet)EditorGUILayout.ObjectField("Ground composition", composition, typeof(GroundCompositionSet), false);
 
         // Start date
         EditorGUILayout.BeginHorizontal();
@@ -178,6 +183,7 @@ public class NarrativeCalendarTimelineWindow : EditorWindow
 
             if (Mathf.Abs(normalizedTime - previousNormalized) > 0.001f)
             {
+                ApplyClock(previousTime, currentTime);
                 Debug.Log($"[NarrativeCalendarTimelineWindow] Time scrubbed to {currentTime} (normalized: {normalizedTime:F3})");
             }
 
@@ -273,5 +279,19 @@ public class NarrativeCalendarTimelineWindow : EditorWindow
         }
 
         Debug.Log($"[NarrativeCalendarTimelineWindow] Loaded {loadedCount} of {totalEvents} events in date range [{start} to {end}]");
+    }
+
+    void ApplyClock(NarrativeDateTime from, NarrativeDateTime to)
+    {
+        if (to >= from)
+        {
+            if (scheduler != null)
+                scheduler.FastForwardTo(to);
+            return;
+        }
+        if (scheduler != null)
+            scheduler.ClearTriggeredAfter(to);
+        if (composition != null)
+            composition.RestoreSnapshot(NarrativeCalendarMath.DateTimeToSeconds(to));
     }
 }

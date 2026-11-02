@@ -30,6 +30,10 @@ public class PixelLightGridMountGameObject : MonoBehaviour
     public CustomRadialSideAsset customRadialSide;
     public int previewConfigIndex = -1;
     public RadialBuildHost radialHost;
+    public System.Collections.Generic.List<PixelLightRootRule> rootRules = new System.Collections.Generic.List<PixelLightRootRule>();
+    public bool allowAllRoots;
+    public GroundCompositionNarrativeEvent stagedGroundEvent = new GroundCompositionNarrativeEvent();
+    public float stagedNarrativeSeconds;
 
     public RadialBuildHost ResolvedRadialHost() =>
         radialHost != null ? radialHost : GetComponent<RadialBuildHost>();
