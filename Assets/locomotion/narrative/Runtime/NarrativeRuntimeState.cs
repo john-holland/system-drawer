@@ -14,6 +14,7 @@ namespace Locomotion.Narrative
 
         // Scheduling
         public List<string> triggeredEventIds = new List<string>();
+        public List<string> presentationSkippedEventIds = new List<string>();
 
         // Execution
         public string activeEventId;

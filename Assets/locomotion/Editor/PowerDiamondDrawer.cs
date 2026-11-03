@@ -19,7 +19,8 @@ public static class PowerDiamondDrawer
         float[] dashedWhite01,
         float threatHalo01,
         float[] green01,
-        float specularShine01)
+        float specularShine01,
+        bool dashGreen = false)
     {
         if (Event.current.type != EventType.Repaint)
             return;
@@ -44,7 +45,7 @@ public static class PowerDiamondDrawer
 
         DrawPoly(c, top, right, bottom, left, redLimit01, new Color(1f, 0.2f, 0.15f, 0.25f), new Color(1f, 0.25f, 0.2f, 1f), 2.5f, false);
         DrawPoly(c, top, right, bottom, left, blue01, new Color(0.25f, 0.45f, 1f, 0.35f), new Color(0.35f, 0.55f, 1f, 1f), 2.5f, false);
-        DrawPoly(c, top, right, bottom, left, green01, new Color(0.2f, 0.75f, 0.35f, 0.32f), new Color(0.25f, 0.9f, 0.4f, 1f), 2.5f, false);
+        DrawPoly(c, top, right, bottom, left, green01, new Color(0.2f, 0.75f, 0.35f, 0.32f), new Color(0.25f, 0.9f, 0.4f, 1f), 2.5f, dashGreen);
         float shine = Mathf.Clamp01(specularShine01);
         Color whiteLine = new Color(1f, 1f, 1f, 0.55f + 0.45f * shine);
         DrawPoly(c, top, right, bottom, left, dashedWhite01, Color.clear, whiteLine, 2f, true);
