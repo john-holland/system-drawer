@@ -19,6 +19,8 @@ public sealed class PlantRootSystemWindow : EditorWindow
     int _particleCount = 24;
     float _scoopAmount = 0.08f;
     PlantRootBakeOutput _output = PlantRootBakeOutput.DiggableVolume;
+    PixelLightGridMountGameObject _mount;
+    int _rootSpacing = 2;
     Vector2 _scroll;
 
     [MenuItem("Locomotion/Plant Root System")]
@@ -72,6 +74,31 @@ public sealed class PlantRootSystemWindow : EditorWindow
 
         if (GUILayout.Button("Bake roots"))
             Bake();
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("PixelLight root system", EditorStyles.boldLabel);
+        _mount = (PixelLightGridMountGameObject)EditorGUILayout.ObjectField(
+            "Mount", _mount, typeof(PixelLightGridMountGameObject), true);
+        _rootSpacing = EditorGUILayout.IntField("Cell spacing", _rootSpacing);
+        if (_mount != null)
+        {
+            _mount.allowAllRoots = EditorGUILayout.Toggle("Allow all roots", _mount.allowAllRoots);
+            if (_mount.stagedGroundEvent == null)
+                _mount.stagedGroundEvent = new GroundCompositionNarrativeEvent();
+            _mount.stagedGroundEvent.kind = (GroundCompositionKind)EditorGUILayout.EnumPopup(
+                "Ground event", _mount.stagedGroundEvent.kind);
+            _mount.stagedGroundEvent.compositionId = EditorGUILayout.TextField(
+                "Composition", _mount.stagedGroundEvent.compositionId);
+            _mount.stagedNarrativeSeconds = EditorGUILayout.FloatField(
+                "Narrative seconds", _mount.stagedNarrativeSeconds);
+        }
+        if (GUILayout.Button("Autopopulate root grid"))
+        {
+            int placed = PixelLightRootDesigner.Autopopulate(_mount, _rootSpacing);
+            if (_mount != null)
+                EditorUtility.SetDirty(_mount);
+            Debug.Log("[PlantRootSystem] Placed " + placed + " root cells.");
+        }
 
         EditorGUILayout.EndScrollView();
     }

@@ -45,6 +45,11 @@ namespace Locomotion.Narrative
 
         public abstract BehaviorTreeStatus Execute(NarrativeExecutionContext ctx, NarrativeRuntimeState state);
 
+        public virtual BehaviorTreeStatus ApplyFastForward(NarrativeExecutionContext ctx, NarrativeRuntimeState state)
+        {
+            return Execute(ctx, state);
+        }
+
         public virtual void Undo(NarrativeExecutionContext ctx, NarrativeRuntimeState state) { }
     }
 

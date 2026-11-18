@@ -10,7 +10,8 @@ public enum PlantGrowthForm
     Undergrowth = 3,
     Vine = 4,
     Moss = 5,
-    Lichen = 6
+    Lichen = 6,
+    Grass = 7
 }
 
 [Serializable]

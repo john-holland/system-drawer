@@ -8,7 +8,24 @@ public enum PlantWindPartKind
     Branch = 1,
     Leaf = 2,
     Petal = 3,
-    Fruit = 4
+    Fruit = 4,
+    Tiller = 5,
+    Stolon = 6,
+    RhizomeNode = 7
+}
+
+[Serializable]
+public struct GrassMotionBlock
+{
+    [Range(0f, 1f)] public float along0;
+    [Range(0f, 1f)] public float along1;
+
+    public bool Contains(float along01)
+    {
+        float a = Mathf.Min(along0, along1);
+        float b = Mathf.Max(along0, along1);
+        return along01 >= a && along01 <= b;
+    }
 }
 
 /// <summary>Impulse and bend caps for a branch. Fruit uses this until a fruit editor exists.</summary>
@@ -57,7 +74,12 @@ public sealed class PlantRadialWindCache
     public readonly List<PlantRadialWindRing> leaves = new List<PlantRadialWindRing>();
     public readonly List<PlantRadialWindRing> petals = new List<PlantRadialWindRing>();
     public readonly List<PlantRadialWindRing> fruits = new List<PlantRadialWindRing>();
+    public readonly List<PlantRadialWindRing> tillers = new List<PlantRadialWindRing>();
+    public readonly List<PlantRadialWindRing> stolons = new List<PlantRadialWindRing>();
+    public readonly List<PlantRadialWindRing> rhizomeNodes = new List<PlantRadialWindRing>();
+    public readonly List<GrassMotionBlock> motionBlocks = new List<GrassMotionBlock>();
     public Texture2D texture;
+    public Texture2D macroTexture;
 
     public static float MinPositive(float[] values, float fallback)
     {
@@ -186,6 +208,34 @@ public sealed class PlantRadialWindCache
         return Mathf.Clamp(s, 0, count - 1);
     }
 
+    /// <summary>
+    /// Macro-to-infinite chord. R is the macro gust, G is micro turbulence,
+    /// B and A are an optional direction taken from the radial bins.
+    /// </summary>
+    public static Color EncodeChord(float macroGust, float microTurbulence, Vector2 direction)
+    {
+        return new Color(
+            Mathf.Clamp01(macroGust),
+            Mathf.Clamp01(microTurbulence),
+            direction.x * 0.5f + 0.5f,
+            direction.y * 0.5f + 0.5f);
+    }
+
+    public static Vector2 DecodeChordDirection(Color chord)
+    {
+        return new Vector2(chord.b * 2f - 1f, chord.a * 2f - 1f);
+    }
+
+    public bool MotionBlocked(float along01)
+    {
+        for (int i = 0; i < motionBlocks.Count; i++)
+        {
+            if (motionBlocks[i].Contains(along01))
+                return true;
+        }
+        return false;
+    }
+
     /// <summary>RGBAFloat texel. R is δ, G is advected wind, A is the effective limit.</summary>
     public static Color EncodeTexel(PlantWindBin bin, float along01)
     {
@@ -272,6 +322,30 @@ public sealed class PlantRadialWindCache
         return texture;
     }
 
+    public Texture2D UploadMacro(Color chord, int width = 16, int height = 8)
+    {
+        width = Mathf.Max(2, width);
+        height = Mathf.Max(2, height);
+        if (macroTexture == null || macroTexture.width != width || macroTexture.height != height)
+        {
+            if (macroTexture != null)
+                UnityEngine.Object.DestroyImmediate(macroTexture);
+            macroTexture = new Texture2D(width, height, TextureFormat.RGBAFloat, false, true)
+            {
+                wrapMode = TextureWrapMode.Repeat,
+                filterMode = FilterMode.Bilinear,
+                name = "GrassMacroWindCache"
+            };
+        }
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+                macroTexture.SetPixel(x, y, chord);
+        }
+        macroTexture.Apply(false, false);
+        return macroTexture;
+    }
+
     List<PlantRadialWindRing> ListFor(PlantWindPartKind kind)
     {
         switch (kind)
@@ -280,6 +354,9 @@ public sealed class PlantRadialWindCache
             case PlantWindPartKind.Leaf: return leaves;
             case PlantWindPartKind.Petal: return petals;
             case PlantWindPartKind.Fruit: return fruits;
+            case PlantWindPartKind.Tiller: return tillers;
+            case PlantWindPartKind.Stolon: return stolons;
+            case PlantWindPartKind.RhizomeNode: return rhizomeNodes;
             default: return branches;
         }
     }

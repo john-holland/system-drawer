@@ -65,6 +65,7 @@ namespace Locomotion.Narrative
 
         /// <summary>
         /// Applies (triggers) all events whose start time is <= now and not yet triggered.
+        /// Live playback starts only the earliest pending event.
         /// </summary>
         public void ApplyEventsUpToNow()
         {
@@ -72,15 +73,76 @@ namespace Locomotion.Narrative
                 return;
 
             NarrativeDateTime now = clock.Now;
-            NarrativeRuntimeState state = executor.GetRuntimeState();
+            CollectPending(now, scratch);
+            if (scratch.Count == 0)
+                return;
 
-            scratch.Clear();
+            scratch.Sort((a, b) => a.startDateTime.CompareTo(b.startDateTime));
+            var evt = scratch[0];
+            if (debugLogging)
+                Debug.Log($"[NarrativeScheduler] Triggering '{evt.title}' at {now}");
+
+            executor.StartEvent(evt);
+        }
+
+        /// <summary>
+        /// Jumps the clock and applies every untriggered event at or before the target, in start order.
+        /// This does not run from Update.
+        /// </summary>
+        public int FastForwardTo(NarrativeDateTime target)
+        {
+            if (calendar == null || executor == null)
+                return 0;
+            if (clock != null)
+                clock.JumpTo(target);
+            CollectPending(target, scratch);
+            scratch.Sort((a, b) => a.startDateTime.CompareTo(b.startDateTime));
+            int applied = 0;
+            for (int i = 0; i < scratch.Count; i++)
+            {
+                if (executor.ExecuteEventImmediate(scratch[i]))
+                    applied++;
+            }
+            return applied;
+        }
+
+        /// <summary>Drops triggered ids whose events start after the target, then jumps the clock.</summary>
+        public int ClearTriggeredAfter(NarrativeDateTime target)
+        {
+            if (calendar == null || executor == null)
+                return 0;
+            NarrativeRuntimeState state = executor.GetRuntimeState();
+            if (state.triggeredEventIds == null)
+                return 0;
+            int removed = 0;
+            for (int i = state.triggeredEventIds.Count - 1; i >= 0; i--)
+            {
+                string id = state.triggeredEventIds[i];
+                NarrativeCalendarEvent evt = FindEvent(id);
+                if (evt != null && evt.startDateTime > target)
+                {
+                    state.triggeredEventIds.RemoveAt(i);
+                    removed++;
+                }
+            }
+            if (clock != null)
+                clock.JumpTo(target);
+            return removed;
+        }
+
+        void CollectPending(NarrativeDateTime now, List<NarrativeCalendarEvent> into)
+        {
+            into.Clear();
+            if (calendar == null || calendar.events == null || executor == null)
+                return;
+            NarrativeRuntimeState state = executor.GetRuntimeState();
             float tNow = NarrativeCalendarMath.DateTimeToSeconds(now);
             for (int i = 0; i < calendar.events.Count; i++)
             {
-                var e = calendar.events[i];
-                if (e == null) continue;
-                if (state.triggeredEventIds.Contains(e.id))
+                NarrativeCalendarEvent e = calendar.events[i];
+                if (e == null)
+                    continue;
+                if (state.triggeredEventIds != null && state.triggeredEventIds.Contains(e.id))
                     continue;
 
                 if (e.spatiotemporalVolume.HasValue)
@@ -95,7 +157,8 @@ namespace Locomotion.Narrative
                     for (int k = 0; k < keysToUse.Count; k++)
                     {
                         string key = keysToUse[k];
-                        if (string.IsNullOrWhiteSpace(key)) continue;
+                        if (string.IsNullOrWhiteSpace(key))
+                            continue;
                         if (executor.bindings.TryResolveGameObject(key.Trim(), out GameObject go) && go != null
                             && vol.Contains(go.transform.position, tNow))
                         {
@@ -105,26 +168,26 @@ namespace Locomotion.Narrative
                     }
                     if (!anyInVolume)
                         continue;
-                    scratch.Add(e);
+                    into.Add(e);
                 }
                 else if (e.startDateTime <= now)
                 {
-                    scratch.Add(e);
+                    into.Add(e);
                 }
             }
+        }
 
-            if (scratch.Count == 0)
-                return;
-
-            // Sort by start time (stable deterministic execution).
-            scratch.Sort((a, b) => a.startDateTime.CompareTo(b.startDateTime));
-
-            // Start the earliest pending event.
-            var evt = scratch[0];
-            if (debugLogging)
-                Debug.Log($"[NarrativeScheduler] Triggering '{evt.title}' at {now}");
-
-            executor.StartEvent(evt);
+        NarrativeCalendarEvent FindEvent(string id)
+        {
+            if (calendar == null || calendar.events == null || string.IsNullOrEmpty(id))
+                return null;
+            for (int i = 0; i < calendar.events.Count; i++)
+            {
+                NarrativeCalendarEvent evt = calendar.events[i];
+                if (evt != null && evt.id == id)
+                    return evt;
+            }
+            return null;
         }
     }
 }

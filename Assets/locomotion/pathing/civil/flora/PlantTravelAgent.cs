@@ -1,12 +1,26 @@
 using System;
 using UnityEngine;
 
+public enum GroundCompositionKind
+{
+    Soil = 0,
+    Roots = 1,
+    Underbrush = 2
+}
+
+/// <summary>
+/// Narrative ground story for soil, roots, and underbrush.
+/// Excavation still uses DiggingCard and DiggableVolume.
+/// </summary>
 [Serializable]
 public sealed class GroundCompositionNarrativeEvent
 {
     public string compositionId;
     public bool openCloseComplete;
     public bool manifoldApplied;
+    public GroundCompositionKind kind = GroundCompositionKind.Soil;
+    public string narrativeTimeId;
+    public float narrativeSeconds;
 }
 
 public struct PlantRootResult

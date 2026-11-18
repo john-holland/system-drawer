@@ -87,6 +87,74 @@ namespace Locomotion.Narrative
                 Debug.Log($"[NarrativeExecutor] Start event '{evt.title}' ({evt.id})");
         }
 
+        /// <summary>
+        /// Applies one event to completion without waiting on Update.
+        /// A still-running action is marked presentation-skipped so a clock jump can continue.
+        /// </summary>
+        public bool ExecuteEventImmediate(NarrativeCalendarEvent evt, int maxSteps = 8)
+        {
+            if (evt == null || string.IsNullOrWhiteSpace(evt.id))
+                return false;
+            if (runtimeState.triggeredEventIds != null && runtimeState.triggeredEventIds.Contains(evt.id))
+                return false;
+            if (ctx == null)
+                ctx = new NarrativeExecutionContext(clock, bindings, weatherSystemComponent);
+
+            StartEvent(evt);
+            int steps = 0;
+            int cap = Mathf.Max(1, maxSteps);
+            while (runtimeState.isExecuting && steps < cap)
+            {
+                steps++;
+                if (activeEvent != null && activeEvent.tree != null && activeEvent.tree.root != null)
+                {
+                    BehaviorTreeStatus treeStatus = ExecuteNode(activeEvent.tree.root);
+                    if (treeStatus == BehaviorTreeStatus.Running)
+                        continue;
+                    if (treeStatus == BehaviorTreeStatus.Failure)
+                    {
+                        FinishEvent();
+                        return false;
+                    }
+                }
+
+                bool running = false;
+                if (activeEvent != null && activeEvent.actions != null)
+                {
+                    for (int i = 0; i < activeEvent.actions.Count; i++)
+                    {
+                        NarrativeActionSpec action = activeEvent.actions[i];
+                        if (action == null)
+                            continue;
+                        BehaviorTreeStatus status = action.ApplyFastForward(ctx, runtimeState);
+                        if (status == BehaviorTreeStatus.Running)
+                        {
+                            running = true;
+                            break;
+                        }
+                        if (status == BehaviorTreeStatus.Failure)
+                        {
+                            FinishEvent();
+                            return false;
+                        }
+                    }
+                }
+                if (running)
+                    continue;
+                FinishEvent();
+            }
+
+            if (runtimeState.isExecuting)
+            {
+                if (runtimeState.presentationSkippedEventIds == null)
+                    runtimeState.presentationSkippedEventIds = new List<string>();
+                if (activeEvent != null && !runtimeState.presentationSkippedEventIds.Contains(activeEvent.id))
+                    runtimeState.presentationSkippedEventIds.Add(activeEvent.id);
+                FinishEvent();
+            }
+            return true;
+        }
+
         private void Update()
         {
             if (!runtimeState.isExecuting || activeEvent == null)

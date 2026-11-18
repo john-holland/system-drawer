@@ -11,6 +11,7 @@ public sealed class PlantWindSubject
     public Vector3 worldPosition;
     public TreeGrowthTravelAgent tree;
     public FlowerTravelAgent flower;
+    public GrassTravelAgent grass;
     public PlantBranchDef branch;
     public BranchPathBake branchBake;
     public Vector3[] branchRest;
@@ -119,6 +120,10 @@ public sealed class WindAdvectionPlantRadialCachingService : MonoBehaviour
         cache.leaves.Clear();
         cache.petals.Clear();
         cache.fruits.Clear();
+        cache.tillers.Clear();
+        cache.stolons.Clear();
+        cache.rhizomeNodes.Clear();
+        cache.motionBlocks.Clear();
         cache.omitBend = false;
         cache.petalOmitted = false;
         cache.clearedPetalCurve = Array.Empty<Vector3>();
@@ -179,6 +184,45 @@ public sealed class WindAdvectionPlantRadialCachingService : MonoBehaviour
             if (cache.petals.Count > 0)
                 cache.FillBin(cache.petals[cache.petals.Count - 1], s, force, flowerEI, axis);
             cache.FillBin(cache.fruits[cache.fruits.Count - 1], s, force, treeEI, axis);
+        }
+
+        if (subject.grass != null && branchRing != null)
+        {
+            float grassCap = PlantRadialWindCache.MinPositive(subject.grass.RedLimit01(), branchRing.limit);
+            PlantRadialWindRing tiller = cache.AddRing(PlantWindPartKind.Tiller, 0, length, branchRing.limit, grassCap);
+            cache.AddRing(PlantWindPartKind.Stolon, 0, length, branchRing.limit, grassCap);
+            cache.AddRing(PlantWindPartKind.RhizomeNode, 0, length * 0.5f, branchRing.limit, grassCap);
+            Vector2 windDir = Vector2.right;
+            float gust = 0f;
+            if (cache.tree.bins != null && cache.tree.bins.Length > 0)
+            {
+                PlantWindBin bin = cache.tree.bins[0];
+                gust = Mathf.Clamp01(bin.advectedWind);
+                windDir = new Vector2(bin.bendAxis.x, bin.bendAxis.z);
+            }
+            for (int s = 0; s < cache.sectors; s++)
+            {
+                float az = (s + 0.5f) / cache.sectors * Mathf.PI * 2f;
+                Vector3 dir = new Vector3(Mathf.Sin(az), 0f, Mathf.Cos(az));
+                Vector3 wind = SampleWind(subject.worldPosition + dir);
+                float force = PlantRadialWindCache.ForceAcross(wind, tangent, impulse);
+                Vector3 axis = PlantRadialWindCache.BendAxis(wind, tangent);
+                cache.FillBin(tiller, s, force, flowerEI, axis);
+                cache.FillBin(cache.stolons[cache.stolons.Count - 1], s, force, flowerEI, axis);
+                cache.FillBin(cache.rhizomeNodes[cache.rhizomeNodes.Count - 1], s, force * 0.25f, flowerEI, axis);
+            }
+            if (subject.grass.blockProceduralMotion)
+            {
+                cache.motionBlocks.Add(new GrassMotionBlock
+                {
+                    along0 = subject.grass.blockAlong0,
+                    along1 = subject.grass.blockAlong1
+                });
+            }
+            float flutter = subject.grass.grassType != null && subject.grass.grassType.windFit != null
+                ? Mathf.Clamp01(Mathf.Abs(subject.grass.grassType.windFit.Sample(0.5f)))
+                : SeededGust(seed, 1, gustAmplitude);
+            GrassWindField.UploadChords(cache, windDir.sqrMagnitude > 1e-6f ? windDir.normalized : Vector2.right, gust, flutter);
         }
 
         if (broken)
