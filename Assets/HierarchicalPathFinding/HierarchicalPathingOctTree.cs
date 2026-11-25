@@ -55,6 +55,50 @@ public sealed class HierarchicalPathingOctTree
         }
     }
 
+    /// <summary>
+    /// Resample leaves that meet <paramref name="box"/>. Split only inside the box, down to <paramref name="minExtent"/>.
+    /// Leaves outside the box keep their blocked flag.
+    /// </summary>
+    public void ResampleInside(Bounds box, float minExtent, int maxDepth, Func<Vector3, bool> isBlocked)
+    {
+        var next = new List<Leaf>(leaves.Count);
+        for (int i = 0; i < leaves.Count; i++)
+        {
+            Leaf leaf = leaves[i];
+            if (leaf == null || !leaf.bounds.Intersects(box))
+            {
+                next.Add(leaf);
+                continue;
+            }
+            FillResample(next, leaf.bounds, box, Mathf.Max(0.01f, minExtent), maxDepth, isBlocked, leaf.blocked);
+        }
+        leaves.Clear();
+        leaves.AddRange(next);
+    }
+
+    static void FillResample(List<Leaf> dst, Bounds bounds, Bounds box, float minExtent, int depth, Func<Vector3, bool> isBlocked, bool inherited)
+    {
+        bool hit = bounds.Intersects(box);
+        float ext = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
+        if (!hit || depth <= 0 || ext <= minExtent + 1e-4f)
+        {
+            bool blocked = hit && isBlocked != null ? isBlocked(bounds.center) : inherited;
+            dst.Add(new Leaf { bounds = bounds, blocked = blocked });
+            return;
+        }
+
+        Vector3 halfSize = bounds.size * 0.5f;
+        Vector3 quarter = halfSize * 0.5f;
+        for (int i = 0; i < 8; i++)
+        {
+            float ox = (i & 1) != 0 ? quarter.x : -quarter.x;
+            float oy = (i & 2) != 0 ? quarter.y : -quarter.y;
+            float oz = (i & 4) != 0 ? quarter.z : -quarter.z;
+            Bounds child = new Bounds(bounds.center + new Vector3(ox, oy, oz), halfSize);
+            FillResample(dst, child, box, minExtent, depth - 1, isBlocked, inherited);
+        }
+    }
+
     /// <summary>A* over leaf centers using face-adjacency between non-blocked leaves.</summary>
     public static List<Vector3> FindPathThroughLeaves(
         IReadOnlyList<Leaf> leaves,

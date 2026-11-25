@@ -94,6 +94,7 @@ internal static class SystemDrawerHubMenuCatalog
         new Entry("Plants", "Grass Designer", "Window/System Drawer/Grass Designer"),
         new Entry("Plants", "Leaf Designer", "Window/System Drawer/Leaf Designer"),
         new Entry("Plants", "Grass Travel Agent", "Locomotion/Grass Travel Agent"),
+        new Entry("Plants", "Snow Wizard", "Window/System Drawer/Snow Wizard"),
         new Entry("Plants", "Branch Configuration", "Locomotion/Branch Configuration"),
         new Entry("City Planning", "Ladder Logic Designer", "Locomotion/Ladder Logic Designer"),
         new Entry("City Planning", "Pixel Light Timed Designer", "Locomotion/Pixel Light Timed Designer"),

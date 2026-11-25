@@ -13,7 +13,8 @@
     "SystemDrawer",
     "SystemDrawer.FeatureBudget",
     "Weather.Runtime",
-    "SdfMax"
+    "SdfMax",
+    "BedogaGenerator"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
