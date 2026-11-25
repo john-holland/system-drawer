@@ -584,6 +584,49 @@ public class HierarchicalPathingSolver : MonoBehaviour, IHierarchicalPathingTree
         }
     }
 
+    /// <summary>
+    /// Rewrite occupancy inside <paramref name="box"/> only. Does not mark the solver dirty and does not rebuild the whole grid.
+    /// </summary>
+    public int PatchOccupancy(Bounds box, float step, Func<Vector3, bool> solid)
+    {
+        if (solid == null)
+            return 0;
+        int touched = 0;
+        float leaf = Mathf.Max(0.01f, step);
+        if (octTreeBuilt != null)
+        {
+            int before = octTreeBuilt.Leaves.Count;
+            octTreeBuilt.ResampleInside(box, leaf, octreeMaxDepth, solid);
+            touched += Mathf.Abs(octTreeBuilt.Leaves.Count - before) + 1;
+        }
+        if (grid3D != null)
+        {
+            for (int iz = 0; iz < grid3D.depth; iz++)
+            for (int iy = 0; iy < grid3D.height; iy++)
+            for (int ix = 0; ix < grid3D.width; ix++)
+            {
+                Vector3 center = grid3D.CellCenterWorld(ix, iy, iz);
+                if (!box.Contains(center))
+                    continue;
+                grid3D.SetBlocked(ix, iy, iz, solid(center));
+                touched++;
+            }
+        }
+        if (grid2D != null)
+        {
+            for (int z = 0; z < grid2D.height; z++)
+            for (int x = 0; x < grid2D.width; x++)
+            {
+                Vector3 center = grid2D.CellCenterWorld(x, z, box.center.y);
+                if (!box.Contains(new Vector3(center.x, box.center.y, center.z)))
+                    continue;
+                grid2D.SetBlocked(x, z, solid(center));
+                touched++;
+            }
+        }
+        return touched;
+    }
+
     void RebuildOctreeLeaves()
     {
         octTreeBuilt = HierarchicalPathingOctTree.Build(

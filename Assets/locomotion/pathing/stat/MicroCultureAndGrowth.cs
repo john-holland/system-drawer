@@ -16,7 +16,8 @@ public enum GrowthEventKind
     NutrientPulse = 2,
     HeatShock = 3,
     BacterialBloom = 4,
-    Custom = 5
+    Custom = 5,
+    SnowLoad = 6
 }
 
 [Serializable]
@@ -92,6 +93,19 @@ public sealed class GrowthEvent
             targetSpeciesIds = species,
             empowerMult = mult,
             durationHours = hours,
+            armed = true
+        };
+    }
+
+    public static GrowthEvent SnowLoad(string treeId, float load)
+    {
+        return new GrowthEvent
+        {
+            eventId = string.IsNullOrEmpty(treeId) ? "snow_load" : "snow_load_" + treeId,
+            displayName = "Snow load",
+            kind = GrowthEventKind.SnowLoad,
+            empowerMult = Mathf.Max(0f, load),
+            durationHours = 1f,
             armed = true
         };
     }

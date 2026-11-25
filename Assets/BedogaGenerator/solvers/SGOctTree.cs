@@ -149,6 +149,44 @@ public class SGOctTree
         }
     }
     
+    /// <summary>Drop entries whose stored bounds sit entirely inside <paramref name="box"/>.</summary>
+    public int RemoveInside(Bounds box)
+    {
+        return root == null ? 0 : RemoveInsideRecursive(root, box);
+    }
+
+    static int RemoveInsideRecursive(OctTreeNode node, Bounds box)
+    {
+        if (node == null || !node.bounds.Intersects(box))
+            return 0;
+        int removed = 0;
+        if (node.isLeaf)
+        {
+            for (int i = node.objects.Count - 1; i >= 0; i--)
+            {
+                Bounds b = node.objectBounds[i];
+                if (!StrictlyInside(box, b))
+                    continue;
+                node.objects.RemoveAt(i);
+                node.objectBounds.RemoveAt(i);
+                if (i < node.objectBehaviorTreeProperties.Count)
+                    node.objectBehaviorTreeProperties.RemoveAt(i);
+                removed++;
+            }
+            return removed;
+        }
+        if (node.children == null)
+            return 0;
+        for (int i = 0; i < node.children.Length; i++)
+            removed += RemoveInsideRecursive(node.children[i], box);
+        return removed;
+    }
+
+    static bool StrictlyInside(Bounds outer, Bounds inner)
+    {
+        return outer.Contains(inner.min) && outer.Contains(inner.max);
+    }
+
     public List<GameObject> Search(Bounds searchBounds)
     {
         List<GameObject> results = new List<GameObject>();

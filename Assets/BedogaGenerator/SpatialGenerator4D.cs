@@ -190,6 +190,15 @@ public class SpatialGenerator4D : SpatialGeneratorBase
         initialized = true;
     }
 
+    /// <summary>Octree for the slice that contains narrative time <paramref name="t"/>.</summary>
+    public SGOctTree GetSliceTree(float t)
+    {
+        EnsureInitialized();
+        if (slices.Count == 0)
+            return null;
+        return slices[TimeToSliceIndex(t)];
+    }
+
     /// <summary>Map time t to slice index [0, sliceCount-1].</summary>
     public int TimeToSliceIndex(float t)
     {

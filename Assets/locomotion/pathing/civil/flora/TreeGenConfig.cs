@@ -10,6 +10,8 @@ public sealed class TreeGenConfig : ScriptableObject
     public int seed = 1;
     public List<PlantBranchDef> branches = new List<PlantBranchDef>();
     public List<BranchPathBake> bakes = new List<BranchPathBake>();
+    [Range(0f, 1f)] public float snowCatchBranch = 0.45f;
+    [Range(0f, 1f)] public float snowCatchLeaf = 0.25f;
 
     public void PullFromOrganism()
     {

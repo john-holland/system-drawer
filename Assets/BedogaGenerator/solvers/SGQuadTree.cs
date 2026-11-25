@@ -127,6 +127,45 @@ public class SGQuadTree
         }
     }
     
+    /// <summary>Drop entries whose world bounds sit entirely inside <paramref name="box"/>.</summary>
+    public int RemoveInside(Bounds box)
+    {
+        return root == null ? 0 : RemoveInsideRecursive(root, box);
+    }
+
+    int RemoveInsideRecursive(QuadTreeNode node, Bounds box)
+    {
+        if (node == null || !node.bounds.Intersects(box))
+            return 0;
+        int removed = 0;
+        if (node.isLeaf)
+        {
+            for (int i = node.objects.Count - 1; i >= 0; i--)
+            {
+                GameObject obj = node.objects[i];
+                if (obj == null)
+                    continue;
+                if (!StrictlyInside(box, GetGameObjectBounds(obj)))
+                    continue;
+                node.objects.RemoveAt(i);
+                if (i < node.objectBehaviorTreeProperties.Count)
+                    node.objectBehaviorTreeProperties.RemoveAt(i);
+                removed++;
+            }
+            return removed;
+        }
+        if (node.children == null)
+            return 0;
+        for (int i = 0; i < node.children.Length; i++)
+            removed += RemoveInsideRecursive(node.children[i], box);
+        return removed;
+    }
+
+    static bool StrictlyInside(Bounds outer, Bounds inner)
+    {
+        return outer.Contains(inner.min) && outer.Contains(inner.max);
+    }
+
     public List<GameObject> Search(Bounds searchBounds)
     {
         List<GameObject> results = new List<GameObject>();
